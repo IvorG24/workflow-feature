@@ -2305,11 +2305,11 @@ export const createTechnicalQuestions = async (
     }
   ) => {
     const { data: requestFormValues, questionnaireId } = params;
-    const technicalQuestionData: string[] = [];
+    const technicalQuestionData: {response: string}[] = [];
     for (const section of requestFormValues.sections) {
       for (const field of section.section_field) {
         if (field.field_name.toLowerCase().includes("technical question")) {
-          technicalQuestionData.push(String(field.field_response));
+          technicalQuestionData.push({response:String(field.field_response)});
         }
       }
     }
@@ -2337,11 +2337,13 @@ export const createTechnicalQuestions = async (
     }
   ) => {
     const { data: requestFormValues, questionnaireId } = params;
-    const technicalQuestionData: string[] = [];
-
+    const technicalQuestionData: {response: string; fieldId: string}[] = [];
     for (const field of requestFormValues.section_field) {
       if (field.field_name.toLowerCase().includes("technical question")) {
-        technicalQuestionData.push(String(field.field_response));
+        technicalQuestionData.push({
+          response:String(field.field_response),
+          fieldId: field.field_id
+        });
       }
     }
     const { data: fieldData, error: fieldError } = await supabaseClient.rpc(

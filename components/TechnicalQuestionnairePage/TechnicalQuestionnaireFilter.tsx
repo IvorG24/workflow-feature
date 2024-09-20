@@ -111,7 +111,6 @@ const TechnicalQuestionnaireFilter = ({
       >
         <TextInput
           label="Questionnaire Name"
-          placeholder="Questionnaire Name"
           value={questionnaireName}
           onChange={(event) => setQuestionnaireName(event.target.value)}
           onKeyDown={(event) => {
@@ -120,6 +119,7 @@ const TechnicalQuestionnaireFilter = ({
             }
           }}
           autoFocus
+          sx={{ input: { textTransform: "uppercase" } }}
         />
         <Group mt="md">
           <Button

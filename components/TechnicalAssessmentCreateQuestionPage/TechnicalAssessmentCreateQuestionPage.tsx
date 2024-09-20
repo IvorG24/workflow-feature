@@ -90,6 +90,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
+      setIsLoading(true);
       if (!requestorProfile) return;
       if (!teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
@@ -125,7 +126,23 @@ const TechnicalAssessmentCreateQuestionPage = ({
         const uniqueChoices = new Set();
 
         for (let i = 1; i < section.section_field.length; i++) {
-          if (i === 5) continue;
+          if (i === 5) {
+            const correctResponseIndex = (
+              section.section_field[i].field_response as string
+            ).match(/\d+/g);
+            if (correctResponseIndex) {
+              if (
+                !section.section_field[Number(correctResponseIndex[0])]
+                  .field_response
+              ) {
+                notifications.show({
+                  message: `Invalid Correct Answer: ${questionResponse}`,
+                  color: "orange",
+                });
+                return;
+              }
+            }
+          }
 
           if (
             section.section_field[i].field_response === "" ||
@@ -148,7 +165,6 @@ const TechnicalAssessmentCreateQuestionPage = ({
         }
       }
 
-      setIsLoading(true);
       await createTechnicalQuestions(supabaseClient, {
         requestFormValues: data,
         formId,
@@ -158,11 +174,13 @@ const TechnicalAssessmentCreateQuestionPage = ({
       });
 
       notifications.show({
-        message: "Request created.",
+        message: "Technical question created.",
         color: "green",
       });
       await router.push(
-        `/${formatTeamNameToUrlKey(team.team_name)}/forms/${formId}/technical-questionnaire-view?questionnaireId=${questionnaireId}`
+        `/${formatTeamNameToUrlKey(
+          team.team_name
+        )}/forms/${formId}/technical-questionnaire-view?questionnaireId=${questionnaireId}`
       );
     } catch (e) {
       notifications.show({

@@ -19285,7 +19285,7 @@ SET search_path TO ''
 AS $$
 let returnData = false;
 const { data, questionnaireId } = input_data;
-data.forEach(function (field_response) {
+data.forEach((question) => {
     const query = `
     SELECT *
     FROM form_schema.field_table f
@@ -19295,8 +19295,9 @@ data.forEach(function (field_response) {
       f.field_name = $1
       AND q.questionnaire_question_questionnaire_id = $2
       AND q.questionnaire_question_is_disabled = FALSE
+      ${question.fieldId ? `AND f.field_id != '${question.fieldId}'` : ""}
     `;
-    const result = plv8.execute(query, [field_response, questionnaireId]);
+    const result = plv8.execute(query, [question.response, questionnaireId]);
 
     if (result.length > 0) {
       returnData = true;

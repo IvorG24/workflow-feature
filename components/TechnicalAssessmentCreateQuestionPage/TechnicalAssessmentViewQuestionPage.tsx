@@ -180,6 +180,23 @@ const TechnicalAssessmentViewQuestionPage = ({
         if ((index === 3 || index === 4) && !fieldResponse) {
           continue;
         }
+        if (index === 5) {
+          const correctResponseIndex = (field.field_response as string).match(
+            /\d+/g
+          );
+          if (correctResponseIndex) {
+            if (
+              !data.section_field[Number(correctResponseIndex[0])]
+                .field_response
+            ) {
+              notifications.show({
+                message: `Invalid Correct Answer`,
+                color: "orange",
+              });
+              return;
+            }
+          }
+        }
         if (!fieldResponse) {
           notifications.show({
             message: `Field "${field.field_name}" cannot be empty.`,
@@ -385,14 +402,14 @@ const TechnicalAssessmentViewQuestionPage = ({
                       field_is_required: false,
                     }
                   : correspondingResponse
-                    ? {
-                        ...field,
-                        field_id: correspondingResponse.field_id,
-                        field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
-                        field_response: correspondingResponse.field_response,
-                        field_is_required: false,
-                      }
-                    : field;
+                  ? {
+                      ...field,
+                      field_id: correspondingResponse.field_id,
+                      field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
+                      field_response: correspondingResponse.field_response,
+                      field_is_required: false,
+                    }
+                  : field;
               });
 
               return {
@@ -512,7 +529,6 @@ const TechnicalAssessmentViewQuestionPage = ({
                           <ActionIcon
                             mr="md"
                             color="red"
-                            size={22}
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent accordion toggle
                               openCancelInterviewModal(
@@ -521,7 +537,7 @@ const TechnicalAssessmentViewQuestionPage = ({
                               );
                             }}
                           >
-                            <IconTrash size={22} />
+                            <IconTrash size={14} />
                           </ActionIcon>
                         </Flex>
                         <Accordion.Panel>

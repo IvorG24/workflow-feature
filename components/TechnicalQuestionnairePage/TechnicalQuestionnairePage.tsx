@@ -158,7 +158,8 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
 
   const handleConfirm = async (questionnaireName: string) => {
     try {
-      if (questionnaireName === "") {
+      const formattedQuestionnaireName = questionnaireName.trim().toUpperCase();
+      if (formattedQuestionnaireName === "") {
         notifications.show({
           message: "Questionnaire name is required.",
           color: "red",
@@ -166,7 +167,7 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
         return;
       }
       const checkIfExist = await checkQuestionnaireName(supabaseClient, {
-        questionnaireName,
+        questionnaireName: formattedQuestionnaireName,
       });
       if (checkIfExist.length > 0) {
         notifications.show({
@@ -176,7 +177,7 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
         return;
       }
       const data = await createQuestionnaire(supabaseClient, {
-        questionnaireName,
+        questionnaireName: formattedQuestionnaireName,
         teamId: activeTeam.team_id,
         team_member_id: teamMember?.team_member_id ?? "",
       });
@@ -200,7 +201,7 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
         color: "green",
       });
       close();
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong.",
         color: "red",
