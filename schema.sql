@@ -16404,7 +16404,9 @@ CREATE OR REPLACE FUNCTION phone_interview_validation(
 RETURNS JSON
 SET search_path TO ''
 AS $$
+
   let message;
+
   plv8.subtransaction(function() {
     const {
       interview_schedule
@@ -16489,31 +16491,28 @@ AS $$
 
     const hrScheduledInterviews = plv8.execute(
       `
-        SELECT
-            tm.team_member_id,
-              COUNT(iom.interview_meeting_interview_id)
-      + COUNT(CASE WHEN ti.technical_interview_number = 1 THEN iom.interview_meeting_interview_id END)
-      + COUNT(CASE WHEN ti.technical_interview_number = 2 THEN iom.interview_meeting_interview_id END)
-      AS interview_count
+      SELECT
+        tm.team_member_id,
+        COUNT(DISTINCT iom.interview_meeting_interview_id) AS interview_count
         FROM (
             SELECT unnest(array[${availableHrMembers.map(id => `'${id}'`).join(',')}])::UUID AS team_member_id
         ) tm
         LEFT JOIN hr_schema.hr_phone_interview_table hpi
-            ON tm.team_member_id = hpi.hr_phone_interview_team_member_id
+        ON tm.team_member_id = hpi.hr_phone_interview_team_member_id
         LEFT JOIN hr_schema.director_interview_table di
             ON tm.team_member_id = di.director_interview_team_member_id
         LEFT JOIN hr_schema.technical_interview_table ti
             ON tm.team_member_id = ti.technical_interview_team_member_id
         LEFT JOIN hr_schema.trade_test_table t
             ON tm.team_member_id = t.trade_test_team_member_id
-        LEFT JOIN hr_schema.interview_online_meeting_table iom
+        JOIN hr_schema.interview_online_meeting_table iom
             ON iom.interview_meeting_interview_id = COALESCE(
-                hpi.hr_phone_interview_id,
-                di.director_interview_id,
-                ti.technical_interview_id,
-                t.trade_test_id
-            )
-            AND iom.interview_meeting_schedule BETWEEN $1 AND $2
+            hpi.hr_phone_interview_id,
+            di.director_interview_id,
+            ti.technical_interview_id,
+            t.trade_test_id
+        )
+                    AND iom.interview_meeting_schedule BETWEEN $1 AND $2
             AND iom.interview_meeting_is_disabled = false
         GROUP BY tm.team_member_id
         ORDER BY interview_count ASC
@@ -16553,6 +16552,7 @@ AS $$
       };
     }
   });
+
   return message;
 $$ LANGUAGE plv8;
 
