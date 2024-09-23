@@ -1,5 +1,6 @@
 import {
   fetchRegion,
+  getAdOwnerList,
   getApplicationInformationPositionOptions,
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
@@ -51,6 +52,7 @@ const formDefaultValues = {
       start: null,
       end: null,
     },
+    adOwner: "",
   },
   responseFilter: {
     position: [],
@@ -226,6 +228,24 @@ const ApplicationInformationSpreadsheetView = ({
                 option_value: region.region,
                 option_order: index + 1,
                 option_field_id: "1a901f84-4f55-47aa-bfa0-42f56d1eb6c5",
+              };
+            }),
+          };
+          return [...prev, regionOption];
+        });
+      }
+
+      const addOwner = await getAdOwnerList(supabaseClient);
+      if (addOwner) {
+        setOptionList((prev) => {
+          const regionOption = {
+            field_name: "Ad Owner",
+            field_option: addOwner.map((adOwner, index) => {
+              return {
+                option_id: uuidv4(),
+                option_value: adOwner.ad_owner_name.toUpperCase(),
+                option_order: index + 1,
+                option_field_id: uuidv4(),
               };
             }),
           };

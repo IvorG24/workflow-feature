@@ -2169,6 +2169,7 @@ export type ApplicationInformationSpreadsheetData = {
   request_score_value: string;
   request_response_list: (RequestResponseTableRow & { field_id: string })[];
   request_signer_list: RequestListItemSignerType[];
+  request_ad_owner: string;
 };
 
 export type SectionWithFieldType = SectionTableRow & {

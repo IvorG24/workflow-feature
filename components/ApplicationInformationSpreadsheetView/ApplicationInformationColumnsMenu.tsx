@@ -58,6 +58,10 @@ const requestColumnList = {
       field_id: "Score",
       field_name: "Score",
     },
+    {
+      field_id: "Ad Owner",
+      field_name: "Add Owner",
+    },
   ],
 };
 

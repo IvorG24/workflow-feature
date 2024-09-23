@@ -70,6 +70,11 @@ export const requestColumnList = [
     field_name: "Score",
     field_type: "NUMBER",
   },
+  {
+    field_id: "request_ad_owner",
+    field_name: "Ad Owner",
+    field_type: "DROPDOWN",
+  },
 ];
 
 export type ClassNameType =
