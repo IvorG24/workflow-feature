@@ -324,6 +324,8 @@ const TechnicalAssessmentViewQuestionPage = ({
                   ...form.form_section[0].section_field[0],
                   field_option: positionOptions,
                   field_response: positions ? positions : null,
+                  field_is_read_only: true,
+                  field_is_required: true,
                 },
               ],
             },
@@ -398,8 +400,6 @@ const TechnicalAssessmentViewQuestionPage = ({
           setIsLoading(false);
         }
       } catch (e) {
-        console.log(e);
-
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

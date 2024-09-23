@@ -2171,23 +2171,19 @@ export const createTechnicalQuestions = async (
     }
   ) => {
     const { requestFormValues, questionnaireId } = params;
-
     const FieldTableInput: FieldTableInsert[] = [];
     const OptionTableInput: QuestionOption[] = [];
     const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
     const QuestionId: string[] = [];
     let correctAnswerFieldResponse = "";
-    let field_order = 0;
+    let field_order = 8;
     let correctAnswerFieldId = "";
     for (const section of requestFormValues.sections) {
       for (const field of section.section_field) {
         if (field.field_is_correct) {
           correctAnswerFieldResponse = String(field.field_response);
-          console.log(correctAnswerFieldResponse);
-
           field_order = field.field_order;
         }
-
         if (field.field_name.toLowerCase().includes("technical question")) {
           const fieldId = uuidv4();
           correctAnswerFieldId = fieldId;
@@ -2196,7 +2192,7 @@ export const createTechnicalQuestions = async (
             field_name: String(field.field_response),
             field_is_required: field.field_is_required,
             field_type: "MULTIPLE CHOICE",
-            field_order: 7,
+            field_order: field_order,
             field_section_id: '45a29efd-e90c-4fdd-8cb0-17d3b5a5e739',
           };
           FieldTableInput.push(fieldEntry);
@@ -2240,7 +2236,6 @@ export const createTechnicalQuestions = async (
             CorrectResponseTableInput.push(correctResponseEntry);
           }
     }
-
 
     const fieldResponseValues = FieldTableInput.map((response) => {
       const escapedResponse = escapeQuotes(response.field_name || "");

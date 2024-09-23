@@ -104,7 +104,7 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
             isRefetchingData={isFetching}
           />
         )}
-        <Box mb={"xl"}>
+        <Box mb={"xs"}>
           {!isReadyToSelect &&
             tradeTestData.trade_test_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>

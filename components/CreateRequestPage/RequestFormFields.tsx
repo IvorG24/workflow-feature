@@ -423,7 +423,7 @@ const RequestFormFields = ({
           <Radio
             pt={20}
             checked={radioValue === true}
-            label={`${String.fromCharCode(65 + (fieldIndex - 1))}.`}
+            label={`${String.fromCharCode(65 + (fieldIndex - 1))} )`}
             onChange={() => {
               setValue(
                 `sections.${sectionIndex}.section_field.${fieldIndex}.field_is_correct`,
@@ -1360,6 +1360,9 @@ const RequestFormFields = ({
               <MultiSelect
                 value={value as string[]}
                 onChange={(value) => onChange(value)}
+                searchable={
+                  formslyFormName === "Technical Questionnaire" ? true : false
+                }
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
@@ -1505,18 +1508,17 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Radio.Group
                 {...inputProps}
-                label={`${String.fromCharCode(65 + fieldIndex)}.`}
                 value={value as string}
                 onChange={onChange}
                 mb="md"
               >
                 <Stack mt="xs">
-                  {field.options.map((option) => (
+                  {field.options.map((option, optionIdx) => (
                     <Radio
                       ml="xs"
                       key={option.option_id}
                       value={option.option_value}
-                      label={option.option_value}
+                      label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
                       sx={{
                         input: { cursor: "pointer" },
                         label: { cursor: "pointer" },

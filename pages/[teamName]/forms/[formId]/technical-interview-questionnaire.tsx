@@ -50,8 +50,6 @@ type Props = {
   form: FormWithResponseType;
 };
 const Page = ({ form }: Props) => {
-  console.log(form.form_name);
-
   const formslyForm = () => {
     switch (form.form_name) {
       case "Technical Questionnaire":

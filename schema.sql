@@ -19519,7 +19519,7 @@ plv8.subtransaction(function(){
   const emailResendData = plv8.execute(
     `
       SELECT *
-      FROM user_schema.email_resend_table 
+      FROM user_schema.email_resend_table
       WHERE
         email_resend_email = '${email}'
       ORDER BY email_resend_date_created DESC
