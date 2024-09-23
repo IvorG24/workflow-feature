@@ -904,6 +904,7 @@ export type FormWithResponseType = {
       field_correct_response?: FieldCorrectResponseTableRow | null;
       field_response?: unknown;
       field_prefix?: string;
+      field_is_correct?: boolean;
     })[];
   })[];
   form_team_group: {
@@ -2529,3 +2530,18 @@ export type QuestionOption = {
     option_order:number;
     option_field_id:string;
 }
+
+export type QuestionnaireData= {
+    field_name: string;
+    field_id: string;
+    field_response: string;
+    field_is_required: boolean;
+    field_type: string;
+    field_position_id: string;
+    field_options: {
+      field_id: string;
+      field_name: string;
+      field_response: string;
+      field_is_correct: boolean;
+    }[];
+  };

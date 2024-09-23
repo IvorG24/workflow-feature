@@ -49,6 +49,7 @@ import CurrencyFormField from "./SpecialField/CurrencyFormField";
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
+    isCorrect?: boolean;
   } & {
     field_section_duplicatable_id: string | undefined;
     field_description?: string;
@@ -318,6 +319,11 @@ const RequestFormFields = ({
     name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
   });
 
+  const radioValue = useWatch({
+    control,
+    name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_is_correct`,
+  });
+
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
 
@@ -408,6 +414,55 @@ const RequestFormFields = ({
   }, [field]);
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
+    if (
+      formslyFormName === "Technical Questionnaire" &&
+      field.field_name.includes("Question Choice")
+    ) {
+      return (
+        <Flex align="center" gap="sm" w="100%">
+          <Radio
+            pt={20}
+            checked={radioValue === true}
+            onChange={() => {
+              setValue(
+                `sections.${sectionIndex}.section_field.${fieldIndex}.field_is_correct`,
+                true as never
+              );
+
+              const totalChoices = getValues(
+                `sections.${sectionIndex}.section_field`
+              ).length;
+              for (let i = 0; i < totalChoices; i++) {
+                if (i !== fieldIndex) {
+                  setValue(
+                    `sections.${sectionIndex}.section_field.${i}.field_is_correct`,
+                    false as never
+                  );
+                }
+              }
+            }}
+          />
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => {
+              return (
+                <TextInput
+                  {...inputProps}
+                  error={fieldError}
+                  withAsterisk={field.field_is_required}
+                  value={`${linkToDisplay || value || ""}`}
+                  style={{ flex: 1 }}
+                  onChange={onChange}
+                  readOnly={field.field_is_read_only}
+                />
+              );
+            }}
+          />
+        </Flex>
+      );
+    }
+
     switch (field.field_type) {
       case "LINK":
         return (

@@ -3,71 +3,71 @@ import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import {
-  APP_SOURCE_ID,
-  BASE_URL,
-  formslyPremadeFormsData,
+    APP_SOURCE_ID,
+    BASE_URL,
+    formslyPremadeFormsData,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
 import {
-  AddressTableInsert,
-  AdOwnerRequestTableInsert,
-  AttachmentBucketType,
-  AttachmentTableInsert,
-  CommentTableInsert,
-  CreateTicketFormValues,
-  EquipmentDescriptionTableInsert,
-  EquipmentPartTableInsert,
-  EquipmentTableInsert,
-  ErrorTableInsert,
-  FieldCorrectResponseTableInsert,
-  FieldTableInsert,
-  FormTableRow,
-  FormType,
-  FormWithResponseType,
-  InterviewOnlineMeetingTableInsert,
-  InterviewOnlineMeetingTableRow,
-  InvitationTableRow,
-  ItemDescriptionFieldTableInsert,
-  ItemDescriptionFieldUOMTableInsert,
-  ItemDescriptionTableUpdate,
-  ItemForm,
-  ItemTableInsert,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraItemCategoryTableInsert,
-  JiraItemCategoryUserTableInsert,
-  JiraItemUserTableData,
-  JiraOrganizationTableInsert,
-  JiraProjectTableInsert,
-  JiraUserAccountTableInsert,
-  JobTitleTableInsert,
-  MemoAgreementTableRow,
-  MemoLineItem,
-  MemoTableRow,
-  NotificationTableInsert,
-  OtherExpensesTypeTableInsert,
-  QuestionOption,
-  ReferenceMemoType,
-  RequestResponseTableInsert,
-  RequestSignerTableInsert,
-  RequestTableRow,
-  ServiceForm,
-  ServiceScopeChoiceTableInsert,
-  ServiceTableInsert,
-  SignerTableInsert,
-  SupplierTableInsert,
-  TeamGroupTableInsert,
-  TeamMemberTableInsert,
-  TeamProjectWithAddressType,
-  TeamTableInsert,
-  TechnicalAssessmentTableRow,
-  TicketCommentTableInsert,
-  TicketResponseTableInsert,
-  TicketTableRow,
-  UserTableInsert,
-  UserTableRow,
-  UserValidIDTableInsert
+    AddressTableInsert,
+    AdOwnerRequestTableInsert,
+    AttachmentBucketType,
+    AttachmentTableInsert,
+    CommentTableInsert,
+    CreateTicketFormValues,
+    EquipmentDescriptionTableInsert,
+    EquipmentPartTableInsert,
+    EquipmentTableInsert,
+    ErrorTableInsert,
+    FieldCorrectResponseTableInsert,
+    FieldTableInsert,
+    FormTableRow,
+    FormType,
+    FormWithResponseType,
+    InterviewOnlineMeetingTableInsert,
+    InterviewOnlineMeetingTableRow,
+    InvitationTableRow,
+    ItemDescriptionFieldTableInsert,
+    ItemDescriptionFieldUOMTableInsert,
+    ItemDescriptionTableUpdate,
+    ItemForm,
+    ItemTableInsert,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraItemCategoryTableInsert,
+    JiraItemCategoryUserTableInsert,
+    JiraItemUserTableData,
+    JiraOrganizationTableInsert,
+    JiraProjectTableInsert,
+    JiraUserAccountTableInsert,
+    JobTitleTableInsert,
+    MemoAgreementTableRow,
+    MemoLineItem,
+    MemoTableRow,
+    NotificationTableInsert,
+    OtherExpensesTypeTableInsert,
+    QuestionOption,
+    ReferenceMemoType,
+    RequestResponseTableInsert,
+    RequestSignerTableInsert,
+    RequestTableRow,
+    ServiceForm,
+    ServiceScopeChoiceTableInsert,
+    ServiceTableInsert,
+    SignerTableInsert,
+    SupplierTableInsert,
+    TeamGroupTableInsert,
+    TeamMemberTableInsert,
+    TeamProjectWithAddressType,
+    TeamTableInsert,
+    TechnicalAssessmentTableRow,
+    TicketCommentTableInsert,
+    TicketResponseTableInsert,
+    TicketTableRow,
+    UserTableInsert,
+    UserTableRow,
+    UserValidIDTableInsert
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -2171,15 +2171,6 @@ export const createTechnicalQuestions = async (
   ) => {
     const { requestFormValues, questionnaireId } = params;
 
-    const { data: fieldData, error: fieldError } = await supabaseClient
-      .schema("form_schema")
-      .from("field_table")
-      .select("field_order")
-      .order("field_order", { ascending: false })
-      .eq("field_section_id", requestFormValues.sections[0].section_id);
-
-    if (fieldError) throw fieldError;
-
     const FieldTableInput: FieldTableInsert[] = [];
     const OptionTableInput: QuestionOption[] = [];
     const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
@@ -2189,8 +2180,10 @@ export const createTechnicalQuestions = async (
     let correctAnswerFieldId = "";
     for (const section of requestFormValues.sections) {
       for (const field of section.section_field) {
-        if (field.field_name.toLowerCase().includes("correct answer")) {
+        if (field.field_is_correct) {
           correctAnswerFieldResponse = String(field.field_response);
+          console.log(correctAnswerFieldResponse);
+
           field_order = field.field_order;
         }
 
@@ -2202,8 +2195,8 @@ export const createTechnicalQuestions = async (
             field_name: String(field.field_response),
             field_is_required: field.field_is_required,
             field_type: "MULTIPLE CHOICE",
-            field_order: fieldData[0].field_order + 1,
-            field_section_id: field.field_section_id,
+            field_order: 7,
+            field_section_id: '45a29efd-e90c-4fdd-8cb0-17d3b5a5e739',
           };
           FieldTableInput.push(fieldEntry);
 
@@ -2238,21 +2231,15 @@ export const createTechnicalQuestions = async (
         }
       }
       if (correctAnswerFieldResponse) {
-        for (const optionField of section.section_field) {
-          if (
-            optionField.field_name.toLowerCase() ===
-            correctAnswerFieldResponse.toLowerCase()
-          ) {
             const correctResponseEntry: FieldCorrectResponseTableInsert = {
               correct_response_id: uuidv4(),
-              correct_response_value: String(optionField.field_response),
+              correct_response_value: correctAnswerFieldResponse,
               correct_response_field_id: correctAnswerFieldId,
             };
             CorrectResponseTableInput.push(correctResponseEntry);
           }
-        }
-      }
     }
+
 
     const fieldResponseValues = FieldTableInput.map((response) => {
       const escapedResponse = escapeQuotes(response.field_name || "");
@@ -2278,7 +2265,6 @@ export const createTechnicalQuestions = async (
         return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
       }
     ).join(",");
-
 
     const { data, error } = await supabaseClient
       .rpc("create_technical_question", {

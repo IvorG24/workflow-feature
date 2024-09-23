@@ -1,11 +1,9 @@
 import {
-  getOptionsTechnicalQuestion,
   getPositionPerQuestionnaire,
   getPositionTypeOptions,
   getQuestionnaireName,
   getTechnicalOptionsItem,
 } from "@/backend/api/get";
-
 import { checkIfQuestionExistsUpdate } from "@/backend/api/post";
 import {
   handleDeleteTechnicalQuestion,
@@ -27,6 +25,7 @@ import {
   FormType,
   FormWithResponseType,
   OptionTableRow,
+  QuestionnaireData,
   RequestResponseTableRow,
 } from "@/utils/types";
 import {
@@ -88,6 +87,7 @@ const TechnicalAssessmentViewQuestionPage = ({
   const { setIsLoading } = useLoadingActions();
   const activeTeam = useUserTeamMember();
   const [isJoyRideOpen, setIsJoyRideOpen] = useState(false);
+  const [correctData, setCorrectData] = useState<QuestionnaireData[]>([]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [positions, setPositions] = useState<string[]>([]);
   const [questionnaireName, setQuestionnaireName] = useState<string>("");
@@ -274,16 +274,14 @@ const TechnicalAssessmentViewQuestionPage = ({
   useEffect(() => {
     const handleFetchOptions = async () => {
       try {
-        setIsLoading(true);
         if (!questionnaireId) return;
         if (!teamGroup.includes("HUMAN RESOURCES")) return;
         if (!teamMember) return;
         const positionOptions: OptionTableRow[] = [];
-        const correctOptions: OptionTableRow[] = [];
-
+        setIsLoading(true);
         while (1) {
           const positionData = await getPositionTypeOptions(supabaseClient, {
-            fieldId: form.form_section[1].section_field[0].field_id,
+            fieldId: form.form_section[0].section_field[0].field_id,
             teamId: team.team_id,
           });
 
@@ -299,25 +297,6 @@ const TechnicalAssessmentViewQuestionPage = ({
           if (positionData.length < FETCH_OPTION_LIMIT) break;
         }
 
-        while (1) {
-          const correctData = await getOptionsTechnicalQuestion(
-            supabaseClient,
-            {
-              fieldId: form.form_section[2].section_field[5].field_id,
-            }
-          );
-          const correctOptionsFinal = correctData.map((option, index) => {
-            return {
-              option_field_id: form.form_section[2].section_field[5].field_id,
-              option_id: option.option_id,
-              option_order: index,
-              option_value: option.option_value,
-            };
-          });
-          correctOptions.push(...correctOptionsFinal);
-          if (correctData.length < FETCH_OPTION_LIMIT) break;
-        }
-
         const questionnaireName = await getQuestionnaireName(supabaseClient, {
           questionnaireId: questionnaireId,
         });
@@ -331,27 +310,17 @@ const TechnicalAssessmentViewQuestionPage = ({
           }
         );
 
+        setCorrectData(questionnaireData);
         const positions = await getPositionPerQuestionnaire(supabaseClient, {
           questionnaireId: questionnaireId,
         });
+        console.log(positions);
 
+        replaceSection(form.form_section);
         setPositions(positions);
-        if (questionnaireData.length === 0) {
+        if (questionnaireData.length === 0 && positions.length === 0) {
           setIsJoyRideOpen(true);
-
-          replaceSection([
-            {
-              ...form.form_section[1],
-              section_field: [
-                {
-                  ...form.form_section[1].section_field[0],
-                  field_option: positionOptions,
-                  field_response: positions ? positions : null,
-                  field_is_read_only: true,
-                },
-              ],
-            },
-          ]);
+          replaceSection(form.form_section);
           setIsLoading(false);
           return;
         }
@@ -359,27 +328,22 @@ const TechnicalAssessmentViewQuestionPage = ({
         if (questionnaireData) {
           replaceSection([
             {
-              ...form.form_section[1],
+              ...form.form_section[0],
               section_field: [
                 {
-                  ...form.form_section[1].section_field[0],
+                  ...form.form_section[0].section_field[0],
                   field_option: positionOptions,
                   field_response: positions ? positions : null,
                 },
               ],
             },
             {
-              ...form.form_section[2],
+              ...form.form_section[1],
               section_field: [
-                ...form.form_section[2].section_field.slice(0, 5),
-                {
-                  ...form.form_section[2].section_field[5],
-                  field_option: correctOptions,
-                },
+                ...form.form_section[1].section_field.slice(1, 6),
               ],
             },
           ]);
-
           const updatedSections = questionnaireData.map(
             (sectionData, sectionIndex) => {
               const newSection = getValues(`sections.${1}`);
@@ -387,11 +351,8 @@ const TechnicalAssessmentViewQuestionPage = ({
                 const correspondingResponse = sectionData.field_options.find(
                   (response) => response.field_name === field.field_name
                 );
-
                 const isTechnicalQuestion =
                   field.field_name === "Technical Question";
-
-                const isCorrectAnswer = field.field_name === "Correct Answer";
 
                 return isTechnicalQuestion
                   ? {
@@ -402,14 +363,16 @@ const TechnicalAssessmentViewQuestionPage = ({
                       field_is_required: false,
                     }
                   : correspondingResponse
-                  ? {
-                      ...field,
-                      field_id: correspondingResponse.field_id,
-                      field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
-                      field_response: correspondingResponse.field_response,
-                      field_is_required: false,
-                    }
-                  : field;
+                    ? {
+                        ...field,
+                        field_id: correspondingResponse.field_id,
+                        field_type: "TEXT",
+                        field_response: correspondingResponse.field_response,
+                        field_is_required: false,
+                        field_is_correct:
+                          correspondingResponse.field_is_correct,
+                      }
+                    : field;
               });
 
               return {
@@ -426,13 +389,10 @@ const TechnicalAssessmentViewQuestionPage = ({
           const currentSections = getValues("sections");
           setValue("sections", [...currentSections, ...updatedSections]);
           setIsLoading(false);
-          const isButtonDisabled =
-            positions.length ===
-            (currentSections[0]?.section_field[0]?.field_response as string[])
-              .length;
-          setIsButtonDisabled(isButtonDisabled);
         }
       } catch (e) {
+        console.log(e);
+
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
@@ -442,13 +402,13 @@ const TechnicalAssessmentViewQuestionPage = ({
     handleFetchOptions();
   }, [teamGroup, teamMember, questionnaireId, form]);
 
-  useEffect(() => {
-    if (positions && watchedFieldResponse) {
-      const isButtonDisabled =
-        positions.length === (watchedFieldResponse as string[]).length;
-      setIsButtonDisabled(isButtonDisabled);
-    }
-  }, [positions, watchedFieldResponse]);
+  //   useEffect(() => {
+  //     if (positions && watchedFieldResponse) {
+  //       const isButtonDisabled =
+  //         positions.length === (watchedFieldResponse as string[]).length;
+  //       setIsButtonDisabled(isButtonDisabled);
+  //     }
+  //   }, [positions, watchedFieldResponse]);
 
   return (
     <Container>
@@ -482,7 +442,7 @@ const TechnicalAssessmentViewQuestionPage = ({
             router.push(
               `/${formatTeamNameToUrlKey(
                 team.team_name
-              )}/forms/${formId}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
+              )}/forms/${"3914133a-6751-40af-b37d-27aa0345eed2"}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
             )
           }
         >

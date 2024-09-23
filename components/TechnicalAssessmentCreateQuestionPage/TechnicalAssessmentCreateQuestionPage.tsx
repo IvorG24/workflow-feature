@@ -36,12 +36,15 @@ import RequestFormSection from "../CreateRequestPage/RequestFormSection";
 export type Section = FormWithResponseType["form_section"][0];
 
 export type RequestFormValues = {
-  sections: (Section & { section_is_old_data?: boolean })[];
+  sections: (Section & {
+    section_is_old_data?: boolean;
+  })[];
 };
 
 export type FieldWithResponseArray =
   FormType["form_section"][0]["section_field"][0] & {
     field_response: RequestResponseTableRow[];
+    field_is_correct?: boolean;
   };
 
 type Props = {
@@ -111,9 +114,10 @@ const TechnicalAssessmentCreateQuestionPage = ({
       const uniqueQuestions = new Set();
 
       for (const section of data.sections) {
-        const questionResponse = section.section_field[0]
+        const questionResponse = section.section_field[1]
           .field_response as string;
 
+        // Check for duplicate questions
         if (uniqueQuestions.has(questionResponse)) {
           notifications.show({
             message: `Duplicate question found: ${questionResponse}`,
@@ -124,36 +128,20 @@ const TechnicalAssessmentCreateQuestionPage = ({
         uniqueQuestions.add(questionResponse);
 
         const uniqueChoices = new Set();
+        let isCorrectAnswerSelected = false; // Flag to check if a correct answer is selected
 
         for (let i = 1; i < section.section_field.length; i++) {
-          if (i === 5) {
-            const correctResponseIndex = (
-              section.section_field[i].field_response as string
-            ).match(/\d+/g);
-            if (correctResponseIndex) {
-              if (
-                !section.section_field[Number(correctResponseIndex[0])]
-                  .field_response
-              ) {
-                notifications.show({
-                  message: `Invalid Correct Answer: ${questionResponse}`,
-                  color: "orange",
-                });
-                return;
-              }
-            }
+          const choiceResponse = section.section_field[i]
+            .field_response as string;
+
+          if (section.section_field[i].field_is_correct) {
+            isCorrectAnswerSelected = true;
           }
 
-          if (
-            section.section_field[i].field_response === "" ||
-            section.section_field[i].field_response === null ||
-            section.section_field[i].field_response === undefined
-          ) {
+          if (!choiceResponse) {
             continue;
           }
 
-          const choiceResponse = section.section_field[i]
-            .field_response as string;
           if (uniqueChoices.has(choiceResponse)) {
             notifications.show({
               message: `Duplicate choice found in question: ${questionResponse}`,
@@ -162,6 +150,14 @@ const TechnicalAssessmentCreateQuestionPage = ({
             return;
           }
           uniqueChoices.add(choiceResponse);
+        }
+
+        if (!isCorrectAnswerSelected) {
+          notifications.show({
+            message: `Correct answer not selected for question: ${questionResponse}`,
+            color: "orange",
+          });
+          return;
         }
       }
 
@@ -177,6 +173,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
         message: "Technical question created.",
         color: "green",
       });
+
       await router.push(
         `/${formatTeamNameToUrlKey(
           team.team_name
@@ -253,12 +250,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
           const correctData = await getOptionsTechnicalQuestion(
             supabaseClient,
             {
-              fieldId: form.form_section[2].section_field[5].field_id,
+              fieldId: form.form_section[1].section_field[0].field_id,
             }
           );
           const correctOptionsFinal = correctData.map((option, index) => {
             return {
-              option_field_id: form.form_section[2].section_field[5].field_id,
+              option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: option.option_id,
               option_order: index,
               option_value: option.option_value,
@@ -274,15 +271,14 @@ const TechnicalAssessmentCreateQuestionPage = ({
         setQuestionnaireName(questionnaireName.questionnaire_name);
         replaceSection([
           {
-            ...form.form_section[2],
+            ...form.form_section[1],
             section_is_duplicatable: true,
             section_field: [
-              ...form.form_section[2].section_field.slice(0, 5),
-
               {
-                ...form.form_section[2].section_field[5],
+                ...form.form_section[1].section_field[0],
                 field_option: correctOptions,
               },
+              ...form.form_section[1].section_field.slice(1, 6),
             ],
           },
         ]);

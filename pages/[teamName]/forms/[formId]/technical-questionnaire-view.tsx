@@ -22,12 +22,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         };
       }
       const { data, error } = await supabaseClient.rpc(
-        "create_public_request_page_on_load",
+        "create_request_page_on_load",
         {
           input_data: {
             formId: context.query.formId,
-            applicationInformationId: context.query.applicationInformationId,
-            generalAssessmentId: context.query.generalAssessmentId,
+            userId: user.id,
           },
         }
       );
@@ -53,7 +52,7 @@ type Props = {
 const Page = ({ form }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Technical Assessment":
+      case "Technical Questionnaire":
         return (
           <TechnicalAssessmentViewQuestionPage
             form={form}

@@ -16041,8 +16041,8 @@ AS $$
         WITH team_member_id_list (team_member_id) AS (
           VALUES ${hrTeamMemberIdList}
         )
-        SELECT 
-          team_member_id_list.team_member_id, 
+        SELECT
+          team_member_id_list.team_member_id,
           COALESCE(COUNT(${table}_team_member_id), 0) AS total_count,
           COALESCE(COUNT(DISTINCT CASE
             WHEN ${table}_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
@@ -16542,7 +16542,7 @@ AS $$
 
     const interviewDate = new Date(interview_schedule);
     const currentYear = interviewDate.getFullYear();
-    const currentMonth = interviewDate.getMonth(); 
+    const currentMonth = interviewDate.getMonth();
 
 
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -19292,18 +19292,11 @@ AS $$
         `, [field.field_id]
       );
 
-      let correctAnswerFieldName = null;
+     let correctResponseValue = null;
 
       if (correctAnswer.length > 0) {
-      const correctResponseValue = correctAnswer[0].correct_response_value;
-
-      optionsData.forEach((option, index) => {
-        if (option.question_option_value === correctResponseValue) {
-          correctAnswerFieldName = `Question Choice ${index + 1}`;
-        }
-      });
+        correctResponseValue = correctAnswer[0].correct_response_value;
       }
-
       return {
         field_name: "Technical Question",
         field_response: field.field_name,
@@ -19316,12 +19309,9 @@ AS $$
           field_id: option.question_option_id,
           field_name: `Question Choice ${index + 1}`,
           field_response: option.question_option_value,
+          field_is_correct: option.question_option_value === correctResponseValue,
           })),
-          ...(correctAnswer.length > 0 ? [{
-          field_id: correctAnswer[0].correct_response_id,
-          field_name: "Correct Answer",
-          field_response: correctAnswerFieldName
-          }] : [])
+
         ]
       };
     });
