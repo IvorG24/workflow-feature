@@ -37,7 +37,7 @@ const SuccessPage = () => {
             <Title size={20}>Check your mailbox</Title>
             <Text size={14}>
               We have sent you a confirmation email to complete your
-              registration.To proceed, click the link provided in the email. If
+              registration. To proceed, click the link provided in the email. If
               you don&apos;t see it in your inbox, please check your spam
               folder.
             </Text>

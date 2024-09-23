@@ -99,15 +99,7 @@ const SignUpPage = () => {
         email: data.email,
         password: data.password,
       });
-
-      if (error) {
-        notifications.show({
-          message: error,
-          color: "orange",
-          autoClose: false,
-        });
-        return;
-      }
+      if (error) throw error;
 
       notifications.show({
         message:
@@ -115,7 +107,7 @@ const SignUpPage = () => {
         color: "green",
         withCloseButton: false,
       });
-      reset();
+
       await router.push(
         `/sign-up/success?confirmationId=${newUserData.user?.id}`
       );
