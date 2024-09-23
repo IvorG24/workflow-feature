@@ -423,6 +423,7 @@ const RequestFormFields = ({
           <Radio
             pt={20}
             checked={radioValue === true}
+            label={`${String.fromCharCode(65 + (fieldIndex - 1))}.`}
             onChange={() => {
               setValue(
                 `sections.${sectionIndex}.section_field.${fieldIndex}.field_is_correct`,
@@ -1504,6 +1505,7 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Radio.Group
                 {...inputProps}
+                label={`${String.fromCharCode(65 + fieldIndex)}.`}
                 value={value as string}
                 onChange={onChange}
                 mb="md"

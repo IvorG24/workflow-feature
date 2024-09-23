@@ -128,26 +128,39 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
         const uniqueChoices = new Set();
         let isCorrectAnswerSelected = false; // Flag to check if a correct answer is selected
-
+        const requiredFields = [1, 2];
         for (let i = 1; i < section.section_field.length; i++) {
           const choiceResponse = section.section_field[i]
             .field_response as string;
 
           if (section.section_field[i].field_is_correct) {
             isCorrectAnswerSelected = true;
+
+            if ((i === 3 || i === 4) && !choiceResponse) {
+              notifications.show({
+                message: `Choice ${i} cannot be selected as correct because it has no response.`,
+                color: "red",
+              });
+              return;
+            }
           }
 
-          if (!choiceResponse) {
-            continue;
+          if (requiredFields.includes(i) && !choiceResponse) {
+            notifications.show({
+              message: `A choice response is missing for required question choice ${i}`,
+              color: "red",
+            });
+            return;
           }
 
-          if (uniqueChoices.has(choiceResponse)) {
+          if (choiceResponse && uniqueChoices.has(choiceResponse)) {
             notifications.show({
               message: `Duplicate choice found in question: ${questionResponse}`,
               color: "orange",
             });
             return;
           }
+
           uniqueChoices.add(choiceResponse);
         }
 

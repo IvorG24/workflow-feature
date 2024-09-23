@@ -217,7 +217,6 @@ const TechnicalAssessmentViewQuestionPage = ({
       }
 
       setIsLoading(true);
-      console.log(data);
 
       await updateTechnicalQuestion(supabaseClient, {
         requestValues: data,
@@ -317,7 +316,18 @@ const TechnicalAssessmentViewQuestionPage = ({
         setPositions(positions);
         if (questionnaireData.length === 0 && positions.length === 0) {
           setIsJoyRideOpen(true);
-          replaceSection(form.form_section);
+          replaceSection([
+            {
+              ...form.form_section[0],
+              section_field: [
+                {
+                  ...form.form_section[0].section_field[0],
+                  field_option: positionOptions,
+                  field_response: positions ? positions : null,
+                },
+              ],
+            },
+          ]);
           setIsLoading(false);
           return;
         }
@@ -337,7 +347,7 @@ const TechnicalAssessmentViewQuestionPage = ({
             {
               ...form.form_section[1],
               section_field: [
-                ...form.form_section[1].section_field.slice(1, 6),
+                ...form.form_section[1].section_field.slice(0, 5),
               ],
             },
           ]);
