@@ -1711,8 +1711,32 @@ AS $$
     if (!status) {
       if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
         const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
-        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth();
+
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+        const week1End = new Date(currentYear, currentMonth, 7);
+        const week2Start = new Date(currentYear, currentMonth, 8);
+        const week2End = new Date(currentYear, currentMonth, 14);
+        const week3Start = new Date(currentYear, currentMonth, 15);
+        const week3End = new Date(currentYear, currentMonth, 21);
+        const week4Start = new Date(currentYear, currentMonth, 22);
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+        let weekStart, weekEnd;
+        if (currentDate <= week1End) {
+          weekStart = firstDayOfMonth;
+          weekEnd = week1End;
+        } else if (currentDate >= week2Start && currentDate <= week2End) {
+          weekStart = week2Start;
+          weekEnd = week2End;
+        } else if (currentDate >= week3Start && currentDate <= week3End) {
+          weekStart = week3Start;
+          weekEnd = week3End;
+        } else if (currentDate >= week4Start && currentDate <= lastDayOfMonth) {
+          weekStart = week4Start;
+          weekEnd = lastDayOfMonth;
+        }
 
         const teamMemberIdList = plv8.execute(
           `
@@ -1737,16 +1761,19 @@ AS $$
           `
             SELECT
               signer_id,
-              COUNT(request_signer_id)
+              COUNT(request_signer_id) AS total_count,
+              COUNT(DISTINCT CASE
+                WHEN request_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+                THEN request_signer_id
+                END
+              ) AS weekly_count
             FROM form_schema.signer_table
             LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
             LEFT JOIN request_schema.request_table ON request_id = request_signer_request_id
-              AND request_date_created >= '${startOfMonth}'
-              AND request_date_created <= '${endOfMonth}'
             WHERE
               signer_id IN (${signerIdList})
             GROUP BY signer_id
-            ORDER BY COUNT ASC
+            ORDER BY weekly_count, total_count
             LIMIT 1
           `
         )[0].signer_id;
@@ -15949,16 +15976,16 @@ AS $$
     } else if (positionData.position_is_with_director_interview && currentStep <= 3) {
       plv8.execute(`INSERT INTO hr_schema.director_interview_table (director_interview_request_id) VALUES ('${requestId}')`);
     } else if (positionData.position_is_with_background_check && currentStep <= 4) {
-      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_month('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_month;
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
-      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_month('{ "table": "job_offer" }')`)[0].get_hr_with_lowest_load_within_a_month;
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "job_offer" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id, job_offer_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     }
   });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_hr_with_lowest_load_within_a_month(
+CREATE OR REPLACE FUNCTION get_hr_with_lowest_load_within_a_week(
   input_data JSON
 )
 RETURNS TEXT
@@ -15982,21 +16009,50 @@ AS $$
     if (!hrTeamMemberIdList.length) return;
 
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const week1End = new Date(currentYear, currentMonth, 7);
+    const week2Start = new Date(currentYear, currentMonth, 8);
+    const week2End = new Date(currentYear, currentMonth, 14);
+    const week3Start = new Date(currentYear, currentMonth, 15);
+    const week3End = new Date(currentYear, currentMonth, 21);
+    const week4Start = new Date(currentYear, currentMonth, 22);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+    let weekStart, weekEnd;
+    if (currentDate <= week1End) {
+      weekStart = firstDayOfMonth;
+      weekEnd = week1End;
+    } else if (currentDate >= week2Start && currentDate <= week2End) {
+      weekStart = week2Start;
+      weekEnd = week2End;
+    } else if (currentDate >= week3Start && currentDate <= week3End) {
+      weekStart = week3Start;
+      weekEnd = week3End;
+    } else if (currentDate >= week4Start && currentDate <= lastDayOfMonth) {
+      weekStart = week4Start;
+      weekEnd = lastDayOfMonth;
+    }
 
     const teamMemberData = plv8.execute(
       `
         WITH team_member_id_list (team_member_id) AS (
           VALUES ${hrTeamMemberIdList}
         )
-        SELECT team_member_id_list.team_member_id, COALESCE(COUNT(${table}_team_member_id), 0) AS count
+        SELECT 
+          team_member_id_list.team_member_id, 
+          COALESCE(COUNT(${table}_team_member_id), 0) AS total_count,
+          COALESCE(COUNT(DISTINCT CASE
+            WHEN ${table}_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+            THEN team_member_id_list.team_member_id
+            END
+          )) AS weekly_count
         FROM team_member_id_list
         LEFT JOIN hr_schema.${table}_table ON ${table}_team_member_id = team_member_id_list.team_member_id
-          AND ${table}_date_created >= '${startOfMonth}'
-          AND ${table}_date_created <= '${endOfMonth}'
         GROUP BY team_member_id_list.team_member_id
-        ORDER BY count
+        ORDER BY weekly_count, total_count
         LIMIT 1
       `
     );
@@ -16486,7 +16542,7 @@ AS $$
 
     const interviewDate = new Date(interview_schedule);
     const currentYear = interviewDate.getFullYear();
-    const currentMonth = interviewDate.getMonth(); // Month (0-11)
+    const currentMonth = interviewDate.getMonth(); 
 
 
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
