@@ -42,7 +42,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
       label: "Date Created",
       value: requestDate,
     },
-    ...(form_name === "Technical Assessment" && form_questionnaire_name
+    ...(form_name === "Technical Questionnaire" && form_questionnaire_name
       ? [
           {
             label: "Questionnaire Name",

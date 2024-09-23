@@ -117,7 +117,6 @@ const TechnicalAssessmentCreateQuestionPage = ({
         const questionResponse = section.section_field[1]
           .field_response as string;
 
-        // Check for duplicate questions
         if (uniqueQuestions.has(questionResponse)) {
           notifications.show({
             message: `Duplicate question found: ${questionResponse}`,
@@ -278,7 +277,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                 ...form.form_section[1].section_field[0],
                 field_option: correctOptions,
               },
-              ...form.form_section[1].section_field.slice(1, 6),
+              ...form.form_section[1].section_field.slice(1, 5),
             ],
           },
         ]);

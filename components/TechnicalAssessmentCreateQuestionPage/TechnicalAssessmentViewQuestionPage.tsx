@@ -25,7 +25,6 @@ import {
   FormType,
   FormWithResponseType,
   OptionTableRow,
-  QuestionnaireData,
   RequestResponseTableRow,
 } from "@/utils/types";
 import {
@@ -87,7 +86,6 @@ const TechnicalAssessmentViewQuestionPage = ({
   const { setIsLoading } = useLoadingActions();
   const activeTeam = useUserTeamMember();
   const [isJoyRideOpen, setIsJoyRideOpen] = useState(false);
-  const [correctData, setCorrectData] = useState<QuestionnaireData[]>([]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [positions, setPositions] = useState<string[]>([]);
   const [questionnaireName, setQuestionnaireName] = useState<string>("");
@@ -219,6 +217,7 @@ const TechnicalAssessmentViewQuestionPage = ({
       }
 
       setIsLoading(true);
+      console.log(data);
 
       await updateTechnicalQuestion(supabaseClient, {
         requestValues: data,
@@ -310,11 +309,9 @@ const TechnicalAssessmentViewQuestionPage = ({
           }
         );
 
-        setCorrectData(questionnaireData);
         const positions = await getPositionPerQuestionnaire(supabaseClient, {
           questionnaireId: questionnaireId,
         });
-        console.log(positions);
 
         replaceSection(form.form_section);
         setPositions(positions);
@@ -402,13 +399,13 @@ const TechnicalAssessmentViewQuestionPage = ({
     handleFetchOptions();
   }, [teamGroup, teamMember, questionnaireId, form]);
 
-  //   useEffect(() => {
-  //     if (positions && watchedFieldResponse) {
-  //       const isButtonDisabled =
-  //         positions.length === (watchedFieldResponse as string[]).length;
-  //       setIsButtonDisabled(isButtonDisabled);
-  //     }
-  //   }, [positions, watchedFieldResponse]);
+  useEffect(() => {
+    if (positions && watchedFieldResponse) {
+      const isButtonDisabled =
+        positions.length === (watchedFieldResponse as string[]).length;
+      setIsButtonDisabled(isButtonDisabled);
+    }
+  }, [positions, watchedFieldResponse]);
 
   return (
     <Container>
@@ -442,7 +439,7 @@ const TechnicalAssessmentViewQuestionPage = ({
             router.push(
               `/${formatTeamNameToUrlKey(
                 team.team_name
-              )}/forms/${"3914133a-6751-40af-b37d-27aa0345eed2"}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
+              )}/forms/${formId}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
             )
           }
         >

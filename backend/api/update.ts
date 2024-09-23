@@ -4,44 +4,44 @@ import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/Approver
 import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  ApiKeyData,
-  AppType,
-  BackgroundCheckSpreadsheetData,
-  DirectorInterviewSpreadsheetData,
-  EditMemoType,
-  EquipmentDescriptionTableUpdate,
-  EquipmentLookupChoices,
-  EquipmentLookupTableUpdate,
-  EquipmentPartTableUpdate,
-  EquipmentTableUpdate,
-  FormWithResponseType,
-  HRPhoneInterviewSpreadsheetData,
-  InterviewOnlineMeetingTableRow,
-  InterviewOnlineMeetingTableUpdate,
-  ItemDescriptionTableUpdate,
-  ItemForm,
-  ItemTableInsert,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraItemCategoryTableUpdate,
-  JiraOrganizationTableUpdate,
-  JiraProjectTableUpdate,
-  JiraUserAccountTableUpdate,
-  JobOfferFormType,
-  JobTitleTableUpdate,
-  MemberRoleType,
-  MemoAgreementTableRow,
-  MemoFormatAttachmentTableInsert,
-  MemoFormatSubsectionTableUpdate,
-  OtherExpensesTypeTableUpdate,
-  SignerTableRow,
-  SignerTableUpdate,
-  TeamTableRow,
-  TeamTableUpdate,
-  TechnicalInterviewSpreadsheetData,
-  TicketTableRow,
-  TicketType,
-  TradeTestSpreadsheetData,
-  UserTableUpdate,
+    ApiKeyData,
+    AppType,
+    BackgroundCheckSpreadsheetData,
+    DirectorInterviewSpreadsheetData,
+    EditMemoType,
+    EquipmentDescriptionTableUpdate,
+    EquipmentLookupChoices,
+    EquipmentLookupTableUpdate,
+    EquipmentPartTableUpdate,
+    EquipmentTableUpdate,
+    FormWithResponseType,
+    HRPhoneInterviewSpreadsheetData,
+    InterviewOnlineMeetingTableRow,
+    InterviewOnlineMeetingTableUpdate,
+    ItemDescriptionTableUpdate,
+    ItemForm,
+    ItemTableInsert,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraItemCategoryTableUpdate,
+    JiraOrganizationTableUpdate,
+    JiraProjectTableUpdate,
+    JiraUserAccountTableUpdate,
+    JobOfferFormType,
+    JobTitleTableUpdate,
+    MemberRoleType,
+    MemoAgreementTableRow,
+    MemoFormatAttachmentTableInsert,
+    MemoFormatSubsectionTableUpdate,
+    OtherExpensesTypeTableUpdate,
+    SignerTableRow,
+    SignerTableUpdate,
+    TeamTableRow,
+    TeamTableUpdate,
+    TechnicalInterviewSpreadsheetData,
+    TicketTableRow,
+    TicketType,
+    TradeTestSpreadsheetData,
+    UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate, getMemoFormat } from "./get";
@@ -1649,56 +1649,54 @@ export const handleDeleteTechnicalQuestion = async (
 
     let correctAnswerFieldName = "";
 
-    const correctAnswer = requestValues.section_field.filter(
-      (field) => field.field_name === "Correct Answer"
+    const correctAnswer = requestValues.section_field.find(
+      (field) => field.field_is_correct
     );
+    const technicalQuestionId = requestValues.section_field.find(
+        (field) => field.field_name === "Technical Question"
+      )?.field_id;
 
-    if (correctAnswer.length > 0) {
-      const correctResponseValue = correctAnswer[0].field_response;
+    if (correctAnswer) {
+      const correctResponseValue = correctAnswer.field_response;
 
       requestValues.section_field.forEach((option) => {
         if (
           option.field_name.startsWith("Question Choice") &&
-          option.field_name === correctResponseValue
+          String(option.field_response) === String(correctResponseValue)
         ) {
           correctAnswerFieldName = String(option.field_response);
         }
       });
     }
+    const correctAnswerEscaped = escapeQuotes(correctAnswerFieldName);
+    await supabaseClient
+    .schema("form_schema")
+    .from("correct_response_table")
+    .update({
+      correct_response_value: correctAnswerEscaped ,
+    })
+    .eq("correct_response_field_id",technicalQuestionId ?? "");
 
     const promises = requestValues.section_field.map(async (field) => {
       const escapedResponse = escapeQuotes(String(field.field_response));
-      const correctAnswer = escapeQuotes(correctAnswerFieldName);
       switch (field.field_name) {
         case "Technical Question":
-          return supabaseClient
-            .schema("form_schema")
-            .from("field_table")
-            .update({
-              field_name: escapedResponse,
-            })
-            .eq("field_id", field.field_id)
-            .then(() => {
-              return supabaseClient
-                .schema("form_schema")
-                .from("questionnaire_question_table")
-                .update({
-                  questionnaire_question: escapedResponse,
-                })
-                .eq("questionnaire_question_field_id", field.field_id);
-            });
-          break;
-        case "Correct Answer":
-          if (correctAnswerFieldName) {
-            return supabaseClient
+            await supabaseClient
               .schema("form_schema")
-              .from("correct_response_table")
+              .from("field_table")
               .update({
-                correct_response_value: correctAnswer,
+                field_name: escapedResponse,
               })
-              .eq("correct_response_id", field.field_id);
-          }
-          break;
+              .eq("field_id", field.field_id);
+            await supabaseClient
+              .schema("form_schema")
+              .from("questionnaire_question_table")
+              .update({
+                questionnaire_question: escapedResponse,
+              })
+              .eq("questionnaire_question_field_id", field.field_id);
+            break;
+
         default:
           if (field.field_name.includes("Question Choice")) {
             return supabaseClient
@@ -1709,17 +1707,21 @@ export const handleDeleteTechnicalQuestion = async (
               })
               .eq("question_option_id", field.field_id);
           }
+
           return null;
       }
     });
 
+    // Wait for all promises to complete
     const results = await Promise.all(promises.map((p) => p.catch((e) => e)));
 
     results.forEach((result) => {
       if (result instanceof Error) {
+        console.error("Error updating field:", result);
       }
     });
   };
+
 
 export const disableApikey = async (
   supabaseClient: SupabaseClient<Database>,
