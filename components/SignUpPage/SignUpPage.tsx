@@ -76,7 +76,6 @@ const SignUpPage = () => {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = signUpFormMethods;
 
@@ -107,9 +106,8 @@ const SignUpPage = () => {
         color: "green",
         withCloseButton: false,
       });
-
       await router.push(
-        `/sign-up/success?confirmationId=${newUserData.user?.id}`
+        `/sign-up/success?confirmationId=${newUserData.user?.id}&email=${data.email}`
       );
     } catch (e) {
       notifications.show({

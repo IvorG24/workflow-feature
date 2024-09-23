@@ -7104,3 +7104,18 @@ export const getHRApplicantAnalytics = async (
 
   return data as HRAnalyticsData;
 };
+
+export const getEmailResendTimer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    email: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_email_resend_timer",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as number;
+};

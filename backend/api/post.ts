@@ -223,6 +223,7 @@ export const signUpUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: { email: string; password: string }
 ) => {
+
   const { data, error } = await supabaseClient.auth.signUp({
     ...params,
   });
@@ -2414,4 +2415,20 @@ export const createTechnicalQuestions = async (
       .from("error_table")
       .insert(errorTableRow);
     if (error) throw error;
+  };
+
+  export const resendEmail = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      email: string;
+    }
+  ) => {
+    const {email} = params;
+    const { error } = await supabaseClient
+    .schema("user_schema")
+    .from("email_resend_table")
+    .insert({
+      email_resend_email: email,
+    });
+  if (error) throw error;
   };

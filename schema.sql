@@ -1192,6 +1192,12 @@ CREATE TABLE lookup_schema.position_table (
   position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id)
 );
 
+CREATE TABLE user_schema.email_resend_table (
+  email_resend_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  email_resend_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  email_resend_email VARCHAR(4000) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -19501,6 +19507,40 @@ plv8.subtransaction(function() {
         } : null
       };
     });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_email_resend_timer(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function(){
+  const { email } = input_data;
+
+  const emailResendData = plv8.execute(
+    `
+      SELECT *
+      FROM user_schema.email_resend_table 
+      WHERE
+        email_resend_email = '${email}'
+      ORDER BY email_resend_date_created DESC
+      LIMIT 1
+    `
+  );
+  if(!emailResendData.length) {
+    returnData = 0;
+    return;
+  }
+
+  const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
+  const diffInMilliseconds = currentDate - emailResendData[0].email_resend_date_created;
+
+  const timer = 60 - Math.ceil(diffInMilliseconds / 1000);
+  returnData = timer <= 0 ? 0 : timer;
 });
 return returnData;
 $$ LANGUAGE plv8;
