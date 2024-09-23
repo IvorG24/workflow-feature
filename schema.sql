@@ -14888,6 +14888,7 @@ AS $$
     Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.start) ? requestFilterCondition.push(`request_score_value  >= ${requestFilter.requestScoreRange.start}`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.end) ? requestFilterCondition.push(`request_score_value <= ${requestFilter.requestScoreRange.end}`) : null;
+    Boolean(requestFilter.adOwner) && requestFilter.adOwner.length ? requestFilterCondition.push(`request_ad_owner IN (${requestFilter.adOwner.map(adOwner => `'${adOwner.toLowerCase()}'`)})`) : null;
 
     let requestSignerCondition = "";
     Boolean(requestFilter.approver) && requestFilter.approver.length ? requestSignerCondition = `request_signer_signer_id IN (${requestFilter.approver.map(approver => `'${approver}'`)})` : null;
@@ -14913,12 +14914,15 @@ AS $$
             request_status_date_updated,
             request_response,
             request_score_value,
+            ad_owner_name AS request_ad_owner,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
+          LEFT JOIN lookup_schema.ad_owner_request_table ON ad_owner_request_request_id = request_id
+          LEFT JOIN lookup_schema.ad_owner_table ON ad_owner_id = ad_owner_request_owner_id
           WHERE
             team_member_team_id = '${teamId}'
             AND request_is_disabled = FALSE
@@ -14991,6 +14995,7 @@ AS $$
         request_status: parentRequest.request_status,
         request_status_date_updated: parentRequest.request_status_date_updated,
         request_score_value: parentRequest.request_score_value,
+        request_ad_owner: parentRequest.request_ad_owner,
         request_response_list: responseList,
         request_signer_list: signerList.map(signer => {
           return {
@@ -23048,6 +23053,11 @@ USING (true);
 
 --- lookup_schema.ad_owner_request_table
 ALTER TABLE lookup_schema.ad_owner_request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_request_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_request_table
+AS PERMISSIVE FOR SELECT
+USING (true);
 
 DROP POLICY IF EXISTS "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table;
 CREATE POLICY "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table

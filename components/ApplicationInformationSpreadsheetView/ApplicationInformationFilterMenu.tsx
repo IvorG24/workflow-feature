@@ -61,6 +61,11 @@ const sectionList = [
         label: "Score",
         type: "NUMBER",
       },
+      {
+        id: "requestFilter.adOwner",
+        label: "Ad Owner",
+        type: "MULTISELECT",
+      },
     ],
   },
   {

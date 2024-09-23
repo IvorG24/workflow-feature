@@ -5955,6 +5955,7 @@ export const getApplicationInformationSummaryData = async (
       input_data: updatedParams,
     }
   );
+
   if (error) throw error;
   return data as ApplicationInformationSpreadsheetData[];
 };
@@ -6790,6 +6791,7 @@ export const getLatestApiKey = async (
   }
   return data;
 };
+
 export const getAdOwnerList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
