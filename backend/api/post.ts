@@ -2171,20 +2171,26 @@ export const createTechnicalQuestions = async (
     }
   ) => {
     const { requestFormValues, questionnaireId } = params;
+
+    let fieldOrder = await getQuestionFieldOrder(supabaseClient, {
+        questionnaireId,
+    });
+
+    fieldOrder = fieldOrder + 1;
+
     const FieldTableInput: FieldTableInsert[] = [];
     const OptionTableInput: QuestionOption[] = [];
     const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
     const QuestionId: string[] = [];
     let correctAnswerFieldResponse = "";
-    let field_order = 8;
     let correctAnswerFieldId = "";
     for (const section of requestFormValues.sections) {
       for (const field of section.section_field) {
         if (field.field_is_correct) {
           correctAnswerFieldResponse = String(field.field_response);
-          field_order = field.field_order;
         }
         if (field.field_name.toLowerCase().includes("technical question")) {
+
           const fieldId = uuidv4();
           correctAnswerFieldId = fieldId;
           const fieldEntry: FieldTableInsert = {
@@ -2192,13 +2198,14 @@ export const createTechnicalQuestions = async (
             field_name: String(field.field_response),
             field_is_required: field.field_is_required,
             field_type: "MULTIPLE CHOICE",
-            field_order: field_order,
+            field_order: fieldOrder,
             field_section_id: '45a29efd-e90c-4fdd-8cb0-17d3b5a5e739',
           };
+
           FieldTableInput.push(fieldEntry);
-
+          fieldOrder++;
           if (field.field_type === "TEXT" && field.field_response) {
-
+            let optionOrder = 1;
             for (const optionField of section.section_field) {
               const optionId = uuidv4();
               if (
@@ -2216,12 +2223,12 @@ export const createTechnicalQuestions = async (
                 const optionEntry: QuestionOption = {
                   option_id: optionId,
                   option_value: String(optionField.field_response) === "undefined" ? null : String(optionField.field_response),
-                  option_order: field_order,
+                  option_order: optionOrder,
                   option_field_id: fieldId,
                 };
 
                 OptionTableInput.push(optionEntry);
-                field_order++;
+                optionOrder++;
               }
             }
           }
@@ -2277,7 +2284,7 @@ export const createTechnicalQuestions = async (
     if (error) throw error;
 
     return data;
-  };
+};
 
   export const checkIfQuestionExists = async (
     supabaseClient: SupabaseClient<Database>,
@@ -2413,3 +2420,21 @@ export const createTechnicalQuestions = async (
     });
   if (error) throw error;
   };
+
+  export const getQuestionFieldOrder = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireId: string;
+    }
+  ) => {
+    const { questionnaireId } = params;
+    const { data, error } = await supabaseClient.rpc("get_question_field_order", {
+        input_data: {
+            questionnaireId,
+         },
+        });
+
+    if (error) throw error;
+
+    return data as unknown as number;
+  }

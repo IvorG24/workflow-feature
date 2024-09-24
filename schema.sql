@@ -19540,6 +19540,36 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_question_field_order(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = 0;
+
+plv8.subtransaction(function() {
+    const { questionnaireId } = input_data;
+
+
+    const fieldOrderResult = plv8.execute(`
+        SELECT f.field_order
+        FROM form_schema.field_table f
+        JOIN form_schema.questionnaire_question_table q
+        ON q.questionnaire_question_field_id = f.field_id
+        WHERE q.questionnaire_question_questionnaire_id = $1
+        ORDER BY f.field_order DESC
+        LIMIT 1
+    `, [questionnaireId]);
+
+    if (fieldOrderResult.length > 0) {
+        returnData = fieldOrderResult[0].field_order;
+    }
+});
+
+return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES

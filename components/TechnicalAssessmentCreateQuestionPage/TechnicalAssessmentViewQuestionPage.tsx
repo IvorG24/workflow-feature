@@ -171,39 +171,24 @@ const TechnicalAssessmentViewQuestionPage = ({
         return;
       }
 
-      const choiceSet = new Set();
+      const choiceSet = new Set<string>();
+      let isCorrectAnswerSelected = false;
+      const requiredFields = [1, 2];
 
       for (const [index, field] of data.section_field.entries()) {
-        const fieldResponse = (field.field_response as string).trim();
-        if ((index === 3 || index === 4) && !fieldResponse) {
-          continue;
-        }
-        if (index === 5) {
-          const correctResponseIndex = (field.field_response as string).match(
-            /\d+/g
-          );
-          if (correctResponseIndex) {
-            if (
-              !data.section_field[Number(correctResponseIndex[0])]
-                .field_response
-            ) {
-              notifications.show({
-                message: `Invalid Correct Answer`,
-                color: "orange",
-              });
-              return;
-            }
-          }
-        }
-        if (!fieldResponse) {
+        const fieldResponse = (field.field_response as string)?.trim();
+
+        if (requiredFields.includes(index) && !fieldResponse) {
           notifications.show({
-            message: `Field "${field.field_name}" cannot be empty.`,
+            message: `Field "${field.field_name}" cannot be empty for question choice ${index}.`,
             color: "orange",
           });
           return;
         }
-
         if (field.field_name.toLowerCase().includes("question choice")) {
+          if (!fieldResponse) {
+            continue;
+          }
           if (choiceSet.has(fieldResponse)) {
             notifications.show({
               message: `Duplicate choice "${fieldResponse}" found. Choices must be unique.`,
@@ -214,6 +199,34 @@ const TechnicalAssessmentViewQuestionPage = ({
 
           choiceSet.add(fieldResponse);
         }
+
+        if (field.field_is_correct) {
+          isCorrectAnswerSelected = true;
+
+          if ((index === 3 || index === 4) && !fieldResponse) {
+            notifications.show({
+              message: `Choice ${index} cannot be selected as correct because it has no response.`,
+              color: "red",
+            });
+            return;
+          }
+        }
+
+        if (requiredFields.includes(index) && !fieldResponse) {
+          notifications.show({
+            message: `A response is missing for required question choice ${index}.`,
+            color: "red",
+          });
+          return;
+        }
+      }
+
+      if (!isCorrectAnswerSelected) {
+        notifications.show({
+          message: "You must select a correct answer.",
+          color: "orange",
+        });
+        return;
       }
 
       setIsLoading(true);
@@ -229,7 +242,7 @@ const TechnicalAssessmentViewQuestionPage = ({
         color: "green",
       });
       setIsLoading(false);
-    } catch (e) {
+    } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again.",
         color: "red",
