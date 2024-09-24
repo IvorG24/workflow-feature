@@ -16483,12 +16483,12 @@ AS $$
 
     const hrTeamMembers = plv8.execute(
       `
-    SELECT tmt.team_member_id
-    FROM team_schema.team_group_table tgt
-    JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
-    JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
-    WHERE tgt.team_group_name = 'HUMAN RESOURCES'
-    AND tmt.team_member_is_disabled = false
+        SELECT tmt.team_member_id
+        FROM team_schema.team_group_table tgt
+        JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+        JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
+        WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+        AND tmt.team_member_is_disabled = false
       `
     );
 
@@ -16504,37 +16504,37 @@ AS $$
 
     const overlappingSchedules = plv8.execute(
       `
-    SELECT
-    iom.interview_meeting_schedule,
-    COALESCE(
-        hpi.hr_phone_interview_team_member_id,
-        di.director_interview_team_member_id,
-        ti.technical_interview_team_member_id,
-        t.trade_test_team_member_id
-    ) AS team_member_id
-    FROM hr_schema.interview_online_meeting_table iom
-    LEFT JOIN hr_schema.hr_phone_interview_table hpi
-    ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
-    LEFT JOIN hr_schema.director_interview_table di
-    ON iom.interview_meeting_interview_id = di.director_interview_id
-    LEFT JOIN hr_schema.trade_test_table t
-    ON iom.interview_meeting_interview_id = t.trade_test_id
-    LEFT JOIN hr_schema.technical_interview_table ti
-    ON iom.interview_meeting_interview_id = ti.technical_interview_id
-    WHERE iom.interview_meeting_schedule = $1
-    AND iom.interview_meeting_is_disabled = false
-    AND COALESCE(
-        hpi.hr_phone_interview_team_member_id,
-        di.director_interview_team_member_id,
-        ti.technical_interview_team_member_id,
-        t.trade_test_team_member_id
-    ) = ANY($2)
-    AND (
-        hpi.hr_phone_interview_status = 'PENDING'
-        OR di.director_interview_status = 'PENDING'
-        OR ti.technical_interview_status = 'PENDING'
-        OR t.trade_test_status = 'PENDING'
-    )
+        SELECT
+        iom.interview_meeting_schedule,
+        COALESCE(
+          hpi.hr_phone_interview_team_member_id,
+          di.director_interview_team_member_id,
+          ti.technical_interview_team_member_id,
+          t.trade_test_team_member_id
+        ) AS team_member_id
+        FROM hr_schema.interview_online_meeting_table iom
+        LEFT JOIN hr_schema.hr_phone_interview_table hpi
+        ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
+        LEFT JOIN hr_schema.director_interview_table di
+        ON iom.interview_meeting_interview_id = di.director_interview_id
+        LEFT JOIN hr_schema.trade_test_table t
+        ON iom.interview_meeting_interview_id = t.trade_test_id
+        LEFT JOIN hr_schema.technical_interview_table ti
+        ON iom.interview_meeting_interview_id = ti.technical_interview_id
+        WHERE iom.interview_meeting_schedule = $1
+        AND iom.interview_meeting_is_disabled = false
+        AND COALESCE(
+          hpi.hr_phone_interview_team_member_id,
+          di.director_interview_team_member_id,
+          ti.technical_interview_team_member_id,
+          t.trade_test_team_member_id
+        ) = ANY($2)
+        AND (
+          hpi.hr_phone_interview_status = 'PENDING'
+          OR di.director_interview_status = 'PENDING'
+          OR ti.technical_interview_status = 'PENDING'
+          OR t.trade_test_status = 'PENDING'
+        )
       `,
       [interview_schedule, hrMemberIds]
     );
@@ -16564,52 +16564,52 @@ AS $$
 
     let weekStart, weekEnd;
     if (interviewDate <= week1End) {
-        weekStart = firstDayOfMonth;
-        weekEnd = week1End;
+      weekStart = firstDayOfMonth;
+      weekEnd = week1End;
     } else if (interviewDate >= week2Start && interviewDate <= week2End) {
-        weekStart = week2Start;
-        weekEnd = week2End;
+      weekStart = week2Start;
+      weekEnd = week2End;
     } else if (interviewDate >= week3Start && interviewDate <= week3End) {
-        weekStart = week3Start;
-        weekEnd = week3End;
+      weekStart = week3Start;
+      weekEnd = week3End;
     } else if (interviewDate >= week4Start && interviewDate <= lastDayOfMonth) {
-        weekStart = week4Start;
-        weekEnd = lastDayOfMonth;
+      weekStart = week4Start;
+      weekEnd = lastDayOfMonth;
     }
 
     availableHrMembers.forEach((teamMemberId) => {
       const result = plv8.execute(
         `
-      WITH interviews_data AS (
-      SELECT
-        CAST(COUNT(iom_total.interview_meeting_interview_id) AS INTEGER) AS total_count,
-        CAST(COUNT(CASE
-        WHEN iom_total.interview_meeting_schedule BETWEEN $1 AND $2
-        THEN 1 ELSE NULL
-        END) AS INTEGER) AS weekly_count
-      FROM hr_schema.interview_online_meeting_table iom_total
-      LEFT JOIN hr_schema.hr_phone_interview_table hpi
-        ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
-      LEFT JOIN hr_schema.director_interview_table di
-        ON iom_total.interview_meeting_interview_id = di.director_interview_id
-      LEFT JOIN hr_schema.technical_interview_table ti
-        ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
-      LEFT JOIN hr_schema.trade_test_table t
-        ON iom_total.interview_meeting_interview_id = t.trade_test_id
-      WHERE iom_total.interview_meeting_is_disabled = false
-        AND (
-        hpi.hr_phone_interview_team_member_id = $3 OR
-        di.director_interview_team_member_id = $3 OR
-        ti.technical_interview_team_member_id = $3 OR
-        t.trade_test_team_member_id = $3
-        )
-      )
-      SELECT
-      $3 AS team_member_id,
-      weekly_count,
-      total_count
-      FROM interviews_data;
-          `,
+          WITH interviews_data AS (
+          SELECT
+            CAST(COUNT(iom_total.interview_meeting_interview_id) AS INTEGER) AS total_count,
+            CAST(COUNT(CASE
+            WHEN iom_total.interview_meeting_schedule::DATE BETWEEN $1 AND $2
+            THEN 1 ELSE NULL
+            END) AS INTEGER) AS weekly_count
+          FROM hr_schema.interview_online_meeting_table iom_total
+          LEFT JOIN hr_schema.hr_phone_interview_table hpi
+            ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
+          LEFT JOIN hr_schema.director_interview_table di
+            ON iom_total.interview_meeting_interview_id = di.director_interview_id
+          LEFT JOIN hr_schema.technical_interview_table ti
+            ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
+          LEFT JOIN hr_schema.trade_test_table t
+            ON iom_total.interview_meeting_interview_id = t.trade_test_id
+          WHERE iom_total.interview_meeting_is_disabled = false
+            AND (
+            hpi.hr_phone_interview_team_member_id = $3 OR
+            di.director_interview_team_member_id = $3 OR
+            ti.technical_interview_team_member_id = $3 OR
+            t.trade_test_team_member_id = $3
+            )
+          )
+          SELECT
+          $3 AS team_member_id,
+          weekly_count,
+          total_count
+          FROM interviews_data;
+        `,
         [weekStart, weekEnd, teamMemberId]
       );
       hrScheduledInterviews.push(result[0]);
@@ -16618,17 +16618,16 @@ AS $$
     const hrLoadMap = new Map();
 
     hrScheduledInterviews.forEach(interview => {
-        hrLoadMap.set(interview.team_member_id, {
-            totalLoad: interview.total_count,
-            weeklyLoad: interview.weekly_count
-        });
+      hrLoadMap.set(interview.team_member_id, {
+        totalLoad: interview.total_count,
+        weeklyLoad: interview.weekly_count
+      });
     });
 
     let lowestLoadMember = null;
     let lowestWeeklyLoad = Infinity;
     let lowestTotalLoad = Infinity;
     let tiedMembers = [];
-
 
     hrLoadMap.forEach((load, memberId) => {
       const { totalLoad, weeklyLoad } = load;
