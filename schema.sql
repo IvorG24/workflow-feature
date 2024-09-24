@@ -1768,9 +1768,10 @@ AS $$
             SELECT
               signer_id,
               COUNT(request_signer_id) AS total_count,
-              COUNT(DISTINCT CASE
-                WHEN request_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-                THEN request_signer_id
+              COUNT(
+                CASE
+                  WHEN request_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+                    THEN request_signer_id
                 END
               ) AS weekly_count
             FROM form_schema.signer_table
@@ -16055,9 +16056,10 @@ AS $$
         SELECT
           team_member_id_list.team_member_id,
           COALESCE(COUNT(${table}_team_member_id), 0) AS total_count,
-          COALESCE(COUNT(DISTINCT CASE
-            WHEN ${table}_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-            THEN team_member_id_list.team_member_id
+          COALESCE(COUNT(
+            CASE
+              WHEN ${table}_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+                THEN team_member_id_list.team_member_id
             END
           )) AS weekly_count
         FROM team_member_id_list
@@ -16473,6 +16475,7 @@ SET search_path TO ''
 AS $$
   let message;
   let hrScheduledInterviews = [];
+
   plv8.subtransaction(function() {
     const {
       interview_schedule
@@ -16485,7 +16488,7 @@ AS $$
         JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
         JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
         WHERE tgt.team_group_name = 'HUMAN RESOURCES'
-          AND tmt.team_member_is_disabled = false
+        AND tmt.team_member_is_disabled = false
       `
     );
 
@@ -16504,15 +16507,11 @@ AS $$
         SELECT
         iom.interview_meeting_schedule,
         COALESCE(
-            hpi.hr_phone_interview_team_member_id,
-            di.director_interview_team_member_id,
-            ti.technical_interview_team_member_id,
-            t.trade_test_team_member_id
-        ) AS team_member_id,
-        hpi.hr_phone_interview_status,
-        di.director_interview_status,
-        ti.technical_interview_status,
-        t.trade_test_status
+          hpi.hr_phone_interview_team_member_id,
+          di.director_interview_team_member_id,
+          ti.technical_interview_team_member_id,
+          t.trade_test_team_member_id
+        ) AS team_member_id
         FROM hr_schema.interview_online_meeting_table iom
         LEFT JOIN hr_schema.hr_phone_interview_table hpi
         ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
@@ -16525,16 +16524,16 @@ AS $$
         WHERE iom.interview_meeting_schedule = $1
         AND iom.interview_meeting_is_disabled = false
         AND COALESCE(
-            hpi.hr_phone_interview_team_member_id,
-            di.director_interview_team_member_id,
-            ti.technical_interview_team_member_id,
-            t.trade_test_team_member_id
+          hpi.hr_phone_interview_team_member_id,
+          di.director_interview_team_member_id,
+          ti.technical_interview_team_member_id,
+          t.trade_test_team_member_id
         ) = ANY($2)
         AND (
-            hpi.hr_phone_interview_status = 'PENDING'
-            OR di.director_interview_status = 'PENDING'
-            OR ti.technical_interview_status = 'PENDING'
-            OR t.trade_test_status = 'PENDING'
+          hpi.hr_phone_interview_status = 'PENDING'
+          OR di.director_interview_status = 'PENDING'
+          OR ti.technical_interview_status = 'PENDING'
+          OR t.trade_test_status = 'PENDING'
         )
       `,
       [interview_schedule, hrMemberIds]
@@ -16554,8 +16553,6 @@ AS $$
     const interviewDate = new Date(interview_schedule);
     const currentYear = interviewDate.getFullYear();
     const currentMonth = interviewDate.getMonth();
-
-
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const week1End = new Date(currentYear, currentMonth, 7);
     const week2Start = new Date(currentYear, currentMonth, 8);
@@ -16567,99 +16564,106 @@ AS $$
 
     let weekStart, weekEnd;
     if (interviewDate <= week1End) {
-        weekStart = firstDayOfMonth;
-        weekEnd = week1End;
+      weekStart = firstDayOfMonth;
+      weekEnd = week1End;
     } else if (interviewDate >= week2Start && interviewDate <= week2End) {
-        weekStart = week2Start;
-        weekEnd = week2End;
+      weekStart = week2Start;
+      weekEnd = week2End;
     } else if (interviewDate >= week3Start && interviewDate <= week3End) {
-        weekStart = week3Start;
-        weekEnd = week3End;
+      weekStart = week3Start;
+      weekEnd = week3End;
     } else if (interviewDate >= week4Start && interviewDate <= lastDayOfMonth) {
-        weekStart = week4Start;
-        weekEnd = lastDayOfMonth;
+      weekStart = week4Start;
+      weekEnd = lastDayOfMonth;
     }
 
-   availableHrMembers.forEach((teamMemberId) => {
-    const result = plv8.execute(
+    availableHrMembers.forEach((teamMemberId) => {
+      const result = plv8.execute(
         `
-        WITH interviews_data AS (
-            SELECT
-            COUNT(DISTINCT iom_total.interview_meeting_interview_id) AS total_count,
-            COUNT(DISTINCT CASE
-                WHEN iom_total.interview_meeting_schedule BETWEEN $1 AND $2
-                THEN iom_total.interview_meeting_interview_id
-                END) AS weekly_count
-            FROM hr_schema.hr_phone_interview_table hpi
-            LEFT JOIN hr_schema.director_interview_table di
-            ON hpi.hr_phone_interview_team_member_id = di.director_interview_team_member_id
-            LEFT JOIN hr_schema.technical_interview_table ti
-            ON hpi.hr_phone_interview_team_member_id = ti.technical_interview_team_member_id
-            LEFT JOIN hr_schema.trade_test_table t
-            ON hpi.hr_phone_interview_team_member_id = t.trade_test_team_member_id
-            JOIN hr_schema.interview_online_meeting_table iom_total
-            ON iom_total.interview_meeting_interview_id = COALESCE(
-                hpi.hr_phone_interview_id,
-                di.director_interview_id,
-                ti.technical_interview_id,
-                t.trade_test_id
+          WITH interviews_data AS (
+          SELECT
+            CAST(COUNT(iom_total.interview_meeting_interview_id) AS INTEGER) AS total_count,
+            CAST(COUNT(CASE
+            WHEN iom_total.interview_meeting_schedule::DATE BETWEEN $1 AND $2
+            THEN 1 ELSE NULL
+            END) AS INTEGER) AS weekly_count
+          FROM hr_schema.interview_online_meeting_table iom_total
+          LEFT JOIN hr_schema.hr_phone_interview_table hpi
+            ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
+          LEFT JOIN hr_schema.director_interview_table di
+            ON iom_total.interview_meeting_interview_id = di.director_interview_id
+          LEFT JOIN hr_schema.technical_interview_table ti
+            ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
+          LEFT JOIN hr_schema.trade_test_table t
+            ON iom_total.interview_meeting_interview_id = t.trade_test_id
+          WHERE iom_total.interview_meeting_is_disabled = false
+            AND (
+            hpi.hr_phone_interview_team_member_id = $3 OR
+            di.director_interview_team_member_id = $3 OR
+            ti.technical_interview_team_member_id = $3 OR
+            t.trade_test_team_member_id = $3
             )
-            WHERE iom_total.interview_meeting_is_disabled = false
-            AND hpi.hr_phone_interview_team_member_id = $3
-        )
-        SELECT
-            $3 AS team_member_id,
-            weekly_count,
-            total_count
-        FROM interviews_data
+          )
+          SELECT
+          $3 AS team_member_id,
+          weekly_count,
+          total_count
+          FROM interviews_data;
         `,
         [weekStart, weekEnd, teamMemberId]
-    );
-
-   hrScheduledInterviews.push(result[0]);});
+      );
+      hrScheduledInterviews.push(result[0]);
+    });
 
     const hrLoadMap = new Map();
 
     hrScheduledInterviews.forEach(interview => {
-        hrLoadMap.set(interview.team_member_id, {
-            totalLoad: interview.total_count,
-            weeklyLoad: interview.weekly_count
-        });
-        });
-
-        let lowestLoadMember = null;
-        let lowestWeeklyLoad = Infinity;
-        let lowestTotalLoad = Infinity;
-
-        hrLoadMap.forEach((load, memberId) => {
-        const { totalLoad, weeklyLoad } = load;
-
-        if (weeklyLoad < lowestWeeklyLoad) {
-            lowestWeeklyLoad = weeklyLoad;
-            lowestTotalLoad = totalLoad;
-            lowestLoadMember = memberId;
-        }
-        else if (weeklyLoad === lowestWeeklyLoad) {
-            if (totalLoad < lowestTotalLoad) {
-            lowestTotalLoad = totalLoad;
-            lowestLoadMember = memberId;
-            }
-        }
-        });
-
-        if (!lowestLoadMember) {
-        message = {
-            status: 'error',
-            message: 'No available HR member for the selected time.'
-        };
-        } else {
-        message = {
-            status: 'success',
-            message: 'HR phone interview scheduled successfully.',
-            assigned_hr_team_member_id: lowestLoadMember
-        };
-        }
+      hrLoadMap.set(interview.team_member_id, {
+        totalLoad: interview.total_count,
+        weeklyLoad: interview.weekly_count
+      });
     });
+
+    let lowestLoadMember = null;
+    let lowestWeeklyLoad = Infinity;
+    let lowestTotalLoad = Infinity;
+    let tiedMembers = [];
+
+    hrLoadMap.forEach((load, memberId) => {
+      const { totalLoad, weeklyLoad } = load;
+
+      if (weeklyLoad < lowestWeeklyLoad) {
+        lowestWeeklyLoad = weeklyLoad;
+        lowestTotalLoad = totalLoad;
+        lowestLoadMember = memberId;
+        tiedMembers = [memberId];
+      } else if (weeklyLoad === lowestWeeklyLoad) {
+        tiedMembers.push(memberId);
+      }
+    });
+
+    if (tiedMembers.length > 1) {
+      lowestLoadMember = tiedMembers.reduce((lowest, memberId) => {
+        const { totalLoad } = hrLoadMap.get(memberId);
+        const { totalLoad: currentLowestTotal } = hrLoadMap.get(lowest);
+        return totalLoad < currentLowestTotal ? memberId : lowest;
+      }, tiedMembers[0]);
+    }
+
+    if (!lowestLoadMember) {
+      message = {
+        status: 'error',
+        message: 'No available HR member for the selected time.'
+      };
+    } else {
+      message = {
+        status: 'success',
+        message: 'HR phone interview scheduled successfully.',
+        assigned_hr_team_member_id: lowestLoadMember
+      };
+    }
+  });
+
   return message;
 $$ LANGUAGE plv8;
 
@@ -19295,6 +19299,15 @@ AS $$
       `, [questionnaireId]
     );
 
+    const questionnaireData = plv8.execute(
+      `
+        SELECT questionnaire_name,questionnaire_date_created
+        FROM form_schema.questionnaire_table
+        WHERE
+          questionnaire_id = $1
+      `, [questionnaireId]
+    );
+
     returnData = fieldData.map((field) => {
       const optionsData = plv8.execute(`
         SELECT *
@@ -19558,11 +19571,8 @@ RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = 0;
-
 plv8.subtransaction(function() {
     const { questionnaireId } = input_data;
-
-
     const fieldOrderResult = plv8.execute(`
         SELECT f.field_order
         FROM form_schema.field_table f
@@ -19578,6 +19588,32 @@ plv8.subtransaction(function() {
     }
 });
 
+return returnData;
+$$ LANGUAGE PLV8;
+
+CREATE OR REPLACE FUNCTION check_assessment_create_request_page(
+  input_data JSON
+)
+RETURNS BOOLEAN
+SET search_path TO ''
+AS $$
+let returnData;
+plv8.subtransaction(function(){
+  const { fieldAndResponse } = input_data;
+
+  const condition = fieldAndResponse.map(data => `(request_response = '"${data.response}"' AND request_response_field_id = '${data.fieldId}')`).join(" OR ")
+
+  const count = plv8.execute(
+    `
+      SELECT COUNT(*)
+      FROM request_schema.request_response_table
+      WHERE ${condition}
+    `
+  )[0].count
+
+  returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
+
+});
 return returnData;
 $$ LANGUAGE plv8;
 
