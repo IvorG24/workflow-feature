@@ -63,7 +63,7 @@ type Props = {
 
 const TechnicalAssessmentCreateQuestionPage = ({
   questionnaireId,
-  questionnaireData:initialData,
+  questionnaireData: initialData,
 }: Props) => {
   const { setIsLoading } = useLoadingActions();
   const router = useRouter();
@@ -76,9 +76,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
   const { colors } = useMantineTheme();
   const supabaseClient = useSupabaseClient();
   const [positionOptions, setPositionOptions] = useState<OptionTableRow[]>([]);
-  const [questionnaireData, setQuestionnaireData] = useState<QuestionFields>(initialData.fields);
+  const questionnaireData: QuestionFields[] = initialData.fields;
   const [currentPosition, setCurrentPosition] = useState<string[]>([]);
-
+  const questionnaireDetails = {
+    questionnaire_name: initialData.questionnaire_name,
+    questionnaire_date_created: initialData.questionnaire_date_created,
+  };
   const formMethods = useForm<TechnicalQuestionFormValues>({
     defaultValues: {
       sections: [
@@ -175,7 +178,27 @@ const TechnicalAssessmentCreateQuestionPage = ({
         });
         return;
       }
+      const choicesWithResponse = data.choices
+        .slice(0, 2)
+        .filter((choice) => choice.choice.trim() !== "");
+      if (choicesWithResponse.length < 2) {
+        notifications.show({
+          message: `At least two choices with valid responses are required for: ${data.question}`,
+          color: "orange",
+        });
+        return;
+      }
 
+      const correctAnswerSelected = data.choices.some(
+        (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
+      );
+      if (!correctAnswerSelected) {
+        notifications.show({
+          message: `No valid correct answer selected for: ${data.question}`,
+          color: "orange",
+        });
+        return;
+      }
       setIsLoading(true);
 
       await updateTechnicalQuestion(supabaseClient, {
@@ -257,7 +280,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
       });
       setCurrentPosition(positions);
       if (questionnaireData) {
-        const sections = questionnaireData[2].map((question) => ({
+        const sections = questionnaireData.map((question) => ({
           field_id: question.field_id,
           field_name: question.field_name,
           question: question.field_response,
@@ -327,7 +350,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
       </Flex>
       <Space h="xl" />
       <Stack spacing={"xl"}>
-        <QuestionnaireDetails />
+        <QuestionnaireDetails questionnaireData={questionnaireDetails} />
         <Paper p={20} shadow="sm">
           <FormProvider {...formMethods}>
             <form onSubmit={handleSubmit(handleUpdateQuestionnairePosition)}>
@@ -421,6 +444,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                                 checked={watch(
                                   `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
                                 )}
+                                label={`${String.fromCharCode(65 + choiceIndex)} )`}
                                 mt={24}
                                 onChange={() =>
                                   handleRadioChange(questionIndex, choiceIndex)

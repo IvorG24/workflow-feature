@@ -1,24 +1,42 @@
+import {
+  checkIfGroupMember,
+  getTechnicalOptionsItem,
+  getUserActiveTeamId,
+} from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TechnicalAssessmentCreateQuestionPage from "@/components/TechnicalAssessmentCreateQuestionPage/TechnicalAssessmentCreateQuestionPage";
-import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { withActiveTeam } from "@/utils/server-side-protections";
+import { QuestionnaireData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ context }) => {
+export const getServerSideProps: GetServerSideProps = withActiveTeam(
+  async ({ context, supabaseClient, user, userActiveTeam }) => {
     try {
-      const questionnaireId = context.query?.questionnaireId;
-
-      if (!questionnaireId) {
+      const questionnaireId = context.query?.questionnaireId as string;
+      const iSHumanResourcesMember = await checkIfGroupMember(supabaseClient, {
+        userId: user.id,
+        groupName: "HUMAN RESOURCES",
+        teamId: userActiveTeam.team_id,
+      });
+      if (!iSHumanResourcesMember) {
         return {
           redirect: {
-            destination: "/404",
+            destination: "/401",
             permanent: false,
           },
         };
       }
+      const getTeam = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+
+      const questionnaireData = await getTechnicalOptionsItem(supabaseClient, {
+        teamId: getTeam,
+        questionnaireId: questionnaireId,
+      });
 
       return {
-        props: { questionnaireId }, // Wrap it inside an object with `props`
+        props: { questionnaireId, questionnaireData } as unknown as Props,
       };
     } catch (e) {
       return {
@@ -33,9 +51,10 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   questionnaireId: string;
+  questionnaireData: QuestionnaireData;
 };
 
-const Page = ({ questionnaireId }: Props) => {
+const Page = ({ questionnaireId, questionnaireData }: Props) => {
   return (
     <>
       <Meta
@@ -44,6 +63,7 @@ const Page = ({ questionnaireId }: Props) => {
       />
       <TechnicalAssessmentCreateQuestionPage
         questionnaireId={questionnaireId}
+        questionnaireData={questionnaireData}
       />
     </>
   );

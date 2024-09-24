@@ -2545,6 +2545,7 @@ export type QuestionFields = {
       field_is_correct: boolean;
     }[],
 };
+
 export type QuestionnaireData = {
   questionnaire_name: string;
   questionnaire_date_created: string;

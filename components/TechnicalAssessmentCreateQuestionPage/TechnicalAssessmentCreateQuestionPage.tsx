@@ -1,7 +1,9 @@
 import { createTechnicalQuestions } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { TechnicalQuestionFormValues } from "@/utils/types";
+import { formatTeamNameToUrlKey } from "@/utils/string";
+import { QuestionnaireData, TechnicalQuestionFormValues } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -18,17 +20,28 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import QuestionnaireDetails from "./QuestionnaireDetails/QuestionnaireDetails";
 
 type Props = {
   questionnaireId: string;
+  questionnaireData: QuestionnaireData;
 };
-const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
+const TechnicalAssessmentCreateQuestionPage = ({
+  questionnaireId,
+  questionnaireData,
+}: Props) => {
   const { setIsLoading } = useLoadingActions();
+  const router = useRouter();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const requestorProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
+  const questionnaireDetails = {
+    questionnaire_name: questionnaireData.questionnaire_name,
+    questionnaire_date_created: questionnaireData.questionnaire_date_created,
+  };
   const formMethods = useForm<TechnicalQuestionFormValues>({
     defaultValues: {
       sections: [
@@ -84,17 +97,29 @@ const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
         }
         uniqueQuestions.add(questionData.question);
 
+        const choicesWithResponse = questionData.choices
+          .slice(0, 2)
+          .filter((choice) => choice.choice.trim() !== "");
+        if (choicesWithResponse.length < 2) {
+          notifications.show({
+            message: `At least two choices with valid responses are required for: ${questionData.question}`,
+            color: "orange",
+          });
+          return;
+        }
+
         const correctAnswerSelected = questionData.choices.some(
-          (choice) => choice.isCorrectAnswer
+          (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
         );
         if (!correctAnswerSelected) {
           notifications.show({
-            message: `No correct answer selected for: ${questionData.question}`,
+            message: `No valid correct answer selected for: ${questionData.question}`,
             color: "orange",
           });
           return;
         }
       }
+
       await createTechnicalQuestions(supabaseClient, {
         requestFormValues: data,
         questionnaireId: questionnaireId,
@@ -103,7 +128,12 @@ const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
         message: "Technical question created successfully.",
         color: "green",
       });
+      router.push(
+        `${formatTeamNameToUrlKey(activeTeam.team_name)}/technical-question/${questionnaireId}`
+      );
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "An error occurred, please try again later.",
         color: "red",
@@ -135,7 +165,7 @@ const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
       </Title>
       <Space h="xl" />
       <Stack spacing={"xl"}>
-        <QuestionnaireDetails />
+        <QuestionnaireDetails questionnaireData={questionnaireDetails} />
         <FormProvider {...formMethods}>
           <form onSubmit={handleSubmit(handleCreateRequest)}>
             {fields.map((question, questionIndex) => (
@@ -167,6 +197,7 @@ const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
                               checked={watch(
                                 `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
                               )}
+                              label={`${String.fromCharCode(65 + choiceIndex)} )`}
                               mt={24}
                               onChange={() =>
                                 handleRadioChange(questionIndex, choiceIndex)

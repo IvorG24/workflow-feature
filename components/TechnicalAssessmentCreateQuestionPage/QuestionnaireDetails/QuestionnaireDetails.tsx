@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/constant";
 import { Paper, Stack, TextInput } from "@mantine/core";
 
 type QuestionnaireData = {
@@ -16,13 +17,15 @@ const QuestionnaireDetails = ({ questionnaireData }: Props) => {
         <TextInput
           variant="filled"
           label="Questionnaire Name"
-          value={"ivor"}
+          value={questionnaireData.questionnaire_name}
           readOnly
         />
         <TextInput
           variant="filled"
           label="Date Created"
-          value={"2022-01-01"}
+          value={formatDate(
+            new Date(questionnaireData.questionnaire_date_created)
+          )}
           readOnly
         />
       </Stack>
