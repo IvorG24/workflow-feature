@@ -1768,9 +1768,10 @@ AS $$
             SELECT
               signer_id,
               COUNT(request_signer_id) AS total_count,
-              COUNT(DISTINCT CASE
-                WHEN request_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-                THEN request_signer_id
+              COUNT(
+                CASE
+                  WHEN request_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+                    THEN request_signer_id
                 END
               ) AS weekly_count
             FROM form_schema.signer_table
@@ -16055,9 +16056,10 @@ AS $$
         SELECT 
           team_member_id_list.team_member_id, 
           COALESCE(COUNT(${table}_team_member_id), 0) AS total_count,
-          COALESCE(COUNT(DISTINCT CASE
-            WHEN ${table}_date_created BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-            THEN team_member_id_list.team_member_id
+          COALESCE(COUNT(
+            CASE
+              WHEN ${table}_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
+                THEN team_member_id_list.team_member_id
             END
           )) AS weekly_count
         FROM team_member_id_list
@@ -16587,7 +16589,7 @@ AS $$
             SELECT
             COUNT(DISTINCT iom_total.interview_meeting_interview_id) AS total_count,
             COUNT(DISTINCT CASE
-                WHEN iom_total.interview_meeting_schedule BETWEEN $1 AND $2
+                WHEN iom_total.interview_meeting_schedule::DATE BETWEEN $1 AND $2
                 THEN iom_total.interview_meeting_interview_id
                 END) AS weekly_count
             FROM hr_schema.hr_phone_interview_table hpi
