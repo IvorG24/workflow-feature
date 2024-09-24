@@ -1,7 +1,9 @@
+import { checkAssessmentCreateRequestPage } from "@/backend/api/get";
 import { createRequest, insertError } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { Database } from "@/utils/database";
 import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
@@ -23,7 +25,6 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { Database } from "oneoffice-api";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
@@ -62,6 +63,54 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    const checkIfAlreadyAnswered = async () => {
+      try {
+        setIsLoading(true);
+
+        const applicationInformationField = form.form_section[0]
+          .section_field[0] as FormType["form_section"][0]["section_field"][0] & {
+          field_response: string;
+        };
+        const generalAssessmentfield = form.form_section[0]
+          .section_field[1] as FormType["form_section"][0]["section_field"][0] & {
+          field_response: string;
+        };
+
+        const isAlreadyExists = await checkAssessmentCreateRequestPage(
+          supabaseClient,
+          {
+            fieldAndResponse: [
+              {
+                fieldId: applicationInformationField.field_id,
+                response: applicationInformationField.field_response,
+              },
+              {
+                fieldId: generalAssessmentfield.field_id,
+                response: generalAssessmentfield.field_response,
+              },
+            ],
+          }
+        );
+        if (isAlreadyExists) {
+          notifications.show({
+            message: "Technical Assessment already exists",
+            color: "orange",
+          });
+          await router.push("/");
+        }
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkIfAlreadyAnswered();
+  }, [router, form.form_section]);
 
   useEffect(() => {
     if (form.form_section.length === 3) {

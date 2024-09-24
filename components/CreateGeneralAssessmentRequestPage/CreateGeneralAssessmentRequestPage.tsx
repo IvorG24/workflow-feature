@@ -1,7 +1,9 @@
+import { checkAssessmentCreateRequestPage } from "@/backend/api/get";
 import { createRequest, insertError } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { Database } from "@/utils/database";
 import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
@@ -13,7 +15,6 @@ import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { Database } from "oneoffice-api";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
@@ -56,6 +57,46 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
     control,
     name: "sections",
   });
+
+  useEffect(() => {
+    const checkIfAlreadyAnswered = async () => {
+      try {
+        setIsLoading(true);
+
+        const formattedField = form.form_section[0]
+          .section_field[0] as FormType["form_section"][0]["section_field"][0] & {
+          field_response: string;
+        };
+
+        const isAlreadyExists = await checkAssessmentCreateRequestPage(
+          supabaseClient,
+          {
+            fieldAndResponse: [
+              {
+                fieldId: formattedField.field_id,
+                response: formattedField.field_response,
+              },
+            ],
+          }
+        );
+        if (isAlreadyExists) {
+          notifications.show({
+            message: "General Assessment already exists",
+            color: "orange",
+          });
+          await router.push("/");
+        }
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkIfAlreadyAnswered();
+  }, [form.form_section]);
 
   useEffect(() => {
     replaceSection(form.form_section);

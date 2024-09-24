@@ -5197,8 +5197,8 @@ export const getFormSection = async (
       query = query.in("field_table.field_id", IT_ASSET_FIELD_ID_LIST);
       break;
     case "Technical Assessment":
-    query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
-    break;
+      query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
+      break;
   }
 
   const { data, error } = await query;
@@ -5882,7 +5882,7 @@ export const getApplicationInformationPositionOptions = async (
     .range(index, index + limit - 1);
   if (error) throw error;
 
-  return data
+  return data;
 };
 
 export const getApplicationInformationSummaryData = async (
@@ -6865,24 +6865,24 @@ export const getHRSpreadsheetViewOnLoad = async (
 
 export const checkSpreadsheetRowStatus = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { table: string, status: string, id: string }
+  params: { table: string; status: string; id: string }
 ) => {
   const { data, error } = await supabaseClient
-  .rpc("check_spreadsheet_row_status", { input_data: params })
-  .select("*");
-if (error) throw error;
-  return data
+    .rpc("check_spreadsheet_row_status", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
 };
 
 export const checkJobOfferRow = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { id: string, status: string, requestId: string }
+  params: { id: string; status: string; requestId: string }
 ) => {
   const { data, error } = await supabaseClient
-  .rpc("check_job_offer_row", { input_data: params })
-  .select("*");
-if (error) throw error;
-  return data
+    .rpc("check_job_offer_row", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
 };
 
 export const getHRIndicatorCount = async (
@@ -6891,10 +6891,9 @@ export const getHRIndicatorCount = async (
     teamMemberId: string;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_hr_indicator_count",
-    { input_data: params }
-  );
+  const { data, error } = await supabaseClient.rpc("get_hr_indicator_count", {
+    input_data: params,
+  });
   if (error) throw error;
 
   return data;
@@ -6903,7 +6902,7 @@ export const getHRIndicatorCount = async (
 export const getFieldOfStudyOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    value: string
+    value: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -6918,178 +6917,174 @@ export const getFieldOfStudyOptions = async (
 export const getDegreeNameOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    degreeType: string,
-    fieldOfStudy: string
+    degreeType: string;
+    fieldOfStudy: string;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_degree_name_options",
-    { input_data: params }
-  );
+  const { data, error } = await supabaseClient.rpc("get_degree_name_options", {
+    input_data: params,
+  });
   if (error) throw error;
 
   return data as string[];
 };
 
 export const getHRProjectOptions = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_hr_project_options"
-  );
+  const { data, error } = await supabaseClient.rpc("get_hr_project_options");
   if (error) throw error;
   return data as HRProjectType[];
 };
 
 export const getQuestionnaireList = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      teamId: string;
-      page: number;
-      limit: number;
-      creator?: string;
-      isAscendingSort: boolean;
-      search?: string;
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    creator?: string;
+    isAscendingSort: boolean;
+    search?: string;
+  }
+) => {
+  const { teamId, page, limit, creator, isAscendingSort, search } = params;
+  const sortCondition = isAscendingSort ? "asc" : "desc";
+
+  const creatorCondition =
+    creator && validate(creator)
+      ? `q.questionnaire_created_by = '${creator}'`
+      : `q.questionnaire_created_by '%' || '${creator}' || '%'`;
+
+  const searchCondition =
+    search && validate(search)
+      ? `q.questionnaire_name = '${search}'`
+      : `q.questionnaire_name ILIKE '%' || '${search}' || '%'`;
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_questionnare_table_on_load",
+    {
+      input_data: {
+        teamId,
+        search: search ? `AND (${searchCondition})` : "",
+        creator: creator ? `AND (${creatorCondition})` : "",
+        page,
+        isAscendingSort: sortCondition,
+        limit,
+      },
     }
-  ) => {
-    const { teamId, page, limit, creator, isAscendingSort, search } = params;
-    const sortCondition = isAscendingSort ? "asc" : "desc";
+  );
+  if (error) throw error;
 
-    const creatorCondition =
-      creator && validate(creator)
-        ? `q.questionnaire_created_by = '${creator}'`
-        : `q.questionnaire_created_by '%' || '${creator}' || '%'`;
-
-    const searchCondition =
-      search && validate(search)
-        ? `q.questionnaire_name = '${search}'`
-        : `q.questionnaire_name ILIKE '%' || '${search}' || '%'`;
-
-    const { data, error } = await supabaseClient.rpc(
-      "get_questionnare_table_on_load",
-      {
-        input_data: {
-          teamId,
-          search: search ? `AND (${searchCondition})` : "",
-          creator: creator ? `AND (${creatorCondition})` : "",
-          page,
-          isAscendingSort: sortCondition,
-          limit,
-        },
-      }
-    );
-    if (error) throw error;
-
-
-    return data as unknown as {
-      data: TechnicalAssessmentTableRow[];
-      count: number;
-    };
+  return data as unknown as {
+    data: TechnicalAssessmentTableRow[];
+    count: number;
   };
+};
 
-  export const getQuestionnaireName = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      questionnaireId: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("form_schema")
-      .from("questionnaire_table")
-      .select("questionnaire_name")
-      .eq("questionnaire_id", params.questionnaireId);
+export const getQuestionnaireName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .select("questionnaire_name")
+    .eq("questionnaire_id", params.questionnaireId);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data[0] as { questionnaire_name: string };
-  };
+  return data[0] as { questionnaire_name: string };
+};
 
-  export const getPositionPerQuestionnaire = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      questionnaireId: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("lookup_schema")
-      .from("position_table")
-      .select("position_alias")
-      .eq("position_questionnaire_id", params.questionnaireId);
+export const getPositionPerQuestionnaire = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_alias")
+    .eq("position_questionnaire_id", params.questionnaireId);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const positions = data.map((item) => item.position_alias);
+  const positions = data.map((item) => item.position_alias);
 
-    return positions;
-  };
+  return positions;
+};
 
-  export const getOptionsTechnicalQuestion = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: { fieldId: string }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("form_schema")
-      .from("option_table")
-      .select("*")
-      .eq("option_field_id", params.fieldId)
-      .order("option_order", { ascending: true });
+export const getOptionsTechnicalQuestion = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { fieldId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("option_table")
+    .select("*")
+    .eq("option_field_id", params.fieldId)
+    .order("option_order", { ascending: true });
 
-    if (error) throw error;
-    return data as OptionTableRow[];
-  };
+  if (error) throw error;
+  return data as OptionTableRow[];
+};
 
-  export const getTechnicalOptionsItem = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      teamId: string;
-      questionnaireId: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient.rpc("get_technical_options", {
-      input_data: params,
-    });
+export const getTechnicalOptionsItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_technical_options", {
+    input_data: params,
+  });
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data as unknown as {
-      field_name: string;
+  return data as unknown as {
+    field_name: string;
+    field_id: string;
+    field_response: string;
+    field_is_required: boolean;
+    field_type: string;
+    field_position_id: string;
+    field_options: {
       field_id: string;
+      field_name: string;
       field_response: string;
-      field_is_required: boolean;
-      field_type: string;
-      field_position_id: string;
-      field_options: {
-        field_id: string;
-        field_name: string;
-        field_response: string;
-      }[];
     }[];
-  };
+  }[];
+};
 
-  export const getPositionTypeOptions = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: { teamId: string; fieldId: string }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("lookup_schema")
-      .from("position_table")
-      .select("*")
-      .eq("position_team_id", params.teamId)
-      .order("position_alias");
+export const getPositionTypeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; fieldId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", params.teamId)
+    .order("position_alias");
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const returnData = data.map((item, index) => {
-      return {
-        option_value: item.position_alias,
-        option_id: item.position_id,
-        option_field_id: params.fieldId,
-        option_order: index,
-      };
-    });
+  const returnData = data.map((item, index) => {
+    return {
+      option_value: item.position_alias,
+      option_id: item.position_id,
+      option_field_id: params.fieldId,
+      option_order: index,
+    };
+  });
 
-    return returnData as OptionTableRow[];
-  };
+  return returnData as OptionTableRow[];
+};
 
 export const getHRApplicantAnalytics = async (
   supabaseClient: SupabaseClient<Database>,
@@ -7113,11 +7108,30 @@ export const getEmailResendTimer = async (
     email: string;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_email_resend_timer",
-    { input_data: params }
-  );
+  const { data, error } = await supabaseClient.rpc("get_email_resend_timer", {
+    input_data: params,
+  });
   if (error) throw error;
 
   return data as number;
+};
+
+export const checkAssessmentCreateRequestPage = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldAndResponse: {
+      fieldId: string;
+      response: string;
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "check_assessment_create_request_page",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as boolean;
 };

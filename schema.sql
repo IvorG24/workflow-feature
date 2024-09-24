@@ -19555,6 +19555,32 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION check_assessment_create_request_page(
+  input_data JSON
+)
+RETURNS BOOLEAN
+SET search_path TO ''
+AS $$
+let returnData;
+plv8.subtransaction(function(){
+  const { fieldAndResponse } = input_data;
+
+  const condition = fieldAndResponse.map(data => `(request_response = '"${data.response}"' AND request_response_field_id = '${data.fieldId}')`).join(" OR ")
+
+  const count = plv8.execute(
+    `
+      SELECT COUNT(*)
+      FROM request_schema.request_response_table
+      WHERE ${condition}
+    `
+  )[0].count
+
+  returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
+
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
