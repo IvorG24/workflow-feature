@@ -21,21 +21,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
-      const { data, error } = await supabaseClient.rpc(
-        "create_request_page_on_load",
-        {
-          input_data: {
-            formId: context.query.formId,
-            userId: user.id,
-          },
-        }
-      );
 
-      if (error) throw error;
-
-      return {
-        props: data as Props,
-      };
     } catch (e) {
       return {
         redirect: {
@@ -55,8 +41,6 @@ const Page = ({ form }: Props) => {
       case "Technical Questionnaire":
         return (
           <TechnicalAssessmentCreateQuestionPage
-            form={form}
-            formslyFormName={form.form_name}
           />
         );
       default:

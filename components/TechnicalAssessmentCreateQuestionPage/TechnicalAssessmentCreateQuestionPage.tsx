@@ -127,7 +127,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
         uniqueQuestions.add(questionResponse);
 
         const uniqueChoices = new Set();
-        let isCorrectAnswerSelected = false;
+        let isCorrectAnswerSelected = false; // Flag to check if a correct answer is selected
         const requiredFields = [1, 2];
         for (let i = 1; i < section.section_field.length; i++) {
           const choiceResponse = section.section_field[i]
