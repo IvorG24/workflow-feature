@@ -19382,7 +19382,8 @@ SET search_path TO ''
 AS $$
 let returnData = false;
 const { data, questionnaireId } = input_data;
-data.forEach((question) => {
+
+  data.forEach((question) => {
     const query = `
     SELECT *
     FROM form_schema.field_table f
