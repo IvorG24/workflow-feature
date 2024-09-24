@@ -192,7 +192,7 @@ const TechnicalQuestionnaireFilter = ({
             name="creator"
             render={({ field: { value, onChange } }) => (
               <Select
-                placeholder="creator"
+                placeholder="Created By"
                 ref={requestorRef}
                 data={memberList}
                 value={value}

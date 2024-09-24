@@ -128,12 +128,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
         message: "Technical question created successfully.",
         color: "green",
       });
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/technical-question/${questionnaireId}`
+      await router.push(
+        `/${formatTeamNameToUrlKey(
+          activeTeam.team_name
+        )}/technical-question/${questionnaireId}`
       );
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "An error occurred, please try again later.",
         color: "red",
@@ -197,7 +197,9 @@ const TechnicalAssessmentCreateQuestionPage = ({
                               checked={watch(
                                 `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
                               )}
-                              label={`${String.fromCharCode(65 + choiceIndex)} )`}
+                              label={`${String.fromCharCode(
+                                65 + choiceIndex
+                              )} )`}
                               mt={24}
                               onChange={() =>
                                 handleRadioChange(questionIndex, choiceIndex)
