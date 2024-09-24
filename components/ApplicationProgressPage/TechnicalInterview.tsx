@@ -120,7 +120,7 @@ const TechnicalInterview = ({
             isRefetchingData={isFetching}
           />
         )}
-        <Box mb={"xl"}>
+        <Box mb={"xs"}>
           {!isReadyToSelect &&
             technicalInterviewData.technical_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>

@@ -49,6 +49,7 @@ import CurrencyFormField from "./SpecialField/CurrencyFormField";
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
+    isCorrect?: boolean;
   } & {
     field_section_duplicatable_id: string | undefined;
     field_description?: string;
@@ -1304,6 +1305,9 @@ const RequestFormFields = ({
               <MultiSelect
                 value={value as string[]}
                 onChange={(value) => onChange(value)}
+                searchable={
+                  formslyFormName === "Technical Questionnaire" ? true : false
+                }
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
@@ -1454,12 +1458,12 @@ const RequestFormFields = ({
                 mb="md"
               >
                 <Stack mt="xs">
-                  {field.options.map((option) => (
+                  {field.options.map((option, optionIdx) => (
                     <Radio
                       ml="xs"
                       key={option.option_id}
                       value={option.option_value}
-                      label={option.option_value}
+                      label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
                       sx={{
                         input: { cursor: "pointer" },
                         label: { cursor: "pointer" },

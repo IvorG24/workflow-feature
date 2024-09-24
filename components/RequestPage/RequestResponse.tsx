@@ -377,12 +377,12 @@ const RequestResponse = ({
             value={parsedValue}
           >
             <Stack mt="xs">
-              {response.options.map((option) => (
+              {response.options.map((option, optionIdx) => (
                 <Radio
                   ml="xs"
                   key={option.option_id}
                   value={option.option_value}
-                  label={option.option_value}
+                  label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
                 />
               ))}
             </Stack>

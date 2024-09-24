@@ -732,27 +732,27 @@ const SchedulingCalendar = ({
 
   return (
     <>
-      <JoyRideNoSSR
-        steps={[
-          {
-            target: ".set-schedule",
-            content: (
-              <Text>
-                You can now set a schedule. To continue, simply click the
-                &ldquo;Set Schedule&ldquo; button.
-              </Text>
-            ),
-            disableBeacon: true,
-          },
-        ]}
-        run={true}
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        hideBackButton
-        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
-      />
       <Flex direction="column" gap={10} mb={20}>
+        <JoyRideNoSSR
+          steps={[
+            {
+              target: ".set-schedule",
+              content: (
+                <Text>
+                  You can now set a schedule. To continue, simply click the
+                  &ldquo;Set Schedule&ldquo; button.
+                </Text>
+              ),
+              disableBeacon: true,
+            },
+          ]}
+          run={true}
+          hideCloseButton
+          disableCloseOnEsc
+          disableOverlayClose
+          hideBackButton
+          styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+        />
         {intialDate && (
           <Stack>
             <Group>

@@ -109,7 +109,7 @@ const TechnicalQuestionnaireTable = ({
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/forms/cc410201-f5a6-49ce-a06c-c2ce2c169436/technical-questionnaire-view?questionnaireId=${questionnaire_id}`}
+                    )}/technical-question/${questionnaire_id}`}
                     target="_blank"
                   >
                     {String(questionnaire_id)}
@@ -118,7 +118,7 @@ const TechnicalQuestionnaireTable = ({
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/forms/cc410201-f5a6-49ce-a06c-c2ce2c169436/technical-questionnaire-view?questionnaireId=${questionnaire_id}`}
+                  )}/technical-question/${questionnaire_id}`}
                 >
                   {({ copied, copy }) => (
                     <Tooltip
@@ -262,7 +262,7 @@ const TechnicalQuestionnaireTable = ({
                   await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/forms/cc410201-f5a6-49ce-a06c-c2ce2c169436/technical-questionnaire-view?questionnaireId=${questionnaire_id}`
+                    )}/technical-question/${questionnaire_id}`
                   )
                 }
               >

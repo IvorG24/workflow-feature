@@ -112,7 +112,7 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
             setIsLoading={setIsLoading}
           />
         )}
-        <Box mb={"xl"}>
+        <Box mb={"xs"}>
           {!isReadyToSelect &&
             directorInterviewData.director_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>

@@ -11,7 +11,7 @@ const TechnicalAssessment = ({ technicalAssessmentData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <Title order={3}>Technical Assessment</Title>
-      <Stack>
+      <Stack mb={24}>
         <Group>
           <Text>Request ID: </Text>
           <Title order={5}>{technicalAssessmentData.request_formsly_id}</Title>

@@ -25,7 +25,6 @@ import {
   FieldTableInsert,
   FormTableRow,
   FormType,
-  FormWithResponseType,
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InvitationTableRow,
@@ -62,6 +61,7 @@ import {
   TeamProjectWithAddressType,
   TeamTableInsert,
   TechnicalAssessmentTableRow,
+  TechnicalQuestionFormValues,
   TicketCommentTableInsert,
   TicketResponseTableInsert,
   TicketTableRow,
@@ -2163,101 +2163,86 @@ export const createAdOwnerRequest = async (
 export const createTechnicalQuestions = async (
     supabaseClient: SupabaseClient<Database>,
     params: {
-      requestFormValues: RequestFormValues;
-      formId: string;
-      teamMemberId?: string;
-      teamId: string;
+      requestFormValues: TechnicalQuestionFormValues;
       questionnaireId: string;
     }
   ) => {
     const { requestFormValues, questionnaireId } = params;
 
-    const { data: fieldData, error: fieldError } = await supabaseClient
-      .schema("form_schema")
-      .from("field_table")
-      .select("field_order")
-      .order("field_order", { ascending: false })
-      .eq("field_section_id", requestFormValues.sections[0].section_id);
+    let fieldOrder = await getQuestionFieldOrder(supabaseClient, {
+      questionnaireId,
+    });
 
-    if (fieldError) throw fieldError;
+    fieldOrder = fieldOrder + 1;
 
     const FieldTableInput: FieldTableInsert[] = [];
     const OptionTableInput: QuestionOption[] = [];
     const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
     const QuestionId: string[] = [];
+    let FieldId = "";
     let correctAnswerFieldResponse = "";
-    let field_order = 0;
     let correctAnswerFieldId = "";
+
     for (const section of requestFormValues.sections) {
-      for (const field of section.section_field) {
-        if (field.field_name.toLowerCase().includes("correct answer")) {
-          correctAnswerFieldResponse = String(field.field_response);
-          field_order = field.field_order;
-        }
+      const technicalQuestion = section.field_name === "Technical Question";
 
-        if (field.field_name.toLowerCase().includes("technical question")) {
-          const fieldId = uuidv4();
-          correctAnswerFieldId = fieldId;
-          const fieldEntry: FieldTableInsert = {
-            field_id: fieldId,
-            field_name: String(field.field_response),
-            field_is_required: field.field_is_required,
-            field_type: "MULTIPLE CHOICE",
-            field_order: fieldData[0].field_order + 1,
-            field_section_id: field.field_section_id,
-          };
-          FieldTableInput.push(fieldEntry);
+      if (technicalQuestion) {
+        const fieldId = uuidv4();
+        FieldId = fieldId;
+        correctAnswerFieldId = fieldId;
 
-          if (field.field_type === "TEXT" && field.field_response) {
+        const fieldEntry: FieldTableInsert = {
+          field_id: fieldId,
+          field_name: String(section.question),
+          field_is_required: true,
+          field_type: "MULTIPLE CHOICE",
+          field_order: fieldOrder,
+          field_section_id: '45a29efd-e90c-4fdd-8cb0-17d3b5a5e739',
+        };
 
-            for (const optionField of section.section_field) {
-              const optionId = uuidv4();
-              if (
-                optionField.field_name
-                  .toLowerCase()
-                  .includes("question choice 1") ||
-                optionField.field_name
-                  .toLowerCase()
-                  .includes("question choice 2") ||
-                optionField.field_name
-                  .toLowerCase()
-                  .includes("question choice 3") ||
-                optionField.field_name.toLowerCase().includes("question choice 4")
-              ) {
-                const optionEntry: QuestionOption = {
-                  option_id: optionId,
-                  option_value: String(optionField.field_response) === "undefined" ? null : String(optionField.field_response),
-                  option_order: field_order,
-                  option_field_id: fieldId,
-                };
+        FieldTableInput.push(fieldEntry);
+        fieldOrder++;
 
-                OptionTableInput.push(optionEntry);
-                field_order++;
-              }
+        let optionOrder = 1;
+        for (const optionField of section.choices) {
+          if (
+            optionField.field_name.toLowerCase().includes("question choice")
+          ) {
+            const optionId = uuidv4();
+            const optionEntry: QuestionOption = {
+              option_id: optionId,
+              option_value:
+                String(optionField.choice) === "undefined"
+                  ? null
+                  : String(optionField.choice),
+              option_order: optionOrder,
+              option_field_id: FieldId,
+            };
+
+            OptionTableInput.push(optionEntry);
+            optionOrder++;
+
+
+            if (optionField.isCorrectAnswer) {
+              correctAnswerFieldResponse = String(optionField.choice);
             }
           }
         }
-      }
-      if (correctAnswerFieldResponse) {
-        for (const optionField of section.section_field) {
-          if (
-            optionField.field_name.toLowerCase() ===
-            correctAnswerFieldResponse.toLowerCase()
-          ) {
-            const correctResponseEntry: FieldCorrectResponseTableInsert = {
-              correct_response_id: uuidv4(),
-              correct_response_value: String(optionField.field_response),
-              correct_response_field_id: correctAnswerFieldId,
-            };
-            CorrectResponseTableInput.push(correctResponseEntry);
-          }
+
+        if (correctAnswerFieldResponse) {
+          const correctResponseEntry: FieldCorrectResponseTableInsert = {
+            correct_response_id: uuidv4(),
+            correct_response_value: correctAnswerFieldResponse,
+            correct_response_field_id: correctAnswerFieldId,
+          };
+          CorrectResponseTableInput.push(correctResponseEntry);
         }
       }
     }
 
     const fieldResponseValues = FieldTableInput.map((response) => {
       const escapedResponse = escapeQuotes(response.field_name || "");
-      return `('${response.field_id}', '${escapedResponse}','${response.field_is_required}','${response.field_type}',${response.field_order},'${response.field_section_id}')`;
+      return `('${response.field_id}', '${escapedResponse}', '${response.field_is_required}', '${response.field_type}', ${response.field_order}, '${response.field_section_id}')`;
     }).join(",");
 
     const correctResponseValues = CorrectResponseTableInput.map((response) => {
@@ -2269,17 +2254,14 @@ export const createTechnicalQuestions = async (
       const questionId = uuidv4();
       QuestionId.push(questionId);
       const escapedResponse = escapeQuotes(response.field_name || "");
-      return `('${questionId}','${escapedResponse}','${response.field_id}','${questionnaireId}')`;
+      return `('${questionId}', '${escapedResponse}', '${response.field_id}', '${questionnaireId}')`;
     }).join(",");
 
-    const questionOptionResponseValues = OptionTableInput.map(
-      (response, index) => {
-        const escapedResponse = escapeQuotes(response.option_value || "");
-        const fieldUuid = QuestionId[Math.floor(index / 4)];
-        return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
-      }
-    ).join(",");
-
+    const questionOptionResponseValues = OptionTableInput.map((response, index) => {
+      const escapedResponse = escapeQuotes(response.option_value || "");
+      const fieldUuid = QuestionId[Math.floor(index / 4)];
+      return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
+    }).join(",");
 
     const { data, error } = await supabaseClient
       .rpc("create_technical_question", {
@@ -2297,6 +2279,7 @@ export const createTechnicalQuestions = async (
 
     return data;
   };
+
 
   export const checkIfQuestionExists = async (
     supabaseClient: SupabaseClient<Database>,
@@ -2333,19 +2316,19 @@ export const createTechnicalQuestions = async (
   export const checkIfQuestionExistsUpdate = async (
     supabaseClient: SupabaseClient<Database>,
     params: {
-      data: FormWithResponseType["form_section"][0];
+      data: TechnicalQuestionFormValues["sections"][0];
       questionnaireId: string;
     }
   ) => {
     const { data: requestFormValues, questionnaireId } = params;
     const technicalQuestionData: {response: string; fieldId: string}[] = [];
-    for (const field of requestFormValues.section_field) {
-      if (field.field_name.toLowerCase().includes("technical question")) {
+
+      if (requestFormValues.field_name.toLowerCase().includes("technical question")) {
         technicalQuestionData.push({
-          response:String(field.field_response),
-          fieldId: field.field_id
+          response:String(requestFormValues.question),
+          fieldId: requestFormValues.field_id
         });
-      }
+
     }
     const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
       "check_technical_question",
@@ -2432,3 +2415,21 @@ export const createTechnicalQuestions = async (
     });
   if (error) throw error;
   };
+
+  export const getQuestionFieldOrder = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireId: string;
+    }
+  ) => {
+    const { questionnaireId } = params;
+    const { data, error } = await supabaseClient.rpc("get_question_field_order", {
+        input_data: {
+            questionnaireId,
+         },
+        });
+
+    if (error) throw error;
+
+    return data as unknown as number;
+  }

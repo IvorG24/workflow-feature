@@ -112,7 +112,7 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
             isRefetchingData={isFetching}
           />
         )}
-        <Box mb={"xl"}>
+        <Box mb={"xs"}>
           {!isReadyToSelect &&
             hrPhoneInterviewData.hr_phone_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>
