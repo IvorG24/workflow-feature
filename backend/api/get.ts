@@ -7047,23 +7047,8 @@ export const getTechnicalOptionsItem = async (
 
   if (error) throw error;
 
-  return data as unknown as {
-    field_name: string;
-    field_id: string;
-    field_response: string;
-    field_is_required: boolean;
-    field_type: string;
-    field_position_id: string;
-    field_options: {
-      field_id: string;
-      field_name: string;
-      field_response: string;
-    }[];
-  }[];
-};
-    return data as unknown as QuestionnaireData
-  };
-
+return data as unknown as QuestionnaireData
+}
   export const getPositionTypeOptions = async (
     supabaseClient: SupabaseClient<Database>,
     params: { teamId: string }

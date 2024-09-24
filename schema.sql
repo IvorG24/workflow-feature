@@ -19286,27 +19286,14 @@ AS $$
       WHERE
         q.questionnaire_id = $1
         AND qq.questionnaire_question_is_disabled = FALSE
-      ORDER BY field_order ASC;
-        `, [questionnaireId]
-    );
+      ORDER BY f.field_order ASC;
+    `, [questionnaireId]);
 
-    const questionnaireData = plv8.execute(
-      `
-        SELECT questionnaire_name,questionnaire_date_created
-        FROM form_schema.questionnaire_table
-        WHERE
-          questionnaire_id = $1
-      `, [questionnaireId]
-    );
-
-    const questionnaireData = plv8.execute(
-      `
-        SELECT questionnaire_name,questionnaire_date_created
-        FROM form_schema.questionnaire_table
-        WHERE
-          questionnaire_id = $1
-      `, [questionnaireId]
-    );
+    const questionnaireData = plv8.execute(`
+      SELECT questionnaire_name, questionnaire_date_created
+      FROM form_schema.questionnaire_table
+      WHERE questionnaire_id = $1;
+    `, [questionnaireId]);
 
     returnData = fieldData.map((field) => {
       const optionsData = plv8.execute(`
@@ -19314,43 +19301,43 @@ AS $$
         FROM form_schema.question_option_table
         WHERE question_option_questionnaire_question_id = $1
         ORDER BY question_option_order ASC;
-      `, [field.questionnaire_question_id]
-      );
+      `, [field.questionnaire_question_id]);
 
-      const correctAnswer = plv8.execute(
-        `
+      const correctAnswer = plv8.execute(`
         SELECT *
         FROM form_schema.correct_response_table
         WHERE correct_response_field_id = $1;
-        `, [field.field_id]
-      );
+      `, [field.field_id]);
 
-     let correctResponseValue = null;
-
+      let correctResponseValue = null;
       if (correctAnswer.length > 0) {
         correctResponseValue = correctAnswer[0].correct_response_value;
       }
+
       return {
-        questionnaire_name: questionnaireData[0].questionnaire_name,
-        questionnaire_date_created: questionnaireData[0].questionnaire_date_created,
-        field_name: "Technical Question",
+        field_name: field.field_name,
         field_response: field.field_name,
         field_id: field.field_id,
         field_is_required: field.field_is_required,
         field_type: field.field_type,
         field_position_type: field.field_position_id,
-        field_options: [
-          ...optionsData.map((option, index) => ({
+        field_options: optionsData.map((option, index) => ({
           field_id: option.question_option_id,
           field_name: `Question Choice ${index + 1}`,
           field_response: option.question_option_value,
           field_is_correct: option.question_option_value === correctResponseValue,
-          })),
-        ]
+        }))
       };
     });
+
+    returnData = {
+      questionnaire_name: questionnaireData[0].questionnaire_name,
+      questionnaire_date_created: questionnaireData[0].questionnaire_date_created,
+      fields: returnData
+    };
   });
-return returnData;
+
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_technical_question(

@@ -129,7 +129,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
         color: "green",
       });
       router.push(
-        `${formatTeamNameToUrlKey(activeTeam.team_name)}/technical-question/${questionnaireId}`
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/technical-question/${questionnaireId}`
       );
     } catch (e) {
       console.log(e);
