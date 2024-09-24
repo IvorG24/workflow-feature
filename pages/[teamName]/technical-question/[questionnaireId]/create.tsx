@@ -1,29 +1,50 @@
-import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
 import TechnicalAssessmentCreateQuestionPage from "@/components/TechnicalAssessmentCreateQuestionPage/TechnicalAssessmentCreateQuestionPage";
+import { withAuthAndOnboarding } from "@/utils/server-side-protections";
+import { GetServerSideProps } from "next";
 
-// export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-//   async ({ supabaseClient, user, context }) => {
-//     try {
-//     } catch (e) {
-//       return {
-//         redirect: {
-//           destination: "/500",
-//           permanent: false,
-//         },
-//       };
-//     }
-//   }
-// );
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ context }) => {
+    try {
+      const questionnaireId = context.query?.questionnaireId;
 
-const Page = ({}) => {
+      if (!questionnaireId) {
+        return {
+          redirect: {
+            destination: "/404",
+            permanent: false,
+          },
+        };
+      }
+
+      return {
+        props: { questionnaireId }, // Wrap it inside an object with `props`
+      };
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
+  }
+);
+
+type Props = {
+  questionnaireId: string;
+};
+
+const Page = ({ questionnaireId }: Props) => {
   return (
     <>
       <Meta
-        description="Create Request Page"
-        url="/teamName/forms/[formId]/create"
+        description="Create technical question Page"
+        url="/teamName/technical-question/[questionnaireId]/create"
       />
-      <TechnicalAssessmentCreateQuestionPage/>
+      <TechnicalAssessmentCreateQuestionPage
+        questionnaireId={questionnaireId}
+      />
     </>
   );
 };

@@ -1,199 +1,111 @@
-import {
-  getOptionsTechnicalQuestion,
-  getQuestionnaireName,
-} from "@/backend/api/get";
-import {
-  checkIfQuestionExists,
-  createTechnicalQuestions,
-} from "@/backend/api/post";
-
+import { createTechnicalQuestions } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { TechnicalQuestionFormValues } from "@/utils/types";
 import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
-import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  FormType,
-  FormWithResponseType,
-  OptionTableRow,
-  RequestResponseTableRow,
-} from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+  ActionIcon,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Radio,
+  Space,
+  Stack,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import RequestFormDetails from "../CreateRequestPage/RequestFormDetails";
-import RequestFormSection from "../CreateRequestPage/RequestFormSection";
-
-export type Section = FormWithResponseType["form_section"][0];
-
-export type RequestFormValues = {
-  sections: (Section & {
-    section_is_old_data?: boolean;
-  })[];
-};
-
-export type FieldWithResponseArray =
-  FormType["form_section"][0]["section_field"][0] & {
-    field_response: RequestResponseTableRow[];
-    field_is_correct?: boolean;
-  };
+import QuestionnaireDetails from "./QuestionnaireDetails/QuestionnaireDetails";
 
 type Props = {
-  form: FormType;
-  requestProjectId?: string;
-  formslyFormName?: string;
+  questionnaireId: string;
 };
-
-const TechnicalAssessmentCreateQuestionPage = ({
-  form,
-  formslyFormName = "",
-}: Props) => {
-  const router = useRouter();
-  const supabaseClient = createPagesBrowserClient<Database>();
-  const teamMember = useUserTeamMember();
-  const teamGroup = useUserTeamMemberGroupList();
-  const team = useActiveTeam();
-  const requestorProfile = useUserProfile();
-  const questionnaireId = router.query.questionnaireId as string;
+const TechnicalAssessmentCreateQuestionPage = ({ questionnaireId }: Props) => {
   const { setIsLoading } = useLoadingActions();
+  const teamMember = useUserTeamMember();
+  const requestorProfile = useUserProfile();
+  const supabaseClient = useSupabaseClient();
+  const formMethods = useForm<TechnicalQuestionFormValues>({
+    defaultValues: {
+      sections: [
+        {
+          field_name: "Technical Question",
+          question: "",
+          choices: [
+            {
+              field_name: "Question Choice 1",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 2",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 3",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 4",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+          ],
+        },
+      ],
+    },
+  });
 
-  const [correctOptions, setCorrectOptions] = useState<OptionTableRow[]>([]);
-  const [questionnaireName, setQuestionnaireName] = useState<string>("");
-
-  const formId = router.query.formId as string;
-
-  const formDetails = {
-    form_name: form.form_name,
-    form_description: form.form_description,
-    form_date_created: form.form_date_created,
-    form_team_member: form.form_team_member,
-    form_questionnaire_name: questionnaireName,
-  };
-
-  const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
-  const {
-    fields: formSections,
-    insert: insertSection,
-    remove: removeSection,
-    replace: replaceSection,
-  } = useFieldArray({
-    control,
+  const { handleSubmit, register, watch, setValue } = formMethods;
+  const { fields, append, remove } = useFieldArray({
+    control: formMethods.control,
     name: "sections",
   });
 
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const handleCreateRequest = async (data: TechnicalQuestionFormValues) => {
     try {
       setIsLoading(true);
-      if (!requestorProfile) return;
-      if (!teamMember) return;
-      if (!teamGroup.includes("HUMAN RESOURCES")) return;
-
-      const isQuestionExists = await checkIfQuestionExists(supabaseClient, {
-        data,
-        questionnaireId: questionnaireId,
-      });
-
-      if (isQuestionExists) {
-        notifications.show({
-          message: "Question already exists.",
-          color: "orange",
-        });
-        return;
-      }
+      if (!requestorProfile || !teamMember) return;
 
       const uniqueQuestions = new Set();
-
-      for (const section of data.sections) {
-        const questionResponse = section.section_field[1]
-          .field_response as string;
-
-        if (uniqueQuestions.has(questionResponse)) {
+      for (const questionData of data.sections) {
+        if (uniqueQuestions.has(questionData.question)) {
           notifications.show({
-            message: `Duplicate question found: ${questionResponse}`,
+            message: `Duplicate question found: ${questionData.question}`,
             color: "orange",
           });
           return;
         }
-        uniqueQuestions.add(questionResponse);
+        uniqueQuestions.add(questionData.question);
 
-        const uniqueChoices = new Set();
-        let isCorrectAnswerSelected = false; // Flag to check if a correct answer is selected
-        const requiredFields = [1, 2];
-        for (let i = 1; i < section.section_field.length; i++) {
-          const choiceResponse = section.section_field[i]
-            .field_response as string;
-
-          if (section.section_field[i].field_is_correct) {
-            isCorrectAnswerSelected = true;
-
-            if ((i === 3 || i === 4) && !choiceResponse) {
-              notifications.show({
-                message: `Choice ${i} cannot be selected as correct because it has no response.`,
-                color: "red",
-              });
-              return;
-            }
-          }
-
-          if (requiredFields.includes(i) && !choiceResponse) {
-            notifications.show({
-              message: `A choice response is missing for required question choice ${i}`,
-              color: "red",
-            });
-            return;
-          }
-
-          if (choiceResponse && uniqueChoices.has(choiceResponse)) {
-            notifications.show({
-              message: `Duplicate choice found in question: ${questionResponse}`,
-              color: "orange",
-            });
-            return;
-          }
-
-          uniqueChoices.add(choiceResponse);
-        }
-
-        if (!isCorrectAnswerSelected) {
+        const correctAnswerSelected = questionData.choices.some(
+          (choice) => choice.isCorrectAnswer
+        );
+        if (!correctAnswerSelected) {
           notifications.show({
-            message: `Correct answer not selected for question: ${questionResponse}`,
+            message: `No correct answer selected for: ${questionData.question}`,
             color: "orange",
           });
           return;
         }
       }
-
       await createTechnicalQuestions(supabaseClient, {
         requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        teamId: teamMember.team_member_team_id,
-        questionnaireId,
+        questionnaireId: questionnaireId,
       });
-
       notifications.show({
-        message: "Technical question created.",
+        message: "Technical question created successfully.",
         color: "green",
       });
-
-      await router.push(
-        `/${formatTeamNameToUrlKey(
-          team.team_name
-        )}/forms/${formId}/technical-questionnaire-view?questionnaireId=${questionnaireId}`
-      );
     } catch (e) {
       notifications.show({
-        message: "Something went wrong. Please try again later.",
+        message: "An error occurred, please try again later.",
         color: "red",
       });
     } finally {
@@ -201,156 +113,134 @@ const TechnicalAssessmentCreateQuestionPage = ({
     }
   };
 
-  const handleDuplicateSection = (sectionId: string) => {
-    const sectionLastIndex = formSections
-      .map((sectionItem) => sectionItem.section_id)
-      .lastIndexOf(sectionId);
-    const sectionMatch = form.form_section.find(
-      (section) => section.section_id === sectionId
+  const handleRadioChange = (questionIndex: number, choiceIndex: number) => {
+    const choices = watch(`sections.${questionIndex}.choices`);
+    choices.forEach((_, idx) =>
+      setValue(
+        `sections.${questionIndex}.choices.${idx}.isCorrectAnswer`,
+        false
+      )
     );
-    if (sectionMatch) {
-      const sectionDuplicatableId = uuidv4();
-      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field
-        .slice(0, 6)
-        .map((field) => {
-          if (field.field_name === "Correct Answer") {
-            return {
-              ...field,
-              field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: correctOptions,
-            };
-          } else {
-            return {
-              ...field,
-              field_section_duplicatable_id: sectionDuplicatableId,
-            };
-          }
-        });
-      const newSection = {
-        ...sectionMatch,
-        section_is_duplicatable: true,
-        section_order: sectionLastIndex + 1,
-        section_field: duplicatedFieldsWithDuplicatableId,
-      };
-      insertSection(sectionLastIndex + 1, newSection);
-      return;
-    }
-  };
 
-  const handleRemoveSection = (sectionDuplicatableId: string) => {
-    const sectionMatchIndex = formSections.findIndex(
-      (section) =>
-        section.section_field[0].field_section_duplicatable_id ===
-        sectionDuplicatableId
+    setValue(
+      `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`,
+      true
     );
-    if (sectionMatchIndex) {
-      removeSection(sectionMatchIndex);
-      return;
-    }
   };
-
-  useEffect(() => {
-    const handleFetchOptions = async () => {
-      try {
-        setIsLoading(true);
-        if (!teamGroup.includes("HUMAN RESOURCES")) return;
-        if (!teamMember) return;
-
-        const correctOptions: OptionTableRow[] = [];
-
-        while (1) {
-          const correctData = await getOptionsTechnicalQuestion(
-            supabaseClient,
-            {
-              fieldId: form.form_section[1].section_field[0].field_id,
-            }
-          );
-          const correctOptionsFinal = correctData.map((option, index) => {
-            return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
-              option_id: option.option_id,
-              option_order: index,
-              option_value: option.option_value,
-            };
-          });
-          correctOptions.push(...correctOptionsFinal);
-          if (correctData.length < FETCH_OPTION_LIMIT) break;
-        }
-        setCorrectOptions(correctOptions);
-        const questionnaireName = await getQuestionnaireName(supabaseClient, {
-          questionnaireId: questionnaireId,
-        });
-        setQuestionnaireName(questionnaireName.questionnaire_name);
-        replaceSection([
-          {
-            ...form.form_section[1],
-            section_is_duplicatable: true,
-            section_field: [
-              {
-                ...form.form_section[1].section_field[0],
-                field_option: correctOptions,
-              },
-              ...form.form_section[1].section_field.slice(1, 5),
-            ],
-          },
-        ]);
-        setIsLoading(false);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      }
-    };
-    handleFetchOptions();
-  }, [teamGroup, teamMember, questionnaireId]);
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Techincal Question
+        Create Technical Question
       </Title>
       <Space h="xl" />
-      <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
-          <Stack spacing="xl">
-            <RequestFormDetails formDetails={formDetails} />
-            {formSections.map((section, idx) => {
-              const sectionIdToFind = section.section_id;
-              const sectionLastIndex = getValues("sections")
-                .map((sectionItem) => sectionItem.section_id)
-                .lastIndexOf(sectionIdToFind);
+      <Stack spacing={"xl"}>
+        <QuestionnaireDetails />
+        <FormProvider {...formMethods}>
+          <form onSubmit={handleSubmit(handleCreateRequest)}>
+            {fields.map((question, questionIndex) => (
+              <Paper my={10} p={20} key={question.id} withBorder shadow="sm">
+                {question.section_is_duplicatable && (
+                  <Group position="right">
+                    <ActionIcon
+                      onClick={() => remove(questionIndex)}
+                      color="red"
+                    >
+                      <IconTrash size={18} />
+                    </ActionIcon>
+                  </Group>
+                )}
+                <Stack spacing="xl">
+                  <Stack>
+                    <TextInput
+                      label={`Technical Question`}
+                      required
+                      withAsterisk
+                      {...register(`sections.${questionIndex}.question`)}
+                    />
 
-              return (
-                <Box key={section.id}>
-                  <RequestFormSection
-                    key={section.section_id}
-                    section={section}
-                    sectionIndex={idx}
-                    onRemoveSection={handleRemoveSection}
-                    formslyFormName={formslyFormName}
-                  />
-                  {section.section_is_duplicatable &&
-                    idx === sectionLastIndex && (
-                      <Button
-                        mt="md"
-                        variant="default"
-                        onClick={() =>
-                          handleDuplicateSection(section.section_id)
-                        }
-                        fullWidth
-                      >
-                        {section.section_name} +
-                      </Button>
+                    {watch(`sections.${questionIndex}.choices`).map(
+                      (_, choiceIndex) => {
+                        return (
+                          <Flex key={choiceIndex} align="center" gap="md">
+                            <Radio
+                              checked={watch(
+                                `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
+                              )}
+                              mt={24}
+                              onChange={() =>
+                                handleRadioChange(questionIndex, choiceIndex)
+                              }
+                            />
+                            <TextInput
+                              label={`Question Choice ${choiceIndex + 1}`}
+                              required={choiceIndex === 0 || choiceIndex === 1}
+                              withAsterisk={
+                                choiceIndex === 0 || choiceIndex === 1
+                              }
+                              sx={{ flexGrow: 1 }}
+                              {...register(
+                                `sections.${questionIndex}.choices.${choiceIndex}.choice`
+                              )}
+                            />
+                          </Flex>
+                        );
+                      }
                     )}
-                </Box>
-              );
-            })}
-
-            <Button type="submit">Submit</Button>
-          </Stack>
-        </form>
-      </FormProvider>
+                  </Stack>
+                </Stack>
+              </Paper>
+            ))}
+            <Space h="sm" />
+            <Button
+              leftIcon={<IconPlus size={18} />}
+              variant="outline"
+              color="blue"
+              fullWidth
+              onClick={() =>
+                append({
+                  field_id: "",
+                  field_name: "Technical Question",
+                  question: "",
+                  section_is_duplicatable: true,
+                  choices: [
+                    {
+                      field_id: "",
+                      field_name: "Question Choice 1",
+                      choice: "",
+                      isCorrectAnswer: false,
+                    },
+                    {
+                      field_id: "",
+                      field_name: "Question Choice 2",
+                      choice: "",
+                      isCorrectAnswer: false,
+                    },
+                    {
+                      field_id: "",
+                      field_name: "Question Choice 3",
+                      choice: "",
+                      isCorrectAnswer: false,
+                    },
+                    {
+                      field_id: "",
+                      field_name: "Question Choice 4",
+                      choice: "",
+                      isCorrectAnswer: false,
+                    },
+                  ],
+                })
+              }
+            >
+              Add New Question
+            </Button>
+            <Space h="lg" />
+            <Button fullWidth type="submit">
+              Submit
+            </Button>
+          </form>
+        </FormProvider>
+      </Stack>
     </Container>
   );
 };

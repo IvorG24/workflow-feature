@@ -4,44 +4,44 @@ import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/Approver
 import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  ApiKeyData,
-  AppType,
-  BackgroundCheckSpreadsheetData,
-  DirectorInterviewSpreadsheetData,
-  EditMemoType,
-  EquipmentDescriptionTableUpdate,
-  EquipmentLookupChoices,
-  EquipmentLookupTableUpdate,
-  EquipmentPartTableUpdate,
-  EquipmentTableUpdate,
-  FormWithResponseType,
-  HRPhoneInterviewSpreadsheetData,
-  InterviewOnlineMeetingTableRow,
-  InterviewOnlineMeetingTableUpdate,
-  ItemDescriptionTableUpdate,
-  ItemForm,
-  ItemTableInsert,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraItemCategoryTableUpdate,
-  JiraOrganizationTableUpdate,
-  JiraProjectTableUpdate,
-  JiraUserAccountTableUpdate,
-  JobOfferFormType,
-  JobTitleTableUpdate,
-  MemberRoleType,
-  MemoAgreementTableRow,
-  MemoFormatAttachmentTableInsert,
-  MemoFormatSubsectionTableUpdate,
-  OtherExpensesTypeTableUpdate,
-  SignerTableRow,
-  SignerTableUpdate,
-  TeamTableRow,
-  TeamTableUpdate,
-  TechnicalInterviewSpreadsheetData,
-  TicketTableRow,
-  TicketType,
-  TradeTestSpreadsheetData,
-  UserTableUpdate,
+    ApiKeyData,
+    AppType,
+    BackgroundCheckSpreadsheetData,
+    DirectorInterviewSpreadsheetData,
+    EditMemoType,
+    EquipmentDescriptionTableUpdate,
+    EquipmentLookupChoices,
+    EquipmentLookupTableUpdate,
+    EquipmentPartTableUpdate,
+    EquipmentTableUpdate,
+    HRPhoneInterviewSpreadsheetData,
+    InterviewOnlineMeetingTableRow,
+    InterviewOnlineMeetingTableUpdate,
+    ItemDescriptionTableUpdate,
+    ItemForm,
+    ItemTableInsert,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraItemCategoryTableUpdate,
+    JiraOrganizationTableUpdate,
+    JiraProjectTableUpdate,
+    JiraUserAccountTableUpdate,
+    JobOfferFormType,
+    JobTitleTableUpdate,
+    MemberRoleType,
+    MemoAgreementTableRow,
+    MemoFormatAttachmentTableInsert,
+    MemoFormatSubsectionTableUpdate,
+    OtherExpensesTypeTableUpdate,
+    SignerTableRow,
+    SignerTableUpdate,
+    TeamTableRow,
+    TeamTableUpdate,
+    TechnicalInterviewSpreadsheetData,
+    TechnicalQuestionFormValues,
+    TicketTableRow,
+    TicketType,
+    TradeTestSpreadsheetData,
+    UserTableUpdate
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate, getMemoFormat } from "./get";
@@ -1580,6 +1580,102 @@ export const handleDeleteTechnicalQuestion = async (
     return { success: true, error: null };
   };
 
+  export const updateTechnicalQuestion = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      requestValues: TechnicalQuestionFormValues["sections"][0];
+      questionnaireId: string;
+      teamMemberId: string;
+    }
+  ) => {
+    const { requestValues, questionnaireId, teamMemberId } = params;
+    console.log("requestValues", requestValues);
+
+    const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+    const { error: questionnaireError } = await supabaseClient
+      .schema("form_schema")
+      .from("questionnaire_table")
+      .update({
+        questionnaire_updated_by: teamMemberId,
+        questionnaire_date_updated: currentDate,
+      })
+      .eq("questionnaire_id", questionnaireId);
+
+    if (questionnaireError) throw questionnaireError;
+
+    const correctAnswer = requestValues.choices.find(
+      (choice) => choice.isCorrectAnswer
+    );
+    const technicalQuestionId = requestValues.field_id;
+
+    let correctAnswerFieldName = "";
+    if (correctAnswer) {
+      correctAnswerFieldName = correctAnswer.choice;
+    }
+
+    const correctAnswerEscaped = escapeQuotes(correctAnswerFieldName);
+
+    const { error: correctResponseError } = await supabaseClient
+      .schema("form_schema")
+      .from("correct_response_table")
+      .update({
+        correct_response_value: correctAnswerEscaped,
+      })
+      .eq("correct_response_field_id", technicalQuestionId ?? "");
+
+    if (correctResponseError) throw correctResponseError;
+
+    const escapedQuestion = escapeQuotes(String(requestValues.question));
+      console.log("escapedQuestion", escapedQuestion);
+
+    const { error: fieldTableError } = await supabaseClient
+      .schema("form_schema")
+      .from("field_table")
+      .update({
+        field_name: escapedQuestion,
+      })
+      .eq("field_id", requestValues.field_id);
+
+    if (fieldTableError) throw fieldTableError;
+
+    const { error: questionnaireQuestionError } = await supabaseClient
+      .schema("form_schema")
+      .from("questionnaire_question_table")
+      .update({
+        questionnaire_question: escapedQuestion,
+      })
+      .eq("questionnaire_question_field_id", requestValues.field_id);
+
+    if (questionnaireQuestionError) throw questionnaireQuestionError;
+
+    const promises = requestValues.choices.map(async (choice) => {
+      const escapedChoice = escapeQuotes(choice.choice);
+
+      if (choice.field_name.includes("Question Choice")) {
+        return supabaseClient
+          .schema("form_schema")
+          .from("question_option_table")
+          .update({
+            question_option_value: escapedChoice,
+          })
+          .eq("question_option_id", choice.field_id);
+      }
+      return null;
+    });
+
+
+    const results = await Promise.all(
+      promises.map((p) => p.catch((e) => e))
+    );
+
+    results.forEach((result) => {
+      if (result instanceof Error) {
+        console.error("Error updating choice:", result);
+      }
+    });
+  };
+
   export const updateQuestionnairePosition = async (
     supabaseClient: SupabaseClient<Database>,
     params: {
@@ -1624,104 +1720,6 @@ export const handleDeleteTechnicalQuestion = async (
 
     return results;
   };
-
-  export const updateTechnicalQuestion = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      requestValues: FormWithResponseType["form_section"][0];
-      questionnaireId: string;
-      teamMemberId: string;
-    }
-  ) => {
-    const { requestValues, questionnaireId, teamMemberId } = params;
-
-    const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
-    const { error } = await supabaseClient
-      .schema("form_schema")
-      .from("questionnaire_table")
-      .update({
-        questionnaire_updated_by: teamMemberId,
-        questionnaire_date_updated: currentDate,
-      })
-      .eq("questionnaire_id", questionnaireId);
-
-    if (error) throw error;
-
-    let correctAnswerFieldName = "";
-
-    const correctAnswer = requestValues.section_field.find(
-      (field) => field.field_is_correct
-    );
-    const technicalQuestionId = requestValues.section_field.find(
-        (field) => field.field_name === "Technical Question"
-      )?.field_id;
-
-    if (correctAnswer) {
-      const correctResponseValue = correctAnswer.field_response;
-
-      requestValues.section_field.forEach((option) => {
-        if (
-          option.field_name.startsWith("Question Choice") &&
-          String(option.field_response) === String(correctResponseValue)
-        ) {
-          correctAnswerFieldName = String(option.field_response);
-        }
-      });
-    }
-    const correctAnswerEscaped = escapeQuotes(correctAnswerFieldName);
-    await supabaseClient
-    .schema("form_schema")
-    .from("correct_response_table")
-    .update({
-      correct_response_value: correctAnswerEscaped ,
-    })
-    .eq("correct_response_field_id",technicalQuestionId ?? "");
-
-    const promises = requestValues.section_field.map(async (field) => {
-      const escapedResponse = escapeQuotes(String(field.field_response));
-      switch (field.field_name) {
-        case "Technical Question":
-            await supabaseClient
-              .schema("form_schema")
-              .from("field_table")
-              .update({
-                field_name: escapedResponse,
-              })
-              .eq("field_id", field.field_id);
-            await supabaseClient
-              .schema("form_schema")
-              .from("questionnaire_question_table")
-              .update({
-                questionnaire_question: escapedResponse,
-              })
-              .eq("questionnaire_question_field_id", field.field_id);
-            break;
-
-        default:
-          if (field.field_name.includes("Question Choice")) {
-            return supabaseClient
-              .schema("form_schema")
-              .from("question_option_table")
-              .update({
-                question_option_value: escapedResponse,
-              })
-              .eq("question_option_id", field.field_id);
-          }
-
-          return null;
-      }
-    });
-
-    // Wait for all promises to complete
-    const results = await Promise.all(promises.map((p) => p.catch((e) => e)));
-
-    results.forEach((result) => {
-      if (result instanceof Error) {
-        console.error("Error updating field:", result);
-      }
-    });
-  };
-
 
 export const disableApikey = async (
   supabaseClient: SupabaseClient<Database>,

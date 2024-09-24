@@ -1,8 +1,6 @@
 import {
   getPositionPerQuestionnaire,
   getPositionTypeOptions,
-  getQuestionnaireName,
-  getTechnicalOptionsItem,
 } from "@/backend/api/get";
 import { checkIfQuestionExistsUpdate } from "@/backend/api/post";
 import {
@@ -17,123 +15,130 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
-import { Database } from "@/utils/database";
 import { JoyRideNoSSR } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  FormType,
-  FormWithResponseType,
   OptionTableRow,
-  RequestResponseTableRow,
+  QuestionFields,
+  QuestionnaireData,
+  TechnicalQuestionFormValues,
 } from "@/utils/types";
 import {
   Accordion,
   ActionIcon,
-  Box,
   Button,
   Container,
   Flex,
+  Group,
+  MultiSelect,
+  Paper,
+  Radio,
   Space,
   Stack,
   Text,
+  TextInput,
   Title,
   useMantineTheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import {
+  Controller,
   FormProvider,
   useFieldArray,
   useForm,
   useWatch,
 } from "react-hook-form";
-import RequestFormDetails from "../CreateRequestPage/RequestFormDetails";
-import RequestFormSection from "../CreateRequestPage/RequestFormSection";
+import QuestionnaireDetails from "./QuestionnaireDetails/QuestionnaireDetails";
 
-export type Section = FormWithResponseType["form_section"][0];
-
-export type RequestFormValues = {
-  sections: (Section & { section_is_old_data?: boolean })[];
-};
-
-export type FieldWithResponseArray =
-  FormType["form_section"][0]["section_field"][0] & {
-    field_response: RequestResponseTableRow[];
-  };
-
+type Section = TechnicalQuestionFormValues["sections"][0];
 type Props = {
-  form: FormType;
-  requestProjectId?: string;
-  formslyFormName?: string;
+  questionnaireId: string;
+  questionnaireData: QuestionnaireData;
 };
 
-const TechnicalAssessmentViewQuestionPage = ({
-  form,
-  formslyFormName = "",
+const TechnicalAssessmentCreateQuestionPage = ({
+  questionnaireId,
+  questionnaireData:initialData,
 }: Props) => {
+  const { setIsLoading } = useLoadingActions();
   const router = useRouter();
-  const { colors } = useMantineTheme();
-  const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const teamGroup = useUserTeamMemberGroupList();
-  const team = useActiveTeam();
+  const activeTeam = useActiveTeam();
   const requestorProfile = useUserProfile();
-  const { setIsLoading } = useLoadingActions();
-  const activeTeam = useUserTeamMember();
   const [isJoyRideOpen, setIsJoyRideOpen] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [positions, setPositions] = useState<string[]>([]);
-  const [questionnaireName, setQuestionnaireName] = useState<string>("");
-  const formId = router.query.formId as string;
-  const questionnaireId = router.query.questionnaireId as string;
-  const formDetails = {
-    form_name: form.form_name,
-    form_description: form.form_description,
-    form_date_created: form.form_date_created,
-    form_team_member: form.form_team_member,
-    form_questionnaire_name: questionnaireName,
-  };
+  const { colors } = useMantineTheme();
+  const supabaseClient = useSupabaseClient();
+  const [positionOptions, setPositionOptions] = useState<OptionTableRow[]>([]);
+  const [questionnaireData, setQuestionnaireData] = useState<QuestionFields>(initialData.fields);
+  const [currentPosition, setCurrentPosition] = useState<string[]>([]);
 
-  const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
-  const {
-    fields: formSections,
-    remove: removeSection,
-    replace: replaceSection,
-  } = useFieldArray({
-    control,
+  const formMethods = useForm<TechnicalQuestionFormValues>({
+    defaultValues: {
+      sections: [
+        {
+          field_name: "Technical Question",
+          question: "",
+          section_is_duplicatable: false,
+          choices: [
+            {
+              field_name: "Question Choice 1",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 2",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 3",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+            {
+              field_name: "Question Choice 4",
+              choice: "",
+              isCorrectAnswer: false,
+            },
+          ],
+        },
+      ],
+      positions: [], // MultiSelect for positions
+    },
+  });
+
+  const { handleSubmit, register, watch, setValue, control, getValues } =
+    formMethods;
+  const { fields, remove } = useFieldArray({
+    control: formMethods.control,
     name: "sections",
   });
   const watchedFieldResponse = useWatch({
     control,
-    name: "sections.0.section_field.0.field_response",
+    name: "positions",
   });
-  const handleUpdateQuestionnairePosition = async (data: RequestFormValues) => {
+
+  const handleUpdateQuestionnairePosition = async (
+    data: TechnicalQuestionFormValues
+  ) => {
     try {
       if (!questionnaireId) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
       if (!teamMember) return;
       setIsLoading(true);
-      if (data.sections[0].section_field[0].field_is_read_only) {
-        notifications.show({
-          message: "No Questions Found",
-          color: "orange",
-        });
-        setIsLoading(false);
-        return;
-      }
 
-      const positions = data.sections[0].section_field[0]
-        .field_response as string[];
+      const positions = data.positions as string[];
 
       await updateQuestionnairePosition(supabaseClient, {
         questionnaireId: questionnaireId,
-        teamMemberId: activeTeam?.team_member_id || "",
+        teamMemberId: teamMember?.team_member_id || "",
         position: positions,
       });
       notifications.show({
@@ -171,69 +176,11 @@ const TechnicalAssessmentViewQuestionPage = ({
         return;
       }
 
-      const choiceSet = new Set<string>();
-      let isCorrectAnswerSelected = false;
-      const requiredFields = [1, 2];
-
-      for (const [index, field] of data.section_field.entries()) {
-        const fieldResponse = (field.field_response as string)?.trim();
-
-        if (requiredFields.includes(index) && !fieldResponse) {
-          notifications.show({
-            message: `Field "${field.field_name}" cannot be empty for question choice ${index}.`,
-            color: "orange",
-          });
-          return;
-        }
-        if (field.field_name.toLowerCase().includes("question choice")) {
-          if (!fieldResponse) {
-            continue;
-          }
-          if (choiceSet.has(fieldResponse)) {
-            notifications.show({
-              message: `Duplicate choice "${fieldResponse}" found. Choices must be unique.`,
-              color: "orange",
-            });
-            return;
-          }
-
-          choiceSet.add(fieldResponse);
-        }
-
-        if (field.field_is_correct) {
-          isCorrectAnswerSelected = true;
-
-          if ((index === 3 || index === 4) && !fieldResponse) {
-            notifications.show({
-              message: `Choice ${index} cannot be selected as correct because it has no response.`,
-              color: "red",
-            });
-            return;
-          }
-        }
-
-        if (requiredFields.includes(index) && !fieldResponse) {
-          notifications.show({
-            message: `A response is missing for required question choice ${index}.`,
-            color: "red",
-          });
-          return;
-        }
-      }
-
-      if (!isCorrectAnswerSelected) {
-        notifications.show({
-          message: "You must select a correct answer.",
-          color: "orange",
-        });
-        return;
-      }
-
       setIsLoading(true);
 
       await updateTechnicalQuestion(supabaseClient, {
         requestValues: data,
-        teamMemberId: activeTeam?.team_member_id || "",
+        teamMemberId: teamMember.team_member_id || "",
         questionnaireId: questionnaireId,
       });
 
@@ -242,7 +189,7 @@ const TechnicalAssessmentViewQuestionPage = ({
         color: "green",
       });
       setIsLoading(false);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again.",
         color: "red",
@@ -251,23 +198,19 @@ const TechnicalAssessmentViewQuestionPage = ({
     }
   };
 
-  const handleDeleteQuestion = async (sectionIndex: number, data: Section) => {
-    try {
-      removeSection(sectionIndex);
+  const handleRadioChange = (questionIndex: number, choiceIndex: number) => {
+    const choices = watch(`sections.${questionIndex}.choices`);
+    choices.forEach((_, idx) =>
+      setValue(
+        `sections.${questionIndex}.choices.${idx}.isCorrectAnswer`,
+        false
+      )
+    );
 
-      await handleDeleteTechnicalQuestion(supabaseClient, {
-        fieldId: data.section_field[0].field_id,
-      });
-      notifications.show({
-        message: "Question deleted.",
-        color: "green",
-      });
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong",
-        color: "red",
-      });
-    }
+    setValue(
+      `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`,
+      true
+    );
   };
 
   const openCancelInterviewModal = (sectionIndex: number, data: Section) =>
@@ -282,153 +225,66 @@ const TechnicalAssessmentViewQuestionPage = ({
       centered: true,
     });
 
+  const handleDeleteQuestion = async (sectionIndex: number, data: Section) => {
+    try {
+      remove(sectionIndex);
+
+      await handleDeleteTechnicalQuestion(supabaseClient, {
+        fieldId: data.field_id,
+      });
+      notifications.show({
+        message: "Question deleted.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
-    const handleFetchOptions = async () => {
-      try {
-        if (!questionnaireId) return;
-        if (!teamGroup.includes("HUMAN RESOURCES")) return;
-        if (!teamMember) return;
-        const positionOptions: OptionTableRow[] = [];
-        setIsLoading(true);
-        while (1) {
-          const positionData = await getPositionTypeOptions(supabaseClient, {
-            fieldId: form.form_section[0].section_field[0].field_id,
-            teamId: team.team_id,
-          });
-
-          const positionOptionsFinal = positionData.map((option, index) => {
-            return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
-              option_id: option.option_id,
-              option_order: index,
-              option_value: option.option_value,
-            };
-          });
-          positionOptions.push(...positionOptionsFinal);
-          if (positionData.length < FETCH_OPTION_LIMIT) break;
-        }
-
-        const questionnaireName = await getQuestionnaireName(supabaseClient, {
-          questionnaireId: questionnaireId,
-        });
-        setQuestionnaireName(questionnaireName.questionnaire_name);
-
-        const questionnaireData = await getTechnicalOptionsItem(
-          supabaseClient,
-          {
-            teamId: team.team_id,
-            questionnaireId: questionnaireId,
-          }
-        );
-
-        const positions = await getPositionPerQuestionnaire(supabaseClient, {
-          questionnaireId: questionnaireId,
-        });
-
-        replaceSection(form.form_section);
-        setPositions(positions);
-        if (questionnaireData.length === 0 && positions.length === 0) {
-          setIsJoyRideOpen(true);
-          replaceSection([
-            {
-              ...form.form_section[0],
-              section_field: [
-                {
-                  ...form.form_section[0].section_field[0],
-                  field_option: positionOptions,
-                  field_response: positions ? positions : null,
-                  field_is_read_only: true,
-                  field_is_required: true,
-                },
-              ],
-            },
-          ]);
-          setIsLoading(false);
-          return;
-        }
-
-        if (questionnaireData) {
-          replaceSection([
-            {
-              ...form.form_section[0],
-              section_field: [
-                {
-                  ...form.form_section[0].section_field[0],
-                  field_option: positionOptions,
-                  field_response: positions ? positions : null,
-                },
-              ],
-            },
-            {
-              ...form.form_section[1],
-              section_field: [
-                ...form.form_section[1].section_field.slice(0, 5),
-              ],
-            },
-          ]);
-          const updatedSections = questionnaireData.map(
-            (sectionData, sectionIndex) => {
-              const newSection = getValues(`sections.${1}`);
-              const updatedFields = newSection.section_field.map((field) => {
-                const correspondingResponse = sectionData.field_options.find(
-                  (response) => response.field_name === field.field_name
-                );
-                const isTechnicalQuestion =
-                  field.field_name === "Technical Question";
-
-                return isTechnicalQuestion
-                  ? {
-                      ...field,
-                      field_id: sectionData.field_id,
-                      field_type: "TEXT",
-                      field_response: sectionData.field_response,
-                      field_is_required: false,
-                    }
-                  : correspondingResponse
-                    ? {
-                        ...field,
-                        field_id: correspondingResponse.field_id,
-                        field_type: "TEXT",
-                        field_response: correspondingResponse.field_response,
-                        field_is_required: false,
-                        field_is_correct:
-                          correspondingResponse.field_is_correct,
-                      }
-                    : field;
-              });
-
-              return {
-                ...newSection,
-                section_order: sectionIndex,
-                section_field: updatedFields,
-                section_is_old_data: true,
-                section_is_duplicatable: false,
-              };
-            }
-          );
-
-          removeSection(1);
-          const currentSections = getValues("sections");
-          setValue("sections", [...currentSections, ...updatedSections]);
-          setIsLoading(false);
-        }
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
+    const fetchOptions = async () => {
+      if (!activeTeam.team_id) return;
+      setIsLoading(true);
+      const positionOptions = await getPositionTypeOptions(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+      setPositionOptions(positionOptions);
+      const positions = await getPositionPerQuestionnaire(supabaseClient, {
+        questionnaireId: questionnaireId,
+      });
+      setCurrentPosition(positions);
+      if (questionnaireData) {
+        const sections = questionnaireData[2].map((question) => ({
+          field_id: question.field_id,
+          field_name: question.field_name,
+          question: question.field_response,
+          section_is_duplicatable: false,
+          choices: question.field_options.map((choice) => ({
+            field_id: choice.field_id,
+            field_name: choice.field_name,
+            choice: choice.field_response,
+            isCorrectAnswer: choice.field_is_correct,
+          })),
+        }));
+        formMethods.reset({ sections, positions: positions });
+      } else {
+        setIsJoyRideOpen(true);
       }
+      setIsLoading(false);
     };
-    handleFetchOptions();
-  }, [teamGroup, teamMember, questionnaireId, form]);
+    fetchOptions();
+  }, [activeTeam.team_id, questionnaireId]);
 
   useEffect(() => {
-    if (positions && watchedFieldResponse) {
+    if (positionOptions && watchedFieldResponse) {
       const isButtonDisabled =
-        positions.length === (watchedFieldResponse as string[]).length;
+        currentPosition.length === (watchedFieldResponse as string[]).length;
       setIsButtonDisabled(isButtonDisabled);
     }
-  }, [positions, watchedFieldResponse]);
+  }, [currentPosition, watchedFieldResponse]);
 
   return (
     <Container>
@@ -461,8 +317,8 @@ const TechnicalAssessmentViewQuestionPage = ({
           onClick={() =>
             router.push(
               `/${formatTeamNameToUrlKey(
-                team.team_name
-              )}/forms/${formId}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
+                activeTeam.team_name
+              )}/technical-question/${questionnaireId}/create`
             )
           }
         >
@@ -470,102 +326,144 @@ const TechnicalAssessmentViewQuestionPage = ({
         </Button>
       </Flex>
       <Space h="xl" />
-      <RequestFormDetails formDetails={formDetails} />
+      <Stack spacing={"xl"}>
+        <QuestionnaireDetails />
+        <Paper p={20} shadow="sm">
+          <FormProvider {...formMethods}>
+            <form onSubmit={handleSubmit(handleUpdateQuestionnairePosition)}>
+              <Stack spacing="xl">
+                <Controller
+                  name="positions"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelect
+                      label="Position"
+                      searchable
+                      required
+                      withAsterisk
+                      placeholder="Select positions"
+                      data={positionOptions.map((option) => ({
+                        value: option.option_value,
+                        label: option.option_value,
+                      }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
 
-      <Space h="xl" />
-      <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleUpdateQuestionnairePosition)}>
-          <Stack spacing="xs">
-            {formSections.map((section, idx) => {
-              const isQuestionSection = section.section_name === "Question";
-              const sectionKey =
-                section.section_id && !isNaN(Number(section.section_id))
-                  ? section.section_id
-                  : `section-${idx}`;
+                <Button disabled={isButtonDisabled} fullWidth type="submit">
+                  Submit
+                </Button>
+              </Stack>
+            </form>
+          </FormProvider>
+        </Paper>
+
+        <Accordion variant="contained" sx={{ background: "white" }} multiple>
+          {fields &&
+            fields.length > 0 &&
+            fields.map((question, questionIndex) => {
+              const questionText = watch(`sections.${questionIndex}.question`);
+
+              if (!questionText || questionText.trim() === "") {
+                return null;
+              }
 
               return (
-                <Box key={sectionKey}>
-                  {isQuestionSection ? (
-                    <Accordion
-                      sx={(theme) => ({
-                        background:
-                          theme.colorScheme === "dark"
-                            ? theme.colors.dark[6]
-                            : theme.white,
-                        color:
-                          theme.colorScheme === "dark"
-                            ? theme.colors.dark[0]
-                            : theme.black,
-                      })}
-                      multiple
-                      variant="contained"
-                      key={sectionKey}
+                <Accordion.Item
+                  value={`question-${questionIndex}`}
+                  key={question.id}
+                >
+                  <Flex justify="space-between" align="center">
+                    <Accordion.Control>
+                      {questionText ||
+                        `Technical Question ${questionIndex + 1}`}
+                    </Accordion.Control>
+                    <ActionIcon
+                      mr="md"
+                      color="red"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCancelInterviewModal(
+                          questionIndex,
+                          getValues(`sections.${questionIndex}`)
+                        );
+                      }}
                     >
-                      <Accordion.Item value={`section-${sectionKey}`}>
-                        <Flex justify="space-between" align="center">
-                          <Accordion.Control>
-                            {`${section.section_field[0].field_response}`}
-                          </Accordion.Control>
+                      <IconTrash size={14} />
+                    </ActionIcon>
+                  </Flex>
+                  <Accordion.Panel>
+                    <Paper my={10} p={20} withBorder shadow="sm">
+                      {question.section_is_duplicatable && (
+                        <Group position="right">
                           <ActionIcon
-                            mr="md"
+                            onClick={() => remove(questionIndex)}
                             color="red"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent accordion toggle
-                              openCancelInterviewModal(
-                                idx,
-                                getValues(`sections.${idx}`)
-                              );
-                            }}
                           >
-                            <IconTrash size={14} />
+                            <IconTrash size={18} />
                           </ActionIcon>
-                        </Flex>
-                        <Accordion.Panel>
-                          <RequestFormSection
-                            section={section}
-                            sectionIndex={idx}
-                            formslyFormName={formslyFormName}
-                          />
-                          <Space h="xl" />
-                          <Button
-                            fullWidth
-                            onClick={() =>
-                              handleUpdateQuestion(getValues(`sections.${idx}`))
-                            }
-                          >
-                            Update
-                          </Button>
-                        </Accordion.Panel>
-                      </Accordion.Item>
-                    </Accordion>
-                  ) : (
-                    <>
-                      <Box>
-                        <RequestFormSection
-                          section={section}
-                          sectionIndex={idx}
-                          formslyFormName={formslyFormName}
+                        </Group>
+                      )}
+                      <Stack spacing="xl">
+                        <TextInput
+                          label={`Technical Question`}
+                          required
+                          withAsterisk
+                          {...register(`sections.${questionIndex}.question`)}
                         />
-                      </Box>
-                      <Space h="xl" />
-                      <Button
-                        disabled={isButtonDisabled}
-                        fullWidth
-                        type="submit"
-                      >
-                        Update Position
-                      </Button>{" "}
-                    </>
-                  )}
-                </Box>
+                        {(watch(`sections.${questionIndex}.choices`) || []).map(
+                          (_, choiceIndex) => (
+                            <Flex key={choiceIndex} align="center" gap="md">
+                              <Radio
+                                checked={watch(
+                                  `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
+                                )}
+                                mt={24}
+                                onChange={() =>
+                                  handleRadioChange(questionIndex, choiceIndex)
+                                }
+                              />
+                              <TextInput
+                                label={`Question Choice ${choiceIndex + 1}`}
+                                required={
+                                  choiceIndex === 0 || choiceIndex === 1
+                                }
+                                withAsterisk={
+                                  choiceIndex === 0 || choiceIndex === 1
+                                }
+                                sx={{ flexGrow: 1 }}
+                                {...register(
+                                  `sections.${questionIndex}.choices.${choiceIndex}.choice`
+                                )}
+                              />
+                            </Flex>
+                          )
+                        )}
+                        <Button
+                          onClick={() => {
+                            const updatedQuestion = getValues(
+                              `sections.${questionIndex}`
+                            );
+                            handleUpdateQuestion(updatedQuestion); // Pass the latest form values
+                          }}
+                        >
+                          Update Question
+                        </Button>
+                      </Stack>
+                    </Paper>
+                  </Accordion.Panel>
+                </Accordion.Item>
               );
             })}
-          </Stack>
-          <Space h="xl" />
-        </form>
-      </FormProvider>
+        </Accordion>
+
+        <Space h="sm" />
+      </Stack>
     </Container>
   );
 };
 
-export default TechnicalAssessmentViewQuestionPage;
+export default TechnicalAssessmentCreateQuestionPage;

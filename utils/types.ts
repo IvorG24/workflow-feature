@@ -2526,23 +2526,43 @@ export type HRAnalyticsData = {
 };
 
 export type QuestionOption = {
-    option_id:string;
-    option_value:string | null;
-    option_order:number;
-    option_field_id:string;
-}
-
-export type QuestionnaireData= {
-    field_name: string;
-    field_id: string;
-    field_response: string;
-    field_is_required: boolean;
-    field_type: string;
-    field_position_id: string;
-    field_options: {
+  option_id:string;
+  option_value:string | null;
+  option_order:number;
+  option_field_id:string;
+};
+export type QuestionFields = {
+  field_name: string;
+  field_id: string;
+  field_response: string;
+  field_is_required: boolean;
+  field_type: string;
+  field_position_type: string;
+  field_options: {
       field_id: string;
       field_name: string;
       field_response: string;
       field_is_correct: boolean;
+    }[],
+};
+export type QuestionnaireData = {
+  questionnaire_name: string;
+  questionnaire_date_created: string;
+  fields:QuestionFields[];
+  };
+
+  export type TechnicalQuestionFormValues = {
+    sections: {
+      field_id: string;
+      field_name: string;
+      question: string;
+      section_is_duplicatable: boolean;
+      choices: {
+        field_id: string;
+        field_name: string;
+        choice: string;
+        isCorrectAnswer: boolean;
+      }[];
     }[];
+    positions?: string[];
   };

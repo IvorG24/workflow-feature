@@ -19286,6 +19286,15 @@ AS $$
         `, [questionnaireId]
     );
 
+    const questionnaireData = plv8.execute(
+      `
+        SELECT questionnaire_name,questionnaire_date_created
+        FROM form_schema.questionnaire_table
+        WHERE
+          questionnaire_id = $1
+      `, [questionnaireId]
+    );
+
     returnData = fieldData.map((field) => {
       const optionsData = plv8.execute(`
         SELECT *
@@ -19309,6 +19318,8 @@ AS $$
         correctResponseValue = correctAnswer[0].correct_response_value;
       }
       return {
+        questionnaire_name: questionnaireData[0].questionnaire_name,
+        questionnaire_date_created: questionnaireData[0].questionnaire_date_created,
         field_name: "Technical Question",
         field_response: field.field_name,
         field_id: field.field_id,
@@ -19322,7 +19333,6 @@ AS $$
           field_response: option.question_option_value,
           field_is_correct: option.question_option_value === correctResponseValue,
           })),
-
         ]
       };
     });
