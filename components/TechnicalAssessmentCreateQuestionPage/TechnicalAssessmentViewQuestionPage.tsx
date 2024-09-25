@@ -162,7 +162,13 @@ const TechnicalAssessmentCreateQuestionPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
-
+      if (data.question.trim() === "") {
+        notifications.show({
+          message: "Technical question is required.",
+          color: "orange",
+        });
+        return;
+      }
       const isQuestionExists = await checkIfQuestionExistsUpdate(
         supabaseClient,
         {
