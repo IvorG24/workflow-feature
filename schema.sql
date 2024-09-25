@@ -93,7 +93,9 @@ CREATE TABLE address_table (
   address_city VARCHAR(4000) NOT NULL,
   address_barangay VARCHAR(4000) NOT NULL,
   address_street VARCHAR(4000) NOT NULL,
-  address_zip_code VARCHAR(4000) NOT NULL
+  address_zip_code VARCHAR(4000) NOT NULL,
+  address_latitude VARCHAR(4000),
+  address_longitude VARCHAR(4000)
 );
 
 CREATE TABLE user_schema.user_table (
