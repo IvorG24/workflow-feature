@@ -127,6 +127,8 @@ const JobOfferMainTableRow = ({
       manpowerLoadingReferenceCreatedBy: "",
       compensation: "",
       attachment: null,
+      projectLatitude: undefined,
+      projectLongitude: undefined,
     },
   });
 
@@ -163,6 +165,8 @@ const JobOfferMainTableRow = ({
       setValue("manpowerLoadingReferenceCreatedBy", "");
       setValue("compensation", "");
       setValue("attachment", null);
+      setValue("projectLatitude", undefined);
+      setValue("projectLongitude", undefined);
       clearErrors();
     }
   }, [jobOfferModalIsOpen]);
@@ -406,6 +410,19 @@ const JobOfferMainTableRow = ({
                         const projectAddress = projectOptions.find(
                           (project) => project.hr_project_name === value
                         )?.hr_project_address;
+
+                        setValue(
+                          "projectLatitude",
+                          projectAddress && projectAddress?.address_latitude
+                            ? projectAddress.address_latitude
+                            : undefined
+                        );
+                        setValue(
+                          "projectLongitude",
+                          projectAddress && projectAddress?.address_longitude
+                            ? projectAddress.address_longitude
+                            : undefined
+                        );
                         setValue(
                           "projectAddress",
                           [

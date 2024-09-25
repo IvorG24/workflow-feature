@@ -2475,6 +2475,8 @@ export type JobOfferFormType = {
   title: string;
   projectAssignment: string;
   projectAddress: string;
+  projectLongitude?: string;
+  projectLatitude?: string;
   manpowerLoadingId: string;
   manpowerLoadingReferenceCreatedBy: string;
   compensation: string;

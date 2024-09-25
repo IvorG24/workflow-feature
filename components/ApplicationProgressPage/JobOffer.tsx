@@ -7,6 +7,7 @@ import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
 import { AttachmentTableRow, JobOfferTableRow } from "@/utils/types";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -20,7 +21,7 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
-import { IconFile, IconNote } from "@tabler/icons-react";
+import { IconFile, IconMap, IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -184,6 +185,21 @@ const JobOffer = ({
               <Title order={5}>
                 {jobOfferData.job_offer_project_assignment_address}
               </Title>
+              {jobOfferData.job_offer_project_latitude &&
+              jobOfferData.job_offer_project_longitude ? (
+                <ActionIcon
+                  variant="outline"
+                  color="blue"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps?q=${jobOfferData.job_offer_project_latitude},${jobOfferData.job_offer_project_longitude}`,
+                      "_blank"
+                    )
+                  }
+                >
+                  <IconMap size={16} />
+                </ActionIcon>
+              ) : null}
             </Group>
             <Group>
               <Text>Compensation: </Text>

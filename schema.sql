@@ -1059,6 +1059,8 @@ CREATE TABLE hr_schema.job_offer_table (
   job_offer_title VARCHAR(4000),
   job_offer_project_assignment VARCHAR(4000),
   job_offer_project_assignment_address VARCHAR(4000),
+  job_offer_project_latitude VARCHAR(4000),
+  job_offer_project_longitude VARCHAR(4000),
   job_offer_manpower_loading_id VARCHAR(4000),
   job_offer_manpower_loading_reference_created_by VARCHAR(4000),
   job_offer_compensation VARCHAR(4000),
@@ -17813,7 +17815,9 @@ AS $$
       projectAddress,
       manpowerLoadingId,
       manpowerLoadingReferenceCreatedBy,
-      compensation
+      compensation,
+      projectLongitude,
+      projectLatitude
     } = input_data;
 
     const jobOfferId = plv8.execute(
@@ -17829,7 +17833,9 @@ AS $$
           job_offer_project_assignment_address,
           job_offer_manpower_loading_id,
           job_offer_manpower_loading_reference_created_by,
-          job_offer_compensation
+          job_offer_compensation,
+          job_offer_project_latitude,
+          job_offer_project_longitude
         )
         VALUES
         (
@@ -17842,7 +17848,9 @@ AS $$
           '${projectAddress}',
           '${manpowerLoadingId}',
           '${manpowerLoadingReferenceCreatedBy}',
-          '${compensation}'
+          '${compensation}',
+          ${projectLatitude ? `'${projectLatitude}'` : "NULL"},
+          ${projectLongitude ? `'${projectLongitude}'` : "NULL"}
         )
         RETURNING job_offer_id
       `
@@ -19223,8 +19231,7 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_hr_project_options(
-)
+CREATE OR REPLACE FUNCTION get_hr_project_options()
 RETURNS JSON
 SET search_path TO ''
 AS $$
@@ -19251,7 +19258,9 @@ plv8.subtransaction(function(){
         address_city: project.address_city,
         address_barangay: project.address_barangay,
         address_street: project.address_street,
-        address_zip_code: project.address_zip_code
+        address_zip_code: project.address_zip_code,
+        address_latitude: project.address_latitude, 
+        address_longitude: project.address_longitude,
       }
     }
   });
