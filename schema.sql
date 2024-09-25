@@ -18784,7 +18784,7 @@ plv8.subtransaction(function(){
   const hrOptionList = hrMemberData.map(hr => {
     return { label: `${hr.user_first_name} ${hr.user_last_name}`, value: hr.team_member_id };
   });
-  
+
   returnData = {
     positionOptionList,
     hrOptionList
@@ -19594,7 +19594,6 @@ plv8.subtransaction(function(){
   )[0].count
 
   returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
-
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -20177,7 +20176,7 @@ TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_member_table;
-CREATE policy "Allow READ for anon users" ON team_schema.team_member_table
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_member_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
