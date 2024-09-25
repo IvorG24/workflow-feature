@@ -14,6 +14,7 @@ import {
   GetServerSidePropsResult,
 } from "next";
 
+import rateLimit from "express-rate-limit";
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
 import { formatTeamNameToUrlKey, isUUID } from "./string";
@@ -187,7 +188,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
 };
 
 export const withAuthAndOnboardingRequestPage = <
-  P extends { [key: string]: any },
+  P extends { [key: string]: any }
 >(
   getServerSidePropsFunc: (params: {
     context: GetServerSidePropsContext;
@@ -470,3 +471,15 @@ export const withOwnerAndRaya = <P extends { [key: string]: any }>(
     }
   };
 };
+
+export const limiter = rateLimit({
+  windowMs: 60 * 1000, // per minute
+  max: 60, // 60 requests
+  keyGenerator: function (req) {
+    return String(req.headers["authorization"]);
+  },
+  message: {
+    status: 429,
+    message: "Too many requests, please try again later.",
+  },
+});

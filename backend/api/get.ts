@@ -7090,6 +7090,21 @@ export const getHRApplicantAnalytics = async (
   return data as HRAnalyticsData;
 };
 
+export const getRequestAdOwner = async (
+  supabaseClient: SupabaseClient<Database>,
+  requestId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("ad_owner_request_table")
+    .select("ad_owner: ad_owner_request_owner_id(ad_owner_name)")
+    .eq("ad_owner_request_request_id", requestId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data as unknown as {ad_owner: {ad_owner_name: string}};
+};
+
 export const getEmailResendTimer = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
