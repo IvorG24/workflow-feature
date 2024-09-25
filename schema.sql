@@ -18082,7 +18082,9 @@ plv8.subtransaction(function(){
 });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
+CREATE OR REPLACE FUNCTION get_application_information_analytics(
+  input_data JSON
+)
 RETURNS JSON
 SET search_path TO ''
 AS $$
@@ -18099,12 +18101,12 @@ AS $$
     }
 
     const candidate_referral_source = plv8.execute(`
-        SELECT request_response, COUNT(DISTINCT request_response)::int AS count
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
-        ${dateFilterCondition}
-        GROUP BY request_response
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      FROM request_schema.request_response_table
+      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+      WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
+      ${dateFilterCondition}
+      GROUP BY request_response
     `);
 
     const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
@@ -18170,36 +18172,36 @@ AS $$
 
     let query = `
      SELECT p.*,
-            g.equipment_general_name,
-            b.equipment_brand,
-            m.equipment_model,
-            u.equipment_unit_of_measurement,
-            ec.equipment_component_category
+        g.equipment_general_name,
+        b.equipment_brand,
+        m.equipment_model,
+        u.equipment_unit_of_measurement,
+        ec.equipment_component_category
      FROM equipment_schema.equipment_part_table p
      JOIN equipment_schema.equipment_table e
-         ON e.equipment_id = p.equipment_part_equipment_id
-         AND e.equipment_is_disabled = false
-         AND e.equipment_is_available = true
+        ON e.equipment_id = p.equipment_part_equipment_id
+        AND e.equipment_is_disabled = false
+        AND e.equipment_is_available = true
      JOIN equipment_schema.equipment_general_name_table g
-         ON g.equipment_general_name_id = p.equipment_part_general_name_id
-         AND g.equipment_general_name_is_disabled = false
-         AND g.equipment_general_name_is_available = true
+        ON g.equipment_general_name_id = p.equipment_part_general_name_id
+        AND g.equipment_general_name_is_disabled = false
+        AND g.equipment_general_name_is_available = true
      JOIN equipment_schema.equipment_brand_table b
-         ON b.equipment_brand_id = p.equipment_part_brand_id
-         AND b.equipment_brand_is_disabled = false
-         AND b.equipment_brand_is_available = true
+        ON b.equipment_brand_id = p.equipment_part_brand_id
+        AND b.equipment_brand_is_disabled = false
+        AND b.equipment_brand_is_available = true
      JOIN equipment_schema.equipment_model_table m
-         ON m.equipment_model_id = p.equipment_part_model_id
-         AND m.equipment_model_is_disabled = false
-         AND m.equipment_model_is_available = true
+        ON m.equipment_model_id = p.equipment_part_model_id
+        AND m.equipment_model_is_disabled = false
+        AND m.equipment_model_is_available = true
      JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table u
-         ON u.equipment_unit_of_measurement_id = p.equipment_part_unit_of_measurement_id
-         AND u.equipment_unit_of_measurement_is_disabled = false
-         AND u.equipment_unit_of_measurement_is_available = true
+        ON u.equipment_unit_of_measurement_id = p.equipment_part_unit_of_measurement_id
+        AND u.equipment_unit_of_measurement_is_disabled = false
+        AND u.equipment_unit_of_measurement_is_available = true
      JOIN equipment_schema.equipment_component_category_table ec
-         ON ec.equipment_component_category_id = p.equipment_part_component_category_id
-         AND ec.equipment_component_category_is_disabled = false
-         AND ec.equipment_component_category_is_available = true
+        ON ec.equipment_component_category_id = p.equipment_part_component_category_id
+        AND ec.equipment_component_category_is_disabled = false
+        AND ec.equipment_component_category_is_available = true
      WHERE p.equipment_part_is_available = true
        AND p.equipment_part_is_disabled = false
        AND e.equipment_team_id = '${teamId}'`;
@@ -18216,26 +18218,24 @@ AS $$
     let pedPartData = plv8.execute(query);
      pedPartData.forEach((data) => {
         const {
-            equipment_part_is_available,
-            equipment_part_is_disabled,
-            equipment_part_general_name_id,
-            equipment_part_brand_id,
-            equipment_part_unit_of_measurement_id,
-            equipment_part_component_category_id,
-            equipment_part_model_id,
-            equipment_part_equipment_id,
-            ...filteredData
+          equipment_part_is_available,
+          equipment_part_is_disabled,
+          equipment_part_general_name_id,
+          equipment_part_brand_id,
+          equipment_part_unit_of_measurement_id,
+          equipment_part_component_category_id,
+          equipment_part_model_id,
+          equipment_part_equipment_id,
+          ...filteredData
         } = data;
         returnData.push(filteredData);
     });
   });
-
   return returnData;
-
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_other_expenses_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
@@ -18259,7 +18259,8 @@ AS $$
       ON c.other_expenses_category_id = t.other_expenses_type_category_id
       WHERE t.other_expenses_type_is_available = true
       AND t.other_expenses_type_is_disabled = false
-      AND c.other_expenses_category_team_id = '${teamId}'`;
+      AND c.other_expenses_category_team_id = '${teamId}'
+    `;
 
     if (startDate) {
       query += ` AND t.other_expenses_type_date_created >= '${startDate}' `;
@@ -18272,27 +18273,27 @@ AS $$
     let otherExpensesData = plv8.execute(query);
 
     otherExpensesData.forEach((data) => {
-        const {
-            other_expenses_type_is_disabled,
-            other_expenses_type_is_available,
-            other_expenses_type_category_id,
-            ...filteredData
-        } = data;
+      const {
+        other_expenses_type_is_disabled,
+        other_expenses_type_is_available,
+        other_expenses_type_category_id,
+        ...filteredData
+      } = data;
 
-        returnData.push(filteredData);
+      returnData.push(filteredData);
     });
   });
   return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_item_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = [];
-   plv8.subtransaction(function() {
+  plv8.subtransaction(function() {
     const {
       limit = 100,
       offset = 0,
@@ -18357,18 +18358,17 @@ let returnData = [];
 
     returnData = Object.values(groupedData);
   });
-
   return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_ped_item_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = [];
-   plv8.subtransaction(function() {
+  plv8.subtransaction(function() {
     const {
       limit = 100,
       offset = 0,
@@ -18431,15 +18431,13 @@ let returnData = [];
         groupedData[itemId].item_descriptions.push(data.item_description_label);
       }
     });
-
     returnData = Object.values(groupedData);
   });
-
   return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_services_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
@@ -18473,28 +18471,28 @@ plv8.subtransaction(function() {
     let serviceData = plv8.execute(query);
 
     serviceData.forEach((data)=>{
-        const {
-          service_is_available,
-          service_is_disabled,
-          service_category_id,
-          service_team_id,
-            ...filteredData
-        } = data;
+      const {
+        service_is_available,
+        service_is_disabled,
+        service_category_id,
+        service_team_id,
+        ...filteredData
+      } = data;
 
-        returnData.push(filteredData);
+      returnData.push(filteredData);
     })
 })
 return returnData
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_it_asset_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = [];
-   plv8.subtransaction(function() {
+  plv8.subtransaction(function() {
     const {
       limit = 100,
       offset = 0,
@@ -18556,15 +18554,13 @@ let returnData = [];
         groupedData[itemId].item_descriptions.push(data.item_description_label);
       }
     });
-
     returnData = Object.values(groupedData);
   });
-
   return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_request_raya_api(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
@@ -18609,7 +18605,8 @@ AS $$
       WHERE
         r.request_status = 'APPROVED' AND
         r.request_is_disabled = false
-        AND t.team_id = '${teamId}'`;
+        AND t.team_id = '${teamId}'
+      `;
 
     if (startDate) {
       mainQuery += ` AND r.request_date_created >= '${startDate}' `;
@@ -18738,10 +18735,8 @@ AS $$
         }
       });
     }
-
     returnData = Object.values(groupedData);
   });
-
   return returnData;
 $$ LANGUAGE plv8;
 
@@ -18789,7 +18784,7 @@ plv8.subtransaction(function(){
   const hrOptionList = hrMemberData.map(hr => {
     return { label: `${hr.user_first_name} ${hr.user_last_name}`, value: hr.team_member_id };
   });
-
+  
   returnData = {
     positionOptionList,
     hrOptionList
