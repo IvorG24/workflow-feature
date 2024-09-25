@@ -1,7 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getPositionType,
-  getRequestAdOwner,
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
@@ -305,114 +303,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       confirmProps: { color: "red" },
       onConfirm: async () => await handleDeleteRequest(),
     });
-
-  const onCreateJiraTicket = async () => {
-    try {
-      setIsLoading(true);
-
-      let candidateSource = "";
-      const adOwner = await getRequestAdOwner(
-        supabaseClient,
-        request.request_id
-      );
-
-      if (
-        adOwner?.ad_owner.ad_owner_name &&
-        adOwner?.ad_owner.ad_owner_name === "lgu"
-      ) {
-        candidateSource = adOwner?.ad_owner.ad_owner_name.toUpperCase();
-      } else {
-        candidateSource = safeParse(
-          `${formSection[0].section_field[3].field_response?.request_response}`
-        );
-      }
-
-      const personalInformationSection = formSection[1].section_field;
-      const firstName = safeParse(
-        `${personalInformationSection[0].field_response?.request_response}`
-      );
-      const middleName = personalInformationSection[1].field_response
-        ?.request_response
-        ? safeParse(
-            personalInformationSection[1].field_response?.request_response
-          )
-        : "";
-      const lastName = safeParse(
-        `${personalInformationSection[2].field_response?.request_response}`
-      );
-      let applicantName = `${lastName}, ${firstName}`;
-      if (middleName) {
-        applicantName = applicantName + ` ${middleName}`;
-      }
-
-      const applicantPosition = safeParse(
-        `${formSection[0].section_field[0].field_response?.request_response}`
-      );
-      const positionType = await getPositionType(
-        supabaseClient,
-        applicantPosition
-      );
-      const sssID = safeParse(
-        `${formSection[3].section_field[0].field_response?.request_response}`
-      );
-      const contactNumber = safeParse(
-        `${formSection[2].section_field[0].field_response?.request_response}`
-      );
-      const emailAddress = safeParse(
-        `${formSection[2].section_field[1].field_response?.request_response}`
-      );
-      const employmentStatus = safeParse(
-        `${formSection[5].section_field[0].field_response?.request_response}`
-      );
-      const isExperienced = formSection.some(
-        (section) => section.section_name === "Most Recent Work Experience"
-      );
-
-      const createTicketResponse = await fetch(
-        "/api/jira/create-recruitment-ticket",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicantName,
-            applicantPosition,
-            positionType,
-            sssID,
-            contactNumber,
-            emailAddress,
-            candidateSource,
-            employmentStatus,
-            isExperienced,
-          }),
-        }
-      );
-      const jiraTicket = await createTicketResponse.json();
-
-      if (!jiraTicket.jiraTicketId) {
-        notifications.show({
-          message: "Failed to create jira ticket",
-          color: "red",
-        });
-        return;
-      }
-      setRequestJira({
-        id: jiraTicket.jiraTicketId,
-        link: jiraTicket.jiraTicketLink,
-      });
-      return jiraTicket;
-    } catch (e) {
-      const errorMessage = (e as Error).message;
-      notifications.show({
-        message: `Error: ${errorMessage}`,
-        color: "red",
-      });
-      return { jiraTicketId: "", jiraTicketLink: "" };
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     try {
