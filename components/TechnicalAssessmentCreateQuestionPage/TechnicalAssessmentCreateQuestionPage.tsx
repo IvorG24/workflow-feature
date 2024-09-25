@@ -104,28 +104,30 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       const uniqueQuestions = new Set();
       for (const questionData of data.sections) {
-        if (uniqueQuestions.has(questionData.question)) {
+        const trimmedQuestion = questionData.question.trim(); // Trim question
+
+        if (uniqueQuestions.has(trimmedQuestion)) {
           notifications.show({
-            message: `Duplicate question found: ${questionData.question}`,
+            message: `Duplicate question found: ${trimmedQuestion}`,
             color: "orange",
           });
           return;
         }
-        uniqueQuestions.add(questionData.question);
+        uniqueQuestions.add(trimmedQuestion);
 
         const choicesWithResponse = questionData.choices
           .slice(0, 2)
-          .filter((choice) => choice.choice.trim() !== "");
+          .filter((choice) => choice.choice.trim() !== ""); // Trim choices
 
         const hasDuplicateChoices =
           new Set(choicesWithResponse.map((choice) => choice.choice.trim()))
             .size !== choicesWithResponse.length;
 
         if (choicesWithResponse.length < 2 || hasDuplicateChoices) {
-          let message = `At least two choices with valid responses are required for: ${questionData.question}`;
+          let message = `At least two choices with valid responses are required for: ${trimmedQuestion}`;
 
           if (hasDuplicateChoices) {
-            message = `Duplicate choices are not allowed for: ${questionData.question}`;
+            message = `Duplicate choices are not allowed for: ${trimmedQuestion}`;
           }
 
           notifications.show({
@@ -136,11 +138,11 @@ const TechnicalAssessmentCreateQuestionPage = ({
         }
 
         const correctAnswerSelected = questionData.choices.some(
-          (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
+          (choice) => choice.isCorrectAnswer && choice.choice.trim() !== "" // Trim correct answer
         );
         if (!correctAnswerSelected) {
           notifications.show({
-            message: `No valid correct answer selected for: ${questionData.question}`,
+            message: `No valid correct answer selected for: ${trimmedQuestion}`,
             color: "orange",
           });
           return;

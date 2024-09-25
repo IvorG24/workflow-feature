@@ -2,7 +2,6 @@ import {
   getPositionPerQuestionnaire,
   getPositionTypeOptions,
 } from "@/backend/api/get";
-import { checkIfQuestionExistsUpdate } from "@/backend/api/post";
 import {
   handleDeleteTechnicalQuestion,
   updateQuestionnairePosition,
@@ -162,27 +161,24 @@ const TechnicalAssessmentCreateQuestionPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
-      if (data.question.trim() === "") {
+
+      const trimmedQuestion = data.question.trim();
+      if (trimmedQuestion === "") {
         notifications.show({
           message: "Technical question is required.",
           color: "orange",
         });
         return;
       }
-      const isQuestionExists = await checkIfQuestionExistsUpdate(
-        supabaseClient,
-        {
-          data,
-          questionnaireId,
-        }
-      );
 
-      if (isQuestionExists) {
-        notifications.show({
-          message: "Question already exists.",
-          color: "orange",
-        });
-        return;
+      for (const section of questionnaireData) {
+        if (section.field_response.trim() === trimmedQuestion) {
+          notifications.show({
+            message: "Duplicate Question found.",
+            color: "orange",
+          });
+          return;
+        }
       }
 
       const choicesWithResponse = data.choices.filter(
@@ -191,7 +187,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       if (choicesWithResponse.length < 2) {
         notifications.show({
-          message: `At least two choices with valid responses are required for: ${data.question}`,
+          message: `At least two choices with valid responses are required for: ${trimmedQuestion}`,
           color: "orange",
         });
         return;
@@ -203,18 +199,19 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       if (uniqueChoices.size !== choicesWithResponse.length) {
         notifications.show({
-          message: `Duplicate choices found for: ${data.question}. Please provide unique choices.`,
+          message: `Duplicate choices found for: ${trimmedQuestion}. Please provide unique choices.`,
           color: "orange",
         });
         return;
       }
 
+      // Check if a valid correct answer has been selected
       const correctAnswerSelected = choicesWithResponse.some(
         (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
       );
       if (!correctAnswerSelected) {
         notifications.show({
-          message: `No valid correct answer selected for: ${data.question}`,
+          message: `No valid correct answer selected for: ${trimmedQuestion}`,
           color: "orange",
         });
         return;
@@ -224,7 +221,14 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       // Update the technical question
       await updateTechnicalQuestion(supabaseClient, {
-        requestValues: data,
+        requestValues: {
+          ...data,
+          question: trimmedQuestion, // Ensure the trimmed question is passed to the update function
+          choices: choicesWithResponse.map((choice) => ({
+            ...choice,
+            choice: choice.choice.trim(), // Ensure the trimmed choices are passed
+          })),
+        },
         teamMemberId: teamMember.team_member_id || "",
         questionnaireId: questionnaireId,
       });
