@@ -2280,23 +2280,21 @@ export const createTechnicalQuestions = async (
     return data;
   };
 
-
   export const checkIfQuestionExists = async (
     supabaseClient: SupabaseClient<Database>,
     params: {
-      data: RequestFormValues;
+      data: TechnicalQuestionFormValues;
       questionnaireId: string;
     }
   ) => {
     const { data: requestFormValues, questionnaireId } = params;
     const technicalQuestionData: {response: string}[] = [];
     for (const section of requestFormValues.sections) {
-      for (const field of section.section_field) {
-        if (field.field_name.toLowerCase().includes("technical question")) {
-          technicalQuestionData.push({response:String(field.field_response)});
+        if (section.field_name.toLowerCase().includes("technical question")) {
+          technicalQuestionData.push({response:String(section.question)});
         }
       }
-    }
+
 
     const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
       "check_technical_question",

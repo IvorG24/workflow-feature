@@ -162,7 +162,13 @@ const TechnicalAssessmentCreateQuestionPage = ({
       if (!requestorProfile) return;
       if (!teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
-
+      if (data.question.trim() === "") {
+        notifications.show({
+          message: "Technical question is required.",
+          color: "orange",
+        });
+        return;
+      }
       const isQuestionExists = await checkIfQuestionExistsUpdate(
         supabaseClient,
         {
@@ -178,9 +184,11 @@ const TechnicalAssessmentCreateQuestionPage = ({
         });
         return;
       }
-      const choicesWithResponse = data.choices
-        .slice(0, 2)
-        .filter((choice) => choice.choice.trim() !== "");
+
+      const choicesWithResponse = data.choices.filter(
+        (choice) => choice.choice && choice.choice.trim() !== ""
+      );
+
       if (choicesWithResponse.length < 2) {
         notifications.show({
           message: `At least two choices with valid responses are required for: ${data.question}`,
@@ -189,7 +197,19 @@ const TechnicalAssessmentCreateQuestionPage = ({
         return;
       }
 
-      const correctAnswerSelected = data.choices.some(
+      const uniqueChoices = new Set(
+        choicesWithResponse.map((choice) => choice.choice.trim().toLowerCase())
+      );
+
+      if (uniqueChoices.size !== choicesWithResponse.length) {
+        notifications.show({
+          message: `Duplicate choices found for: ${data.question}. Please provide unique choices.`,
+          color: "orange",
+        });
+        return;
+      }
+
+      const correctAnswerSelected = choicesWithResponse.some(
         (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
       );
       if (!correctAnswerSelected) {
@@ -199,8 +219,10 @@ const TechnicalAssessmentCreateQuestionPage = ({
         });
         return;
       }
+
       setIsLoading(true);
 
+      // Update the technical question
       await updateTechnicalQuestion(supabaseClient, {
         requestValues: data,
         teamMemberId: teamMember.team_member_id || "",
@@ -388,7 +410,9 @@ const TechnicalAssessmentCreateQuestionPage = ({
           {fields &&
             fields.length > 0 &&
             fields.map((question, questionIndex) => {
-              const questionText = watch(`sections.${questionIndex}.question`);
+              const questionText = getValues(
+                `sections.${questionIndex}.question`
+              );
 
               if (!questionText || questionText.trim() === "") {
                 return null;

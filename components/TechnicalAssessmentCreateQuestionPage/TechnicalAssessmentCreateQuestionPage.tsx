@@ -1,4 +1,7 @@
-import { createTechnicalQuestions } from "@/backend/api/post";
+import {
+  checkIfQuestionExists,
+  createTechnicalQuestions,
+} from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -86,6 +89,19 @@ const TechnicalAssessmentCreateQuestionPage = ({
       setIsLoading(true);
       if (!requestorProfile || !teamMember) return;
 
+      const isQuestionExists = await checkIfQuestionExists(supabaseClient, {
+        data,
+        questionnaireId: questionnaireId,
+      });
+
+      if (isQuestionExists) {
+        notifications.show({
+          message: "Question already exists.",
+          color: "orange",
+        });
+        return;
+      }
+
       const uniqueQuestions = new Set();
       for (const questionData of data.sections) {
         if (uniqueQuestions.has(questionData.question)) {
@@ -100,9 +116,20 @@ const TechnicalAssessmentCreateQuestionPage = ({
         const choicesWithResponse = questionData.choices
           .slice(0, 2)
           .filter((choice) => choice.choice.trim() !== "");
-        if (choicesWithResponse.length < 2) {
+
+        const hasDuplicateChoices =
+          new Set(choicesWithResponse.map((choice) => choice.choice.trim()))
+            .size !== choicesWithResponse.length;
+
+        if (choicesWithResponse.length < 2 || hasDuplicateChoices) {
+          let message = `At least two choices with valid responses are required for: ${questionData.question}`;
+
+          if (hasDuplicateChoices) {
+            message = `Duplicate choices are not allowed for: ${questionData.question}`;
+          }
+
           notifications.show({
-            message: `At least two choices with valid responses are required for: ${questionData.question}`,
+            message,
             color: "orange",
           });
           return;
@@ -128,10 +155,8 @@ const TechnicalAssessmentCreateQuestionPage = ({
         message: "Technical question created successfully.",
         color: "green",
       });
-      await router.push(
-        `/${formatTeamNameToUrlKey(
-          activeTeam.team_name
-        )}/technical-question/${questionnaireId}`
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/technical-question/${questionnaireId}`
       );
     } catch (e) {
       notifications.show({
@@ -197,9 +222,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                               checked={watch(
                                 `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
                               )}
-                              label={`${String.fromCharCode(
-                                65 + choiceIndex
-                              )} )`}
+                              label={`${String.fromCharCode(65 + choiceIndex)} )`}
                               mt={24}
                               onChange={() =>
                                 handleRadioChange(questionIndex, choiceIndex)
