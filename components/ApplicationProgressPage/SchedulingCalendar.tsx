@@ -275,6 +275,7 @@ const SchedulingCalendar = ({
       const [hours, minutes] = time.split(":").map(Number);
 
       const tempDate = new Date(selectedDate);
+
       tempDate.setHours(hours, minutes);
       const { status, assigned_hr_team_member_id } =
         await phoneInterviewValidation(supabaseClient, {
@@ -403,7 +404,7 @@ const SchedulingCalendar = ({
     } else {
       // create online meeting
       if (process.env.NODE_ENV === "production") {
-        await handleCreateOnlineMeeting(tempDate);
+        await handleCreateOnlineMeeting(tempDate, breakDuration, duration);
       } else {
         const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
           supabaseClient,
@@ -420,7 +421,11 @@ const SchedulingCalendar = ({
     }
   };
 
-  const handleCreateOnlineMeeting = async (tempDate: Date) => {
+  const handleCreateOnlineMeeting = async (
+    tempDate: Date,
+    breakDuration: number,
+    duration: number
+  ) => {
     const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
     const hrRepresentativeEmail = "johndoe@gmail.com"; // replace with actual hr rep email
     const formattedDate = moment(tempDate).format("dddd, MMMM Do YYYY, h:mm A");
@@ -467,6 +472,7 @@ const SchedulingCalendar = ({
       },
       body: JSON.stringify(meetingDetails),
     });
+
     const createMeetingData = await createMeetingResponse.json();
 
     const meetingUrl = createMeetingData.onlineMeeting.joinUrl;
@@ -475,9 +481,9 @@ const SchedulingCalendar = ({
       interview_meeting_interview_id: targetId,
       interview_meeting_url: meetingUrl,
       interview_meeting_provider_id: createMeetingData.id,
-      interview_meeting_break_duration: 0,
-      interview_meeting_duration: 0,
-      interview_meeting_schedule: "",
+      interview_meeting_break_duration: breakDuration,
+      interview_meeting_duration: duration,
+      interview_meeting_schedule: tempDate.toISOString(),
     };
 
     const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
