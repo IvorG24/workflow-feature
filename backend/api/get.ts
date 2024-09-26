@@ -6486,5 +6486,5 @@ export const getRequestAdOwner = async (
     .maybeSingle();
   if (error) throw error;
 
-  return data as unknown as {ad_owner: {ad_owner_name: string}};
+  return data as unknown as { ad_owner: { ad_owner_name: string } };
 };
