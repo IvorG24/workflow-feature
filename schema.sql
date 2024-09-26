@@ -5639,7 +5639,9 @@ AS $$
           } else {
             return field;
           }
-        })
+        });
+
+        const assigneeSectionFieldList = form.form_section[2].section_field.filter((field) => field.field_order !== 0);
 
         returnData = {
           form: {
@@ -5649,7 +5651,13 @@ AS $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              ...form.form_section.slice(1)
+              {
+                ...form.form_section[1]
+              },
+              {
+                ...form.form_section[2],
+                section_field: assigneeSectionFieldList,
+              }
             ],
           },
           projectOptions

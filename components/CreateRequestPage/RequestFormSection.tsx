@@ -101,6 +101,10 @@ type RequestFormSectionProps = {
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;

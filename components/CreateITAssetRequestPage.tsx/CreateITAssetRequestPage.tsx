@@ -1,4 +1,5 @@
 import {
+  getEmployeeName,
   getITAssetItemOptions,
   getItem,
   getProjectSignerWithTeamMember,
@@ -390,6 +391,47 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
     }
   };
 
+  const handleEmployeeNumberChange = async (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+      const employee = await getEmployeeName(supabaseClient, {
+        employeeId: value,
+      });
+
+      if (employee) {
+        setValue(
+          `sections.${sectionIndex}.section_field.2.field_response`,
+          employee.scic_employee_first_name
+        );
+        setValue(
+          `sections.${sectionIndex}.section_field.3.field_response`,
+          employee.scic_employee_middle_name
+        );
+        setValue(
+          `sections.${sectionIndex}.section_field.4.field_response`,
+          employee.scic_employee_last_name
+        );
+        setValue(
+          `sections.${sectionIndex}.section_field.5.field_response`,
+          employee.scic_employee_suffix
+        );
+      } else {
+        setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
+        setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");
+        setValue(`sections.${sectionIndex}.section_field.4.field_response`, "");
+        setValue(`sections.${sectionIndex}.section_field.5.field_response`, "");
+      }
+    } catch (e) {
+      notifications.show({
+        message: "Failed to fetch employee data",
+        color: "orange",
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
@@ -469,6 +511,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
                     itAssetRequestFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onGeneralNameChange: handleGeneralNameChange,
+                      onEmployeeNumberChange: handleEmployeeNumberChange,
                     }}
                     formslyFormName={form.form_name}
                     loadingFieldList={loadingFieldList}
