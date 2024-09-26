@@ -14441,6 +14441,7 @@ plv8.subtransaction(function(){
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           form_id = '${formId}'
+          AND form_is_disabled = false
       `
     )[0];
 
