@@ -26,7 +26,6 @@ const FormSectionList = ({ formId, formName }: Props) => {
           formId: formId,
           formName: formName,
         });
-
         setSectionList(data);
       } catch (e) {
         notifications.show({

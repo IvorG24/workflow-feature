@@ -1,7 +1,6 @@
 import {
   ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
-  OptionType,
 } from "@/utils/types";
 import {
   Accordion,
@@ -51,21 +50,6 @@ const sectionList = [
         label: "Date Updated",
         type: "DATE",
       },
-      {
-        id: "requestFilter.approver",
-        label: "Approver",
-        type: "MULTISELECT",
-      },
-      {
-        id: "requestFilter.requestScoreRange",
-        label: "Score",
-        type: "NUMBER",
-      },
-      {
-        id: "requestFilter.adOwner",
-        label: "Ad Owner",
-        type: "MULTISELECT",
-      },
     ],
   },
   {
@@ -109,11 +93,6 @@ const sectionList = [
       {
         id: "responseFilter.lastName",
         label: "Last Name",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.nickname",
-        label: "Nickname",
         type: "TEXT",
       },
       {
@@ -212,13 +191,8 @@ const sectionList = [
         type: "MULTISELECT",
       },
       {
-        id: "responseFilter.fieldOfStudy",
-        label: "Field of Study",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.degreeName",
-        label: "Degree Name",
+        id: "responseFilter.degree",
+        label: "Degree",
         type: "TEXT",
       },
       {
@@ -252,11 +226,6 @@ const sectionList = [
         type: "BOOLEAN",
       },
       {
-        id: "responseFilter.shiftWillingToWork",
-        label: "Shift Willing to Work",
-        type: "SELECT",
-      },
-      {
         id: "responseFilter.willingToBeAssignedAnywhere",
         label: "Willing to be assigned anywhere",
         type: "BOOLEAN",
@@ -278,7 +247,7 @@ const sectionList = [
       },
       {
         id: "responseFilter.expectedSalary",
-        label: "Expected Monthly Salary (PHP)",
+        label: "Expected Salary",
         type: "NUMBER",
       },
     ],
@@ -289,14 +258,12 @@ type Props = {
   fetchData: (data?: ApplicationInformationFilterFormValues) => void;
   optionList: ApplicationInformationFieldOptionType[];
   handleReset: () => void;
-  approverOptionList: OptionType[];
 };
 
 const ApplicationInformationFilterMenu = ({
   fetchData,
   optionList,
   handleReset,
-  approverOptionList,
 }: Props) => {
   const theme = useMantineTheme();
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
@@ -315,15 +282,7 @@ const ApplicationInformationFilterMenu = ({
     if (["SELECT", "MULTISELECT"].includes(field.type)) {
       fieldOptions =
         optionList
-          .find((option) => {
-            if (field.label === "Shift Willing to Work") {
-              return (
-                option.field_name === "Which shift are you willing to work?"
-              );
-            } else {
-              return option.field_name === field.label;
-            }
-          })
+          .find((option) => option.field_name === field.label)
           ?.field_option.map((option) => {
             return {
               label: option.option_value,
@@ -337,8 +296,6 @@ const ApplicationInformationFilterMenu = ({
           { label: "APPROVED", value: "APPROVED" },
           { label: "REJECTED", value: "REJECTED" },
         ];
-      } else if (field.label === "Approver") {
-        fieldOptions = approverOptionList;
       }
     }
 

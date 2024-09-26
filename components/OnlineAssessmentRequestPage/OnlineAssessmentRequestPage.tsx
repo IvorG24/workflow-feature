@@ -8,12 +8,13 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
+import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR, safeParse } from "@/utils/functions";
+import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -28,14 +29,14 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
+  Accordion,
   Alert,
-  Button,
   Container,
   Flex,
+  Paper,
   Stack,
   Text,
   Title,
-  useMantineTheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -50,11 +51,10 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const TechnicalAssessmentRequestPage = ({ request }: Props) => {
+const OnlineAssessmentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
-  const { colors } = useMantineTheme();
   const { setIsLoading } = useLoadingActions();
   const [isNoteClosed, setIsNoteClosed] = useState(false);
 
@@ -81,11 +81,11 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
     request.request_form.form_section
   );
 
-  // const isWithDuplicatableSection = request.request_form.form_section.some(
-  //   (section) =>
-  //     section.section_is_duplicatable &&
-  //     section.section_field[0].field_response.length
-  // );
+  const isWithDuplicatableSection = request.request_form.form_section.some(
+    (section) =>
+      section.section_is_duplicatable &&
+      section.section_field[0].field_response.length
+  );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -350,31 +350,16 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = request.request_status === "APPROVED";
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[1].section_field[0].field_response[0]
+          .request_response ?? ""
+      );
 
   return (
     <Container>
-      <JoyRideNoSSR
-        steps={[
-          {
-            target: ".next-step",
-            content: (
-              <Text>
-                You can now continue to HR Phone Interview since the technical
-                assessment has been approved. To continue, simply click the
-                &ldquo;Next Step&ldquo; button.
-              </Text>
-            ),
-            disableBeacon: true,
-          },
-        ]}
-        run={true}
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        hideBackButton
-        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
-      />
       {!isNoteClosed && router.pathname.includes("public-request") && (
         <Alert
           mb="xl"
@@ -392,26 +377,10 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           </Text>
         </Alert>
       )}
-
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {nextStep && (
-          <Button
-            className="next-step"
-            onClick={() =>
-              router.push(
-                `/user/application-progress/${safeParse(
-                  request.request_form.form_section[0].section_field[0]
-                    .field_response[0].request_response
-                )}`
-              )
-            }
-          >
-            Next Step
-          </Button>
-        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -422,8 +391,15 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
         />
+
         <Stack spacing="xl" mt="lg">
-          {formSection.slice(0, 2).map((section, idx) => {
+          {formSection.map((section, idx) => {
+            if (
+              !section.section_field[0].field_response ||
+              section.section_is_duplicatable ||
+              section.section_name === "Resume"
+            )
+              return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -435,26 +411,45 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
-          {formSection[2].section_field.length ? (
-            formSection.slice(2).map((section, idx) => {
-              return (
-                <RequestSection
-                  key={section.section_id + idx}
-                  section={section}
-                  isFormslyForm={true}
-                  isOnlyWithResponse
-                  index={idx + 1}
-                  isPublicRequest={true}
-                />
-              );
-            })
-          ) : (
-            <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
-              <Text>
-                The position doesn&apos;t have a technical assessment yet.
-              </Text>
-            </Alert>
+
+          {isWithDuplicatableSection && (
+            <Accordion>
+              <Accordion.Item value={"workExperience"}>
+                <Paper shadow="xs">
+                  <Accordion.Control>
+                    <Title order={4} color="dimmed">
+                      Most Recent Work Experience
+                    </Title>
+                  </Accordion.Control>
+                </Paper>
+                <Accordion.Panel>
+                  <Stack spacing="xl" mt="lg">
+                    {formSection
+                      .filter((section) => section.section_is_duplicatable)
+                      .map((section, index) => {
+                        return (
+                          <RequestSection
+                            key={section.section_id + index}
+                            section={section}
+                            isFormslyForm={true}
+                            isOnlyWithResponse
+                            index={index + 1}
+                            isPublicRequest={true}
+                          />
+                        );
+                      })}
+                  </Stack>
+                </Accordion.Panel>
+              </Accordion.Item>
+            </Accordion>
           )}
+
+          <RequestSection
+            section={formSection[formSection.length - 1]}
+            isFormslyForm={true}
+            isOnlyWithResponse
+            isPublicRequest={true}
+          />
         </Stack>
 
         {isRequestActionSectionVisible && (
@@ -479,7 +474,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           />
         )}
 
-        {/* <RequestSignerSection signerList={signerList} /> */}
+        <RequestSignerSection signerList={signerList} />
       </Stack>
 
       <RequestCommentList
@@ -495,4 +490,4 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   );
 };
 
-export default TechnicalAssessmentRequestPage;
+export default OnlineAssessmentRequestPage;

@@ -4,12 +4,12 @@ import {
   SectionWithFieldType,
 } from "@/utils/types";
 import {
+  ActionIcon,
   Box,
   Button,
   Center,
   createStyles,
   Flex,
-  Group,
   LoadingOverlay,
   Paper,
   ScrollArea,
@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import {
   IconArrowDown,
-  IconArrowsVertical,
+  IconArrowsSort,
   IconArrowUp,
   IconChevronDown,
 } from "@tabler/icons-react";
@@ -65,16 +65,6 @@ export const requestColumnList = [
     field_name: "Approver",
     field_type: "Approver",
   },
-  {
-    field_id: "request_score_value",
-    field_name: "Score",
-    field_type: "NUMBER",
-  },
-  {
-    field_id: "request_ad_owner",
-    field_name: "Ad Owner",
-    field_type: "DROPDOWN",
-  },
 ];
 
 export type ClassNameType =
@@ -88,37 +78,13 @@ export type ClassNameType =
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
-    "&& th": {
-      color: "white",
-      fontSize: 14,
-      fontWeight: 900,
-      backgroundColor: theme.colors.blue[5],
-      transition: "background-color 0.3s ease",
-      padding: "10px",
-      "& svg": {
-        fill: "white",
-        color: "white",
-      },
-      "&:hover": {
-        backgroundColor: "#0042ab !important",
-        color: "white !important",
-        "& svg": {
-          fill: "white",
-          color: "white",
-        },
-      },
-    },
-    "&& td": {
-      borderBottom: "1px solid #CDD1D6",
-      minWidth: 150,
+    "& td": {
+      minWidth: 130,
       width: "100%",
-      padding: "10px",
     },
   },
   Request: {
     backgroundColor: theme.colors.blue[3],
-    color: theme.white,
-    textAlign: "center",
   },
   Header: {
     backgroundColor: theme.colors.cyan[3],
@@ -204,15 +170,21 @@ const ApplicationInformationSpreadsheetTable = ({
     field_name: string;
   }) => {
     return (
-      <Group>
-        {sort.field !== field.field_id && <IconArrowsVertical size={14} />}
+      <ActionIcon
+        onClick={() => {
+          handleSortClick(field.field_id, field.field_type);
+        }}
+        color={sort.field !== field.field_id ? "dark" : "blue"}
+        variant={sort.field !== field.field_id ? "subtle" : "light"}
+      >
+        {sort.field !== field.field_id && <IconArrowsSort size={14} />}
         {sort.field === field.field_id && sort.order === "ASC" && (
           <IconArrowUp size={14} />
         )}
         {sort.field === field.field_id && sort.order === "DESC" && (
           <IconArrowDown size={14} />
         )}
-      </Group>
+      </ActionIcon>
     );
   };
 
@@ -220,22 +192,9 @@ const ApplicationInformationSpreadsheetTable = ({
     return requestColumnList
       .filter((field) => !hiddenColumnList.includes(field.field_name))
       .map((field, index) => (
-        <th
-          key={index}
-          className={classes["Request"]}
-          onClick={
-            !unsortableFieldList.includes(field.field_name)
-              ? () => handleSortClick(field.field_id, field.field_type)
-              : undefined
-          }
-          style={{
-            cursor: !unsortableFieldList.includes(field.field_name)
-              ? "pointer"
-              : "default",
-          }}
-        >
-          <Flex gap="xs" align="center" justify="space-between">
-            <Text truncate>{field.field_name}</Text>
+        <th key={index} className={classes["Request"]}>
+          <Flex gap="xs" align="center" justify="center" wrap="wrap">
+            <Text>{field.field_name}</Text>
             {!unsortableFieldList.includes(field.field_name) &&
               sortButtons(field)}
           </Flex>
@@ -250,7 +209,6 @@ const ApplicationInformationSpreadsheetTable = ({
       field_type: string;
       section_name: string;
     }[] = [];
-
     sectionList.forEach((section) => {
       if (section.section_name !== "Most Recent Work Experience") {
         section.section_field.forEach((field) => {
@@ -265,31 +223,19 @@ const ApplicationInformationSpreadsheetTable = ({
     });
 
     return fieldList
-      .filter((field) => !hiddenColumnList.includes(field.field_id)) // Filter out hidden columns
-      .map((field, index) => {
-        const isSortable = !unsortableFieldList.includes(field.field_name); // Check if sortable
-        return (
-          <th
-            key={index}
-            className={classes[field.section_name as ClassNameType]}
-            onClick={
-              isSortable
-                ? () => handleSortClick(field.field_id, field.field_type)
-                : undefined
-            }
-            style={{
-              cursor: !unsortableFieldList.includes(field.field_name)
-                ? "pointer"
-                : "default",
-            }}
-          >
-            <Flex gap="sm" align="center" justify="space-between">
-              <Text>{field.field_name}</Text>
-              {isSortable && sortButtons(field)}
-            </Flex>
-          </th>
-        );
-      });
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
+      .map((field, index) => (
+        <th
+          key={index}
+          className={classes[field.section_name as ClassNameType]}
+        >
+          <Flex gap="xs" align="center" justify="center" wrap="wrap">
+            <Text>{field.field_name}</Text>
+            {!unsortableFieldList.includes(field.field_name) &&
+              sortButtons(field)}
+          </Flex>
+        </th>
+      ));
   };
 
   return (

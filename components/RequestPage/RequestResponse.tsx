@@ -7,9 +7,7 @@ import {
   Flex,
   MultiSelect,
   NumberInput,
-  Radio,
   Select,
-  Stack,
   Switch,
   TextInput,
   Textarea,
@@ -283,27 +281,6 @@ const RequestResponse = ({
             clearable
           />
         );
-      case "AUTOCOMPLETE":
-        const autocompleteOption = response.options.map((option) => ({
-          value: option.option_value,
-          label: option.option_value,
-        }));
-
-        return isFormslyForm || Boolean(response.isSpecialField) ? (
-          <TextInput
-            label={response.label}
-            value={parsedValue}
-            {...inputProps}
-          />
-        ) : (
-          <Select
-            label={response.label}
-            data={autocompleteOption}
-            value={parsedValue}
-            {...inputProps}
-            clearable
-          />
-        );
       case "MULTISELECT":
         let multiselectOption = response.options.map((option) => ({
           value: option.option_value,
@@ -367,26 +344,6 @@ const RequestResponse = ({
               <IconExternalLink />
             </ActionIcon>
           </Flex>
-        );
-      case "MULTIPLE CHOICE":
-        return (
-          <Radio.Group
-            {...inputProps}
-            label={response.label}
-            mb="md"
-            value={parsedValue}
-          >
-            <Stack mt="xs">
-              {response.options.map((option, optionIdx) => (
-                <Radio
-                  ml="xs"
-                  key={option.option_id}
-                  value={option.option_value}
-                  label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
-                />
-              ))}
-            </Stack>
-          </Radio.Group>
         );
     }
   };

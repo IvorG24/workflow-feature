@@ -1,25 +1,23 @@
-import { insertError } from "@/backend/api/post";
 import CreateApplicationInformationRequestPage from "@/components/CreateApplicationInformationRequestPage/CreateApplicationInformationRequestPage";
-import CreateGeneralAssessmentRequestPage from "@/components/CreateGeneralAssessmentRequestPage/CreateGeneralAssessmentRequestPage";
+import CreateOnlineApplicationRequestPage from "@/components/CreateOnlineApplicationRequestPage/CreateOnlineApplicationRequestPage";
+import CreateOnlineAssessmentRequestPage from "@/components/CreateOnlineAssessmentRequestPage/CreateOnlineAssessmentRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
-import CreateTechnicalAssessmentRequestPage from "@/components/CreateTechnicalAssessmentRequestPage/CreateTechnicalAssessmentRequestPage";
 import Meta from "@/components/Meta/Meta";
-import { isError } from "@/utils/functions";
 import { FormWithResponseType } from "@/utils/types";
 import { Space } from "@mantine/core";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const supabaseClient = createPagesServerClient(context);
   try {
+    const supabaseClient = createPagesServerClient(context);
     const { data, error } = await supabaseClient.rpc(
       "create_public_request_page_on_load",
       {
         input_data: {
           formId: context.query.formId,
           applicationInformationId: context.query.applicationInformationId,
-          generalAssessmentId: context.query.generalAssessmentId,
+          onlineApplicationId: context.query.onlineApplicationId,
         },
       }
     );
@@ -29,15 +27,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       props: data as Props,
     };
   } catch (e) {
-    if (isError(e)) {
-      await insertError(supabaseClient, {
-        errorTableRow: {
-          error_message: e.message,
-          error_url: context.resolvedUrl,
-          error_function: "getServerSideProps",
-        },
-      });
-    }
     return {
       redirect: {
         destination: "/500",
@@ -56,10 +45,10 @@ const Page = ({ form }: Props) => {
     switch (form.form_name) {
       case "Application Information":
         return <CreateApplicationInformationRequestPage form={form} />;
-      case "General Assessment":
-        return <CreateGeneralAssessmentRequestPage form={form} />;
-      case "Technical Assessment":
-        return <CreateTechnicalAssessmentRequestPage form={form} />;
+      case "Online Application":
+        return <CreateOnlineApplicationRequestPage form={form} />;
+      case "Online Assessment":
+        return <CreateOnlineAssessmentRequestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

@@ -11,7 +11,6 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import {
-  IconAlertCircle,
   IconFile,
   IconFileAlert,
   IconFileDescription,
@@ -38,9 +37,8 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
 
   const getIcon = () => {
     const type = notification.notification_type;
-    if (type === "APPROVE" || type === "QUALIFIED")
-      return <IconFileLike size={20} color="#40C057" />;
-    else if (type === "REJECT" || type === "NOT QUALIFIED")
+    if (type === "APPROVE") return <IconFileLike size={20} color="#40C057" />;
+    else if (type === "REJECT")
       return <IconFileDislike size={20} color="#FA5252" />;
     else if (type === "PAUSE")
       return <IconFileAlert size={20} color="#FD7E14" />;
@@ -55,8 +53,6 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
       return <IconFileDescription size={20} color="#FF922B" />;
     else if (type === "MEMO-APPROVED")
       return <IconFileDescription size={20} color="#40C057" />;
-    else if (type === "NOT RESPONSIVE")
-      return <IconAlertCircle size={20} color="#868E96" />;
   };
 
   return (
@@ -97,11 +93,11 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
 
             <Flex direction="column" w="100%">
               <Tooltip
-                label={notification.notification_content}
+                label={startCase(notification.notification_content)}
                 openDelay={2000}
               >
                 <Text size="sm" lineClamp={2}>
-                  {notification.notification_content}
+                  {startCase(notification.notification_content)}
                 </Text>
               </Tooltip>
               <Flex justify="space-between" w="100%">
