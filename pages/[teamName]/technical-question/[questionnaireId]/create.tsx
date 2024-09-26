@@ -1,18 +1,13 @@
-import {
-  checkIfGroupMember,
-  getTechnicalOptionsItem,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { checkIfGroupMember, getQuestionnaireDetails } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TechnicalAssessmentCreateQuestionPage from "@/components/TechnicalAssessmentCreateQuestionPage/TechnicalAssessmentCreateQuestionPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { QuestionnaireData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ context, supabaseClient, user, userActiveTeam }) => {
     try {
-      const questionnaireId = context.query?.questionnaireId as string;
+      const questionnaireId = context.query?.questionnaireId;
       const iSHumanResourcesMember = await checkIfGroupMember(supabaseClient, {
         userId: user.id,
         groupName: "HUMAN RESOURCES",
@@ -26,14 +21,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
-      const getTeam = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-
-      const questionnaireData = await getTechnicalOptionsItem(supabaseClient, {
-        teamId: getTeam,
-        questionnaireId: questionnaireId,
-      });
+      const questionnaireData = await getQuestionnaireDetails(
+        supabaseClient,
+        questionnaireId as string
+      );
 
       return {
         props: { questionnaireId, questionnaireData } as unknown as Props,
@@ -51,7 +42,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
 type Props = {
   questionnaireId: string;
-  questionnaireData: QuestionnaireData;
+  questionnaireData: {
+    questionnaire_name: string;
+    questionnaire_date_created: string;
+  };
 };
 
 const Page = ({ questionnaireId, questionnaireData }: Props) => {

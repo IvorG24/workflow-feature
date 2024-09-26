@@ -81,6 +81,9 @@ const TechnicalAssessmentCreateQuestionPage = ({
     questionnaire_name: initialData.questionnaire_name,
     questionnaire_date_created: initialData.questionnaire_date_created,
   };
+  const [submittedQuestions, setSubmittedQuestions] = useState<
+    Record<number, string>
+  >({});
   const formMethods = useForm<TechnicalQuestionFormValues>({
     defaultValues: {
       sections: [
@@ -156,13 +159,13 @@ const TechnicalAssessmentCreateQuestionPage = ({
     }
   };
 
-  const handleUpdateQuestion = async (data: Section) => {
+  const handleUpdateQuestion = async (data: Section, questionIndex: number) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
 
-      const trimmedQuestion = data.question.trim();
+      const trimmedQuestion = data.question.trim().toLowerCase();
       if (trimmedQuestion === "") {
         notifications.show({
           message: "Technical question is required.",
@@ -172,7 +175,10 @@ const TechnicalAssessmentCreateQuestionPage = ({
       }
 
       for (const section of questionnaireData) {
-        if (section.field_response.trim() === trimmedQuestion) {
+        if (
+          section.field_id !== data.field_id &&
+          section.field_response.trim().toLowerCase() === trimmedQuestion
+        ) {
           notifications.show({
             message: "Duplicate Question found.",
             color: "orange",
@@ -187,7 +193,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       if (choicesWithResponse.length < 2) {
         notifications.show({
-          message: `At least two choices with valid responses are required for: ${trimmedQuestion}`,
+          message: `At least two choices with valid responses are required`,
           color: "orange",
         });
         return;
@@ -199,19 +205,18 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       if (uniqueChoices.size !== choicesWithResponse.length) {
         notifications.show({
-          message: `Duplicate choices found for: ${trimmedQuestion}. Please provide unique choices.`,
+          message: `Duplicate choices found. Please provide unique choices.`,
           color: "orange",
         });
         return;
       }
 
-      // Check if a valid correct answer has been selected
       const correctAnswerSelected = choicesWithResponse.some(
         (choice) => choice.isCorrectAnswer && choice.choice.trim() !== ""
       );
       if (!correctAnswerSelected) {
         notifications.show({
-          message: `No valid correct answer selected for: ${trimmedQuestion}`,
+          message: `No valid correct answer selected`,
           color: "orange",
         });
         return;
@@ -219,20 +224,22 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       setIsLoading(true);
 
-      // Update the technical question
       await updateTechnicalQuestion(supabaseClient, {
         requestValues: {
           ...data,
-          question: trimmedQuestion, // Ensure the trimmed question is passed to the update function
+          question: trimmedQuestion.trim(),
           choices: choicesWithResponse.map((choice) => ({
             ...choice,
-            choice: choice.choice.trim(), // Ensure the trimmed choices are passed
+            choice: choice.choice.trim(),
           })),
         },
         teamMemberId: teamMember.team_member_id || "",
         questionnaireId: questionnaireId,
       });
-
+      setSubmittedQuestions((prev) => ({
+        ...prev,
+        [questionIndex]: data.question,
+      }));
       notifications.show({
         message: "Questionnaire Updated.",
         color: "green",
@@ -414,13 +421,8 @@ const TechnicalAssessmentCreateQuestionPage = ({
           {fields &&
             fields.length > 0 &&
             fields.map((question, questionIndex) => {
-              const questionText = getValues(
-                `sections.${questionIndex}.question`
-              );
-
-              if (!questionText || questionText.trim() === "") {
-                return null;
-              }
+              const questionText =
+                submittedQuestions[questionIndex] || ` ${question.question}`;
 
               return (
                 <Accordion.Item
@@ -428,10 +430,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                   key={question.id}
                 >
                   <Flex justify="space-between" align="center">
-                    <Accordion.Control>
-                      {questionText ||
-                        `Technical Question ${questionIndex + 1}`}
-                    </Accordion.Control>
+                    <Accordion.Control>{questionText}</Accordion.Control>
                     <ActionIcon
                       mr="md"
                       color="red"
@@ -499,7 +498,10 @@ const TechnicalAssessmentCreateQuestionPage = ({
                             const updatedQuestion = getValues(
                               `sections.${questionIndex}`
                             );
-                            handleUpdateQuestion(updatedQuestion); // Pass the latest form values
+                            handleUpdateQuestion(
+                              updatedQuestion,
+                              questionIndex
+                            ); // Pass the latest form values
                           }}
                         >
                           Update Question

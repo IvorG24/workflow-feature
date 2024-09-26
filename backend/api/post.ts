@@ -67,7 +67,7 @@ import {
   TicketTableRow,
   UserTableInsert,
   UserTableRow,
-  UserValidIDTableInsert
+  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -223,7 +223,6 @@ export const signUpUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: { email: string; password: string }
 ) => {
-
   const { data, error } = await supabaseClient.auth.signUp({
     ...params,
   });
@@ -496,7 +495,7 @@ export const createRequest = async (
     status,
     requestScore,
     rootFormslyRequestId,
-    recruiter
+    recruiter,
   } = params;
 
   const requestId = uuidv4();
@@ -2161,273 +2160,274 @@ export const createAdOwnerRequest = async (
 };
 
 export const createTechnicalQuestions = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      requestFormValues: TechnicalQuestionFormValues;
-      questionnaireId: string;
-    }
-  ) => {
-    const { requestFormValues, questionnaireId } = params;
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestFormValues: TechnicalQuestionFormValues;
+    questionnaireId: string;
+  }
+) => {
+  const { requestFormValues, questionnaireId } = params;
 
-    let fieldOrder = await getQuestionFieldOrder(supabaseClient, {
-      questionnaireId,
-    });
+  let fieldOrder = await getQuestionFieldOrder(supabaseClient, {
+    questionnaireId,
+  });
 
-    fieldOrder = fieldOrder + 1;
+  fieldOrder = fieldOrder + 1;
 
-    const FieldTableInput: FieldTableInsert[] = [];
-    const OptionTableInput: QuestionOption[] = [];
-    const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
-    const QuestionId: string[] = [];
-    let FieldId = "";
-    let correctAnswerFieldResponse = "";
-    let correctAnswerFieldId = "";
+  const FieldTableInput: FieldTableInsert[] = [];
+  const OptionTableInput: QuestionOption[] = [];
+  const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
+  const QuestionId: string[] = [];
+  let FieldId = "";
+  let correctAnswerFieldResponse = "";
+  let correctAnswerFieldId = "";
 
-    for (const section of requestFormValues.sections) {
-      const technicalQuestion = section.field_name === "Technical Question";
+  for (const section of requestFormValues.sections) {
+    const technicalQuestion = section.field_name === "Technical Question";
 
-      if (technicalQuestion) {
-        const fieldId = uuidv4();
-        FieldId = fieldId;
-        correctAnswerFieldId = fieldId;
+    if (technicalQuestion) {
+      const fieldId = uuidv4();
+      FieldId = fieldId;
+      correctAnswerFieldId = fieldId;
 
-        const fieldEntry: FieldTableInsert = {
-          field_id: fieldId,
-          field_name: String(section.question),
-          field_is_required: true,
-          field_type: "MULTIPLE CHOICE",
-          field_order: fieldOrder,
-          field_section_id: '45a29efd-e90c-4fdd-8cb0-17d3b5a5e739',
-        };
+      const fieldEntry: FieldTableInsert = {
+        field_id: fieldId,
+        field_name: String(section.question.trim()),
+        field_is_required: true,
+        field_type: "MULTIPLE CHOICE",
+        field_order: fieldOrder,
+        field_section_id: "45a29efd-e90c-4fdd-8cb0-17d3b5a5e739",
+      };
 
-        FieldTableInput.push(fieldEntry);
-        fieldOrder++;
+      FieldTableInput.push(fieldEntry);
+      fieldOrder++;
 
-        let optionOrder = 1;
-        for (const optionField of section.choices) {
-          if (
-            optionField.field_name.toLowerCase().includes("question choice")
-          ) {
-            const optionId = uuidv4();
-            const optionEntry: QuestionOption = {
-              option_id: optionId,
-              option_value:
-                String(optionField.choice) === "undefined"
-                  ? null
-                  : String(optionField.choice),
-              option_order: optionOrder,
-              option_field_id: FieldId,
-            };
+      let optionOrder = 1;
+      for (const optionField of section.choices) {
+        if (optionField.field_name.toLowerCase().includes("question choice")) {
+          const optionId = uuidv4();
+          const optionEntry: QuestionOption = {
+            option_id: optionId,
+            option_value:
+              String(optionField.choice) === "undefined"
+                ? null
+                : String(optionField.choice.trim()),
+            option_order: optionOrder,
+            option_field_id: FieldId,
+          };
 
-            OptionTableInput.push(optionEntry);
-            optionOrder++;
+          OptionTableInput.push(optionEntry);
+          optionOrder++;
 
-
-            if (optionField.isCorrectAnswer) {
-              correctAnswerFieldResponse = String(optionField.choice);
-            }
+          if (optionField.isCorrectAnswer) {
+            correctAnswerFieldResponse = String(optionField.choice.trim());
           }
         }
+      }
 
-        if (correctAnswerFieldResponse) {
-          const correctResponseEntry: FieldCorrectResponseTableInsert = {
-            correct_response_id: uuidv4(),
-            correct_response_value: correctAnswerFieldResponse,
-            correct_response_field_id: correctAnswerFieldId,
-          };
-          CorrectResponseTableInput.push(correctResponseEntry);
-        }
+      if (correctAnswerFieldResponse) {
+        const correctResponseEntry: FieldCorrectResponseTableInsert = {
+          correct_response_id: uuidv4(),
+          correct_response_value: correctAnswerFieldResponse,
+          correct_response_field_id: correctAnswerFieldId,
+        };
+        CorrectResponseTableInput.push(correctResponseEntry);
       }
     }
+  }
 
-    const fieldResponseValues = FieldTableInput.map((response) => {
-      const escapedResponse = escapeQuotes(response.field_name || "");
-      return `('${response.field_id}', '${escapedResponse}', '${response.field_is_required}', '${response.field_type}', ${response.field_order}, '${response.field_section_id}')`;
-    }).join(",");
+  const fieldResponseValues = FieldTableInput.map((response) => {
+    const escapedResponse = escapeQuotes(response.field_name || "");
+    return `('${response.field_id}', '${escapedResponse}', '${response.field_is_required}', '${response.field_type}', ${response.field_order}, '${response.field_section_id}')`;
+  }).join(",");
 
-    const correctResponseValues = CorrectResponseTableInput.map((response) => {
-      const escapedResponse = escapeQuotes(response.correct_response_value || "");
-      return `('${response.correct_response_id}', '${escapedResponse}', '${response.correct_response_field_id}')`;
-    }).join(",");
+  const correctResponseValues = CorrectResponseTableInput.map((response) => {
+    const escapedResponse = escapeQuotes(response.correct_response_value || "");
+    return `('${response.correct_response_id}', '${escapedResponse}', '${response.correct_response_field_id}')`;
+  }).join(",");
 
-    const questionResponseValues = FieldTableInput.map((response) => {
-      const questionId = uuidv4();
-      QuestionId.push(questionId);
-      const escapedResponse = escapeQuotes(response.field_name || "");
-      return `('${questionId}', '${escapedResponse}', '${response.field_id}', '${questionnaireId}')`;
-    }).join(",");
+  const questionResponseValues = FieldTableInput.map((response) => {
+    const questionId = uuidv4();
+    QuestionId.push(questionId);
+    const escapedResponse = escapeQuotes(response.field_name || "");
+    return `('${questionId}', '${escapedResponse}', '${response.field_id}', '${questionnaireId}')`;
+  }).join(",");
 
-    const questionOptionResponseValues = OptionTableInput.map((response, index) => {
+  const questionOptionResponseValues = OptionTableInput.map(
+    (response, index) => {
       const escapedResponse = escapeQuotes(response.option_value || "");
       const fieldUuid = QuestionId[Math.floor(index / 4)];
       return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
-    }).join(",");
-
-    const { data, error } = await supabaseClient
-      .rpc("create_technical_question", {
-        input_data: {
-          fieldResponseValues,
-          correctResponseValues,
-          questionResponseValues,
-          questionOptionResponseValues,
-        },
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return data;
-  };
-
-  export const checkIfQuestionExists = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      data: TechnicalQuestionFormValues;
-      questionnaireId: string;
     }
-  ) => {
-    const { data: requestFormValues, questionnaireId } = params;
-    const technicalQuestionData: {response: string}[] = [];
-    for (const section of requestFormValues.sections) {
-        if (section.field_name.toLowerCase().includes("technical question")) {
-          technicalQuestionData.push({response:String(section.question)});
-        }
-      }
+  ).join(",");
 
+  const { data, error } = await supabaseClient
+    .rpc("create_technical_question", {
+      input_data: {
+        fieldResponseValues,
+        correctResponseValues,
+        questionResponseValues,
+        questionOptionResponseValues,
+      },
+    })
+    .select()
+    .single();
 
-    const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
-      "check_technical_question",
-      {
-        input_data: {
-          data: technicalQuestionData,
-          questionnaireId,
-        },
-      }
-    );
+  if (error) throw error;
 
-    if (fieldError) throw fieldError;
+  return data;
+};
 
-    return fieldData as boolean;
-  };
-
-  export const checkIfQuestionExistsUpdate = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      data: TechnicalQuestionFormValues["sections"][0];
-      questionnaireId: string;
+export const checkIfQuestionExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    data: TechnicalQuestionFormValues;
+    questionnaireId: string;
+  }
+) => {
+  const { data: requestFormValues, questionnaireId } = params;
+  const technicalQuestionData = [];
+  for (const section of requestFormValues.sections) {
+    if (section.field_name.toLowerCase().includes("technical question")) {
+      technicalQuestionData.push(String(section.question.trim().toLowerCase()));
     }
-  ) => {
-    const { data: requestFormValues, questionnaireId } = params;
-    const technicalQuestionData: {response: string; fieldId: string}[] = [];
+  }
 
-      if (requestFormValues.field_name.toLowerCase().includes("technical question")) {
-        technicalQuestionData.push({
-          response:String(requestFormValues.question),
-          fieldId: requestFormValues.field_id
-        });
+  console.log(technicalQuestionData);
 
+  const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
+    "check_technical_question",
+    {
+      input_data: {
+        data: technicalQuestionData,
+        questionnaireId,
+      },
     }
-    const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
-      "check_technical_question",
-      {
-        input_data: {
-          data: technicalQuestionData,
-          questionnaireId,
-        },
-      }
-    );
+  );
 
-    if (fieldError) throw fieldError;
+  if (fieldError) throw fieldError;
 
-    return fieldData as boolean;
-  };
+  return fieldData as boolean;
+};
 
-  export const createQuestionnaire = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      questionnaireName: string;
-      teamId: string;
-      team_member_id: string;
+export const checkIfQuestionExistsUpdate = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    data: TechnicalQuestionFormValues["sections"][0];
+    questionnaireId: string;
+  }
+) => {
+  const { data: requestFormValues, questionnaireId } = params;
+  const technicalQuestionData: { response: string; fieldId: string }[] = [];
+
+  if (
+    requestFormValues.field_name.toLowerCase().includes("technical question")
+  ) {
+    technicalQuestionData.push({
+      response: String(requestFormValues.question),
+      fieldId: requestFormValues.field_id,
+    });
+  }
+  const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
+    "check_technical_question",
+    {
+      input_data: {
+        data: technicalQuestionData,
+        questionnaireId,
+      },
     }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("form_schema")
-      .from("questionnaire_table")
-      .insert({
-        questionnaire_name: params.questionnaireName,
-        questionnaire_team_id: params.teamId,
-        questionnaire_created_by: params.team_member_id,
-      })
-      .select()
-      .single();
+  );
 
-    if (error) throw error;
+  if (fieldError) throw fieldError;
 
-    return data as unknown as TechnicalAssessmentTableRow;
-  };
+  return fieldData as boolean;
+};
 
-  export const checkQuestionnaireName = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      questionnaireName: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("form_schema")
-      .from("questionnaire_table")
-      .select("*")
-      .eq("questionnaire_name", params.questionnaireName)
-      .limit(1);
+export const createQuestionnaire = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireName: string;
+    teamId: string;
+    team_member_id: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .insert({
+      questionnaire_name: params.questionnaireName,
+      questionnaire_team_id: params.teamId,
+      questionnaire_created_by: params.team_member_id,
+    })
+    .select()
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data;
-  };
+  return data as unknown as TechnicalAssessmentTableRow;
+};
 
-  export const insertError = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      errorTableRow: ErrorTableInsert;
-    }
-  ) => {
-    const { errorTableRow } = params;
-    const { error } = await supabaseClient
-      .from("error_table")
-      .insert(errorTableRow);
-    if (error) throw error;
-  };
+export const checkQuestionnaireName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireName: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .select("*")
+    .eq("questionnaire_name", params.questionnaireName)
+    .limit(1);
 
-  export const resendEmail = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      email: string;
-    }
-  ) => {
-    const {email} = params;
-    const { error } = await supabaseClient
+  if (error) throw error;
+
+  return data;
+};
+
+export const insertError = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    errorTableRow: ErrorTableInsert;
+  }
+) => {
+  const { errorTableRow } = params;
+  const { error } = await supabaseClient
+    .from("error_table")
+    .insert(errorTableRow);
+  if (error) throw error;
+};
+
+export const resendEmail = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    email: string;
+  }
+) => {
+  const { email } = params;
+  const { error } = await supabaseClient
     .schema("user_schema")
     .from("email_resend_table")
     .insert({
       email_resend_email: email,
     });
   if (error) throw error;
-  };
+};
 
-  export const getQuestionFieldOrder = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      questionnaireId: string;
-    }
-  ) => {
-    const { questionnaireId } = params;
-    const { data, error } = await supabaseClient.rpc("get_question_field_order", {
-        input_data: {
-            questionnaireId,
-         },
-        });
-
-    if (error) throw error;
-
-    return data as unknown as number;
+export const getQuestionFieldOrder = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
   }
+) => {
+  const { questionnaireId } = params;
+  const { data, error } = await supabaseClient.rpc("get_question_field_order", {
+    input_data: {
+      questionnaireId,
+    },
+  });
+
+  if (error) throw error;
+
+  return data as unknown as number;
+};
