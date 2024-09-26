@@ -97,7 +97,6 @@ const TechnicalAssessmentCreateQuestionPage = ({
         data,
         questionnaireId: questionnaireId,
       });
-      console.log(isQuestionExisting);
 
       if (isQuestionExisting) {
         notifications.show({

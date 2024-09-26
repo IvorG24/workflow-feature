@@ -2293,8 +2293,6 @@ export const checkIfQuestionExists = async (
     }
   }
 
-  console.log(technicalQuestionData);
-
   const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
     "check_technical_question",
     {
