@@ -2310,39 +2310,6 @@ export const checkIfQuestionExists = async (
   return fieldData as boolean;
 };
 
-export const checkIfQuestionExistsUpdate = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    data: TechnicalQuestionFormValues["sections"][0];
-    questionnaireId: string;
-  }
-) => {
-  const { data: requestFormValues, questionnaireId } = params;
-  const technicalQuestionData: { response: string; fieldId: string }[] = [];
-
-  if (
-    requestFormValues.field_name.toLowerCase().includes("technical question")
-  ) {
-    technicalQuestionData.push({
-      response: String(requestFormValues.question),
-      fieldId: requestFormValues.field_id,
-    });
-  }
-  const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
-    "check_technical_question",
-    {
-      input_data: {
-        data: technicalQuestionData,
-        questionnaireId,
-      },
-    }
-  );
-
-  if (fieldError) throw fieldError;
-
-  return fieldData as boolean;
-};
-
 export const createQuestionnaire = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
