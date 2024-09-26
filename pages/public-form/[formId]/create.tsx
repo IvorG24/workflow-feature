@@ -13,6 +13,16 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
+    if (context.query.formId === "151cc6d7-94d7-4c54-b5ae-44de9f59d170") {
+      return {
+        redirect: {
+          destination:
+            "/public-form/16ae1f62-c553-4b0e-909a-003d92828036/create",
+          permanent: false,
+        },
+      };
+    }
+
     const { data, error } = await supabaseClient.rpc(
       "create_public_request_page_on_load",
       {
