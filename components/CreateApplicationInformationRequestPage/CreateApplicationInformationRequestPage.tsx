@@ -4,19 +4,13 @@ import {
   fetchProvince,
   fetchRegion,
   getApplicationInformationPositionOptions,
-  getDegreeNameOptions,
-  getFieldOfStudyOptions,
 } from "@/backend/api/get";
-import {
-  createAdOwnerRequest,
-  createRequest,
-  insertError,
-} from "@/backend/api/post";
+import { createAdOwnerRequest, createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
+import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
-import { isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
@@ -73,7 +67,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
-  const [minimumExperience, setMinimumExperience] = useState(1);
 
   const { setIsLoading } = useLoadingActions();
 
@@ -83,6 +76,10 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
@@ -119,7 +116,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: position.position_id,
               option_order: index,
-              option_value: position.position_alias,
+              option_value: position.position,
             };
           });
           positionOptionList.push(...positionOptions);
@@ -151,9 +148,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
             section_field: [
               {
                 ...form.form_section[0].section_field[0],
-                field_option: positionOptionList.sort((a, b) =>
-                  a.option_value.localeCompare(b.option_value)
-                ),
+                field_option: positionOptionList,
               },
               ...form.form_section[0].section_field.slice(1, 3).map((field) => {
                 return {
@@ -183,12 +178,12 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           {
             ...form.form_section[5],
             section_field: [
-              ...form.form_section[5].section_field.slice(0, 4),
+              ...form.form_section[5].section_field.slice(0, 3),
               {
-                ...form.form_section[5].section_field[4],
+                ...form.form_section[5].section_field[3],
                 field_option: regionOptionList,
               },
-              ...form.form_section[5].section_field.slice(5),
+              ...form.form_section[5].section_field.slice(4),
             ],
           },
           ...form.form_section.slice(7),
@@ -198,15 +193,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
-        if (isError(e)) {
-          await insertError(supabaseClient, {
-            errorTableRow: {
-              error_message: e.message,
-              error_url: router.asPath,
-              error_function: "fetchOptions",
-            },
-          });
-        }
       } finally {
         setIsLoading(false);
       }
@@ -217,32 +203,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
-
-      let requestScore = 0;
-      let workInformationIndex = 4;
-      if (
-        data.sections[workInformationIndex].section_name !== "Work Information"
-      ) {
-        workInformationIndex = 5;
-      }
-
-      if (
-        data.sections[workInformationIndex].section_field[0].field_response ===
-        "Unemployed"
-      ) {
-        requestScore += 2;
-      }
-      if (
-        Number(
-          data.sections[workInformationIndex].section_field[
-            data.sections[workInformationIndex].section_field.length - 2
-          ].field_response
-        ) >= minimumExperience
-      ) {
-        requestScore += 2;
-      } else {
-        requestScore += 1;
-      }
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
@@ -259,8 +219,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
-        requestScore,
-        recruiter: router.query.recruiter as string | undefined,
       });
 
       const adOwnerId = router.query["ad-owner"] as string;
@@ -283,15 +241,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleCreateRequest",
-          },
-        });
-      }
     } finally {
       setIsLoading(false);
     }
@@ -383,7 +332,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
     }
   };
 
-  const handlePositionChange = async (value: string | null) => {
+  const handlePositionChange = (value: string | null) => {
     const newSection = getValues(`sections.0`);
 
     const isWithEducationalBackground = formSections.some(
@@ -395,11 +344,8 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 0 }]);
 
         const position = positionList.find(
-          (position) => position.position_alias === value
+          (position) => position.position === value
         );
-        if (!position) throw new Error();
-
-        setMinimumExperience(position.position_minimum_years_of_experience);
 
         updateSection(0, {
           ...newSection,
@@ -407,42 +353,30 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
             newSection.section_field[0],
             {
               ...form.form_section[0].section_field[1],
-              field_is_required: Boolean(position.position_certificate_label),
-              field_is_read_only: !Boolean(
-                position.position_is_with_certificate
+              field_is_required: Boolean(
+                position?.position_is_with_certificate
               ),
-              field_description:
-                position.position_certificate_label ?? undefined,
+              field_is_read_only: !Boolean(
+                position?.position_is_with_certificate
+              ),
             },
             {
               ...form.form_section[0].section_field[2],
-              field_is_required: Boolean(position.position_license_label),
-              field_is_read_only: !Boolean(position.position_is_with_license),
-              field_description: position.position_license_label ?? undefined,
+              field_is_required: Boolean(position?.position_is_with_license),
+              field_is_read_only: !Boolean(position?.position_is_with_license),
             },
             newSection.section_field[newSection.section_field.length - 1],
           ],
         });
 
         if (
-          position.position_classification === "NOT APPLICABLE" &&
+          position?.position_type === "STAFF" &&
           !isWithEducationalBackground
         ) {
-          insertSection(
-            4,
-            {
-              ...form.form_section[4],
-              section_field: [
-                form.form_section[4].section_field[0],
-                ...form.form_section[4].section_field.slice(3),
-              ],
-            },
-            { shouldFocus: false }
-          );
+          insertSection(4, form.form_section[4], { shouldFocus: false });
           insertSection(6, form.form_section[6], { shouldFocus: false });
         } else if (
-          (position.position_classification === "SKILLED" ||
-            position.position_classification === "NON-SKILLED") &&
+          position?.position_type === "RANK AND FILE" &&
           isWithEducationalBackground
         ) {
           removeSection([4, 6]);
@@ -452,14 +386,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           ...newSection,
           section_field: [
             newSection.section_field[0],
-            ...form.form_section[0].section_field.slice(1, 3).map((field) => {
-              return {
-                ...field,
-                field_is_read_only: true,
-                field_is_required: false,
-              };
-            }),
-            ...newSection.section_field.slice(3),
+            newSection.section_field[newSection.section_field.length - 1],
           ],
         });
 
@@ -476,15 +403,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handlePositionChange",
-          },
-        });
-      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -572,15 +490,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleRegionChange",
-          },
-        });
-      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -667,15 +576,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleProvinceChange",
-          },
-        });
-      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -761,15 +661,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleCityChange",
-          },
-        });
-      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -840,15 +731,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleBarangayChange",
-          },
-        });
-      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -863,14 +745,14 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
       updateSection(index, {
         ...newSection,
         section_field: [
-          ...newSection.section_field.slice(0, 4),
-          ...newSection.section_field.slice(5),
+          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(4),
         ],
       });
     } else {
       const regionOptions = regionOptionList.map((region, index) => {
         return {
-          option_field_id: form.form_section[5].section_field[4].field_id,
+          option_field_id: form.form_section[5].section_field[3].field_id,
           option_id: region.region_id,
           option_order: index,
           option_value: region.region,
@@ -879,12 +761,12 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
       updateSection(index, {
         ...newSection,
         section_field: [
-          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(0, 3),
           {
-            ...form.form_section[5].section_field[4],
+            ...form.form_section[5].section_field[3],
             field_option: regionOptions,
           },
-          ...newSection.section_field.slice(4),
+          ...newSection.section_field.slice(3),
         ],
       });
     }
@@ -894,146 +776,48 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
     value: string | null
   ) => {
     const newSection = getValues(`sections.4`);
-    const newFieldList = [newSection.section_field[0]];
+
+    const isWithDegree = newSection.section_field.some(
+      (field) => field.field_name === "Degree"
+    );
 
     const isDegreeRequired = value
       ? !["High School", "Vocational"].includes(value)
       : false;
 
-    try {
-      setLoadingFieldList([{ sectionIndex: 4, fieldIndex: 0 }]);
-
-      if (value) {
-        if (isDegreeRequired) {
-          const fieldOfStudyOption = await getFieldOfStudyOptions(
-            supabaseClient,
-            {
-              value,
-            }
-          );
-
-          newFieldList.push(
-            {
-              ...form.form_section[4].section_field[1],
-              field_option: fieldOfStudyOption.map((field, index) => {
-                return {
-                  option_field_id:
-                    form.form_section[4].section_field[1].field_id,
-                  option_id: uuidv4(),
-                  option_order: index,
-                  option_value: field,
-                };
-              }),
-            },
-            ...form.form_section[4].section_field.slice(2)
-          );
-        } else {
-          newFieldList.push(...form.form_section[4].section_field.slice(3));
-        }
-        removeSection(4);
-        insertSection(4, {
-          ...newSection,
-          section_field: newFieldList,
-        });
-      } else {
+    if (value) {
+      if (!isDegreeRequired && isWithDegree) {
         removeSection(4);
         insertSection(4, {
           ...newSection,
           section_field: [
             newSection.section_field[0],
-            ...form.form_section[4].section_field.slice(3),
+            ...newSection.section_field.slice(2),
           ],
         });
-      }
-    } catch (e) {
-      setValue(`sections.4.section_field.0.field_response`, "");
-      removeSection(4);
-      insertSection(4, {
-        ...newSection,
-        section_field: [
-          newSection.section_field[0],
-          ...form.form_section[4].section_field.slice(3),
-        ],
-      });
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleHighestEducationalAttainmentChange",
-          },
-        });
-      }
-    } finally {
-      setLoadingFieldList([]);
-    }
-  };
-
-  const handleFieldOfStudyChange = async (value: string | null) => {
-    const newSection = getValues(`sections.4`);
-
-    try {
-      setLoadingFieldList([{ sectionIndex: 4, fieldIndex: 2 }]);
-
-      if (value) {
-        const degreeNameData = await getDegreeNameOptions(supabaseClient, {
-          degreeType: newSection.section_field[0].field_response as string,
-          fieldOfStudy: value,
-        });
-        const degreeNameOptions = degreeNameData.map((degree, index) => {
-          return {
-            option_field_id: form.form_section[4].section_field[2].field_id,
-            option_id: uuidv4(),
-            option_order: index,
-            option_value: degree,
-          };
-        });
-
-        updateSection(4, {
+      } else if (isDegreeRequired && !isWithDegree) {
+        removeSection(4);
+        insertSection(4, {
           ...newSection,
           section_field: [
-            ...newSection.section_field.slice(0, 2),
-            {
-              ...form.form_section[4].section_field[2],
-              field_option: degreeNameOptions,
-            },
-            ...newSection.section_field.slice(3),
+            newSection.section_field[0],
+            form.form_section[4].section_field[1],
+            ...newSection.section_field.slice(1),
           ],
         });
-      } else {
-        updateSection(4, {
+      }
+    } else {
+      if (!isWithDegree) {
+        removeSection(4);
+        insertSection(4, {
           ...newSection,
           section_field: [
-            ...newSection.section_field.slice(0, 2),
-            {
-              ...form.form_section[4].section_field[2],
-              field_option: [],
-            },
-            ...newSection.section_field.slice(3),
+            newSection.section_field[0],
+            form.form_section[4].section_field[1],
+            ...newSection.section_field.slice(1),
           ],
         });
       }
-    } catch (e) {
-      setValue(`sections.4.section_field.1.field_response`, "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleFieldOfStudyChange",
-          },
-        });
-      }
-    } finally {
-      setLoadingFieldList([]);
     }
   };
 
@@ -1072,7 +856,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
                         handleWillingToBeAssignedAnywhereChange,
                       onHighestEducationalAttainmentChange:
                         handleHighestEducationalAttainmentChange,
-                      onFieldOfStudyChange: handleFieldOfStudyChange,
                     }}
                   />
                   {section.section_is_duplicatable &&
@@ -1091,7 +874,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
                 </Box>
               );
             })}
-            {/* <RequestFormSigner signerList={signerList} /> */}
+            <RequestFormSigner signerList={signerList} />
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

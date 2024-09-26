@@ -1,13 +1,9 @@
-import {
-  checkIfGroupMember,
-  getFormSectionWithFieldList,
-} from "@/backend/api/get";
+import { getFormSectionWithFieldList } from "@/backend/api/get";
 import ApplicationInformationSpreadsheetView from "@/components/ApplicationInformationSpreadsheetView/ApplicationInformationSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
   ApplicationInformationFieldOptionType,
-  OptionType,
   SectionWithFieldType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -15,22 +11,8 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, user, userActiveTeam }) => {
     try {
-      const iSHumanResourcesMember = await checkIfGroupMember(supabaseClient, {
-        userId: user.id,
-        groupName: "HUMAN RESOURCES",
-        teamId: userActiveTeam.team_id,
-      });
-      if (!iSHumanResourcesMember) {
-        return {
-          redirect: {
-            destination: "/401",
-            permanent: false,
-          },
-        };
-      }
-
       const data = await getFormSectionWithFieldList(supabaseClient, {
-        formId: "16ae1f62-c553-4b0e-909a-003d92828036",
+        formId: "151cc6d7-94d7-4c54-b5ae-44de9f59d170",
         userId: user.id,
         teamId: userActiveTeam.team_id,
       });
@@ -51,10 +33,9 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 type Props = {
   sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
-  approverOptionList: OptionType[];
 };
 
-const Page = ({ sectionList, optionList, approverOptionList }: Props) => {
+const Page = ({ sectionList, optionList }: Props) => {
   return (
     <>
       <Meta
@@ -64,7 +45,6 @@ const Page = ({ sectionList, optionList, approverOptionList }: Props) => {
       <ApplicationInformationSpreadsheetView
         sectionList={sectionList}
         optionList={optionList}
-        approverOptionList={approverOptionList}
       />
     </>
   );

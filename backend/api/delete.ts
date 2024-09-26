@@ -194,16 +194,3 @@ export const deleteJobTittle = async (
 
   if (error) throw error;
 };
-
-export const deleteInterviewOnlineMeeting = async (
-  supabaseClient: SupabaseClient<Database>,
-  interviewMeetingId: string
-) => {
-  const { error } = await supabaseClient
-    .schema("hr_schema")
-    .from("interview_online_meeting_table")
-    .delete()
-    .eq("interview_meeting_id", interviewMeetingId);
-
-  if (error) throw error;
-};

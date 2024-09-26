@@ -1,17 +1,13 @@
 import {
   fetchRegion,
-  getAdOwnerList,
-  getApplicationInformationPositionOptions,
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
-import { DEFAULT_NUMBER_SSOT_ROWS, FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
   ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
-  OptionTableRow,
-  OptionType,
   SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
@@ -48,11 +44,6 @@ const formDefaultValues = {
     status: [],
     dateUpdatedRange: { start: "", end: "" },
     approver: [],
-    requestScoreRange: {
-      start: null,
-      end: null,
-    },
-    adOwner: "",
   },
   responseFilter: {
     position: [],
@@ -62,7 +53,6 @@ const formDefaultValues = {
     firstName: "",
     middleName: "",
     lastName: "",
-    nickname: "",
     gender: "",
     ageRange: {
       start: null,
@@ -82,8 +72,7 @@ const formDefaultValues = {
     pagibigNumber: "",
     tin: "",
     highestEducationalAttainment: [],
-    fieldOfStudy: "",
-    degreeName: "",
+    degree: "",
     torOrDiplomaAttachment: null,
     school: "",
     yearGraduated: {
@@ -92,7 +81,6 @@ const formDefaultValues = {
     },
     employmentStatus: "",
     workedAtStaClara: null,
-    shiftWillingToWork: null,
     willingToBeAssignedAnywhere: null,
     regionWillingToBeAssigned: [],
     soonestJoiningDate: {
@@ -113,13 +101,11 @@ const formDefaultValues = {
 type Props = {
   sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
-  approverOptionList: OptionType[];
 };
 
 const ApplicationInformationSpreadsheetView = ({
   sectionList,
   optionList: initialOptionList,
-  approverOptionList,
 }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
@@ -227,69 +213,11 @@ const ApplicationInformationSpreadsheetView = ({
                 option_id: uuidv4(),
                 option_value: region.region,
                 option_order: index + 1,
-                option_field_id: "1a901f84-4f55-47aa-bfa0-42f56d1eb6c5",
+                option_field_id: "aeb28a1f-8a5c-4e17-9ddd-a0377db12e97",
               };
             }),
           };
           return [...prev, regionOption];
-        });
-      }
-
-      const addOwner = await getAdOwnerList(supabaseClient);
-      if (addOwner) {
-        setOptionList((prev) => {
-          const regionOption = {
-            field_name: "Ad Owner",
-            field_option: addOwner.map((adOwner, index) => {
-              return {
-                option_id: uuidv4(),
-                option_value: adOwner.ad_owner_name.toUpperCase(),
-                option_order: index + 1,
-                option_field_id: uuidv4(),
-              };
-            }),
-          };
-          return [...prev, regionOption];
-        });
-      }
-
-      let index = 0;
-      const positionOptionList: OptionTableRow[] = [];
-      while (1) {
-        const positionData = await getApplicationInformationPositionOptions(
-          supabaseClient,
-          {
-            teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
-            index,
-            limit: FETCH_OPTION_LIMIT,
-          }
-        );
-
-        const positionOptions = positionData.map((position, index) => {
-          return {
-            option_field_id: "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
-            option_id: position.position_id,
-            option_order: index,
-            option_value: position.position_alias,
-          };
-        });
-        positionOptionList.push(...positionOptions);
-        if (positionData.length < FETCH_OPTION_LIMIT) break;
-        index += FETCH_OPTION_LIMIT;
-      }
-
-      if (positionOptionList.length) {
-        const orderedOptions = positionOptionList.sort((a, b) =>
-          a.option_value.localeCompare(b.option_value)
-        );
-        setOptionList((prev) => {
-          return [
-            ...prev,
-            {
-              field_name: "Position",
-              field_option: orderedOptions,
-            },
-          ];
         });
       }
 
@@ -334,7 +262,6 @@ const ApplicationInformationSpreadsheetView = ({
               fetchData={fetchData}
               optionList={optionList}
               handleReset={handleReset}
-              approverOptionList={approverOptionList}
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu
