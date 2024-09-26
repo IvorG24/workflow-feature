@@ -7047,29 +7047,29 @@ export const getTechnicalOptionsItem = async (
 
   if (error) throw error;
 
-return data as unknown as QuestionnaireData
-}
-  export const getPositionTypeOptions = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: { teamId: string }
-  ) => {
-    const { data, error } = await supabaseClient
-      .schema("lookup_schema")
-      .from("position_table")
-      .select("*")
-      .eq("position_team_id", params.teamId)
-      .order("position_alias");
+  return data as unknown as QuestionnaireData;
+};
+export const getPositionTypeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", params.teamId)
+    .order("position_alias");
 
   if (error) throw error;
 
-    const returnData = data.map((item, index) => {
-      return {
-        option_value: item.position_alias,
-        option_id: item.position_id,
-        option_field_id: uuidv4(),
-        option_order: index,
-      };
-    });
+  const returnData = data.map((item, index) => {
+    return {
+      option_value: item.position_alias,
+      option_id: item.position_id,
+      option_field_id: uuidv4(),
+      option_order: index,
+    };
+  });
 
   return returnData as OptionTableRow[];
 };
@@ -7102,7 +7102,7 @@ export const getRequestAdOwner = async (
     .maybeSingle();
   if (error) throw error;
 
-  return data as unknown as {ad_owner: {ad_owner_name: string}};
+  return data as unknown as { ad_owner: { ad_owner_name: string } };
 };
 
 export const getEmailResendTimer = async (
@@ -7137,4 +7137,22 @@ export const checkAssessmentCreateRequestPage = async (
   if (error) throw error;
 
   return data as boolean;
+};
+
+export const getQuestionnaireDetails = async (
+  supabaseClient: SupabaseClient<Database>,
+  questionnaireId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .select("questionnaire_name, questionnaire_date_created")
+    .eq("questionnaire_id", questionnaireId)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0] as unknown as {
+    questionnaire_name: string;
+    questionnaire_date_created: string;
+  };
 };

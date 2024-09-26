@@ -6,7 +6,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { QuestionnaireData, TechnicalQuestionFormValues } from "@/utils/types";
+import { TechnicalQuestionFormValues } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -29,7 +29,10 @@ import QuestionnaireDetails from "./QuestionnaireDetails/QuestionnaireDetails";
 
 type Props = {
   questionnaireId: string;
-  questionnaireData: QuestionnaireData;
+  questionnaireData: {
+    questionnaire_name: string;
+    questionnaire_date_created: string;
+  };
 };
 const TechnicalAssessmentCreateQuestionPage = ({
   questionnaireId,
@@ -49,6 +52,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
     defaultValues: {
       sections: [
         {
+          field_id: "",
           field_name: "Technical Question",
           question: "",
           choices: [
@@ -89,12 +93,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
       setIsLoading(true);
       if (!requestorProfile || !teamMember) return;
 
-      const isQuestionExists = await checkIfQuestionExists(supabaseClient, {
+      const isQuestionExisting = await checkIfQuestionExists(supabaseClient, {
         data,
         questionnaireId: questionnaireId,
       });
 
-      if (isQuestionExists) {
+      if (isQuestionExisting) {
         notifications.show({
           message: "Question already exists.",
           color: "orange",
@@ -104,7 +108,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
       const uniqueQuestions = new Set();
       for (const questionData of data.sections) {
-        const trimmedQuestion = questionData.question.trim(); // Trim question
+        const trimmedQuestion = questionData.question.trim().toLowerCase();
 
         if (uniqueQuestions.has(trimmedQuestion)) {
           notifications.show({
@@ -117,17 +121,20 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
         const choicesWithResponse = questionData.choices
           .slice(0, 2)
-          .filter((choice) => choice.choice.trim() !== ""); // Trim choices
+          .filter((choice) => choice.choice.trim() !== "");
 
         const hasDuplicateChoices =
-          new Set(choicesWithResponse.map((choice) => choice.choice.trim()))
-            .size !== choicesWithResponse.length;
+          new Set(
+            choicesWithResponse.map((choice) =>
+              choice.choice.trim().toLowerCase()
+            )
+          ).size !== choicesWithResponse.length;
 
         if (choicesWithResponse.length < 2 || hasDuplicateChoices) {
-          let message = `At least two choices with valid responses are required for: ${trimmedQuestion}`;
+          let message = `At least two choices with valid responses are required`;
 
           if (hasDuplicateChoices) {
-            message = `Duplicate choices are not allowed for: ${trimmedQuestion}`;
+            message = `Duplicate choices are not allowed`;
           }
 
           notifications.show({

@@ -19259,7 +19259,7 @@ plv8.subtransaction(function(){
         address_barangay: project.address_barangay,
         address_street: project.address_street,
         address_zip_code: project.address_zip_code,
-        address_latitude: project.address_latitude, 
+        address_latitude: project.address_latitude,
         address_longitude: project.address_longitude,
       }
     }
@@ -19396,29 +19396,27 @@ CREATE OR REPLACE FUNCTION check_technical_question(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-let returnData = false;
-const { data, questionnaireId } = input_data;
+    let returnData = false;
+    const { data, questionnaireId } = input_data;
 
-  data.forEach((question) => {
     const query = `
-    SELECT *
-    FROM form_schema.field_table f
-    JOIN form_schema.questionnaire_question_table q
-    ON q.questionnaire_question_field_id = f.field_id
-    WHERE
-      f.field_name = $1
-      AND q.questionnaire_question_questionnaire_id = $2
-      AND q.questionnaire_question_is_disabled = FALSE
-      ${question.fieldId ? `AND f.field_id != '${question.fieldId}'` : ""}
+        SELECT COUNT(*)
+        FROM form_schema.field_table f
+        JOIN form_schema.questionnaire_question_table q
+        ON q.questionnaire_question_field_id = f.field_id
+        WHERE
+          LOWER(f.field_name) = ANY($1)
+          AND q.questionnaire_question_questionnaire_id = $2
+        AND q.questionnaire_question_is_disabled = FALSE
     `;
-    const result = plv8.execute(query, [question.response, questionnaireId]);
 
-    if (result.length > 0) {
+    const result = plv8.execute(query, [data, questionnaireId]);
+
+    if (result[0].count > 0) {
       returnData = true;
-      return;
     }
-});
-return returnData;
+
+    return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_questionnare_table_on_load(
