@@ -138,6 +138,10 @@ type RequestFormFieldsProps = {
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -533,6 +537,12 @@ const RequestFormFields = ({
                       onChange(numberOnly);
                       return;
                     }
+                  } else if (
+                    itAssetRequestFormMethods &&
+                    field.field_name === "Employee No. (HRIS)"
+                  ) {
+                    onChange(value.replace(/\D/g, ""));
+                    return;
                   }
                   onChange(value);
                 }}
@@ -555,9 +565,13 @@ const RequestFormFields = ({
                         requestForPaymentFormMethods.onEmployeeNumberChange(
                           value
                         );
-
                       pettyCashVoucherFormMethods &&
                         pettyCashVoucherFormMethods.onEmployeeNumberChange(
+                          value,
+                          sectionIndex
+                        );
+                      itAssetRequestFormMethods &&
+                        itAssetRequestFormMethods.onEmployeeNumberChange(
                           value,
                           sectionIndex
                         );
@@ -675,9 +689,7 @@ const RequestFormFields = ({
                 ...fieldRules,
                 validate: {
                   checkIfZero: (value) =>
-                    itemFormMethods &&
-                    field.field_name === "Quantity" &&
-                    value === 0
+                    field.field_name === "Quantity" && value === 0
                       ? "Quantity value is required"
                       : true,
                   checkIfPositiveInteger: (value) =>
@@ -755,9 +767,7 @@ const RequestFormFields = ({
                 ...fieldRules,
                 validate: {
                   checkIfZero: (value) =>
-                    itemFormMethods &&
-                    field.field_name === "Quantity" &&
-                    value === 0
+                    field.field_name === "Quantity" && value === 0
                       ? "Quantity value is required"
                       : true,
                   checkIfPositiveInteger: (value) =>

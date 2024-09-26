@@ -1830,7 +1830,13 @@ export type JiraITAssetTicketPayloadProps = {
   requestUrl: string;
   requestTypeId: string;
   jiraProjectSiteId: string;
-  employeeName: string;
+  assignee: {
+    employeeId: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    suffix?: string;
+  };
   purpose: string;
   item: string;
   requestFormType: string;

@@ -274,7 +274,7 @@ export const formatJiraITAssetPayload = ({
   requestUrl,
   requestTypeId,
   jiraProjectSiteId,
-  employeeName,
+  assignee,
   purpose,
   item,
 }: JiraITAssetTicketPayloadProps) => {
@@ -287,9 +287,6 @@ export const formatJiraITAssetPayload = ({
         "2": {
           choices: [purpose], // Purpose
         },
-        "3": {
-          text: employeeName, // Employee Name
-        },
         "4": {
           choices: [jiraProjectSiteId], // Requesting Project
         },
@@ -298,6 +295,21 @@ export const formatJiraITAssetPayload = ({
         },
         "6": {
           text: requestId, // Formsly Id
+        },
+        "20": {
+          choices: [assignee.suffix ?? ""],
+        },
+        "21": {
+          text: assignee.firstName,
+        },
+        "22": {
+          text: assignee.middleName ?? "",
+        },
+        "23": {
+          text: assignee.lastName,
+        },
+        "26": {
+          text: assignee.employeeId,
         },
       },
     },

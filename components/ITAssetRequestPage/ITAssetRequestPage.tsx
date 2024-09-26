@@ -1,5 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
+  getEmployeeName,
   getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPage,
@@ -277,6 +278,11 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
+  const getFieldResponse = (index: number) => {
+    const field = request.request_form.form_section[2]?.section_field[index];
+    return safeParse(field?.field_response[0]?.request_response ?? "");
+  };
+
   const onCreateJiraTicket = async () => {
     try {
       if (!request.request_project_id) {
@@ -291,13 +297,32 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         }
       );
 
-      if (!jiraAutomationData?.jiraProjectData) {
+      if (!jiraAutomationData?.jiraProjectData.jira_project_jira_id) {
         throw new Error("Error fetching Jira project data.");
       }
 
-      const employeeName =
-        request.request_form.form_section[2].section_field[2].field_response[0]
-          .request_response;
+      const assigneeEmployeeName = getFieldResponse(0);
+      const assigneeEmployeeId = getFieldResponse(1);
+      let assigneeFirstName = "";
+      let assigneeMiddleName: string | undefined = "";
+      let assigneeLastName = "";
+      let assigneeSuffix: string | undefined = "";
+
+      if (assigneeEmployeeName) {
+        const employee = await getEmployeeName(supabaseClient, {
+          employeeId: assigneeEmployeeId,
+        });
+        if (!employee) return;
+        assigneeFirstName = employee.scic_employee_first_name;
+        assigneeMiddleName = employee.scic_employee_middle_name ?? undefined;
+        assigneeLastName = employee.scic_employee_last_name;
+        assigneeSuffix = employee.scic_employee_suffix ?? undefined;
+      } else {
+        assigneeFirstName = getFieldResponse(3);
+        assigneeMiddleName = getFieldResponse(4);
+        assigneeLastName = getFieldResponse(5);
+        assigneeSuffix = getFieldResponse(6);
+      }
 
       const response = await fetch(
         "/api/jira/get-form?serviceDeskId=3&requestType=332",
@@ -313,6 +338,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       const { fields } = await response.json();
       const purposeList = fields["2"].choices;
       const itemList = fields["1"].choices;
+      const suffixList = fields["20"].choices;
 
       const requestPurpose =
         request.request_form.form_section[0].section_field.find(
@@ -328,16 +354,26 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             )
         )
       );
+      const suffixMatch = suffixList.find(
+        (suffix: JiraFormFieldChoice) =>
+          suffix.name.toLowerCase() === assigneeSuffix?.toLowerCase()
+      );
+      const defaultSuffix = suffixList.find(
+        (suffix: JiraFormFieldChoice) => suffix.name.toLowerCase() === "n/a"
+      );
+
       const purpose = purposeList.find(
         (p: JiraFormFieldChoice) =>
           p.name.toLowerCase().trim() ===
           safeParse(`${requestPurpose?.toLowerCase()}`)
       );
+
       const item = itemList.find(
         (i: JiraFormFieldChoice) =>
           i.name.toLowerCase().trim() ===
           safeParse(`${requestItem?.toLowerCase()}`)
       );
+
       if (!purpose || !item) {
         throw new Error("Jira item or purpose is missing.");
       }
@@ -347,7 +383,13 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         requestTypeId: "332",
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        employeeName: safeParse(employeeName),
+        assignee: {
+          employeeId: assigneeEmployeeId,
+          firstName: assigneeFirstName,
+          middleName: assigneeMiddleName,
+          lastName: assigneeLastName,
+          suffix: suffixMatch ? suffixMatch.id : defaultSuffix.id,
+        },
         purpose: purpose.id,
         item: item.id,
         requestFormType: request.request_form.form_name,
