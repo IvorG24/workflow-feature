@@ -18043,6 +18043,8 @@ AS $$
       `
     )[0].team_member_id;
 
+    const groupNameCondition = groupName.map(name => `team_group_name = '${name}'`).join(" OR ");
+
     const teamGroupId = plv8.execute(
       `
         SELECT team_group_id
@@ -18050,10 +18052,11 @@ AS $$
         WHERE
           team_group_is_disabled = false
           AND team_group_team_id = '${teamId}'
-          AND team_group_name = '${groupName}'
-        LIMIT 1
+          AND (${groupNameCondition})
       `
-    )[0].team_group_id;
+    );
+
+    const groupIdCondition = teamGroupId.map(id => `team_group_id = '${id.team_group_id}'`).join(" OR ");
 
     const teamGroupMemberCount = plv8.execute(
       `
@@ -18061,7 +18064,7 @@ AS $$
         FROM team_schema.team_group_member_table
         WHERE
           team_member_id = '${teamMemberId}'
-          AND team_group_id = '${teamGroupId}'
+          AND (${groupIdCondition})
       `
     )[0].count;
 
