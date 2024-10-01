@@ -7156,3 +7156,18 @@ export const getQuestionnaireDetails = async (
     questionnaire_date_created: string;
   };
 };
+
+export const getPositionCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  position: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_category")
+    .eq("position_alias", position)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0].position_category;
+};

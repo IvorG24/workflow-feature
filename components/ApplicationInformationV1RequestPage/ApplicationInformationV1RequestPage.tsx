@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getPositionTypeOptions,
+  getPositionCategory,
   getRequestComment,
   getUserIdInApplicationInformationV1,
 } from "@/backend/api/get";
@@ -171,6 +171,7 @@ const ApplicationInformationV1RequestPage = ({ request }: Props) => {
         ...prev,
       ]);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -287,7 +288,8 @@ const ApplicationInformationV1RequestPage = ({ request }: Props) => {
       const applicantPosition = safeParse(
         `${formSection[0].section_field[0].field_response?.request_response}`
       );
-      const positionType = await getPositionTypeOptions(
+
+      const positionType = await getPositionCategory(
         supabaseClient,
         applicantPosition
       );
