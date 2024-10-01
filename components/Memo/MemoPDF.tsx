@@ -11,8 +11,12 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { marked } from "marked";
-import Html from "react-pdf-html";
+import dynamic from "next/dynamic";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
+
+const Html = dynamic(() => import("react-pdf-html"), {
+  ssr: false,
+});
 
 const styles = StyleSheet.create({
   memoHeaderInput: {
