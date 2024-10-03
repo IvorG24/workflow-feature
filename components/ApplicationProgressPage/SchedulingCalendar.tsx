@@ -512,11 +512,15 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
+      subject: `${meetingType
+        .replaceAll("_", " ")
+        .toUpperCase()} Schedule | Sta. Clara International Corporation`,
       userFullname,
       message: `
           <p>
-            Your HR phone interview has been scheduled. Please find the details
+            Your ${meetingType
+              .replaceAll("_", " ")
+              .toUpperCase()} has been scheduled. Please find the details
             of your interview below:
           </p>
           <p>
@@ -591,11 +595,15 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
+      subject: `${meetingType
+        .replaceAll("_", " ")
+        .toUpperCase()} Schedule | Sta. Clara International Corporation`,
       userFullname,
       message: `
           <p>
-            Your HR phone interview has been rescheduled. Please find the
+            Your ${meetingType
+              .replaceAll("_", " ")
+              .toUpperCase()} has been rescheduled. Please find the
             details of your interview new interview below:
           </p>
           <p>
