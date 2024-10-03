@@ -14776,14 +14776,14 @@ plv8.subtransaction(function(){
                 },
               ],
             },
-           ...(sectionFieldsWithOptions.length === 5
-            ? [
-              {
-                ...form.form_section[2],
-                section_field: sectionFieldsWithOptions,
-              },
-            ]
-          : []),
+            // ...(sectionFieldsWithOptions.length === 5
+            //   ? [
+            //     {
+            //       ...form.form_section[2],
+            //       section_field: sectionFieldsWithOptions,
+            //     },
+            //   ]
+            // : []),
             ],
           },
          };
@@ -16116,26 +16116,28 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          '${status}',
-          'HR phone interview status is updated to ${status}',
-          '/user/application-progress/${data.application_information_request_id}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
+    if(userId.length) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            '${status}',
+            'HR phone interview status is updated to ${status}',
+            '/user/application-progress/${data.application_information_request_id}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
@@ -16318,11 +16320,20 @@ AS $$
         }
       });
 
+      const meetingLink = plv8.execute(
+        `
+          SELECT * FROM hr_schema.interview_online_meeting_table
+          WHERE interview_meeting_interview_id = '${request.trade_test_id}'
+          LIMIT 1
+        `
+      );
+
       return {
         ...request,
         application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
         application_information_contact_number: contactNumber,
-        application_information_email: email
+        application_information_email: email,
+        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
       }
     });
 });
@@ -16357,26 +16368,28 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          '${status}',
-          'Trade Test status is updated to ${status}',
-          '/user/application-progress/${data.application_information_request_id}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
+    if(userId.length){
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            '${status}',
+            'Trade Test status is updated to ${status}',
+            '/user/application-progress/${data.application_information_request_id}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
@@ -16385,7 +16398,6 @@ AS $$
   });
   return returnData;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION get_phone_meeting_available(
   input_data JSON
@@ -16960,11 +16972,20 @@ AS $$
         }
       });
 
+      const meetingLink = plv8.execute(
+        `
+          SELECT * FROM hr_schema.interview_online_meeting_table
+          WHERE interview_meeting_interview_id = '${request.technical_interview_id}'
+          LIMIT 1
+        `
+      );
+
       return {
         ...request,
         application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
         application_information_contact_number: contactNumber,
-        application_information_email: email
+        application_information_email: email,
+        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
       }
     });
 });
@@ -17001,26 +17022,28 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          '${status}',
-          'Technical Interview ${technicalInterviewNumber} status is updated to ${status}',
-          '/user/application-progress/${data.application_information_request_id}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
+    if(userId.length){
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            '${status}',
+            'Technical Interview ${technicalInterviewNumber} status is updated to ${status}',
+            '/user/application-progress/${data.application_information_request_id}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
@@ -17262,11 +17285,20 @@ AS $$
         }
       });
 
+      const meetingLink = plv8.execute(
+        `
+          SELECT * FROM hr_schema.interview_online_meeting_table
+          WHERE interview_meeting_interview_id = '${request.director_interview_id}'
+          LIMIT 1
+        `
+      );
+
       return {
         ...request,
         application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
         application_information_contact_number: contactNumber,
-        application_information_email: email
+        application_information_email: email,
+        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
       }
     });
 });
@@ -17482,26 +17514,28 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          '${status}',
-          'Director Interview status is updated to ${status}',
-          '/user/application-progress/${data.application_information_request_id}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
+    if(userId.length){
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            '${status}',
+            'Director Interview status is updated to ${status}',
+            '/user/application-progress/${data.application_information_request_id}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
@@ -17595,26 +17629,28 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          '${status}',
-          'Background Check status is updated to ${status}',
-          '/user/application-progress/${data.application_information_request_id}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
+    if(userId.length){
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            '${status}',
+            'Background Check status is updated to ${status}',
+            '/user/application-progress/${data.application_information_request_id}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
@@ -20017,8 +20053,54 @@ USING (
     FROM team_schema.team_member_table
     WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'APPROVER')
+  ) OR (
+    SELECT DISTINCT(team_member_team_id)
+    FROM form_schema.signer_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id 
+    WHERE signer_id = request_signer_signer_id
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table AS tmt
+    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
+    WHERE 
+      tmt.team_member_user_id = (SELECT auth.uid())
+      AND (
+        team_member_role IN ('OWNER', 'APPROVER')
+        OR
+        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      ) 
   )
-);
+)
+WITH CHECK (
+  (
+    SELECT team_member_team_id
+    FROM request_schema.request_table
+    INNER JOIN form_schema.form_table ON form_id = request_form_id
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE request_id = request_signer_request_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'APPROVER')
+  ) OR (
+    SELECT DISTINCT(team_member_team_id)
+    FROM form_schema.signer_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id 
+    WHERE signer_id = request_signer_signer_id
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table AS tmt
+    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
+    WHERE 
+      tmt.team_member_user_id = (SELECT auth.uid())
+      AND (
+        team_member_role IN ('OWNER', 'APPROVER')
+        OR
+        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      ) 
+  )
+)
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON request_schema.request_signer_table
