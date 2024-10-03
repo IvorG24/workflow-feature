@@ -106,6 +106,20 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#228BE6";
     case "closed":
       return "#40C057";
+    case "qualified":
+      return "green";
+    case "not qualified":
+      return "red";
+    case "not responsive":
+      return "gray";
+    case "pending":
+      return "blue";
+    case "waiting for schedule":
+      return "orange";
+    case "rejected":
+      return "red";
+    case "cancelled":
+      return "dark";
     case "incorrect":
       return "#FA5252";
   }

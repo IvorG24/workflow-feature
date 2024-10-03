@@ -1434,3 +1434,67 @@ export const CSI_HIDDEN_FIELDS = [
 
 export const ALLOWED_USER_TO_EDIT_LRF_REQUESTS =
   "accounting.ca@staclara.com.ph";
+
+export const MOCK_DATA = {
+  processed_candidate_count: 779,
+  candidate_for_job_offer_count: 11,
+  candidate_with_job_offer_count: 65,
+  candidate_assignee_job_offer_list: [
+    {
+      candidate_full_name: "Maureen Aguilar",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 5 },
+        { job_offer_status: "declined", count: 3 },
+        { job_offer_status: "accepted", count: 2 },
+      ],
+    },
+    {
+      candidate_full_name: "John Doe",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 12 },
+        { job_offer_status: "declined", count: 5 },
+        { job_offer_status: "accepted", count: 1 },
+      ],
+    },
+    {
+      candidate_full_name: "Jane Smith",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 0 },
+        { job_offer_status: "declined", count: 15 },
+        { job_offer_status: "accepted", count: 5 },
+      ],
+    },
+    {
+      candidate_full_name: "Michael Johnson",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 8 },
+        { job_offer_status: "declined", count: 2 },
+        { job_offer_status: "accepted", count: 9 },
+      ],
+    },
+    {
+      candidate_full_name: "Alice Brown",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 1 },
+        { job_offer_status: "declined", count: 6 },
+        { job_offer_status: "accepted", count: 2 },
+      ],
+    },
+    {
+      candidate_full_name: "David Wilson",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 3 },
+        { job_offer_status: "declined", count: 0 },
+        { job_offer_status: "accepted", count: 20 },
+      ],
+    },
+    {
+      candidate_full_name: "Emily Davis",
+      candidate_job_offer_list: [
+        { job_offer_status: "waiting for response", count: 7 },
+        { job_offer_status: "declined", count: 10 },
+        { job_offer_status: "accepted", count: 2 },
+      ],
+    },
+  ],
+};

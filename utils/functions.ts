@@ -304,3 +304,18 @@ export const parseDataForChart = ({
 
   return chartData;
 };
+
+export const generateMonthLabels = (startDate: Date, endDate: Date) => {
+  const labels = [];
+  let currentDate = moment(startDate);
+
+  while (
+    currentDate.isBefore(endDate) ||
+    currentDate.isSame(endDate, "month")
+  ) {
+    labels.push(currentDate.format("MMMM"));
+    currentDate = currentDate.add(1, "month");
+  }
+
+  return labels;
+};
