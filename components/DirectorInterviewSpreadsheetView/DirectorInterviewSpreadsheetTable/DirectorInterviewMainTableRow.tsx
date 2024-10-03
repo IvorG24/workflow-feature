@@ -7,6 +7,7 @@ import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { DirectorInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
+import { IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -173,6 +174,21 @@ const DirectorInterviewMainTableRow = ({
           <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
         </td>
       )}
+      {!hiddenColumnList.includes("meeting_link") && (
+        <td>
+          {item.meeting_link && (
+            <Button
+              className="meeting-link"
+              onClick={() => window.open(item.meeting_link, "_blank")}
+              variant="outline"
+              leftIcon={<IconVideo size={16} />}
+            >
+              Join Meeting
+            </Button>
+          )}
+        </td>
+      )}
+
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
           !isOverriding &&

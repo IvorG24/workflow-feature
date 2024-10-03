@@ -477,6 +477,13 @@ const SchedulingCalendar = ({
           },
           type: "required",
         },
+        {
+          emailAddress: {
+            address: "recruitment@staclara.com.ph",
+            name: "Sta Clara Recruitment",
+          },
+          type: "required",
+        },
       ],
       allowNewTimeProposals: true,
       isOnlineMeeting: true,

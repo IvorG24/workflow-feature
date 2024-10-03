@@ -435,7 +435,9 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
-          {formSection[2].section_field.length ? (
+          {formSection[2].section_field.every(
+            (field) => field.field_response?.request_response
+          ) ? (
             formSection.slice(2).map((section, idx) => {
               return (
                 <RequestSection
