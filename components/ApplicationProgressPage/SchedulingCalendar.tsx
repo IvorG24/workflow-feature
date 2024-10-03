@@ -19,6 +19,7 @@ import {
   MEETING_TYPE_DETAILS,
 } from "@/utils/constant";
 import { formatTimeToLocal, isError, JoyRideNoSSR } from "@/utils/functions";
+import { capitalizeEachWord } from "@/utils/string";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
@@ -277,16 +278,22 @@ const SchedulingCalendar = ({
       const tempDate = new Date(selectedDate);
       tempDate.setHours(meridiem === "PM" ? hours + 12 : hours, minutes);
 
-      const { status, assigned_hr_team_member_id } =
-        await phoneInterviewValidation(supabaseClient, {
-          interview_schedule: tempDate.toISOString(),
-        });
+      const {
+        status,
+        assigned_hr_team_member_id,
+        assigned_hr_full_name,
+        assigned_hr_email,
+      } = await phoneInterviewValidation(supabaseClient, {
+        interview_schedule: tempDate.toISOString(),
+      });
 
       if (status === "success") {
         await Promise.all([
           handleCreateOrUpdateOnlineMeeting(
             tempDate,
-            meetingType as MeetingType
+            meetingType as MeetingType,
+            assigned_hr_full_name,
+            assigned_hr_email
           ),
           await updateSchedule(supabaseClient, {
             interviewSchedule: tempDate.toISOString(),
@@ -385,7 +392,9 @@ const SchedulingCalendar = ({
 
   const handleCreateOrUpdateOnlineMeeting = async (
     tempDate: Date,
-    meeting_type: MeetingType
+    meeting_type: MeetingType,
+    assigned_hr_full_name: string,
+    assigned_hr_email: string
   ) => {
     const { breakDuration, duration } = MEETING_TYPE_DETAILS[meeting_type];
 
@@ -405,7 +414,13 @@ const SchedulingCalendar = ({
     } else {
       // create online meeting
       if (process.env.NODE_ENV === "production") {
-        await handleCreateOnlineMeeting(tempDate, breakDuration, duration);
+        await handleCreateOnlineMeeting(
+          tempDate,
+          assigned_hr_full_name,
+          assigned_hr_email,
+          breakDuration,
+          duration
+        );
       } else {
         const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
           supabaseClient,
@@ -424,11 +439,13 @@ const SchedulingCalendar = ({
 
   const handleCreateOnlineMeeting = async (
     tempDate: Date,
+    assigned_hr_full_name: string,
+    assigned_hr_email: string,
     breakDuration: number,
     duration: number
   ) => {
-    const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
-    const hrRepresentativeEmail = "johndoe@gmail.com"; // replace with actual hr rep email
+    const hrRepresentativeName = capitalizeEachWord(assigned_hr_full_name);
+    const hrRepresentativeEmail = assigned_hr_email;
     const formattedDate = moment(tempDate).format("dddd, MMMM Do YYYY, h:mm A");
     const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
     const meetingDetails = {
@@ -448,14 +465,14 @@ const SchedulingCalendar = ({
       attendees: [
         {
           emailAddress: {
-            address: hrRepresentativeEmail, // replace with actual hr rep email
+            address: hrRepresentativeEmail,
             name: hrRepresentativeName,
           },
           type: "required",
         },
         {
           emailAddress: {
-            address: user?.user_email, // replace with actual user
+            address: user?.user_email,
             name: userFullname,
           },
           type: "required",
