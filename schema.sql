@@ -16668,14 +16668,29 @@ AS $$
         message: 'No available HR member for the selected time.'
       };
     } else {
+      const assignedHrData = plv8.execute(
+        `
+          SELECT
+            user_email,
+            user_first_name,
+            user_last_name
+          FROM team_schema.team_member_table
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE
+            team_member_id = '${lowestLoadMember}'
+          LIMIT 1
+        `
+      )[0];
+
       message = {
         status: 'success',
         message: 'HR phone interview scheduled successfully.',
-        assigned_hr_team_member_id: lowestLoadMember
+        assigned_hr_team_member_id: lowestLoadMember,
+        assigned_hr_full_name: `${assignedHrData.user_first_name} ${assignedHrData.user_last_name}`,
+        assigned_hr_email: assignedHrData.user_email
       };
     }
   });
-
   return message;
 $$ LANGUAGE plv8;
 
