@@ -483,22 +483,30 @@ const SchedulingCalendar = ({
       onlineMeetingProvider: "teamsForBusiness",
     };
 
-    const createMeetingResponse = await fetch("/api/ms-graph/create-meeting", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(meetingDetails),
-    });
+    let meetingUrl = "";
+    let meetingDataId = "";
 
-    const createMeetingData = await createMeetingResponse.json();
+    if (meetingType !== "hr_phone_interview") {
+      const createMeetingResponse = await fetch(
+        "/api/ms-graph/create-meeting",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(meetingDetails),
+        }
+      );
+      const createMeetingData = await createMeetingResponse.json();
 
-    const meetingUrl = createMeetingData.onlineMeeting.joinUrl;
+      meetingUrl = createMeetingData.onlineMeeting.joinUrl;
+      meetingDataId = createMeetingData.id;
+    }
 
     const interviewOnlineMeeting: InterviewOnlineMeetingTableInsert = {
       interview_meeting_interview_id: targetId,
       interview_meeting_url: meetingUrl,
-      interview_meeting_provider_id: createMeetingData.id,
+      interview_meeting_provider_id: meetingDataId,
       interview_meeting_break_duration: breakDuration,
       interview_meeting_duration: duration,
       interview_meeting_schedule: tempDate.toISOString(),
@@ -531,10 +539,16 @@ const SchedulingCalendar = ({
             <strong>Time</strong>:{" "}
             <span>${moment(tempDate).format("h:mm A")}</span>
           </p>
-          <p>
-            <strong>Meeting Link</strong>
-            <a href=${meetingUrl}>Interview Meeting Link</a>
-          </p>
+          ${
+            meetingUrl.length
+              ? `
+            <p>
+              <strong>Meeting Link</strong>
+              <a href=${meetingUrl}>Interview Meeting Link</a>
+            </p>
+            `
+              : ""
+          }
           <p>
             If you have any questions or need to make adjustments, please
             contact us at recruitment@staclara.com.ph. We look forward to
@@ -568,22 +582,31 @@ const SchedulingCalendar = ({
       },
     };
 
-    const updateMeetingResponse = await fetch("/api/ms-graph/update-meeting", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        meetingDetails,
-        meetingId: interviewOnlineMeeting.interview_meeting_provider_id,
-      }),
-    });
-    const updateMeetingData = await updateMeetingResponse.json();
-    const meetingUrl = updateMeetingData.onlineMeeting.joinUrl;
+    let meetingUrl = "";
+    let meetingDataId = "";
+
+    if (meetingType !== "hr_phone_interview") {
+      const updateMeetingResponse = await fetch(
+        "/api/ms-graph/update-meeting",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meetingDetails,
+            meetingId: interviewOnlineMeeting.interview_meeting_provider_id,
+          }),
+        }
+      );
+      const updateMeetingData = await updateMeetingResponse.json();
+      meetingUrl = updateMeetingData.onlineMeeting.joinUrl;
+      meetingDataId = updateMeetingData.id;
+    }
 
     const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
       interview_meeting_url: meetingUrl,
-      interview_meeting_provider_id: updateMeetingData.id,
+      interview_meeting_provider_id: meetingDataId,
       interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
     };
 
@@ -614,10 +637,16 @@ const SchedulingCalendar = ({
             <strong>Time</strong>:{" "}
             <span>${moment(tempDate).format("h:mm A")}</span>
           </p>
-          <p>
-            <strong>Meeting Link</strong>
-            <a href=${meetingUrl}>Interview Meeting Link</a>
-          </p>
+          ${
+            meetingUrl.length
+              ? ` 
+              <p>
+                <strong>Meeting Link</strong>
+                <a href=${meetingUrl}>Interview Meeting Link</a>
+              </p>
+            `
+              : ""
+          }
           <p>
             If you have any questions or need to make adjustments, please
             contact us at recruitment@staclara.com.ph. We look forward to
@@ -948,7 +977,10 @@ const SchedulingCalendar = ({
           </>
         )}
 
-        {!isReadyToSelect && interviewOnlineMeeting && status === "PENDING" ? (
+        {!isReadyToSelect &&
+        interviewOnlineMeeting &&
+        status === "PENDING" &&
+        interviewOnlineMeeting.interview_meeting_url ? (
           <Flex gap="xs" align="center" mt="sm">
             <Text>Online Meeting:</Text>
             <Button
