@@ -76,7 +76,6 @@ const ResponseAnalytics = () => {
       const rawData = await getHrAnalyticsData(supabaseClient, {
         filterChartValues: data,
       });
-      console.log(rawData);
 
       const labels = adjustDateRange(data.frequencyFilter, rawData) || [];
       setMonthLabels(labels);
@@ -150,6 +149,8 @@ const ResponseAnalytics = () => {
 
       setDataChart(datasetChartResponse);
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
