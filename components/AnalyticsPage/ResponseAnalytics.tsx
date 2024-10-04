@@ -1,7 +1,8 @@
-import { getHrAnalyticsData } from "@/backend/api/get";
-import { generateMonthLabels } from "@/utils/functions";
+import { getHrAnalyticsData, getTeamGroupMember } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { generateDateLabels } from "@/utils/functions";
 import { getStatusToColorForCharts } from "@/utils/styling";
-import { DatasetChartResponse } from "@/utils/types";
+import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
 import { Container, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -15,7 +16,9 @@ export type FilterChartValues = {
   stepFilter: string;
   startDate: Date | null;
   endDate: Date | null;
+  frequencyFilter: string; // Added frequencyFilter
 };
+
 const stepOptions = [
   { label: "Application Information", value: "request" },
   { label: "HR Phone Interview", value: "hr_phone_interview" },
@@ -25,88 +28,126 @@ const stepOptions = [
   { label: "Background Check", value: "background_check" },
   { label: "Job Offer", value: "job_offer" },
 ];
-const colors = {
-  pending: "#ff922b",
-  approved: "#51cf66",
-  rejected: "#fa5252",
-};
+
 const memberOptions = [{ label: "All", value: "All" }];
+
 const ResponseAnalytics = () => {
   const supabaseClient = useSupabaseClient();
+  const activeTeam = useActiveTeam();
+
+  const [dataChart, setDataChart] = useState<DatasetChartResponse[]>([]);
+  const [monthLabels, setMonthLabels] = useState<string[]>([]);
+  const [groupMemberOptions, setMemberOptions] = useState<OptionType[]>([]);
+
   const methods = useForm<FilterChartValues>({
     defaultValues: {
       memberFilter: memberOptions[0].value,
       stepFilter: stepOptions[0].value,
+      frequencyFilter: "monthly",
       startDate: null,
       endDate: null,
     },
   });
+
   const stepValue = methods.watch("stepFilter");
-  const [dataChart, setDataChart] = useState<DatasetChartResponse[]>([]);
-  const [monthLabels, setMonthLabels] = useState<string[]>([]);
+  const memberValue = methods.watch("memberFilter");
+  const frequencyValue = methods.watch("frequencyFilter");
+
+  const adjustDateRange = (frequency: string, rawData: Dataset) => {
+    let startDate = methods.getValues("startDate");
+    let endDate = methods.getValues("endDate");
+
+    if (!startDate || !endDate) {
+      startDate = new Date(rawData.dates[0]);
+      endDate = new Date(rawData.dates[rawData.dates.length - 1]);
+    }
+    if (frequency === "daily") {
+      return generateDateLabels(startDate, endDate, "daily");
+    } else if (frequency === "weekly") {
+      return generateDateLabels(startDate, endDate, "weekly");
+    } else if (frequency === "monthly") {
+      return generateDateLabels(startDate, endDate, "monthly");
+    } else if (frequency === "yearly") {
+      return generateDateLabels(startDate, endDate, "yearly");
+    }
+  };
+
   const handleFetchResponseTable = async (data: FilterChartValues) => {
     try {
       const rawData = await getHrAnalyticsData(supabaseClient, {
         filterChartValues: data,
       });
+      console.log(rawData);
+      const labels = adjustDateRange(data.frequencyFilter, rawData) || [];
+      setMonthLabels(labels);
 
-      const startDate = data.startDate || new Date();
-      const endDate = data.endDate || new Date();
-      const monthLabels = generateMonthLabels(startDate, endDate);
-      setMonthLabels(monthLabels);
-      const datasetChartResponse: DatasetChartResponse[] = [
-        {
-          label: "Pending",
-          data: rawData.pending_counts.map((item) => parseInt(item, 10) || 0), // Ensure no NaN values
-          backgroundColor: [
-            getStatusToColorForCharts("pending") || colors.pending,
-          ], // Fallback to default color
-          borderColor: [getStatusToColorForCharts("pending") || colors.pending], // Fallback to default color
-          borderWidth: 2,
-        },
-        {
-          label: "Approved",
-          data: rawData.approved_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.approved_counts.map(() => colors.approved),
-          borderColor: rawData.approved_counts.map(() => colors.approved),
-          borderWidth: 2,
-        },
-        {
-          label: "Rejected",
-          data: rawData.rejected_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderWidth: 2,
-        },
-        {
-          label: "Qualified",
-          data: rawData.qualified_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderWidth: 2,
-        },
-        {
-          label: "Not Qualified",
-          data: rawData.not_qualified_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderWidth: 2,
-        },
-        {
-          label: "Cancelled",
-          data: rawData.cancelled_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderWidth: 2,
-        },
-        {
-          label: "Not Responsive",
-          data: rawData.not_responsive_counts.map((item) => parseInt(item, 10)),
-          backgroundColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderColor: rawData.rejected_counts.map(() => colors.rejected),
-          borderWidth: 2,
-        },
-      ];
+      const createDataset = (
+        label: string,
+        rawData: (string | number)[] = [],
+        status: string
+      ) => ({
+        label,
+        data: rawData.map((item) => parseInt(item as string, 10)),
+        backgroundColor: [getStatusToColorForCharts(status) || "blue"],
+        borderColor: [getStatusToColorForCharts(status) || "blue"],
+        borderWidth: 2,
+      });
+
+      const addDatasetIfAvailable = (
+        datasetArray: DatasetChartResponse[],
+        label: string,
+        dataKey: (string | number)[] | undefined,
+        status: string
+      ) => {
+        if (dataKey && dataKey.length > 0) {
+          datasetArray.push(createDataset(label, dataKey, status));
+        }
+      };
+
+      const datasetChartResponse: DatasetChartResponse[] = [];
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Pending",
+        rawData?.pending_counts,
+        "pending"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Approved",
+        rawData?.approved_counts,
+        "approved"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Rejected",
+        rawData?.rejected_counts,
+        "rejected"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Qualified",
+        rawData?.qualified_counts,
+        "qualified"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Not Qualified",
+        rawData?.not_qualified_counts,
+        "not qualified"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Cancelled",
+        rawData?.cancelled_counts,
+        "cancelled"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Not Responsive",
+        rawData?.not_responsive_counts,
+        "not responsive"
+      );
+
       setDataChart(datasetChartResponse);
     } catch (e) {
       notifications.show({
@@ -115,11 +156,31 @@ const ResponseAnalytics = () => {
       });
     }
   };
-  console.log(dataChart);
 
   useEffect(() => {
+    const fetchTeamMemberList = async () => {
+      if (!activeTeam.team_id) return;
+      const data = await getTeamGroupMember(supabaseClient, {
+        groupId: "a691a6ca-8209-4b7a-8f48-8a4582bbe75a",
+      });
+
+      const teamMemberList = data.map((member) => ({
+        label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+        value: member.team_member_id,
+      }));
+      setMemberOptions([...memberOptions, ...teamMemberList]);
+    };
+    fetchTeamMemberList();
     handleFetchResponseTable(methods.getValues());
-  }, [methods, dataChart]);
+  }, [activeTeam.team_id, frequencyValue]);
+
+  const selectedStepLabel = stepOptions.find(
+    (option) => option.value === stepValue
+  )?.label;
+  const selectedMemberLabel = groupMemberOptions.find(
+    (option) => option.value === memberValue
+  )?.label;
+
   return (
     <Container fluid>
       <Stack spacing="sm">
@@ -128,12 +189,14 @@ const ResponseAnalytics = () => {
           <form>
             <ResponseTableFilter
               handleFetchResponseTable={handleFetchResponseTable}
-              memberOptions={memberOptions}
+              memberOptions={groupMemberOptions}
               stepOptions={stepOptions}
             />
           </form>
         </FormProvider>
         <ResponseTable
+          xLabel={selectedMemberLabel}
+          yLabel={selectedStepLabel}
           monthLabel={monthLabels}
           dataChartResponse={dataChart}
           stepFilter={stepValue}

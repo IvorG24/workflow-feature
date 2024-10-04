@@ -17,6 +17,8 @@ import StackedBarChartResponse from "../Chart/StackedBarChartResponse";
 
 type RequestStatisticsProps = {
   stepFilter: string;
+  yLabel?: string;
+  xLabel?: string;
   monthLabel: string[];
   dataChartResponse: DatasetChartResponse[];
 };
@@ -24,6 +26,8 @@ type RequestStatisticsProps = {
 const ResponseTable = ({
   stepFilter,
   monthLabel,
+  yLabel,
+  xLabel,
   dataChartResponse,
 }: RequestStatisticsProps) => {
   const statusList =
@@ -31,6 +35,7 @@ const ResponseTable = ({
       ? ["approved", "rejected", "pending"]
       : [
           "qualified",
+          "pending",
           "not qualified",
           "not responsive",
           "waiting for schedule",
@@ -87,8 +92,8 @@ const ResponseTable = ({
           <StackedBarChartResponse
             label={monthLabel}
             datasets={dataChartResponse as DatasetChartResponse[]}
-            xAxisLabel="Filtered by month"
-            yAxisLabel="Job Offer Status"
+            xAxisLabel={`Filter By Month ( ${xLabel} )`}
+            yAxisLabel={yLabel}
           />
         </Box>
       </Stack>

@@ -2586,7 +2586,7 @@ export type DatasetChartResponse = {
 };
 
 export type Dataset = {
-  months: string[];
+  dates: string[];
   pending_counts: string[];
   approved_counts: string[];
   rejected_counts: string[];

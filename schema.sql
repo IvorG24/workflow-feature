@@ -1729,7 +1729,7 @@ AS $$
         const weekRanges = [
           getRange(1, 7),
           getRange(8, 14),
-          getRange(15, 21), 
+          getRange(15, 21),
           getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
         ];
 
@@ -1744,7 +1744,7 @@ AS $$
 
         if (!weekStart) {
           weekStart = new Date(currentYear, currentMonth, 1);
-          weekEnd = weekRanges[0][1]; 
+          weekEnd = weekRanges[0][1];
         }
 
         const teamMemberIdList = plv8.execute(
@@ -1765,7 +1765,7 @@ AS $$
               AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
           `
         ).map(signer => `'${signer.signer_id}'`);
-    
+
         const selectedSigner = plv8.execute(
           `
             SELECT
@@ -16533,7 +16533,7 @@ AS $$
         ON iom.interview_meeting_interview_id = t.trade_test_id
         LEFT JOIN hr_schema.technical_interview_table ti
         ON iom.interview_meeting_interview_id = ti.technical_interview_id
-        WHERE iom.interview_meeting_schedule = $1
+        WHERE iom.interview_meeting_schedule::timestamp = $1::timestamp
         AND iom.interview_meeting_is_disabled = false
         AND COALESCE(
           hpi.hr_phone_interview_team_member_id,
@@ -18104,7 +18104,7 @@ plv8.subtransaction(function(){
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
-RETURNS JSON 
+RETURNS JSON
 SET search_path TO ''
 AS $$
   let data;
@@ -18121,7 +18121,7 @@ AS $$
 
     const candidate_referral_source = plv8.execute(`
         SELECT request_response, COUNT(request_response)::int AS count
-        FROM request_schema.request_response_table 
+        FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_id = request_response_request_id
         WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
         ${dateFilterCondition}
@@ -18144,10 +18144,10 @@ AS $$
     const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
 
     const age_bracket_list = [
-      {min: 18, max: 25}, 
-      {min: 26, max: 30}, 
-      {min: 31, max: 35}, 
-      {min: 36, max: 40}, 
+      {min: 18, max: 25},
+      {min: 26, max: 30},
+      {min: 31, max: 35},
+      {min: 36, max: 40},
       {min: 41, max: 100}
     ];
 
@@ -18155,7 +18155,7 @@ AS $$
       const result = plv8.execute(`
         SELECT COUNT(request_response)::int
         FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table 
+        INNER JOIN request_schema.request_table
         ON request_id = request_response_request_id
         WHERE request_response_field_id = '22229778-e532-4b39-b15d-ca9f80c397c0'
         AND CAST(request_response AS int) >= $1
@@ -20464,13 +20464,13 @@ USING (
     SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE 
+    WHERE
       tmt.team_member_user_id = (SELECT auth.uid())
       AND (
         team_member_role IN ('OWNER', 'APPROVER')
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      ) 
+      )
   )
 )
 WITH CHECK (
@@ -20487,13 +20487,13 @@ WITH CHECK (
     SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE 
+    WHERE
       tmt.team_member_user_id = (SELECT auth.uid())
       AND (
         team_member_role IN ('OWNER', 'APPROVER')
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      ) 
+      )
   )
 );
 
