@@ -288,22 +288,20 @@ const SchedulingCalendar = ({
       });
 
       if (status === "success") {
-        await Promise.all([
-          handleCreateOrUpdateOnlineMeeting(
-            tempDate,
-            meetingType as MeetingType,
-            assigned_hr_full_name,
-            assigned_hr_email
-          ),
-          await updateSchedule(supabaseClient, {
-            interviewSchedule: tempDate.toISOString(),
-            targetId,
-            status: APPLICATION_STATUS_PENDING,
-            table: meetingType,
-            meetingTypeNumber,
-            team_member_id: assigned_hr_team_member_id,
-          }),
-        ]);
+        await handleCreateOrUpdateOnlineMeeting(
+          tempDate,
+          meetingType as MeetingType,
+          assigned_hr_full_name,
+          assigned_hr_email
+        );
+        await updateSchedule(supabaseClient, {
+          interviewSchedule: tempDate.toISOString(),
+          targetId,
+          status: APPLICATION_STATUS_PENDING,
+          table: meetingType,
+          meetingTypeNumber,
+          team_member_id: assigned_hr_team_member_id,
+        });
         setStatus(APPLICATION_STATUS_PENDING);
         setSelectedDate(tempDate);
       }
@@ -504,6 +502,8 @@ const SchedulingCalendar = ({
           body: JSON.stringify(meetingDetails),
         }
       );
+      if (createMeetingResponse.status !== 200) throw new Error();
+
       const createMeetingData = await createMeetingResponse.json();
 
       meetingUrl = createMeetingData.onlineMeeting.joinUrl;
