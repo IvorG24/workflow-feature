@@ -354,7 +354,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
     request.request_status === "APPROVED" &&
     user?.user_email ===
       safeParse(
-        request.request_form.form_section[1].section_field[0].field_response[0]
+        request.request_form.form_section[1].section_field[1].field_response[0]
           ?.request_response ?? ""
       ) &&
     request.isWithNextStep;
