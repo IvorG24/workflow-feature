@@ -1,5 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
@@ -46,6 +49,7 @@ const TradeTestMainTableRow = ({
   const { classes } = useStyles();
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const [isOverriding, setIsOverriding] = useState(false);
 
@@ -215,6 +219,7 @@ const TradeTestMainTableRow = ({
       <td>
         {item.trade_test_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+          teamMemberGroupList.includes("HUMAN RESOURCES") &&
           !isOverriding && (
             <Button
               w={140}
