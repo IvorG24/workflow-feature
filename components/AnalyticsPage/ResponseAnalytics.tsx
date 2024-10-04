@@ -48,10 +48,11 @@ const ResponseAnalytics = () => {
       endDate: null,
     },
   });
+  const { handleSubmit, watch } = methods;
 
-  const stepValue = methods.watch("stepFilter");
-  const memberValue = methods.watch("memberFilter");
-  const frequencyValue = methods.watch("frequencyFilter");
+  const stepValue = watch("stepFilter");
+  const memberValue = watch("memberFilter");
+  const frequencyValue = watch("frequencyFilter");
 
   const adjustDateRange = (frequency: string, rawData: Dataset) => {
     let startDate = methods.getValues("startDate");
@@ -63,8 +64,6 @@ const ResponseAnalytics = () => {
     }
     if (frequency === "daily") {
       return generateDateLabels(startDate, endDate, "daily");
-    } else if (frequency === "weekly") {
-      return generateDateLabels(startDate, endDate, "weekly");
     } else if (frequency === "monthly") {
       return generateDateLabels(startDate, endDate, "monthly");
     } else if (frequency === "yearly") {
@@ -78,6 +77,7 @@ const ResponseAnalytics = () => {
         filterChartValues: data,
       });
       console.log(rawData);
+
       const labels = adjustDateRange(data.frequencyFilter, rawData) || [];
       setMonthLabels(labels);
 
@@ -180,13 +180,41 @@ const ResponseAnalytics = () => {
   const selectedMemberLabel = groupMemberOptions.find(
     (option) => option.value === memberValue
   )?.label;
+  const selectedFrequency = groupMemberOptions.find(
+    (option) => option.value === memberValue
+  )?.label;
+
+  const handleSubmitFilter = (data: FilterChartValues) => {
+    if (!data.startDate || !data.endDate) {
+      notifications.show({
+        message: "Start date and End date are required",
+        color: "red",
+      });
+      return;
+    }
+    const endDate = new Date(data.endDate ? data.endDate : new Date());
+    if (data.frequencyFilter === "daily") {
+      endDate.setHours(23, 59, 59, 999);
+    } else if (data.frequencyFilter === "monthly") {
+      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setDate(0);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (data.frequencyFilter === "yearly") {
+      endDate.setMonth(11);
+      endDate.setDate(31);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    data.endDate = new Date(endDate.toISOString());
+
+    handleFetchResponseTable(data);
+  };
 
   return (
     <Container fluid>
       <Stack spacing="sm">
-        <Title order={2}>HR Response</Title>
+        <Title order={2}>HR Analytics</Title>
         <FormProvider {...methods}>
-          <form>
+          <form onSubmit={handleSubmit(handleSubmitFilter)}>
             <ResponseTableFilter
               handleFetchResponseTable={handleFetchResponseTable}
               memberOptions={groupMemberOptions}
@@ -195,6 +223,7 @@ const ResponseAnalytics = () => {
           </form>
         </FormProvider>
         <ResponseTable
+          frequency={selectedFrequency}
           xLabel={selectedMemberLabel}
           yLabel={selectedStepLabel}
           monthLabel={monthLabels}

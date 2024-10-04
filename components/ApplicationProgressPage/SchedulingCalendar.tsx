@@ -562,8 +562,9 @@ const SchedulingCalendar = ({
 
     const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
       interview_meeting_url: meetingUrl,
+      interview_meeting_schedule: tempDate.toISOString(),
       interview_meeting_provider_id: updateMeetingData.id,
-      interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
+      interview_meeting_id: updateMeetingData.interview_meeting_id,
     };
 
     const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(

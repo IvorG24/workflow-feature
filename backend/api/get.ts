@@ -7180,8 +7180,6 @@ export const getHrAnalyticsData = async (
     filterChartValues: FilterChartValues;
   }
 ) => {
-  console.log(params);
-
   const { data, error } = await supabaseClient.rpc("hr_response_analytics", {
     input_data: {
       filterChartValues: {

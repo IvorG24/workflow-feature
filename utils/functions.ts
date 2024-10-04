@@ -308,7 +308,7 @@ export const parseDataForChart = ({
 export const generateDateLabels = (
   startDate: Date,
   endDate: Date,
-  frequency: "daily" | "weekly" | "monthly" | "yearly"
+  frequency: "daily" | "monthly" | "yearly"
 ) => {
   const labels: string[] = [];
   let currentDate = moment(startDate);
@@ -323,13 +323,6 @@ export const generateDateLabels = (
         labels.push(currentDate.format("dddd MMM DD"));
       }
       currentDate = currentDate.add(1, "day");
-    }
-  } else if (frequency === "weekly") {
-    let weekCounter = 1;
-    while (weekCounter <= 4) {
-      labels.push(`Week ${weekCounter}`);
-      currentDate = currentDate.add(1, "week");
-      weekCounter++;
     }
   } else if (frequency === "monthly") {
     while (

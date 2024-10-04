@@ -19,6 +19,7 @@ type RequestStatisticsProps = {
   stepFilter: string;
   yLabel?: string;
   xLabel?: string;
+  frequency?: string;
   monthLabel: string[];
   dataChartResponse: DatasetChartResponse[];
 };
@@ -64,7 +65,7 @@ const ResponseTable = ({
             <Center c="green">
               <IconChartBar />
             </Center>
-            <Title order={3}>Monthly Statistics</Title>
+            <Title order={3}>Statistics</Title>
           </Group>
           <Group fz={14}>
             {statusList.map((status, idx) => (

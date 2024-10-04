@@ -16,27 +16,27 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
           including employee performance and response analytics. Use the tabs
           below to explore detailed reports and make data-driven decisions.
         </Text>
-        <Tabs defaultValue="response-analytics">
+        <Tabs defaultValue="analytics">
           <Tabs.List>
             <Tabs.Tab
-              value="hr-analytics"
+              value="response"
               icon={<IconReportAnalytics size="0.8rem" />}
-            >
-              HR Anayltics
-            </Tabs.Tab>
-            <Tabs.Tab
-              value="response-analytics"
-              icon={<IconFileAnalytics size="0.8rem" />}
             >
               Response
             </Tabs.Tab>
+            <Tabs.Tab
+              value="analytics"
+              icon={<IconFileAnalytics size="0.8rem" />}
+            >
+              Analytics
+            </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="hr-analytics" pt="xs">
+          <Tabs.Panel value="response" pt="xs">
             <HRAnalytics data={analyticsData} />
           </Tabs.Panel>
 
-          <Tabs.Panel value="response-analytics" pt="xs">
+          <Tabs.Panel value="analytics" pt="xs">
             <ResponseAnalytics />
           </Tabs.Panel>
         </Tabs>
