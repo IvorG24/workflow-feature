@@ -20069,6 +20069,17 @@ USING (
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
       ) 
+  ) OR (
+    SELECT team_member_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table
+    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
+    WHERE 
+      team_member_user_id = (SELECT auth.uid())
+      AND signer_id = request_signer_signer_id
   )
 )
 WITH CHECK (
@@ -20099,6 +20110,17 @@ WITH CHECK (
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
       ) 
+  ) OR (
+    SELECT team_member_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table
+    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
+    WHERE 
+      team_member_user_id = (SELECT auth.uid())
+      AND signer_id = request_signer_signer_id
   )
 )
 
@@ -20568,6 +20590,19 @@ USING (
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
       ) 
+  ) OR (
+    SELECT team_member_team_id
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table
+    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
+    INNER JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
+    WHERE 
+      team_member_user_id = (SELECT auth.uid())
+      AND request_signer_request_id = request_id
   )
 )
 WITH CHECK (
@@ -20591,6 +20626,19 @@ WITH CHECK (
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
       ) 
+  ) OR (
+    SELECT team_member_team_id
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
+    SELECT DISTINCT(team_member_team_id)
+    FROM team_schema.team_member_table
+    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
+    INNER JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
+    WHERE 
+      team_member_user_id = (SELECT auth.uid())
+      AND request_signer_request_id = request_id
   )
 );
 
