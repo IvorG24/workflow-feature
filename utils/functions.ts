@@ -319,7 +319,7 @@ export const generateDateLabels = (
       currentDate.isSame(endDate, "day")
     ) {
       const dayOfWeek = currentDate.isoWeekday();
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      if (dayOfWeek >= 1 && dayOfWeek <= 7) {
         labels.push(currentDate.format("dddd MMM DD"));
       }
       currentDate = currentDate.add(1, "day");

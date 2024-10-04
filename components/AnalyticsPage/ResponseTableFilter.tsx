@@ -59,6 +59,7 @@ const ResponseTableFilter = ({
             {...field}
             onChange={(value) => {
               field.onChange(value);
+              handleFetchResponseTable(getValues());
             }}
           />
         )}
@@ -88,7 +89,7 @@ const ResponseTableFilter = ({
         defaultValue={frequencyOptions[2].value}
         render={({ field }) => (
           <Select
-            label="Frequency"
+            label="Range"
             placeholder="Select Frequency"
             data={frequencyOptions}
             {...field}

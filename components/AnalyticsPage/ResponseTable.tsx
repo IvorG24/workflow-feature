@@ -34,14 +34,24 @@ const ResponseTable = ({
   const statusList =
     stepFilter === "request"
       ? ["approved", "rejected", "pending"]
-      : [
-          "qualified",
-          "pending",
-          "not qualified",
-          "not responsive",
-          "waiting for schedule",
-          "cancelled",
-        ];
+      : stepFilter === "job_offer"
+        ? [
+            "qualified",
+            "pending",
+            "not qualified",
+            "not responsive",
+            "waiting for schedule",
+            "cancelled",
+            "for pooling",
+          ]
+        : [
+            "qualified",
+            "pending",
+            "not qualified",
+            "not responsive",
+            "waiting for schedule",
+            "cancelled",
+          ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
 

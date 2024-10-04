@@ -3,9 +3,10 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { generateDateLabels } from "@/utils/functions";
 import { getStatusToColorForCharts } from "@/utils/styling";
 import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
-import { Container, Stack, Title } from "@mantine/core";
+import { Alert, Container, Stack, Text, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconNote } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ResponseTable from "./ResponseTable";
@@ -16,7 +17,7 @@ export type FilterChartValues = {
   stepFilter: string;
   startDate: Date | null;
   endDate: Date | null;
-  frequencyFilter: string; // Added frequencyFilter
+  frequencyFilter: string;
 };
 
 const stepOptions = [
@@ -149,8 +150,6 @@ const ResponseAnalytics = () => {
 
       setDataChart(datasetChartResponse);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -214,6 +213,14 @@ const ResponseAnalytics = () => {
     <Container fluid>
       <Stack spacing="sm">
         <Title order={2}>HR Analytics</Title>
+        <Alert title="Note!" icon={<IconNote size={16} />}>
+          <Text>
+            To access the date range, click submit. Make sure you have selected
+            the appropriate filters before proceeding. If you encounter any
+            issues, please refresh the page or contact support for assistance.
+          </Text>
+        </Alert>
+
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitFilter)}>
             <ResponseTableFilter

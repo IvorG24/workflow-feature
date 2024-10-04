@@ -107,9 +107,9 @@ export const getStatusToColorForCharts = (status: string) => {
     case "closed":
       return "#40C057";
     case "qualified":
-      return "green";
+      return "#40C057";
     case "not qualified":
-      return "red";
+      return "#fa5252";
     case "not responsive":
       return "gray";
     case "pending":
