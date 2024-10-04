@@ -1088,7 +1088,7 @@ CREATE TABLE hr_schema.request_connection_table (
 CREATE TABLE hr_schema.interview_online_meeting_table (
   interview_meeting_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   interview_meeting_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  interview_meeting_provider_id TEXT UNIQUE NOT NULL,
+  interview_meeting_provider_id TEXT,
   interview_meeting_url TEXT NOT NULL,
   interview_meeting_interview_id UUID NOT NULL,
   interview_meeting_duration INT NOT NULL,
@@ -16706,39 +16706,115 @@ AS $$
   return message;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_schedule(
+CREATE OR REPLACE FUNCTION create_schedule(
   input_data JSON
 )
-RETURNS VOID
+RETURNS JSON
 SET search_path TO ''
 AS $$
+  let returnData = {};
   plv8.subtransaction(function() {
     const {
-      interviewSchedule,
-      targetId,
-      status,
-      table,
-      meetingTypeNumber,
-      team_member_id,
+      interview_meeting_break_duration,
+      interview_meeting_duration,
+      interview_meeting_interview_id,
+      interview_meeting_provider_id,
+      interview_meeting_schedule,
+      interview_meeting_url,
+      updateScheduleProps
     } = input_data;
 
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
 
     let query = `
-      UPDATE hr_schema.` + table + `_table
+      UPDATE hr_schema.` + updateScheduleProps.table + `_table
       SET
-        ` + table + `_status_date_updated = '` + currentDate + `',
-        ` + table + `_status = '` + status + `',
-        ` + table + `_schedule = '` + interviewSchedule + `',
-        ` + table + `_team_member_id = '` + team_member_id + `'`;
-    if (meetingTypeNumber) {
+        ` + updateScheduleProps.table + `_status_date_updated = '` + currentDate + `',
+        ` + updateScheduleProps.table + `_status = '` + updateScheduleProps.status + `',
+        ` + updateScheduleProps.table + `_schedule = '` + updateScheduleProps.interviewSchedule + `',
+        ` + updateScheduleProps.table + `_team_member_id = '` + updateScheduleProps.team_member_id + `'`;
+    if (updateScheduleProps.meetingTypeNumber) {
       query += `,
-        ` + table + `_number = ` + meetingTypeNumber;
+        ` + updateScheduleProps.table + `_number = ` + updateScheduleProps.meetingTypeNumber;
     }
     query += `
-      WHERE ` + table + `_id = '` + targetId + `';`;
+      WHERE ` + updateScheduleProps.table + `_id = '` + updateScheduleProps.targetId + `';`;
     plv8.execute(query);
+
+    returnData = plv8.execute(
+      `
+        INSERT INTO hr_schema.interview_online_meeting_table
+        (
+          interview_meeting_break_duration,
+          interview_meeting_duration,
+          interview_meeting_interview_id,
+          interview_meeting_provider_id,
+          interview_meeting_schedule,
+          interview_meeting_url
+        )
+        VALUES
+        (
+          '${interview_meeting_break_duration}',
+          '${interview_meeting_duration}',
+          '${interview_meeting_interview_id}',
+          '${interview_meeting_provider_id}',
+          '${interview_meeting_schedule}',
+          '${interview_meeting_url}'
+        )
+        RETURNING *
+      `
+    )[0];
   });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_schedule(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function() {
+    const {
+      interview_meeting_id,
+      interview_meeting_provider_id,
+      interview_meeting_url,
+      interview_meeting_schedule,
+      updateScheduleProps
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    let query = `
+      UPDATE hr_schema.` + updateScheduleProps.table + `_table
+      SET
+        ` + updateScheduleProps.table + `_status_date_updated = '` + currentDate + `',
+        ` + updateScheduleProps.table + `_status = '` + updateScheduleProps.status + `',
+        ` + updateScheduleProps.table + `_schedule = '` + updateScheduleProps.interviewSchedule + `',
+        ` + updateScheduleProps.table + `_team_member_id = '` + updateScheduleProps.team_member_id + `'`;
+    if (updateScheduleProps.meetingTypeNumber) {
+      query += `,
+        ` + updateScheduleProps.table + `_number = ` + updateScheduleProps.meetingTypeNumber;
+    }
+    query += `
+      WHERE ` + updateScheduleProps.table + `_id = '` + updateScheduleProps.targetId + `';`;
+    plv8.execute(query);
+
+    returnData = plv8.execute(
+      `
+        UPDATE hr_schema.interview_online_meeting_table
+        SET
+          interview_meeting_url = '${interview_meeting_url}',
+          interview_meeting_provider_id = '${interview_meeting_provider_id}',
+          interview_meeting_schedule = '${interview_meeting_schedule}'
+        WHERE
+          interview_meeting_id = '${interview_meeting_id}'
+        RETURNING *
+      `
+    )[0];
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_trade_test_schedule(
