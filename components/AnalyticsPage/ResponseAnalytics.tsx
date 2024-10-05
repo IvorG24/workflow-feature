@@ -1,9 +1,17 @@
 import { getHrAnalyticsData, getTeamGroupMember } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { frequencyOptions } from "@/utils/constant";
 import { generateDateLabels } from "@/utils/functions";
 import { getStatusToColorForCharts } from "@/utils/styling";
 import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
-import { Alert, Container, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Container,
+  LoadingOverlay,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
@@ -39,7 +47,7 @@ const ResponseAnalytics = () => {
   const [dataChart, setDataChart] = useState<DatasetChartResponse[]>([]);
   const [monthLabels, setMonthLabels] = useState<string[]>([]);
   const [groupMemberOptions, setMemberOptions] = useState<OptionType[]>([]);
-
+  const [isLoading, setIsloading] = useState(false);
   const methods = useForm<FilterChartValues>({
     defaultValues: {
       memberFilter: memberOptions[0].value,
@@ -74,6 +82,7 @@ const ResponseAnalytics = () => {
 
   const handleFetchResponseTable = async (data: FilterChartValues) => {
     try {
+      setIsloading(true);
       const rawData = await getHrAnalyticsData(supabaseClient, {
         filterChartValues: data,
       });
@@ -149,7 +158,9 @@ const ResponseAnalytics = () => {
       );
 
       setDataChart(datasetChartResponse);
+      setIsloading(false);
     } catch (e) {
+      setIsloading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -180,8 +191,8 @@ const ResponseAnalytics = () => {
   const selectedMemberLabel = groupMemberOptions.find(
     (option) => option.value === memberValue
   )?.label;
-  const selectedFrequency = groupMemberOptions.find(
-    (option) => option.value === memberValue
+  const selectedFrequency = frequencyOptions.find(
+    (option) => option.value === frequencyValue
   )?.label;
 
   const handleSubmitFilter = (data: FilterChartValues) => {
@@ -211,6 +222,7 @@ const ResponseAnalytics = () => {
 
   return (
     <Container fluid>
+      <LoadingOverlay visible={isLoading} />
       <Stack spacing="sm">
         <Title order={2}>HR Analytics</Title>
         <Alert title="Note!" icon={<IconNote size={16} />}>

@@ -68,8 +68,6 @@ export const getStatusToColor = (status: string) => {
       return "dark";
     case "missed":
       return "grape";
-    case "for pooling":
-      return "yellow";
     case "not responsive":
       return "gray";
     default:
@@ -122,6 +120,8 @@ export const getStatusToColorForCharts = (status: string) => {
       return "dark";
     case "incorrect":
       return "#FA5252";
+    case "for pooling":
+      return "yellow";
   }
 };
 

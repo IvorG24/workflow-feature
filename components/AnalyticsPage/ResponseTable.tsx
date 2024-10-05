@@ -28,6 +28,7 @@ const ResponseTable = ({
   stepFilter,
   monthLabel,
   yLabel,
+  frequency,
   xLabel,
   dataChartResponse,
 }: RequestStatisticsProps) => {
@@ -103,7 +104,7 @@ const ResponseTable = ({
           <StackedBarChartResponse
             label={monthLabel}
             datasets={dataChartResponse as DatasetChartResponse[]}
-            xAxisLabel={`Filter By Month ( ${xLabel} )`}
+            xAxisLabel={`Filter By ${frequency} ( ${xLabel} )`}
             yAxisLabel={yLabel}
           />
         </Box>
