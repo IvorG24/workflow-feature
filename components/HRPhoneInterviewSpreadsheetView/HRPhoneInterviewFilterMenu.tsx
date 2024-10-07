@@ -47,7 +47,7 @@ const HRPhoneInterviewFilterMenu = ({
         opened={isFilterMenuOpen}
         onClose={closeFilterMenu}
         position="right"
-        title="HR Phone Interview Filter Menu"
+        title="HR Interview Filter Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -206,7 +206,7 @@ const HRPhoneInterviewFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                HR Phone Interview Date Created
+                HR Interview Date Created
               </Text>
               <Flex gap="xs">
                 <Controller
@@ -252,7 +252,7 @@ const HRPhoneInterviewFilterMenu = ({
                 const newValue = value ?? [];
                 return (
                   <MultiSelect
-                    label="HR Phone Interview Status"
+                    label="HR Interview Status"
                     data={[
                       { value: "PENDING", label: "Pending" },
                       { value: "QUALIFIED", label: "Qualified" },
@@ -284,7 +284,7 @@ const HRPhoneInterviewFilterMenu = ({
             />
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                HR Phone Interview Schedule
+                HR Interview Schedule
               </Text>
               <Flex gap="xs">
                 <Controller

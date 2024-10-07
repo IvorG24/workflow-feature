@@ -260,7 +260,7 @@ const TradeTestSpreadsheetView = ({
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            Trade Test Spreadsheet View
+            Practical Test Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}

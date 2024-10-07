@@ -271,7 +271,8 @@ const TechnicalInterviewSpreadsheetView = ({
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            Technical Interview {technicalInterviewNumber} Spreadsheet View
+            {technicalInterviewNumber === 1 ? "Department" : "Requestor"}{" "}
+            Interview Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
@@ -285,12 +286,14 @@ const TechnicalInterviewSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              technicalInterviewNumber={technicalInterviewNumber}
             />
           </FormProvider>
           <TechnicalInterviewColumnsMenu
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
             columnList={Object.keys(formDefaultValues)}
+            technicalInterviewNumber={technicalInterviewNumber}
           />
         </Group>
       </Box>
@@ -307,6 +310,7 @@ const TechnicalInterviewSpreadsheetView = ({
           handleUpdateTechnicalInterviewStatus
         }
         handleCheckRow={handleCheckRow}
+        technicalInterviewNumber={technicalInterviewNumber}
       />
     </Stack>
   );
