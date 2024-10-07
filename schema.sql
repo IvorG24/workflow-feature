@@ -14772,7 +14772,10 @@ plv8.subtransaction(function(){
                 },
                 {
                   ...form.form_section[1].section_field[4],
-                  field_response: safeParse(applicantData[4].request_response),
+                  field_response:
+                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  ? safeParse(applicantData[4].request_response)
+                  : safeParse(applicantData[3].request_response),
                 },
               ],
             },
