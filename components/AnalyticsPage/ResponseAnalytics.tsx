@@ -249,7 +249,9 @@ const ResponseAnalytics = () => {
     <Container fluid>
       <LoadingOverlay visible={isLoading} />
       <Stack spacing="sm">
-        <Title order={2}>HR Analytics</Title>
+        <Title order={3} mb="sm">
+          HR Analytics
+        </Title>
         <Alert title="Note!" icon={<IconNote size={16} />}>
           <Text>
             To access the date range, click submit. Make sure you have selected
