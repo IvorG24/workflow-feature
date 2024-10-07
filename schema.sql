@@ -16384,7 +16384,7 @@ AS $$
           (
             'REQUEST',
             '${status}',
-            'Trade Test status is updated to ${status}',
+            'Practical Test status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
             '${userId[0].user_id}'
           )
@@ -17114,7 +17114,7 @@ AS $$
           (
             'REQUEST',
             '${status}',
-            'Technical Interview ${technicalInterviewNumber} status is updated to ${status}',
+            '${technicalInterviewNumber === 1 ? "Department Interview" : "Requestor Interview"} status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
             '${userId[0].user_id}'
           )

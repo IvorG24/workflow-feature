@@ -20,6 +20,7 @@ type Props = {
   handleReset: () => void;
   positionOptionList: OptionType[];
   hrOptionList: OptionType[];
+  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewFilterMenu = ({
@@ -27,12 +28,14 @@ const TechnicalInterviewFilterMenu = ({
   handleReset,
   positionOptionList,
   hrOptionList,
+  technicalInterviewNumber,
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
-
   const { handleSubmit, control, register } =
     useFormContext<TechnicalInterviewFilterFormValues>();
+
+  const label = technicalInterviewNumber === 1 ? "Department" : "Requestor";
 
   return (
     <>
@@ -47,7 +50,7 @@ const TechnicalInterviewFilterMenu = ({
         opened={isFilterMenuOpen}
         onClose={closeFilterMenu}
         position="right"
-        title="Technical Interview Filter Menu"
+        title={`${label} Interview Filter Menu`}
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -206,7 +209,7 @@ const TechnicalInterviewFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Technical Interview Date Created
+                {technicalInterviewNumber === 1} Interview Date Created
               </Text>
               <Flex gap="xs">
                 <Controller
@@ -252,7 +255,7 @@ const TechnicalInterviewFilterMenu = ({
                 const newValue = value ?? [];
                 return (
                   <MultiSelect
-                    label="Technical Interview Status"
+                    label={`${label} Interview Status`}
                     data={[
                       { value: "PENDING", label: "Pending" },
                       { value: "QUALIFIED", label: "Qualified" },
@@ -284,7 +287,7 @@ const TechnicalInterviewFilterMenu = ({
             />
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Technical Interview Schedule
+                {label} Interview Schedule
               </Text>
               <Flex gap="xs">
                 <Controller

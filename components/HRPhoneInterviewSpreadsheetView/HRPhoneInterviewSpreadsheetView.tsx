@@ -263,7 +263,7 @@ const HRPhoneInterviewSpreadsheetView = ({
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            HR Phone Interview Spreadsheet View
+            HR Interview Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
