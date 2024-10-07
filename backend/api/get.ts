@@ -1,3 +1,4 @@
+import { FilterChartValues } from "@/components/AnalyticsPage/ResponseAnalytics";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -36,6 +37,7 @@ import {
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
+  Dataset,
   DirectorInterviewFilterFormValues,
   DirectorInterviewSpreadsheetData,
   EquipmentDescriptionTableRow,
@@ -7172,4 +7174,44 @@ export const getPositionCategory = async (
   if (error) throw error;
 
   return data[0].position_category;
+};
+
+export const getHrAnalyticsData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    filterChartValues: FilterChartValues;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("hr_response_analytics", {
+    input_data: {
+      filterChartValues: {
+        memberFilter: params.filterChartValues.memberFilter,
+        stepFilter: params.filterChartValues.stepFilter,
+        frequencyFilter: params.filterChartValues.frequencyFilter,
+        startDate: params.filterChartValues.startDate
+          ? params.filterChartValues.startDate.toISOString()
+          : null,
+        endDate: params.filterChartValues.endDate
+          ? params.filterChartValues.endDate.toISOString()
+          : null,
+      },
+    },
+  });
+  if (error) throw error;
+
+  return data as unknown as Dataset;
+};
+
+export const getTeamGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_team_group_member", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as TeamMemberType[];
 };
