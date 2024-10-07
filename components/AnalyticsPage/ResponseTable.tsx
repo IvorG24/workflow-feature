@@ -37,22 +37,22 @@ const ResponseTable = ({
       ? ["approved", "rejected", "pending"]
       : stepFilter === "job_offer"
         ? [
-            "qualified",
+            "accepted",
+            "rejected",
             "pending",
-            "not qualified",
-            "not responsive",
-            "waiting for schedule",
-            "cancelled",
+            "waiting for offer",
             "for pooling",
           ]
-        : [
-            "qualified",
-            "pending",
-            "not qualified",
-            "not responsive",
-            "waiting for schedule",
-            "cancelled",
-          ];
+        : stepFilter === "background_check"
+          ? ["pending", "qualified", "not qualified"]
+          : [
+              "qualified",
+              "pending",
+              "not qualified",
+              "not responsive",
+              "waiting for schedule",
+              "cancelled",
+            ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
 
@@ -104,7 +104,7 @@ const ResponseTable = ({
           <StackedBarChartResponse
             label={monthLabel}
             datasets={dataChartResponse as DatasetChartResponse[]}
-            xAxisLabel={`Filter By ${frequency} ( ${xLabel} )`}
+            xAxisLabel={`Filter ${frequency} ( ${xLabel} )`}
             yAxisLabel={yLabel}
           />
         </Box>

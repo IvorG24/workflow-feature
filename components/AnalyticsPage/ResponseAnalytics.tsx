@@ -122,6 +122,12 @@ const ResponseAnalytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
+        "Accepted",
+        rawData?.pending_counts,
+        "accepted"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
         "Approved",
         rawData?.approved_counts,
         "approved"
@@ -155,6 +161,25 @@ const ResponseAnalytics = () => {
         "Not Responsive",
         rawData?.not_responsive_counts,
         "not responsive"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "For Pooling",
+        rawData?.for_pooling_counts,
+        "for pooling"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Waiting For Schedule",
+        rawData?.waiting_for_schedule_counts,
+        "waiting for schedule"
+      );
+
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Waiting For Offer",
+        rawData?.waiting_for_offer_counts,
+        "waiting for offer"
       );
 
       setDataChart(datasetChartResponse);

@@ -2594,7 +2594,11 @@ export type Dataset = {
   approved_counts: string[];
   rejected_counts: string[];
   qualified_counts: string[];
+  for_pooling_counts: string[];
+  waiting_for_schedule_counts: string[];
+  waiting_for_offer_counts: string[];
   not_qualified_counts: string[];
   not_responsive_counts: string[];
+  accepted_counts: string[];
   cancelled_counts: string[];
 };

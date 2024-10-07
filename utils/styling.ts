@@ -113,7 +113,9 @@ export const getStatusToColorForCharts = (status: string) => {
     case "pending":
       return "blue";
     case "waiting for schedule":
-      return "orange";
+      return "#fd7e14";
+    case "waiting for offer":
+      return "#fd7e14";
     case "rejected":
       return "red";
     case "cancelled":
@@ -121,7 +123,9 @@ export const getStatusToColorForCharts = (status: string) => {
     case "incorrect":
       return "#FA5252";
     case "for pooling":
-      return "yellow";
+      return "#fab005";
+    case "accepted":
+      return "#40C057";
   }
 };
 

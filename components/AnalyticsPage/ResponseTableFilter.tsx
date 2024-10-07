@@ -43,7 +43,7 @@ const ResponseTableFilter = ({
         .toDate()
     : undefined;
   return (
-    <Flex align="center" justify="space-between" flex-wrap>
+    <Flex align="center" justify="space-between" flex-wrap="true">
       <Group spacing="md">
         <Controller
           name="memberFilter"
