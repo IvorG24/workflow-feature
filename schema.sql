@@ -23557,7 +23557,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table tm
     JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
-    WHERE tm.team_member_user_id = auth.uid()
+    WHERE tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role = 'OWNER'
   )
 );
@@ -23572,7 +23572,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table tm
     JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
-    WHERE tm.team_member_user_id = auth.uid()
+    WHERE tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role = 'OWNER'
   )
 );
