@@ -326,6 +326,7 @@ const ApplicationInformationSpreadsheetView = ({
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -335,6 +336,7 @@ const ApplicationInformationSpreadsheetView = ({
               optionList={optionList}
               handleReset={handleReset}
               approverOptionList={approverOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu

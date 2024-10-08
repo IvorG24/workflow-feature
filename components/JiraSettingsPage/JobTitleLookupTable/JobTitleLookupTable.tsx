@@ -230,6 +230,7 @@ const JobTitleLookupTable = () => {
               variant="light"
               leftIcon={<IconReload size={16} />}
               onClick={() => handlePagination(activePage)}
+              disabled={isLoading}
             >
               Refresh
             </Button>

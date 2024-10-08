@@ -226,6 +226,7 @@ const BackgroundCheckSpreadsheetView = ({
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
