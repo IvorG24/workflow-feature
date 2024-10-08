@@ -86,6 +86,7 @@ const HRPhoneInterviewColumnsMenu = ({
           fullWidth
           onClick={() => {
             setHiddenColumnList([]);
+            closeColumnMenu();
           }}
         >
           Reset Column
