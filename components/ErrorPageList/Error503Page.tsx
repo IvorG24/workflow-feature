@@ -57,7 +57,7 @@ const Error503Page = () => {
         breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
       >
         <div>
-          <Title className={classes.title}>Service unavaible...</Title>
+          <Title className={classes.title}>Service unavailable...</Title>
           <Text color="dimmed" size="lg">
             We are currently undergoing maintenance. Please try again later.
           </Text>
