@@ -173,6 +173,7 @@ const RequestListFilter = ({
             }}
             onLabel="ON"
             offLabel="OFF"
+            disabled={isFetchingRequestList}
           />
         </Flex>
       </Flex>

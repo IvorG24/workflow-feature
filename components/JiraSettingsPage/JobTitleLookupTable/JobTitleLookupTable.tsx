@@ -39,7 +39,7 @@ import JobTitleLookupForm from "./JobTitleLookupForm";
 const JobTitleLookupTable = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [openJobTitleLookupFormModal, setOpenJobTitleLookupFormModal] =
     useState(false);
   const [isUpdatingJobTitle, setIsUpdatingJobTitle] = useState(false);

@@ -15,12 +15,14 @@ type Props = {
   stepOptions: OptionType[];
   memberOptions: OptionType[];
   handleFetchResponseTable: (data: FilterChartValues) => void;
+  isLoading: boolean;
 };
 
 const ResponseTableFilter = ({
   stepOptions,
   memberOptions,
   handleFetchResponseTable,
+  isLoading,
 }: Props) => {
   const { control, getValues, watch, setValue } =
     useFormContext<FilterChartValues>();
@@ -37,8 +39,8 @@ const ResponseTableFilter = ({
           frequencyValue === "daily"
             ? "day"
             : frequencyValue === "monthly"
-              ? "month"
-              : "year"
+            ? "month"
+            : "year"
         )
         .toDate()
     : undefined;
@@ -188,7 +190,12 @@ const ResponseTableFilter = ({
         </Grid.Col>
 
         <Grid.Col span={4}>
-          <Button leftIcon={<IconDatabase size={16} />} type="submit" fullWidth>
+          <Button
+            leftIcon={<IconDatabase size={16} />}
+            type="submit"
+            fullWidth
+            disabled={isLoading}
+          >
             Fetch Data
           </Button>
         </Grid.Col>

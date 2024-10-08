@@ -153,7 +153,7 @@ const TechnicalQuestionnaireFilter = ({
             onClick={() => {
               handleFilterForms();
             }}
-            loading={isFetchingRequestList}
+            disabled={isFetchingRequestList}
           >
             Refresh
           </Button>

@@ -266,6 +266,7 @@ const ResponseAnalytics = () => {
               handleFetchResponseTable={handleFetchResponseTable}
               memberOptions={groupMemberOptions}
               stepOptions={stepOptions}
+              isLoading={isLoading}
             />
           </form>
         </FormProvider>

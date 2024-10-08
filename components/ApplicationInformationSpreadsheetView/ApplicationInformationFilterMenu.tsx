@@ -585,7 +585,7 @@ const ApplicationInformationFilterMenu = ({
                 handleReset();
                 closeFilterMenu();
               }}
-              loading={isLoading}
+              disabled={isLoading}
             >
               Reset Filter
             </Button>
