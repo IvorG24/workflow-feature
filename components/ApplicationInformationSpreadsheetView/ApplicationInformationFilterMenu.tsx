@@ -290,6 +290,7 @@ type Props = {
   optionList: ApplicationInformationFieldOptionType[];
   handleReset: () => void;
   approverOptionList: OptionType[];
+  isLoading: boolean;
 };
 
 const ApplicationInformationFilterMenu = ({
@@ -297,6 +298,7 @@ const ApplicationInformationFilterMenu = ({
   optionList,
   handleReset,
   approverOptionList,
+  isLoading,
 }: Props) => {
   const theme = useMantineTheme();
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
@@ -583,10 +585,13 @@ const ApplicationInformationFilterMenu = ({
                 handleReset();
                 closeFilterMenu();
               }}
+              loading={isLoading}
             >
               Reset Filter
             </Button>
-            <Button type="submit">Apply Filter</Button>
+            <Button type="submit" disabled={isLoading}>
+              Apply Filter
+            </Button>
           </Stack>
         </form>
       </Drawer>

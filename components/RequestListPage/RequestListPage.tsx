@@ -255,6 +255,7 @@ const RequestListPage = ({
               projectList={projectList}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

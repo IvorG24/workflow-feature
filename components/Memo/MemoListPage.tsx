@@ -279,6 +279,7 @@ const MemoListPage = ({
                 setActivePage(1);
                 handlePagination();
               }}
+              disabled={isLoading}
             >
               Refresh
             </Button>

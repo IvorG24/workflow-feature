@@ -241,6 +241,7 @@ const FormDepartmentSignerSection = ({
             onClick={() =>
               handleFetchDepartmentSignerList(activePage, departmentSearch)
             }
+            disabled={isLoading}
           >
             Refresh
           </Button>
