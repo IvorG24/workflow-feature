@@ -131,6 +131,7 @@ const HRAnalytics = ({ data: initialData }: Props) => {
             ml="sm"
             leftIcon={<IconDatabase size={18} />}
             onClick={handleFetchAnalyticsData}
+            disabled={isFetching}
           >
             Fetch Data
           </Button>

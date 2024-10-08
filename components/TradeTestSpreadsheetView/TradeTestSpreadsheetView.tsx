@@ -74,7 +74,7 @@ const TradeTestSpreadsheetView = ({
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<TradeTestSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
@@ -275,6 +275,7 @@ const TradeTestSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <TradeTestColumnsMenu
