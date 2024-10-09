@@ -3277,7 +3277,7 @@ CREATE OR REPLACE FUNCTION fetch_request_list(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let return_value
+  let return_value;
   plv8.subtransaction(function(){
     const {
       teamId,
@@ -3300,116 +3300,96 @@ AS $$
     let request_list = [];
     let request_count = 0;
 
-    let fetch_request_list_query =
-      `
-        SELECT DISTINCT
-          request_id,
-          request_formsly_id,
-          request_date_created,
-          request_status,
-          request_team_member_id,
-          request_jira_id,
-          request_jira_link,
-          request_otp_id,
-          request_form_id,
-          form_name,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_avatar
+    const base_request_list_query = `
+        SELECT
+            request_id,
+            request_formsly_id,
+            request_date_created,
+            request_status,
+            request_team_member_id,
+            request_jira_id,
+            request_jira_link,
+            request_otp_id,
+            request_form_id,
+            form_name
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
-        LEFT JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-        LEFT JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE
-          ftmt.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-      `;
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        WHERE 
+            tmt.team_member_team_id = $1
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
+    `;
 
-    let sort_request_list_query =
-      `
+    const base_sort_query = `
         ORDER BY ${columnAccessor} ${sort}
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-      `;
+    `;
 
-    let request_list_count_query =
-      `
-        SELECT COUNT(DISTINCT request_id)
+    const base_request_count_query = `
+        SELECT COUNT(request_id)
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
-        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE
-          ftm.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-      `;
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        WHERE 
+            tmt.team_member_team_id = $1
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
+    `;
 
-    if (!isApproversView) {
-      const nonApproverFilterQuery =
-        `
-          ${requestor}
-          ${approver}
-          ${status}
-          ${form}
-          ${project}
-          ${search}
+    if (isApproversView) {
+        const approver_filter_query = `
+            AND EXISTS (
+                SELECT 1 
+                FROM request_schema.request_signer_table
+                INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id 
+                WHERE 
+                    request_signer_request_id = request_view.request_id
+                    AND request_signer_status = 'PENDING'
+                    AND signer.signer_team_member_id = $2
+            )
+            AND request_view.request_status != 'CANCELED'
         `;
 
-      request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
-      request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
+        request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
+
+        request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
     } else {
-      const approverFilterQuery =
-        `
-          AND signer_team_member_id = '${teamMemberId}'
-          AND request_signer_status = 'PENDING'
-          AND request_status != 'CANCELED'
-        `;
-      request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
-      request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
+        const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
+
+        request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+
+        request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
     const request_data = request_list.map(request => {
       const request_signer = plv8.execute(
-        `
-          SELECT
+        `SELECT
             request_signer_table.request_signer_id,
             request_signer_table.request_signer_status,
             signer_table.signer_is_primary_signer,
             signer_table.signer_team_member_id
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
-        `
-      ).map(signer => {
-        return {
-          request_signer_id: signer.request_signer_id,
-          request_signer_status: signer.request_signer_status,
-          request_signer: {
-              signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
-          }
-        }
-      });
+         FROM request_schema.request_signer_table
+         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+         WHERE request_signer_table.request_signer_request_id = $1`,
+        [request.request_id]
+      )
 
       return {
         ...request,
-        request_signer: request_signer,
-      }
+        request_signer,
+      };
     });
 
     return_value = {
       data: request_data,
       count: Number(request_count.count)
     };
+
   });
-  return return_value
+  return return_value;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_team_project(
@@ -4349,13 +4329,11 @@ AS $$
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name, 'user_avatar',usert.user_avatar) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
-
     const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
-    request_data = {teamMemberList,isFormslyTeam,projectList}
+    request_data = {isFormslyTeam,projectList}
  });
  return request_data;
 $$ LANGUAGE plv8;

@@ -17,7 +17,7 @@ import {
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
   addAmpersandBetweenWords,
   escapeQuotes,
@@ -108,6 +108,7 @@ import {
   TradeTestFilterFormValues,
   TradeTestSpreadsheetData,
   TransactionTableRow,
+  UnformattedRequestListItemRequestSigner,
   UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -251,55 +252,78 @@ export const getRequestList = async (
 
   const sort = isAscendingSort ? "ASC" : "DESC";
 
-  const requestorCondition = requestor
-    ?.map((value) => `request_view.request_team_member_id = '${value}'`)
-    .join(" OR ");
+  const requestorCondition = getFilterConditionFromArray({
+    values: requestor,
+    column: "request_view.request_team_member_id",
+  });
+  const statusCondition = getFilterConditionFromArray({
+    values: status,
+    column: "request_view.request_status",
+  });
+  const formCondition = getFilterConditionFromArray({
+    values: form,
+    column: "request_view.request_form_id",
+  });
+  const projectCondition = getFilterConditionFromArray({
+    values: project,
+    column: "request_view.request_formsly_id_prefix",
+    operator: "SIMILAR TO",
+  });
+
+  const approverList = approver?.map((approver) => `'${approver}'`).join(",");
   const approverCondition = approver
-    ?.map((value) => `signer_table.signer_team_member_id = '${value}'`)
-    .join(" OR ");
-  const statusCondition = status
-    ?.map((value) => `request_view.request_status = '${value}'`)
-    .join(" OR ");
-  const formCondition = form
-    ?.map((value) => `request_view.request_form_id = '${value}'`)
-    .join(" OR ");
-  const projectCondition = project
-    ?.map(
-      (value) =>
-        `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
-    )
-    .join(" OR ");
+    ? `EXISTS (SELECT 1 FROM form_schema.signer_table WHERE signer_team_member_id IN (${approverList}))`
+    : "";
 
-  const searchCondition =
-    search && validate(search)
+  const searchCondition = search
+    ? validate(search)
       ? `request_view.request_id = '${search}'`
-      : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      : `request_view.request_formsly_id ILIKE '%${search}%'`
+    : "";
 
-  const { data: data, error } = await supabaseClient.rpc("fetch_request_list", {
-    input_data: {
-      teamId: teamId,
-      page: page,
-      limit: limit,
-      requestor: requestorCondition ? `AND (${requestorCondition})` : "",
-      approver: approverCondition ? `AND (${approverCondition})` : "",
-      project: projectCondition ? `AND (${projectCondition})` : "",
-      form: formCondition ? `AND (${formCondition})` : "",
-      status: statusCondition ? `AND (${statusCondition})` : "",
-      search: search ? `AND (${searchCondition})` : "",
-      sort,
-      isApproversView,
-      teamMemberId,
-      columnAccessor,
-    },
+  const inputData = {
+    teamId,
+    page,
+    limit,
+    requestor: requestorCondition ? `AND (${requestorCondition})` : "",
+    approver: approverCondition ? `AND (${approverCondition})` : "",
+    project: projectCondition ? `AND (${projectCondition})` : "",
+    form: formCondition ? `AND (${formCondition})` : "",
+    status: statusCondition ? `AND (${statusCondition})` : "",
+    search: search ? `AND (${searchCondition})` : "",
+    sort,
+    isApproversView,
+    teamMemberId,
+    columnAccessor,
+  };
+
+  const { data, error } = await supabaseClient.rpc("fetch_request_list", {
+    input_data: inputData,
   });
 
   if (error || !data) throw error;
+
   const dataFormat = data as unknown as {
-    data: RequestListItemType[];
+    data: (Omit<RequestListItemType, "request_signer"> & {
+      request_signer: UnformattedRequestListItemRequestSigner[];
+    })[];
     count: number;
   };
 
-  return { data: dataFormat.data, count: dataFormat.count };
+  const formattedData: RequestListItemType[] = dataFormat.data.map((item) => {
+    const formatted_request_signer = item.request_signer.map((signer) => ({
+      request_signer_id: signer.request_signer_id,
+      request_signer_status: signer.request_signer_status,
+      request_signer: {
+        signer_team_member_id: signer.signer_team_member_id,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+      },
+    }));
+
+    return { ...item, request_signer: formatted_request_signer };
+  });
+
+  return { data: formattedData, count: dataFormat.count };
 };
 
 // Get user's active team id
@@ -4738,12 +4762,11 @@ export const getJiraItemCategoryList = async (
 
     return {
       ...item,
-      assigned_jira_user:
-        {
-          ...assignedUser[0],
-          ...assignedUser[0]?.jira_item_user_account_id,
-          ...assignedUser[0]?.jira_item_user_role_id,
-        } ?? null,
+      assigned_jira_user: {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      },
     };
   });
 
