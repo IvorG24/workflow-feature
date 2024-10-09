@@ -15042,10 +15042,16 @@ AS $$
 
     const offset = (page - 1) * limit;
 
-
     const request_list = plv8.execute(
       `
-        SELECT * FROM (
+        SELECT  
+          request_id,
+          request_formsly_id,
+          request_date_created,
+          request_status,
+          request_form_id,
+          form_name
+        FROM (
           SELECT
             request_id,
             request_formsly_id,
@@ -15056,14 +15062,18 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          WHERE
-            request_is_disabled = false
             AND form_table.form_is_disabled = false
             AND form_is_public_form = true
-            AND field_name = 'Email Address'
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response = '"${email}"'
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            AND field_id IN (
+              '56438f2d-da70-4fa4-ade6-855f2f29823b',
+              '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
+            )
+          WHERE
+            request_is_disabled = false
         ) AS a
         WHERE
           a.rowNumber = 1
@@ -15105,7 +15115,27 @@ AS $$
       `
     )[0];
 
-    const request_data = request_list.map(request => {
+    return_value = {
+      data: request_list,
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      requestList
+    } = input_data;
+
+    return_value = requestList.map(request => {
       const request_signer = plv8.execute(
         `
           SELECT
@@ -15268,11 +15298,6 @@ AS $$
         request_is_with_progress_indicator: isWithProgressIndicator
       }
     });
-
-    return_value = {
-      data: request_data,
-      count: Number(request_count.count)
-    };
   });
   return return_value
 $$ LANGUAGE plv8;
@@ -23560,9 +23585,29 @@ SELECT
 
 ----- START: INDEXES
 
-CREATE INDEX request_response_request_id_idx ON request_schema.request_response_table (request_response, request_response_request_id);
-CREATE INDEX request_list_idx ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
-CREATE INDEX request_response_idx ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
+CREATE INDEX request_response_request_id_idx 
+ON request_schema.request_response_table (request_response, request_response_request_id);
+
+CREATE INDEX request_list_idx 
+ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
+
+CREATE INDEX request_response_idx
+ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
+
+CREATE INDEX request_response_table_request_response_field_id_idx
+ON request_schema.request_response_table (request_response_field_id);
+
+CREATE INDEX request_signer_table_request_signer_request_id_idx
+ON request_schema.request_signer_table (request_signer_request_id);
+
+CREATE INDEX request_signer_table_request_signer_signer_id_idx
+ON request_schema.request_signer_table (request_signer_signer_id);
+
+CREATE INDEX request_table_request_form_id_idx 
+ON request_schema.request_table (request_form_id);
+
+CREATE INDEX request_team_member_id_idx
+ON request_schema.request_table (request_team_member_id);
 
 ----- END: INDEXES
 

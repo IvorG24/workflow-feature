@@ -6129,7 +6129,7 @@ export const getApplicationInformationSummaryData = async (
     LIMIT '${limit}'
     OFFSET '${offset}'
   `;
-  console.log(parentRequestQuery);
+
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
@@ -6191,19 +6191,16 @@ export const getUserRequestList = async (
   const statusCondition = status
     ?.map((value) => `a.request_status = '${value}'`)
     .join(" OR ");
-
   const formCondition = form
     ?.map((value) => `a.request_form_id = '${value}'`)
     .join(" OR ");
-
   const searchCondition =
     search && validate(search)
       ? `a.request_id = '${search}'`
       : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
-  const { data: data, error } = await supabaseClient.rpc(
-    "fetch_user_request_list",
-    {
+  const { data: requestList, error: requestListError } =
+    await supabaseClient.rpc("fetch_user_request_list", {
       input_data: {
         page: page,
         limit: limit,
@@ -6214,16 +6211,27 @@ export const getUserRequestList = async (
         email,
         form: formCondition ? `AND (${formCondition})` : "",
       },
-    }
-  );
+    });
+  if (requestListError) throw requestListError;
 
-  if (error || !data) throw error;
-  const dataFormat = data as unknown as {
+  const dataFormat = requestList as unknown as {
     data: RequestListItemType[];
     count: number;
   };
 
-  return { data: dataFormat.data, count: dataFormat.count };
+
+  const { data: requestListData, error: requestListDataError } =
+    await supabaseClient.rpc("fetch_user_request_list_data", {
+      input_data: {
+        requestList: dataFormat.data,
+      },
+    });
+  if (requestListDataError) throw requestListDataError;
+
+  return {
+    data: requestListData as RequestListItemType[],
+    count: dataFormat.count,
+  };
 };
 
 export const getUserIdInApplicationInformation = async (
