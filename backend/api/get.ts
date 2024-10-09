@@ -6090,8 +6090,6 @@ export const getApplicationInformationSummaryData = async (
           '9322b870-a0a1-4788-93f0-2895be713f9c'
         )
       INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
-      LEFT JOIN lookup_schema.ad_owner_request_table ON ad_owner_request_request_id = request_id
-      LEFT JOIN lookup_schema.ad_owner_table ON ad_owner_id = ad_owner_request_owner_id
       WHERE
         team_member_team_id = '${teamId}'
         AND request_is_disabled = FALSE
