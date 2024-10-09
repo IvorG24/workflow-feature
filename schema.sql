@@ -3319,6 +3319,7 @@ AS $$
             tmt.team_member_team_id = $1
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
     `;
 
     const base_sort_query = `
@@ -3335,6 +3336,7 @@ AS $$
             tmt.team_member_team_id = $1
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
     `;
 
     if (isApproversView) {
@@ -3358,6 +3360,8 @@ AS $$
         const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
 
         request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+
+        request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
     const request_data = request_list.map(request => {
@@ -3381,7 +3385,7 @@ AS $$
 
     return_value = {
       data: request_data,
-      count: Number(request_count)
+      count: Number(request_count.count)
     };
 
   });
