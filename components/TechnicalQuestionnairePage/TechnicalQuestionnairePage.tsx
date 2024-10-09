@@ -102,12 +102,12 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
       setIsFetchingRequestList(true);
       if (!activeTeam.team_id) {
         console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
+          "TechnicalQuestionnairePage handleFetchQuestionnaireList: active team_id not found"
         );
         return;
       } else if (!teamMember) {
         console.warn(
-          "RequestListPage handleFilterFormsError: team member id not found"
+          "TechnicalQuestionnairePage handleFetchQuestionnaireList: team member id not found"
         );
         return;
       }
@@ -237,6 +237,7 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
               setLocalFilter={setLocalFilter}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

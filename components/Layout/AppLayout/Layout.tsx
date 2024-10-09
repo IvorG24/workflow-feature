@@ -1,16 +1,13 @@
 import {
   getAllGroupOfTeamMember,
-  getAllNotification,
   getAllTeamOfUser,
   getFormList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
-import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
@@ -42,8 +39,8 @@ const Layout = ({ children }: LayoutProps) => {
     setUserProfile,
     setUserTeamMemberGroupList,
   } = useUserActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
+  // const { setNotificationList, setUnreadNotification } =
+  //   useNotificationActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -120,18 +117,18 @@ const Layout = ({ children }: LayoutProps) => {
         );
 
         // fetch notification list
-        const { data: notificationList, count: unreadNotificationCount } =
-          await getAllNotification(supabaseClient, {
-            userId: user.user_id,
-            app: "REQUEST",
-            page: 1,
-            limit: NOTIFICATION_LIST_LIMIT,
-            teamId: activeTeamId,
-          });
+        // const { data: notificationList, count: unreadNotificationCount } =
+        //   await getAllNotification(supabaseClient, {
+        //     userId: user.user_id,
+        //     app: "REQUEST",
+        //     page: 1,
+        //     limit: NOTIFICATION_LIST_LIMIT,
+        //     teamId: activeTeamId,
+        //   });
 
         // set notification
-        setNotificationList(notificationList);
-        setUnreadNotification(unreadNotificationCount || 0);
+        // setNotificationList(notificationList);
+        // setUnreadNotification(unreadNotificationCount || 0);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

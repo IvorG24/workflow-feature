@@ -51,7 +51,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
     TeamMemberWithUserType[]
   >([]);
   const [activePage, setActivePage] = useState(1);
-  const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
+  const [isFetchingRequestList, setIsFetchingRequestList] = useState(true);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
   const [localFilter, setLocalFilter] =
@@ -172,23 +172,13 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   };
 
   const handleFilterForms = async () => {
-    try {
-      setActivePage(1);
-      await handleFetchRequestList(1);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(1);
+    await handleFetchRequestList(1);
   };
 
   const handlePagination = async (page: number) => {
-    try {
-      setActivePage(page);
-      await handleFetchRequestList(page);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(page);
+    await handleFetchRequestList(page);
   };
 
   useEffect(() => {
@@ -258,6 +248,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
               projectList={projectList}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

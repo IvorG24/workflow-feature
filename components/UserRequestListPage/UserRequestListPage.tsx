@@ -153,6 +153,7 @@ const UserRequestListPage = ({ formList }: Props) => {
               setShowTableColumnFilter={setShowTableColumnFilter}
               localFilter={localFilter}
               setLocalFilter={setLocalFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

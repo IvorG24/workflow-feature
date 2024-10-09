@@ -248,7 +248,7 @@ const TicketListPage = ({
             leftIcon={<IconReportAnalytics size={16} />}
             variant="light"
             onClick={async () =>
-              await router.push(
+              router.push(
                 `/${formatTeamNameToUrlKey(
                   activeTeam.team_name ?? ""
                 )}/tickets/admin-analytics`
@@ -277,6 +277,7 @@ const TicketListPage = ({
                 showTableColumnFilter={showTableColumnFilter}
                 setShowTableColumnFilter={setShowTableColumnFilter}
                 setActivePage={setActivePage}
+                isFetchingTicketList={isFetchingTicketList}
               />
             </form>
           </FormProvider>
