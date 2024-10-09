@@ -33,8 +33,6 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
 
-let isInitialized = false;
-
 type Props = {
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
@@ -42,7 +40,6 @@ type Props = {
 
 const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   const router = useRouter();
-
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -181,11 +178,16 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
 
   useEffect(() => {
     const fetchRequestListPageProps = async () => {
+      // replace with useTeamMemberList store
+      const teamMemberList = await getTeamMemberList(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+      setTeamMemberList(teamMemberList);
+
       handlePagination(activePage);
     };
-    if (!isInitialized && activeTeam.team_id && teamMember) {
+    if (activeTeam.team_id && teamMember) {
       fetchRequestListPageProps();
-      isInitialized = true;
     }
   }, [activeTeam, teamMember, teamMemberList]);
 
