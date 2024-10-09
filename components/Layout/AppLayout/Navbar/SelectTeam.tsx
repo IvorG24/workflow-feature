@@ -6,7 +6,6 @@ import {
 import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useNotificationActions } from "@/stores/useNotificationStore";
 import {
   useActiveTeam,
   useTeamActions,
@@ -61,8 +60,8 @@ const SelectTeam = () => {
   const { setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
   const { setIsLoading } = useLoadingActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
+  // const { setNotificationList, setUnreadNotification } =
+  //   useNotificationActions();
   const { setUserTeamMember, setUserTeamMemberGroupList } = useUserActions();
 
   const formatTeamOptions = () => {

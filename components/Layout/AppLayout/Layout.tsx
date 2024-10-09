@@ -6,7 +6,6 @@ import {
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
-import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
@@ -40,8 +39,8 @@ const Layout = ({ children }: LayoutProps) => {
     setUserProfile,
     setUserTeamMemberGroupList,
   } = useUserActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
+  // const { setNotificationList, setUnreadNotification } =
+  //   useNotificationActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
