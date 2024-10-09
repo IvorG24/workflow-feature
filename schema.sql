@@ -3315,7 +3315,7 @@ AS $$
         FROM public.request_view
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        WHERE 
+        WHERE
             tmt.team_member_team_id = $1
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false
@@ -3332,7 +3332,7 @@ AS $$
         FROM public.request_view
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        WHERE 
+        WHERE
             tmt.team_member_team_id = $1
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false
@@ -3342,10 +3342,10 @@ AS $$
     if (isApproversView) {
         const approver_filter_query = `
             AND EXISTS (
-                SELECT 1 
+                SELECT 1
                 FROM request_schema.request_signer_table
-                INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id 
-                WHERE 
+                INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id
+                WHERE
                     request_signer_request_id = request_view.request_id
                     AND request_signer_status = 'PENDING'
                     AND signer.signer_team_member_id = $2
@@ -11973,7 +11973,9 @@ let returnData = [];
 plv8.subtransaction(function() {
   const {
     teamId,
-    search
+    search,
+    limit = 500,
+    offset = 0
   } = input_data;
 
   let searchCondition = '';
@@ -11998,6 +12000,7 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
         AND user_is_disabled = false
+       LIMIT ${limit} OFFSET ${offset}
     `
   );
 
@@ -14822,7 +14825,7 @@ AS $$
           WHERE
             request_response_request_id = '${parentRequest.request_id}'
             AND request_response_field_id IN (
-            '0fd115df-c2fe-4375-b5cf-6f899b47ec56', 
+            '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
             'e48e7297-c250-4595-ba61-2945bf559a25',
             '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
             '9322b870-a0a1-4788-93f0-2895be713f9c'
@@ -15022,7 +15025,7 @@ AS $$
 
     const request_list = plv8.execute(
       `
-        SELECT  
+        SELECT
           request_id,
           request_formsly_id,
           request_date_created,
@@ -15913,7 +15916,7 @@ AS $$
     const weekRanges = [
       getRange(1, 7),
       getRange(8, 14),
-      getRange(15, 21), 
+      getRange(15, 21),
       getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
     ];
 
@@ -15928,7 +15931,7 @@ AS $$
 
     if (!weekStart) {
       weekStart = new Date(currentYear, currentMonth, 1);
-      weekEnd = weekRanges[0][1]; 
+      weekEnd = weekRanges[0][1];
     }
 
     const teamMemberData = plv8.execute(
@@ -23563,10 +23566,10 @@ SELECT
 
 ----- START: INDEXES
 
-CREATE INDEX request_response_request_id_idx 
+CREATE INDEX request_response_request_id_idx
 ON request_schema.request_response_table (request_response, request_response_request_id);
 
-CREATE INDEX request_list_idx 
+CREATE INDEX request_list_idx
 ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
 
 CREATE INDEX request_response_idx
@@ -23581,7 +23584,7 @@ ON request_schema.request_signer_table (request_signer_request_id);
 CREATE INDEX request_signer_table_request_signer_signer_id_idx
 ON request_schema.request_signer_table (request_signer_signer_id);
 
-CREATE INDEX request_table_request_form_id_idx 
+CREATE INDEX request_table_request_form_id_idx
 ON request_schema.request_table (request_form_id);
 
 CREATE INDEX request_team_member_id_idx
