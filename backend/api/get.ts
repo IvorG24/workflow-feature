@@ -6129,7 +6129,7 @@ export const getApplicationInformationSummaryData = async (
     LIMIT '${limit}'
     OFFSET '${offset}'
   `;
-  console.log(parentRequestQuery);
+
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
