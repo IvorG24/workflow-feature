@@ -47,7 +47,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [openNavbar, setOpenNavbar] = useState(false);
 
   const fetchAllTeamMembers = async (teamId: string) => {
-    let allTeamMembers: TeamMemberType[] = [];
+    const allTeamMembers: TeamMemberType[] = [];
     let offset = 0;
     const limit = 500;
     let moreMembers = true;
@@ -59,7 +59,7 @@ const Layout = ({ children }: LayoutProps) => {
         limit: limit,
       });
       if (currentBatch.length > 0) {
-        allTeamMembers = [...allTeamMembers, ...currentBatch];
+        allTeamMembers.push(...currentBatch);
         offset += limit;
       }
       moreMembers = currentBatch.length === limit;

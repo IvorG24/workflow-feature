@@ -1,5 +1,6 @@
-import { getRequestList, getTeamMemberList } from "@/backend/api/get";
+import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -10,7 +11,6 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   RequestListFilterValues,
   RequestListItemType,
-  TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
 import {
@@ -47,9 +47,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
-  const [teamMemberList, setTeamMemberList] = useState<
-    TeamMemberWithUserType[]
-  >([]);
+  const teamMemberList = useTeamMemberList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(true);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -183,18 +181,13 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
 
   useEffect(() => {
     const fetchRequestListPageProps = async () => {
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-      setTeamMemberList(teamMemberList);
-
       handlePagination(activePage);
     };
     if (!isInitialized && activeTeam.team_id && teamMember) {
       fetchRequestListPageProps();
       isInitialized = true;
     }
-  }, [activeTeam, teamMember]);
+  }, [activeTeam, teamMember, teamMemberList]);
 
   return (
     <Container maw={3840} h="100%">
