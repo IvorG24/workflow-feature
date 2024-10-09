@@ -305,7 +305,7 @@ const TicketListPage = ({
                 render: ({ ticket_id }) => {
                   return (
                     <Flex gap="md" align="center">
-                      <Text size="xs" truncate maw={150}>
+                      <Text truncate maw={150}>
                         <Anchor
                           href={`/${formatTeamNameToUrlKey(
                             activeTeam.team_name ?? ""

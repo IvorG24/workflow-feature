@@ -3,11 +3,11 @@ import {
   checkQuestionnaireName,
   createQuestionnaire,
 } from "@/backend/api/post";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
-  TeamMemberWithUserType,
   TechnicalAssessmentFilterValues,
   TechnicalAssessmentTableRow,
 } from "@/utils/types";
@@ -21,18 +21,13 @@ import { FormProvider, useForm } from "react-hook-form";
 import TechnicalQuestionnaireFilter from "./TechnicalQuestionnaireFilter";
 import TechnicalQuestionnaireTable from "./TechnicalQuestionnaireTable";
 
-type Props = {
-  teamMemberList: TeamMemberWithUserType[];
-  isFormslyTeam: boolean;
-};
-
-const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
+const TechnicalQuestionnairePage = () => {
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
-
   const supabaseClient = useSupabaseClient();
-
   const teamMember = useUserTeamMember();
+  const teamMemberList = useTeamMemberList();
+  
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [questionnaireName, setQuestionnaireName] = useState("");
