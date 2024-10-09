@@ -1,6 +1,5 @@
 import {
   getAllGroupOfTeamMember,
-  getAllNotification,
   getFormList,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -14,7 +13,6 @@ import {
   useTeamList,
 } from "@/stores/useTeamStore";
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -122,18 +120,18 @@ const SelectTeam = () => {
         }
 
         // fetch notification list
-        const { data: notificationList, count: unreadNotificationCount } =
-          await getAllNotification(supabaseClient, {
-            userId: user.user_id,
-            app: "REQUEST",
-            page: 1,
-            limit: NOTIFICATION_LIST_LIMIT,
-            teamId: newActiveTeam.team_id,
-          });
+        // const { data: notificationList, count: unreadNotificationCount } =
+        //   await getAllNotification(supabaseClient, {
+        //     userId: user.user_id,
+        //     app: "REQUEST",
+        //     page: 1,
+        //     limit: NOTIFICATION_LIST_LIMIT,
+        //     teamId: newActiveTeam.team_id,
+        //   });
 
         // set notification
-        setNotificationList(notificationList);
-        setUnreadNotification(unreadNotificationCount || 0);
+        // setNotificationList(notificationList);
+        // setUnreadNotification(unreadNotificationCount || 0);
       }
 
       if (newActiveTeam) {
