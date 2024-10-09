@@ -769,7 +769,9 @@ const RequestListTable = ({
             const { request_signer } = request as {
               request_signer: requestSignerType[];
             };
-
+            if (!teamMemberList || teamMemberList.length === 0) {
+              return;
+            }
             const signerList = request_signer.map(
               (signer: requestSignerType) => {
                 const signerTeamMemberData = teamMemberList.find(

@@ -2,7 +2,6 @@ import {
   checkJobOfferRow,
   getHRProjectOptions,
   getJobOfferSummaryData,
-  getTeamMemberList,
 } from "@/backend/api/get";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
@@ -10,7 +9,6 @@ import {
   JobOfferFilterFormValues,
   JobOfferSpreadsheetData,
   OptionType,
-  TeamMemberType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -22,6 +20,7 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import JobOfferColumnsMenu from "./JobOfferColumnsMenu";
 
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   useUserProfile,
@@ -91,9 +90,7 @@ const JobOfferSpreadsheetView = ({
     key: "JobOfferColumns",
     defaultValue: [],
   });
-  const [teamMemberOptions, setTeamMemberOptions] = useState<TeamMemberType[]>(
-    []
-  );
+  const teamMemberOptions = useTeamMemberList();
   const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
 
   const filterFormMethods = useForm<JobOfferFilterFormValues>({
@@ -196,10 +193,6 @@ const JobOfferSpreadsheetView = ({
     const fetchJobOfferData = async () => {
       try {
         setIsLoading(true);
-        const teamMemberData = await getTeamMemberList(supabaseClient, {
-          teamId: team.team_id,
-        });
-        setTeamMemberOptions(teamMemberData);
         const projectData = await getHRProjectOptions(supabaseClient);
         setProjectOptions(projectData);
       } catch (e) {
