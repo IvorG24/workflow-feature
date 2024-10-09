@@ -462,12 +462,21 @@ const JobOfferMainTableRow = ({
                       searchable
                       onChange={onChange}
                       error={errors.projectAssignment?.message}
-                      data={teamMemberOptions.map((teamMember) => {
-                        return {
-                          label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-                          value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-                        };
-                      })}
+                      data={teamMemberOptions
+                        .filter(
+                          (item, index, array) =>
+                            array.findIndex(
+                              (obj) =>
+                                `${obj.team_member_user.user_first_name} ${obj.team_member_user.user_last_name}` ===
+                                `${item.team_member_user.user_first_name} ${item.team_member_user.user_last_name}`
+                            ) === index
+                        )
+                        .map((teamMember) => {
+                          return {
+                            label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                            value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                          };
+                        })}
                       withinPortal
                       autoFocus={false}
                     />
