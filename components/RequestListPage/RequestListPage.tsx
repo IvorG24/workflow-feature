@@ -1,4 +1,4 @@
-import { getRequestList } from "@/backend/api/get";
+import { getRequestList, getTeamMemberList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
@@ -33,22 +33,23 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
 
+let isInitialized = false;
+
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
 };
 
-const RequestListPage = ({
-  teamMemberList,
-  isFormslyTeam,
-  projectList,
-}: Props) => {
+const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   const router = useRouter();
+
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
+  const [teamMemberList, setTeamMemberList] = useState<
+    TeamMemberWithUserType[]
+  >([]);
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -127,17 +128,8 @@ const RequestListPage = ({
   const handleFetchRequestList = async (page: number) => {
     try {
       setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
-        );
-        return;
-      } else if (!teamMember) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: team member id not found"
-        );
-        return;
-      }
+      if (!activeTeam.team_id || !teamMember) return;
+
       const {
         search,
         requestor,
@@ -200,8 +192,19 @@ const RequestListPage = ({
   };
 
   useEffect(() => {
-    handlePagination(activePage);
-  }, [activeTeam.team_id, teamMember]);
+    const fetchRequestListPageProps = async () => {
+      const teamMemberList = await getTeamMemberList(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+      setTeamMemberList(teamMemberList);
+
+      handlePagination(activePage);
+    };
+    if (!isInitialized && activeTeam.team_id && teamMember) {
+      fetchRequestListPageProps();
+      isInitialized = true;
+    }
+  }, [activeTeam, teamMember]);
 
   return (
     <Container maw={3840} h="100%">
