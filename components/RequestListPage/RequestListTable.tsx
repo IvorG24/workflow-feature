@@ -787,9 +787,13 @@ const RequestListTable = ({
             );
 
             return (
-              <RequestSignerList
-                signerList={signerList as RequestListItemSignerType[]}
-              />
+              <>
+                {signerList[0].signer_team_member_user?.user_id && (
+                  <RequestSignerList
+                    signerList={signerList as RequestListItemSignerType[]}
+                  />
+                )}
+              </>
             );
           },
         },
