@@ -818,6 +818,8 @@ export const getTeamMemberList = async (
   params: {
     teamId: string;
     search?: string;
+    offset?: number;
+    limit?: number;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -6083,7 +6085,7 @@ export const getApplicationInformationSummaryData = async (
       FROM public.request_view
       INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
         AND request_response_field_id IN (
-          '0fd115df-c2fe-4375-b5cf-6f899b47ec56', 
+          '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
           'e48e7297-c250-4595-ba61-2945bf559a25',
           '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
           '9322b870-a0a1-4788-93f0-2895be713f9c'
