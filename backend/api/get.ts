@@ -5970,7 +5970,6 @@ export const getApplicationInformationSummaryData = async (
   const isSortByResponse = isUUID(sort?.field ?? "");
 
   const offset = (page - 1) * limit;
-  const teamId = "a5a28977-6956-45c1-a624-b9e90911502e";
 
   const responseFilterCondition = [];
   Boolean(responseFilter.position) && responseFilter?.position?.length
@@ -6029,15 +6028,17 @@ export const getApplicationInformationSummaryData = async (
         `request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`
       )
     : null;
+
+  const requestScoreFilterCondition = [];
   requestFilter.requestScoreRange &&
   Boolean(requestFilter.requestScoreRange.start)
-    ? requestFilterCondition.push(
+    ? requestScoreFilterCondition.push(
         `request_score_value  >= ${requestFilter.requestScoreRange.start}`
       )
     : null;
   requestFilter.requestScoreRange &&
   Boolean(requestFilter.requestScoreRange.end)
-    ? requestFilterCondition.push(
+    ? requestScoreFilterCondition.push(
         `request_score_value <= ${requestFilter.requestScoreRange.end}`
       )
     : null;
@@ -6080,8 +6081,6 @@ export const getApplicationInformationSummaryData = async (
         request_score_value,
         ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
       FROM public.request_view
-      INNER JOIN form_schema.form_table ON form_id = request_form_id
-      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
       INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
         AND request_response_field_id IN (
           '0fd115df-c2fe-4375-b5cf-6f899b47ec56', 
@@ -6089,21 +6088,25 @@ export const getApplicationInformationSummaryData = async (
           '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
           '9322b870-a0a1-4788-93f0-2895be713f9c'
         )
-      INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
-      WHERE
-        team_member_team_id = '${teamId}'
-        AND request_is_disabled = FALSE
-        AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
         ${
           responseFilterCondition.length
             ? `AND (${responseFilterCondition.join(" OR ")})`
             : ""
         }
+      INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
+        ${
+          requestScoreFilterCondition.length
+            ? `AND (${requestScoreFilterCondition.join(" OR ")})`
+            : ""
+        }
+      WHERE
+        request_is_disabled = FALSE
+        AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     ) AS a
     INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
+      ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
     WHERE
       a.rowNumber = ${filterCount ? filterCount : 1}
-      ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
       ${
         requestFilterCondition.length
           ? `AND (${requestFilterCondition.join(" AND ")})`
@@ -6126,7 +6129,7 @@ export const getApplicationInformationSummaryData = async (
     LIMIT '${limit}'
     OFFSET '${offset}'
   `;
-
+  console.log(parentRequestQuery);
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
