@@ -27,7 +27,7 @@ const TechnicalQuestionnairePage = () => {
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const teamMemberList = useTeamMemberList();
-  
+
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [questionnaireName, setQuestionnaireName] = useState("");
@@ -241,7 +241,6 @@ const TechnicalQuestionnairePage = () => {
             setValue={setValue}
             questionnairList={questionnnaireList}
             questionnairListCount={questionnnaireListCount}
-            teamMemberList={teamMemberList}
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}

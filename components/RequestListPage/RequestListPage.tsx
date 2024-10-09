@@ -177,17 +177,8 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   };
 
   useEffect(() => {
-    const fetchRequestListPageProps = async () => {
-      // replace with useTeamMemberList store
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-      setTeamMemberList(teamMemberList);
-
-      handlePagination(activePage);
-    };
     if (activeTeam.team_id && teamMember) {
-      fetchRequestListPageProps();
+      handlePagination(activePage);
     }
   }, [activeTeam, teamMember, teamMemberList]);
 
