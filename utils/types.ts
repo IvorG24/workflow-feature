@@ -1477,7 +1477,6 @@ export type TicketCommentType =
 export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   ticketCategoryList: TicketCategoryTableRow[];
 };
 
