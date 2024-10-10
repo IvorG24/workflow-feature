@@ -738,6 +738,17 @@ const CreatePettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
+    }
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
@@ -778,6 +789,7 @@ const CreatePettyCashVoucherRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
+                    onRemoveSection={handleRemoveSection}
                     pettyCashVoucherFormMethods={{
                       onProjectOrDepartmentNameChange:
                         handleProjectOrDepartmentNameChange,
