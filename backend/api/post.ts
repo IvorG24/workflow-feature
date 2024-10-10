@@ -2407,3 +2407,26 @@ export const getQuestionFieldOrder = async (
 
   return data as unknown as number;
 };
+
+export const createUserWithSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserTableInsert & {
+    user_employee_number: string;
+    sss_number: string;
+    sss_front_image_url: string;
+    sss_back_image_url: string;
+  }
+) => {
+  const { user_phone_number } = params;
+
+  const { error } = await supabaseClient
+    .rpc("create_user_with_sss_id", {
+      input_data: {
+        ...params,
+        user_phone_number: user_phone_number || "",
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+};

@@ -2281,7 +2281,6 @@ export const getUserPendingInvitation = async (
     .eq("invitation_to_email", userEmail)
     .eq("invitation_status", "PENDING")
     .maybeSingle();
-
   if (error) throw error;
 
   return data;
@@ -6302,6 +6301,23 @@ export const checkUserIdNumber = async (
     .from("user_valid_id_table")
     .select("user_valid_id_number", { count: "exact", head: true })
     .eq("user_valid_id_number", idNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};
+
+export const checkUserSSSIDNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    idNumber: string;
+  }
+) => {
+  const { idNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .select("user_sss_number", { count: "exact", head: true })
+    .eq("user_sss_number", idNumber);
 
   if (error) throw error;
   return !Boolean(count);
