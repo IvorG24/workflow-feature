@@ -24,7 +24,7 @@ type RequestStatisticsProps = {
   dataChartResponse: DatasetChartResponse[];
 };
 
-const ResponseTable = ({
+const AnalyticsTable = ({
   stepFilter,
   monthLabel,
   yLabel,
@@ -36,23 +36,17 @@ const ResponseTable = ({
     stepFilter === "request"
       ? ["approved", "rejected", "pending"]
       : stepFilter === "job_offer"
-        ? [
-            "accepted",
-            "rejected",
-            "pending",
-            "waiting for offer",
-            "for pooling",
-          ]
-        : stepFilter === "background_check"
-          ? ["pending", "qualified", "not qualified"]
-          : [
-              "qualified",
-              "pending",
-              "not qualified",
-              "not responsive",
-              "waiting for schedule",
-              "cancelled",
-            ];
+      ? ["accepted", "rejected", "pending", "waiting for offer", "for pooling"]
+      : stepFilter === "background_check"
+      ? ["pending", "qualified", "not qualified"]
+      : [
+          "qualified",
+          "pending",
+          "not qualified",
+          "not responsive",
+          "waiting for schedule",
+          "cancelled",
+        ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
   const [filteredDatasets, setFilteredDatasets] =
@@ -134,4 +128,4 @@ const ResponseTable = ({
   );
 };
 
-export default ResponseTable;
+export default AnalyticsTable;
