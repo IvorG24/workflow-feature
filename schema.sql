@@ -23584,7 +23584,7 @@ SELECT
     $$
     SELECT
       net.http_post(
-        url:='https://zlerahmorhbuqtryccxt.supabase.co/functions/v1/handle-missed-schedule',
+        url:='https://xwsbaxmttvxkvorpabim.supabase.co/functions/v1/handle-missed-schedule',
         headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXJhaG1vcmhidXF0cnljY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTcwOTQyMjEsImV4cCI6MjAxMjY3MDIyMX0.kUtimbpMLQnLfzohwcPX4rKRTKeSx2hIt03nAhdD5wc"}'::jsonb,
         body:=concat('{"time": "', NOW(), '"}')::jsonb
       ) AS request_id;
