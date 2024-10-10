@@ -819,6 +819,17 @@ const EditPettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -1029,7 +1040,6 @@ const EditPettyCashVoucherRequestPage = ({
       };
       fetchRequestDetails();
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -1061,6 +1071,7 @@ const EditPettyCashVoucherRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
+                    onRemoveSection={handleRemoveSection}
                     pettyCashVoucherFormMethods={{
                       onProjectOrDepartmentNameChange:
                         handleProjectOrDepartmentNameChange,

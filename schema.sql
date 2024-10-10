@@ -22,6 +22,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM
 INSERT INTO storage.buckets (id, name) VALUES ('USER_VALID_IDS', 'USER_VALID_IDS');
 INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('JOB_OFFER_ATTACHMENTS', 'JOB_OFFER_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('SSS_ID_ATTACHMENTS', 'SSS_ID_ATTACHMENTS');
 
 ----- END: STORAGES
 
@@ -239,6 +240,16 @@ CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_approver_user_id UUID REFERENCES user_schema.user_table(user_id),
   user_valid_id_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
+);
+
+CREATE TABLE user_schema.user_sss_table (
+  user_sss_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_sss_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_sss_number VARCHAR(4000) UNIQUE NOT NULL,
+  user_sss_front_image_url VARCHAR(4000) NOT NULL,
+  user_sss_back_image_url VARCHAR(4000) NOT NULL,
+
+  user_sss_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE user_schema.user_employee_number_table (
@@ -1569,6 +1580,64 @@ AS $$
     }
  });
  return user_data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_user_with_sss_id(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      user_id,
+      user_email,
+      user_first_name,
+      user_last_name,
+      user_username,
+      user_avatar,
+      user_phone_number,
+      user_active_team_id,
+      user_employee_number,
+      user_job_title,
+      sss_number,
+      sss_front_image_url,
+      sss_back_image_url, 
+    } = input_data;
+
+    if (user_active_team_id) {
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
+    } else {
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
+    }
+    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+
+    if (invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+
+    if (user_employee_number) {
+      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO user_schema.user_sss_table
+        (
+          user_sss_number,
+          user_sss_front_image_url,
+          user_sss_back_image_url,
+          user_sss_user_id
+        )
+        VALUES
+        (
+          '${sss_number}',
+          '${sss_front_image_url}',
+          '${sss_back_image_url}',
+          '${user_id}'
+        )
+        RETURNING *
+      `
+    );
+ });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request(

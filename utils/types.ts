@@ -585,6 +585,13 @@ export type AdOwnerTableRow =
 export type AdOwnerRequestTableInsert =
   Database["lookup_schema"]["Tables"]["ad_owner_request_table"]["Insert"];
 
+export type UserSSSTableRow =
+  Database["user_schema"]["Tables"]["user_sss_table"]["Row"];
+export type UserSSSTableInsert =
+  Database["user_schema"]["Tables"]["user_sss_table"]["Insert"];
+export type UserSSSTableUpdate =
+  Database["user_schema"]["Tables"]["user_sss_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -600,7 +607,8 @@ export type AttachmentBucketType =
   | "MEMO_ATTACHMENTS"
   | "TEAM_PROJECT_ATTACHMENTS"
   | "TICKET_ATTACHMENTS"
-  | "JOB_OFFER_ATTACHMENTS";
+  | "JOB_OFFER_ATTACHMENTS"
+  | "SSS_ID_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
