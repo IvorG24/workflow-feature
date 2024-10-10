@@ -19861,26 +19861,47 @@ AS $$
       const memberFilterCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
         ? `${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
         : "";
+      const countPending = table === "job_offer" ?
+        `COUNT(DISTINCT CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN ${table}_table.${table}_request_id END) AS pending_count` :
+        `COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count`;
+
+      const countForPooling = table === "job_offer" ?
+        `COUNT(DISTINCT CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN ${table}_table.${table}_request_id END) AS for_pooling_count` :
+        `COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count`;
+
+      const countAccepted = table === "job_offer" ?
+        `COUNT(DISTINCT CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN ${table}_table.${table}_request_id END) AS accepted_count` :
+        `COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count`;
+
+      const countWaitingForOffer = table === "job_offer" ?
+        `COUNT(DISTINCT CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN ${table}_table.${table}_request_id END) AS waiting_for_offer_count` :
+        `COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count`;
+
+      const countRejected = table === "job_offer" ?
+        `COUNT(DISTINCT CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN ${table}_table.${table}_request_id END) AS rejected_count` :
+        `COUNT(CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN 1 END) AS rejected_count`;
+
 
       const interviewData = plv8.execute(`
-        SELECT
-          TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN 1 END) AS rejected_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'MISSED' THEN 1 END) AS missed_count
-        FROM hr_schema.${table}_table
-        WHERE ${memberFilterCondition} ${technicalInterviewCondition} ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
-        GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
-        ORDER BY date_group
-      `);
+            SELECT
+                TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
+                ${countPending},
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
+                ${countForPooling},
+                ${countAccepted},
+                ${countWaitingForOffer},
+                ${countRejected},
+                COUNT(CASE WHEN ${table}_table.${table}_status = 'MISSED' THEN 1 END) AS missed_count
+            FROM hr_schema.${table}_table
+            WHERE ${memberFilterCondition} ${technicalInterviewCondition}
+            ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+            GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
+            ORDER BY date_group DESC
+        `);
 
       const dateDataMap = {};
       interviewData.forEach(row => {
@@ -23563,7 +23584,7 @@ SELECT
     $$
     SELECT
       net.http_post(
-        url:='https://xwsbaxmttvxkvorpabim.supabase.co/functions/v1/handle-missed-schedule',
+        url:='https://zlerahmorhbuqtryccxt.supabase.co/functions/v1/handle-missed-schedule',
         headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXJhaG1vcmhidXF0cnljY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTcwOTQyMjEsImV4cCI6MjAxMjY3MDIyMX0.kUtimbpMLQnLfzohwcPX4rKRTKeSx2hIt03nAhdD5wc"}'::jsonb,
         body:=concat('{"time": "', NOW(), '"}')::jsonb
       ) AS request_id;
