@@ -2600,6 +2600,7 @@ export type Dataset = {
   not_responsive_counts: string[];
   accepted_counts: string[];
   cancelled_counts: string[];
+  missed_counts: string[];
 };
 
 export type UnformattedRequestListItemRequestSigner = {

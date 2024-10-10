@@ -205,6 +205,10 @@ type RequestFormFieldsProps = {
     onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
     onTypeOfRequestChange: (value: string | null) => void;
     onQuantityOrUnitCostChange: (sectionIndex: number) => void;
+    onParticularTypeChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -1166,6 +1170,12 @@ const RequestFormFields = ({
                     case "Field of Study":
                       applicationInformationFormMethods?.onFieldOfStudyChange(
                         value
+                      );
+
+                    case "Particular Type":
+                      pettyCashVoucherFormMethods?.onParticularTypeChange(
+                        value,
+                        sectionIndex
                       );
                       break;
                   }

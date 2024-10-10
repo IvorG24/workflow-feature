@@ -1,4 +1,4 @@
-import { FilterChartValues } from "@/components/AnalyticsPage/ResponseAnalytics";
+import { FilterChartValues } from "@/components/AnalyticsPage/Analytics";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -6228,7 +6228,6 @@ export const getUserRequestList = async (
     data: RequestListItemType[];
     count: number;
   };
-
 
   const { data: requestListData, error: requestListDataError } =
     await supabaseClient.rpc("fetch_user_request_list_data", {
