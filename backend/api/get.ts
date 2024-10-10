@@ -2281,7 +2281,6 @@ export const getUserPendingInvitation = async (
     .eq("invitation_to_email", userEmail)
     .eq("invitation_status", "PENDING")
     .maybeSingle();
-
   if (error) throw error;
 
   return data;
@@ -6307,6 +6306,24 @@ export const checkUserIdNumber = async (
   return !Boolean(count);
 };
 
+export const checkUserSSSIDNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    idNumber: string;
+  }
+) => {
+
+  const { idNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .select("user_sss_number", { count: "exact", head: true })
+    .eq("user_sss_number", idNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};
+
 export const getPublicFormList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -7432,4 +7449,21 @@ export const getTeamGroupMember = async (
   if (error) throw error;
 
   return data as TeamMemberType[];
+};
+
+export const checkIfUserHaveSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .select("*", { count: "exact", head: true })
+    .eq("user_sss_user_id", userId);
+  if (error) throw error;
+
+  return Boolean(count);
 };
