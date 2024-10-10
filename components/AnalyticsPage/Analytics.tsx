@@ -3,7 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { frequencyOptions } from "@/utils/constant";
 import { generateDateLabels } from "@/utils/functions";
 import { capitalizeEachWord } from "@/utils/string";
-import { getStatusToColorForCharts } from "@/utils/styling";
+import { getHRAnalyticsStatusToColor } from "@/utils/styling";
 import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
 import {
   Alert,
@@ -98,8 +98,8 @@ const Analytics = () => {
       ) => ({
         label,
         data: rawData.map((item) => parseInt(item as string, 10)),
-        backgroundColor: [getStatusToColorForCharts(status) || "blue"],
-        borderColor: [getStatusToColorForCharts(status) || "blue"],
+        backgroundColor: [getHRAnalyticsStatusToColor(status) || "blue"],
+        borderColor: [getHRAnalyticsStatusToColor(status) || "blue"],
         borderWidth: 2,
       });
 
@@ -129,15 +129,21 @@ const Analytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Rejected",
-        rawData?.rejected_counts,
-        "rejected"
-      );
-      addDatasetIfAvailable(
-        datasetChartResponse,
         "Qualified",
         rawData?.qualified_counts,
         "qualified"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Accepted",
+        rawData?.accepted_counts,
+        "accepted"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Rejected",
+        rawData?.rejected_counts,
+        "rejected"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
@@ -147,9 +153,9 @@ const Analytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Cancelled",
-        rawData?.cancelled_counts,
-        "cancelled"
+        "Waiting For Schedule",
+        rawData?.waiting_for_schedule_counts,
+        "waiting for schedule"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
@@ -159,22 +165,27 @@ const Analytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
+        "Cancelled",
+        rawData?.cancelled_counts,
+        "cancelled"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Waiting For Offer",
+        rawData?.waiting_for_offer_counts,
+        "waiting for offer"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
         "For Pooling",
         rawData?.for_pooling_counts,
         "for pooling"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Waiting For Schedule",
-        rawData?.waiting_for_schedule_counts,
-        "waiting for schedule"
-      );
-
-      addDatasetIfAvailable(
-        datasetChartResponse,
-        "Waiting For Offer",
-        rawData?.waiting_for_offer_counts,
-        "waiting for offer"
+        "Missed",
+        rawData?.missed_counts,
+        "missed"
       );
 
       setDataChart(datasetChartResponse);

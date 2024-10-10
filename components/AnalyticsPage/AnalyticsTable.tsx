@@ -1,5 +1,5 @@
 import { startCase } from "@/utils/string";
-import { getStatusToColorForCharts } from "@/utils/styling";
+import { getHRAnalyticsStatusToColor } from "@/utils/styling";
 import { DatasetChartResponse } from "@/utils/types";
 import {
   Box,
@@ -34,18 +34,19 @@ const AnalyticsTable = ({
 }: RequestStatisticsProps) => {
   const statusList =
     stepFilter === "request"
-      ? ["approved", "rejected", "pending"]
+      ? ["pending", "approved", "rejected"]
       : stepFilter === "job_offer"
-      ? ["accepted", "rejected", "pending", "waiting for offer", "for pooling"]
+      ? ["pending", "accepted", "rejected", "waiting for offer", "for pooling"]
       : stepFilter === "background_check"
       ? ["pending", "qualified", "not qualified"]
       : [
-          "qualified",
           "pending",
+          "qualified",
           "not qualified",
-          "not responsive",
           "waiting for schedule",
+          "not responsive",
           "cancelled",
+          "missed",
         ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
@@ -102,7 +103,7 @@ const AnalyticsTable = ({
                 onClick={() => filterChart(status.toLowerCase())}
                 sx={{ cursor: "pointer" }}
               >
-                <Box c={getStatusToColorForCharts(status)}>
+                <Box c={getHRAnalyticsStatusToColor(status)}>
                   <IconSquareRoundedFilled />
                 </Box>
                 <Text
@@ -121,6 +122,7 @@ const AnalyticsTable = ({
             datasets={filteredDatasets as DatasetChartResponse[]}
             xAxisLabel={`Filter ${frequency} ( ${xLabel} )`}
             yAxisLabel={yLabel}
+            isWithTotal={true}
           />
         </Box>
       </Stack>
