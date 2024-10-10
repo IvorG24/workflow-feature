@@ -478,6 +478,9 @@ const EditPettyCashVoucherRequestPage = ({
         ...form.form_section[3].section_field[1],
         field_option: bankListOptions,
       };
+      const paymentOptionFieldExists = currentSectionField.some(
+        (field) => field.field_id === paymentOptionField.field_id
+      );
 
       const conditionalFields = form.form_section[3].section_field.filter(
         (field) => ["Account Name", "Account Number"].includes(field.field_name)
@@ -495,6 +498,7 @@ const EditPettyCashVoucherRequestPage = ({
         ));
 
       if (isBankTransfer) {
+        if (paymentOptionFieldExists) return;
         if (fieldExists("Account Name")) {
           addFields([paymentOptionField]);
         } else {
