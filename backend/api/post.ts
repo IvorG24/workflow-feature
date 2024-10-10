@@ -65,6 +65,7 @@ import {
   TicketCommentTableInsert,
   TicketResponseTableInsert,
   TicketTableRow,
+  UserSSSTableInsert,
   UserTableInsert,
   UserTableRow,
   UserValidIDTableInsert,
@@ -2428,5 +2429,20 @@ export const createUserWithSSSID = async (
     })
     .select()
     .single();
+  if (error) throw error;
+};
+
+export const createSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sssData: UserSSSTableInsert;
+  }
+) => {
+  const { sssData } = params;
+
+  const { error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .insert(sssData);
   if (error) throw error;
 };

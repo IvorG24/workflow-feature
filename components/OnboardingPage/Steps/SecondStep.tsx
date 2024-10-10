@@ -75,9 +75,6 @@ const SecondStep = ({ activeStep, totalSections, handleChangeStep }: Props) => {
             <Controller
               control={control}
               name="sss_front_image"
-              rules={{
-                required: "Front ID image is required",
-              }}
               render={({
                 field: { value, onChange },
                 fieldState: { error },
@@ -114,9 +111,6 @@ const SecondStep = ({ activeStep, totalSections, handleChangeStep }: Props) => {
             <Controller
               control={control}
               name="sss_back_image"
-              rules={{
-                required: "Back ID image is required",
-              }}
               render={({
                 field: { value, onChange },
                 fieldState: { error },
