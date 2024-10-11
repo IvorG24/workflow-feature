@@ -310,7 +310,7 @@ const MemoPage = ({ memo }: Props) => {
       ];
       setCurrentSignedSignerList(updatedSignedSignerList);
 
-      if (newAgreementData) {
+      if (newAgreementData.memo_agreement_by_team_member) {
         const { user_data } = newAgreementData.memo_agreement_by_team_member;
         const employeeNumber = user_data.user_employee_number[0]
           ? user_data.user_employee_number[0].user_employee_number
