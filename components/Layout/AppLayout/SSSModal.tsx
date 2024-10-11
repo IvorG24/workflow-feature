@@ -58,19 +58,25 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
     try {
       let idFrontImage = "";
       if (data.sss_front_image) {
-        idFrontImage = await uploadImage(supabaseClient, {
-          id: `${userId}-front`,
-          image: data.sss_front_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idFrontImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_front_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sf",
+            userId,
+          })
+        ).publicUrl;
       }
       let idBackImage = "";
       if (data.sss_back_image) {
-        idBackImage = await uploadImage(supabaseClient, {
-          id: `${userId}-back`,
-          image: data.sss_back_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idBackImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_back_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sb",
+            userId,
+          })
+        ).publicUrl;
       }
 
       await createSSSID(supabaseClient, {

@@ -368,3 +368,7 @@ export const getFilterConditionFromArray = ({
       break;
   }
 };
+
+export const shortId = () => {
+  return Math.random().toString(36).substring(2, 6);
+};

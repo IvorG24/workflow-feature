@@ -5,11 +5,16 @@ import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/T
 import {
   APP_SOURCE_ID,
   BASE_URL,
+  formatDate,
   formslyPremadeFormsData,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { formatJiraItemUserTableData } from "@/utils/functions";
-import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
+import { formatJiraItemUserTableData, shortId } from "@/utils/functions";
+import {
+  escapeQuotes,
+  escapeQuotesForObject,
+  getFileType,
+} from "@/utils/string";
 import {
   AddressTableInsert,
   AdOwnerRequestTableInsert,
@@ -78,12 +83,37 @@ import { v4 as uuidv4 } from "uuid";
 export const uploadImage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    id: string;
     image: Blob | File;
     bucket: AttachmentBucketType;
+    fileType: string;
+    userId: string;
+    sssId?: string;
+    applicationInformationFormslyId?: string;
   }
 ) => {
-  const { id, image, bucket } = params;
+  const {
+    image,
+    bucket,
+    fileType,
+    userId,
+    sssId,
+    applicationInformationFormslyId,
+  } = params;
+
+  const { data: uploadData, error: uploadDataError } = await supabaseClient
+    .rpc("get_storage_upload_details", {
+      input_data: {
+        userId,
+        sssId,
+        applicationInformationFormslyId,
+      },
+    })
+    .select("*");
+  if (uploadDataError) throw uploadDataError;
+  const { sssIDNumber, currentDate } = uploadData as unknown as {
+    sssIDNumber: string;
+    currentDate: string;
+  };
 
   // compress image
   const compressedImage: Blob = await new Promise((resolve) => {
@@ -98,39 +128,82 @@ export const uploadImage = async (
     });
   });
 
+  const formattedFileName = `${formatDate(
+    new Date(currentDate)
+  )}-${sssIDNumber}-${fileType}-${shortId()}.${image.name.split(".").pop()}`;
+
   // upload image
   const { error: uploadError } = await supabaseClient.storage
     .from(bucket)
-    .upload(`${id}`, compressedImage, { upsert: true });
+    .upload(formattedFileName, compressedImage, { upsert: true });
   if (uploadError) throw uploadError;
 
   // get public url
-  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(`${id}`);
+  const { data } = supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(formattedFileName);
 
-  return `${data.publicUrl}?id=${uuidv4()}`;
+  return {
+    fileName: formattedFileName,
+    publicUrl: data.publicUrl,
+  };
 };
 
 // Upload File
 export const uploadFile = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    id: string;
     file: Blob | File;
     bucket: AttachmentBucketType;
+    fileType: string;
+    userId: string;
+    sssId?: string;
+    applicationInformationFormslyId?: string;
   }
 ) => {
-  const { id, file, bucket } = params;
+  const {
+    file,
+    bucket,
+    fileType,
+    userId,
+    sssId,
+    applicationInformationFormslyId,
+  } = params;
+
+  const { data: uploadData, error: uploadDataError } = await supabaseClient
+    .rpc("get_storage_upload_details", {
+      input_data: {
+        userId,
+        sssId,
+        applicationInformationFormslyId,
+      },
+    })
+    .select("*");
+  if (uploadDataError) throw uploadDataError;
+  const { sssIDNumber, currentDate } = uploadData as unknown as {
+    sssIDNumber: string;
+    currentDate: string;
+  };
+
+  const formattedFileName = `${formatDate(
+    new Date(currentDate)
+  )}-${sssIDNumber}-${fileType}-${shortId()}.${file.name.split(".").pop()}`;
 
   // upload file
   const { error: uploadError } = await supabaseClient.storage
     .from(bucket)
-    .upload(`${id}`, file, { upsert: true });
+    .upload(formattedFileName, file, { upsert: true });
   if (uploadError) throw uploadError;
 
   // get public url
-  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(`${id}`);
+  const { data } = supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(formattedFileName);
 
-  return `${data.publicUrl}?id=${uuidv4()}`;
+  return {
+    fileName: formattedFileName,
+    publicUrl: data.publicUrl,
+  };
 };
 
 // Create User
@@ -287,39 +360,51 @@ export const resetPassword = async (
   return { error: error };
 };
 
-// Create User
 export const createAttachment = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     attachmentData: AttachmentTableInsert;
     file: File;
+    fileType: string;
+    userId: string;
+    applicationInformationFormslyId?: string;
   }
 ) => {
-  const { file, attachmentData } = params;
+  const {
+    file,
+    attachmentData,
+    fileType,
+    userId,
+    applicationInformationFormslyId,
+  } = params;
 
-  const { error: uploadError } = await supabaseClient.storage
-    .from(attachmentData.attachment_bucket)
-    .upload(attachmentData.attachment_value, file, { upsert: true });
-  if (uploadError) throw uploadError;
+  let attachmentValue;
+  if (file["type"].split("/")[0] === "image") {
+    attachmentValue = await uploadImage(supabaseClient, {
+      image: file,
+      bucket: attachmentData.attachment_bucket as AttachmentBucketType,
+      fileType,
+      userId,
+      applicationInformationFormslyId,
+    });
+  } else {
+    attachmentValue = await uploadFile(supabaseClient, {
+      file: file,
+      bucket: attachmentData.attachment_bucket as AttachmentBucketType,
+      fileType,
+      userId,
+      applicationInformationFormslyId,
+    });
+  }
 
   const { data, error } = await supabaseClient
     .from("attachment_table")
-    .upsert({ ...attachmentData })
+    .upsert({ ...attachmentData, attachment_value: attachmentValue.fileName })
     .select()
     .single();
-
   if (error) throw error;
 
-  // get public url
-  const {
-    data: { publicUrl },
-  } = supabaseClient.storage
-    .from(data.attachment_bucket)
-    .getPublicUrl(`${data.attachment_value}`);
-
-  const url = `${publicUrl}?id=${uuidv4()}`;
-
-  return { data, url };
+  return { data, url: attachmentValue.publicUrl };
 };
 
 // Create notification
@@ -482,6 +567,9 @@ export const createRequest = async (
     requestScore?: number;
     rootFormslyRequestId?: string;
     recruiter?: string;
+    userId: string;
+    sssId?: string;
+    applicationInformationFormslyId?: string;
   }
 ) => {
   const {
@@ -497,6 +585,9 @@ export const createRequest = async (
     requestScore,
     rootFormslyRequestId,
     recruiter,
+    userId,
+    sssId,
+    applicationInformationFormslyId,
   } = params;
 
   const requestId = uuidv4();
@@ -516,23 +607,29 @@ export const createRequest = async (
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
 
-          const uploadId = `${field.field_id}${
-            field.field_section_duplicatable_id
-              ? `_${field.field_section_duplicatable_id}`
-              : `_${uuidv4()}`
-          }`;
+          const fileType = getFileType(field.field_name);
           if (fileResponse["type"].split("/")[0] === "image") {
-            responseValue = await uploadImage(supabaseClient, {
-              id: uploadId,
-              image: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadImage(supabaseClient, {
+                image: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+                sssId,
+                applicationInformationFormslyId,
+              })
+            ).publicUrl;
           } else {
-            responseValue = await uploadFile(supabaseClient, {
-              id: uploadId,
-              file: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadFile(supabaseClient, {
+                file: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+                sssId,
+                applicationInformationFormslyId,
+              })
+            ).publicUrl;
           }
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
@@ -657,6 +754,7 @@ export const editRequest = async (
     requesterName: string;
     formName: string;
     teamName: string;
+    userId: string;
   }
 ) => {
   const {
@@ -667,6 +765,7 @@ export const editRequest = async (
     requesterName,
     formName,
     teamName,
+    userId,
   } = params;
 
   // get request response
@@ -685,23 +784,26 @@ export const editRequest = async (
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
-          const uploadId = `${field.field_id}${
-            field.field_section_duplicatable_id
-              ? `_${field.field_section_duplicatable_id}`
-              : `_${uuidv4()}`
-          }`;
+
+          const fileType = getFileType(field.field_name);
           if (fileResponse["type"].split("/")[0] === "image") {
-            responseValue = await uploadImage(supabaseClient, {
-              id: uploadId,
-              image: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadImage(supabaseClient, {
+                image: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           } else {
-            responseValue = await uploadFile(supabaseClient, {
-              id: uploadId,
-              file: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadFile(supabaseClient, {
+                file: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           }
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
@@ -1088,14 +1190,16 @@ export const createTeamMemo = async (
       memo_signer_user_id: string;
     }[];
     lineItemData: MemoLineItem[];
+    userId: string;
   }
 ) => {
-  const { memoData, signerData, lineItemData } = params;
+  const { memoData, signerData, lineItemData, userId } = params;
 
   // upload attachments
   const updatedLineItemData = await processAllMemoLineItems(
     lineItemData,
-    supabaseClient
+    supabaseClient,
+    userId
   );
 
   const input_data = {
@@ -1115,7 +1219,8 @@ export const createTeamMemo = async (
 
 const processAllMemoLineItems = async (
   lineItemData: MemoLineItem[],
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  userId: string
 ) => {
   const processedLineItems = await Promise.all(
     lineItemData.map(async (lineItem) => {
@@ -1129,11 +1234,14 @@ const processAllMemoLineItems = async (
 
       if (lineItem.memo_line_item_attachment) {
         const bucket = "MEMO_ATTACHMENTS";
-        const attachmentPublicUrl = await uploadImage(supabaseClient, {
-          id: uuidv4(),
-          image: lineItem.memo_line_item_attachment,
-          bucket,
-        });
+        const attachmentPublicUrl = (
+          await uploadImage(supabaseClient, {
+            image: lineItem.memo_line_item_attachment,
+            bucket,
+            fileType: "m",
+            userId,
+          })
+        ).publicUrl;
 
         return {
           ...lineItem,
@@ -1185,14 +1293,16 @@ export const agreeToMemo = async (
 // create reference memo
 export const createReferenceMemo = async (
   supabaseClient: SupabaseClient<Database>,
-  params: ReferenceMemoType
+  params: ReferenceMemoType,
+  userId: string
 ) => {
   const memoId = uuidv4();
   const updatedLineItemData: ReferenceMemoType["memo_line_item_list"] =
     await processReferenceMemoLineItems(
       params.memo_line_item_list,
       supabaseClient,
-      memoId
+      memoId,
+      userId
     );
 
   const memoSignerTableValues = params.memo_signer_list
@@ -1253,7 +1363,8 @@ export const createReferenceMemo = async (
 const processReferenceMemoLineItems = async (
   lineItemData: ReferenceMemoType["memo_line_item_list"],
   supabaseClient: SupabaseClient<Database>,
-  memoId: string
+  memoId: string,
+  userId: string
 ) => {
   const processedLineItems = await Promise.all(
     lineItemData.map(async (lineItem) => {
@@ -1264,11 +1375,14 @@ const processReferenceMemoLineItems = async (
 
       if (file) {
         const bucket = "MEMO_ATTACHMENTS";
-        const attachmentPublicUrl = await uploadImage(supabaseClient, {
-          id: `${lineItem.memo_line_item_id}-${file.name}`,
-          image: file,
-          bucket,
-        });
+        const attachmentPublicUrl = (
+          await uploadImage(supabaseClient, {
+            image: file,
+            bucket,
+            fileType: "m",
+            userId,
+          })
+        ).publicUrl;
 
         return {
           memo_line_item_id: memoLineItemId,
@@ -1334,9 +1448,10 @@ export const createTicket = async (
     teamMemberId: string;
     category: string;
     ticketFormValues: CreateTicketFormValues;
+    userId: string;
   }
 ) => {
-  const { category, teamMemberId, ticketFormValues } = params;
+  const { category, teamMemberId, ticketFormValues, userId } = params;
 
   const ticketId = uuidv4();
 
@@ -1348,23 +1463,26 @@ export const createTicket = async (
       if (responseValue) {
         if (field.ticket_field_type === "FILE") {
           const fileResponse = responseValue as File;
-          const uploadId = `${field.ticket_field_id}${
-            section.ticket_section_id
-              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
-              : ""
-          }`;
+
+          const fileType = getFileType(field.ticket_field_name);
           if (fileResponse["type"].split("/")[0] === "image") {
-            responseValue = await uploadImage(supabaseClient, {
-              id: uploadId,
-              image: fileResponse,
-              bucket: "TICKET_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadImage(supabaseClient, {
+                image: fileResponse,
+                bucket: "TICKET_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           } else {
-            responseValue = await uploadFile(supabaseClient, {
-              id: uploadId,
-              file: fileResponse,
-              bucket: "TICKET_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadFile(supabaseClient, {
+                file: fileResponse,
+                bucket: "TICKET_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           }
         }
         const response = {
@@ -1415,9 +1533,10 @@ export const editTicket = async (
   params: {
     ticketId: string;
     ticketFormValues: CreateTicketFormValues;
+    userId: string;
   }
 ) => {
-  const { ticketId, ticketFormValues } = params;
+  const { ticketId, ticketFormValues, userId } = params;
 
   // get request response
   const requestResponseInput: TicketResponseTableInsert[] = [];
@@ -1430,23 +1549,26 @@ export const editTicket = async (
           typeof responseValue !== "string"
         ) {
           const fileResponse = responseValue as File;
-          const uploadId = `${field.ticket_field_id}${
-            section.ticket_section_id
-              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
-              : ""
-          }`;
+
+          const fileType = getFileType(field.ticket_field_name);
           if (fileResponse["type"].split("/")[0] === "image") {
-            responseValue = await uploadImage(supabaseClient, {
-              id: uploadId,
-              image: fileResponse,
-              bucket: "TICKET_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadImage(supabaseClient, {
+                image: fileResponse,
+                bucket: "TICKET_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           } else {
-            responseValue = await uploadFile(supabaseClient, {
-              id: uploadId,
-              file: fileResponse,
-              bucket: "TICKET_ATTACHMENTS",
-            });
+            responseValue = (
+              await uploadFile(supabaseClient, {
+                file: fileResponse,
+                bucket: "TICKET_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
           }
         }
         const response = {
@@ -1880,12 +2002,11 @@ export const createJiraFormslyItemCategory = async (
 
   const formattedData = {
     ...data,
-    assigned_jira_user:
-      {
-        ...assignedUser[0],
-        ...assignedUser[0]?.jira_item_user_account_id,
-        ...assignedUser[0]?.jira_item_user_role_id,
-      } ?? null,
+    assigned_jira_user: {
+      ...assignedUser[0],
+      ...assignedUser[0]?.jira_item_user_account_id,
+      ...assignedUser[0]?.jira_item_user_role_id,
+    },
   };
 
   return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
