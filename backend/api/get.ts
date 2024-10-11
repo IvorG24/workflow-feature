@@ -75,7 +75,7 @@ import {
   MemoType,
   NotificationOnLoad,
   NotificationTableRow,
-  OptionTableRow,
+   OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
   QuestionnaireData,
@@ -114,12 +114,12 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -5359,21 +5359,6 @@ export const getRequestTypeFieldResponse = async (
     .eq("request_response_field_id", fieldId)
     .maybeSingle();
 
-  if (error) throw error;
-
-  return data;
-};
-
-// Get team admin list
-export const getTeamAdminList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("get_team_admin_list", { input_data: params })
-    .select("*");
   if (error) throw error;
 
   return data;

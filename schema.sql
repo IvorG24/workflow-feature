@@ -4710,22 +4710,6 @@ AS $$
         LIMIT ${limit}
       `)[0].count;
 
-    const teamMemberList = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-      `
-    );
-
     returnData = {
       formList: formList.map(form => {
         return {
@@ -4757,17 +4741,6 @@ AS $$
         }
       }),
       formListCount: Number(`${formListCount}`),
-      teamMemberList: teamMemberList.map(teamMember => {
-        return {
-          team_member_id: teamMember.team_member_id,
-          team_member_role: teamMember.team_member_role,
-          team_member_user: {
-            user_id: teamMember.user_id,
-            user_first_name: teamMember.user_first_name,
-            user_last_name: teamMember.user_last_name,
-          }
-        }
-      }),
       teamId
     }
  });
@@ -4787,38 +4760,10 @@ AS $$
     } = input_data;
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-    const teamMemberList = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
-        ORDER BY user_first_name, user_last_name ASC
-      `
-    );
     const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
     const formId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
     returnData = {
-      teamMemberList: teamMemberList.map(teamMember => {
-        return {
-          team_member_id: teamMember.team_member_id,
-          team_member_role: teamMember.team_member_role,
-          team_member_user: {
-            user_id: teamMember.user_id,
-            user_first_name: teamMember.user_first_name,
-            user_last_name: teamMember.user_last_name,
-          }
-        }
-      }),
       groupList,
       formId
     }
@@ -4842,36 +4787,6 @@ AS $$
     } = input_data;
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const teamMembers = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
-        ORDER BY user_first_name, user_last_name ASC;
-      `
-    );
-    const teamMemberList = teamMembers.map(member => {
-      return {
-        team_member_id: member.team_member_id,
-        team_member_role: member.team_member_role,
-        team_member_user: {
-          user_id: member.user_id,
-          user_first_name: member.user_first_name,
-          user_last_name: member.user_last_name,
-        }
-      }
-    })
-
     const teamGroupList = plv8.execute(`SELECT team_group_id, team_group_name FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false;`);
 
     if(isFormslyForm){
@@ -4879,14 +4794,12 @@ AS $$
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
 
       returnData = {
-        teamMemberList,
         teamGroupList,
         teamProjectList,
         teamProjectListCount: Number(`${teamProjectListCount}`)
       }
     } else {
       returnData = {
-        teamMemberList,
         teamGroupList
       }
     }
@@ -9752,16 +9665,13 @@ AS $$
       userId,
     } = input_data;
 
-
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
-    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
+    returnData = {ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -12048,7 +11958,7 @@ plv8.subtransaction(function() {
   } = input_data;
 
   let searchCondition = '';
-  if(search){
+  if (search) {
     searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
 
@@ -12069,7 +11979,9 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
         AND user_is_disabled = false
-       LIMIT ${limit} OFFSET ${offset}
+        ${searchCondition}
+      ORDER BY user_first_name, user_last_name
+      LIMIT ${limit} OFFSET ${offset}
     `
   );
 
@@ -12087,7 +11999,7 @@ plv8.subtransaction(function() {
         user_employee_number: teamMember.user_employee_number
       }
     }
-  })
+  });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -12824,58 +12736,6 @@ plv8.subtransaction(function() {
     }),
     count: Number(itemCategoryCount)
   }
-});
-return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION get_team_admin_list(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    teamId
-  } = input_data;
-
-  const teamMemberData = plv8.execute(
-    `
-      SELECT
-        team_member_id,
-        team_member_role,
-        team_member_date_created,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_username,
-        user_avatar
-      FROM team_schema.team_member_table
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        team_member_team_id = '${teamId}'
-        AND team_member_role = 'ADMIN'
-      ORDER BY
-        user_first_name ASC,
-        user_last_name ASC
-    `
-  );
-
-  returnData = teamMemberData.map(teamMember => {
-    return {
-      team_member_id: teamMember.team_member_id,
-      team_member_role: teamMember.team_member_role,
-      team_member_date_created: teamMember.team_member_date_created,
-      team_member_user: {
-        user_id: teamMember.user_id,
-        user_first_name: teamMember.user_first_name,
-        user_last_name: teamMember.user_last_name,
-        user_avatar: teamMember.user_avatar,
-        user_email: teamMember.user_email,
-      }
-    }
-  });
 });
 return returnData;
 $$ LANGUAGE plv8;
