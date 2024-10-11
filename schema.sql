@@ -1602,7 +1602,7 @@ AS $$
       user_job_title,
       sss_number,
       sss_front_image_url,
-      sss_back_image_url, 
+      sss_back_image_url,
     } = input_data;
 
     if (user_active_team_id) {
@@ -19666,14 +19666,12 @@ AS $$
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : normalizeDate(clonedCurrentDate, true);
         break;
       case "monthly":
-        startDate = startDateValue ? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth(), 1);
+        startDate = startDateValue ? new Date(normalizeDate(new Date(startDateValue)).setDate(normalizeDate(new Date(startDateValue)).getDate() + 1)) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth(), 1);
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth() + 1, 0, 23, 59, 59);
-        startDate.setDate(startDate.getDate() + 1);
         break;
       case "yearly":
-      startDate = startDateValue? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), 0, 1);
+      startDate = startDateValue?new Date(normalizeDate(new Date(startDateValue)).setDate(normalizeDate(new Date(startDateValue)).getDate() + 1)) : new Date(clonedCurrentDate.getFullYear(), 0, 1);
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), 11, 31, 23, 59, 59);
-        startDate.setDate(startDate.getDate() + 1);
         break;
       default:
         throw new Error("Invalid frequency");
@@ -19692,8 +19690,8 @@ AS $$
 
     if (frequency === 'daily') {
       while (startDate <= endDate) {
-        dates.push(startDate.toISOString().slice(0, 10)); // 'YYYY-MM-DD'
-        startDate.setDate(startDate.getDate() + 1); // Increment by one day
+        dates.push(startDate.toISOString().slice(0, 10));
+        startDate.setDate(startDate.getDate() + 1);
       }
     } else if (frequency === 'monthly') {
       while (startDate <= endDate) {
@@ -19702,8 +19700,8 @@ AS $$
       }
     } else if (frequency === 'yearly') {
       while (startDate <= endDate) {
-        dates.push(startDate.getFullYear().toString()); // 'YYYY'
-        startDate.setFullYear(startDate.getFullYear() + 1); // Increment by one year
+        dates.push(startDate.getFullYear().toString());
+        startDate.setFullYear(startDate.getFullYear() + 1);
       }
     }
 
@@ -19788,46 +19786,76 @@ AS $$
         : table;
 
       const memberFilterCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
-        ? `${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
+        ? `WHERE ${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
         : "";
 
-      const interviewData = plv8.execute(`
-        SELECT
-          TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN 1 END) AS rejected_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'MISSED' THEN 1 END) AS missed_count
-        FROM hr_schema.${table}_table
-        WHERE ${memberFilterCondition} ${technicalInterviewCondition} ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
-        GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
-        ORDER BY date_group
-      `);
+      const jobOfferCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
+        ? `WHERE ${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}'`
+        : "";
 
+   let interviewData;
+    if (table === 'job_offer') {
+        interviewData = plv8.execute(`
+            WITH latest_status AS (
+              SELECT DISTINCT ON (job_offer_table.job_offer_request_id)
+                  job_offer_table.job_offer_request_id,
+                  job_offer_table.job_offer_status,
+                  job_offer_table.job_offer_date_created
+              FROM hr_schema.job_offer_table
+              ${jobOfferCondition}
+              ORDER BY job_offer_table.job_offer_request_id, job_offer_table.job_offer_date_created DESC
+            )
+            SELECT
+                TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', latest_status.job_offer_date_created), '${dateFormat}') AS date_group,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'PENDING' THEN 1 END) AS pending_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'REJECTED' THEN 1 END) AS rejected_count
+            FROM latest_status
+            WHERE latest_status.job_offer_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+            GROUP BY date_group
+            ORDER BY date_group;
+        `);
+    } else {
+        interviewData = plv8.execute(`
+            SELECT
+            TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN 1 END) AS rejected_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'MISSED' THEN 1 END) AS missed_count
+            FROM hr_schema.${table}_table
+            WHERE ${memberFilterCondition} ${technicalInterviewCondition}
+            ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+            GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
+            ORDER BY date_group DESC;
+        `);
+    }
       const dateDataMap = {};
       interviewData.forEach(row => {
         const dateKey = row.date_group;
         dateDataMap[dateKey] = {
-          pending_count: String(row.pending_count),
-          qualified_count: String(row.qualified_count),
-          not_qualified_count: String(row.not_qualified_count),
-          waiting_for_schedule_count: String(row.waiting_for_schedule_count),
-          not_responsive_count: String(row.not_responsive_count),
-          cancelled_count: String(row.cancelled_count),
-          for_pooling_count: String(row.for_pooling_count),
-          accepted_count: String(row.accepted_count),
-          waiting_for_offer_count: String(row.waiting_for_offer_count),
-          rejected_count: String(row.rejected_count),
-          missed_count: String(row.missed_count)
-        };
-      });
+          pending_count: String(row.pending_count ?? "0"),
+          qualified_count: String(row.qualified_count ?? "0"),
+          not_qualified_count: String(row.not_qualified_count ?? "0"),
+          waiting_for_schedule_count: String(row.waiting_for_schedule_count ?? "0"),
+          not_responsive_count: String(row.not_responsive_count ?? "0"),
+          cancelled_count: String(row.cancelled_count ?? "0"),
+          for_pooling_count: String(row.for_pooling_count ?? "0"),
+          accepted_count: String(row.accepted_count ?? "0"),
+          waiting_for_offer_count: String(row.waiting_for_offer_count ?? "0"),
+          rejected_count: String(row.rejected_count ?? "0"),
+          missed_count: String(row.missed_count ?? "0")
+      };
+    });
 
       allDates.forEach(date => {
         const data = dateDataMap[date] || {
@@ -23492,7 +23520,7 @@ SELECT
     $$
     SELECT
       net.http_post(
-        url:='https://xwsbaxmttvxkvorpabim.supabase.co/functions/v1/handle-missed-schedule',
+        url:='https://zlerahmorhbuqtryccxt.supabase.co/functions/v1/handle-missed-schedule',
         headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXJhaG1vcmhidXF0cnljY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTcwOTQyMjEsImV4cCI6MjAxMjY3MDIyMX0.kUtimbpMLQnLfzohwcPX4rKRTKeSx2hIt03nAhdD5wc"}'::jsonb,
         body:=concat('{"time": "', NOW(), '"}')::jsonb
       ) AS request_id;
