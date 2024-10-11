@@ -75,7 +75,7 @@ import {
   MemoType,
   NotificationOnLoad,
   NotificationTableRow,
-   OptionTableRow,
+  OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
   QuestionnaireData,
@@ -114,12 +114,12 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -272,7 +272,14 @@ export const getRequestList = async (
 
   const approverList = approver?.map((approver) => `'${approver}'`).join(",");
   const approverCondition = approver
-    ? `EXISTS (SELECT 1 FROM form_schema.signer_table WHERE signer_team_member_id IN (${approverList}))`
+    ? `EXISTS (
+        SELECT 1
+        FROM request_schema.request_signer_table
+        INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id
+        WHERE
+            request_signer_request_id = request_view.request_id
+            AND signer.signer_team_member_id IN (${approverList})
+    )`
     : "";
 
   const searchCondition = search
