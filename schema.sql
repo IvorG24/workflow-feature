@@ -1602,7 +1602,7 @@ AS $$
       user_job_title,
       sss_number,
       sss_front_image_url,
-      sss_back_image_url, 
+      sss_back_image_url,
     } = input_data;
 
     if (user_active_team_id) {
@@ -19993,7 +19993,6 @@ AS $$
           accepted_count: String(row.accepted_count ?? "0"),
           waiting_for_offer_count: String(row.waiting_for_offer_count ?? "0"),
           rejected_count: String(row.rejected_count ?? "0"),
-
           missed_count: String(row.missed_count ?? "0")
       };
     });
