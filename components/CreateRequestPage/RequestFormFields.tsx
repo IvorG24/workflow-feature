@@ -151,7 +151,6 @@ type RequestFormFieldsProps = {
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
-    onDepartmentChange: (value: string | null) => void;
     onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
     onPayeeVatBooleanChange: (
       value: boolean,
@@ -1027,9 +1026,6 @@ const RequestFormFields = ({
                       );
                       break;
                     case "Department":
-                      liquidationReimbursementFormMethods?.onDepartmentChange(
-                        value
-                      );
                       requestForPaymentFormMethods?.onDepartmentChange(
                         value,
                         prevValue as string | null

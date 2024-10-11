@@ -5781,16 +5781,6 @@ AS $$
           }
         });
 
-        const equipmentCodeList = plv8.execute(`SELECT equipment_description_id, equipment_description_property_number_with_prefix FROM equipment_schema.equipment_description_view`);
-        const equipmentCodeOptions = equipmentCodeList.map((equipmentCode, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[7].field_id,
-            option_id: equipmentCode.equipment_description_id,
-            option_order: index,
-            option_value: equipmentCode.equipment_description_property_number_with_prefix
-          }
-        });
-
         const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
           if (field.field_name === 'Requesting Project') {
             return {
@@ -5802,23 +5792,20 @@ AS $$
               ...field,
               field_option: departmentOptions,
             }
-          } else if (field.field_name === 'Equipment Code') {
-            return {
-              ...field,
-              field_option: equipmentCodeOptions,
-            }
           } else {
             return field;
           }
         });
 
+        const filteredRequestDetailsField = ['BOQ Code', 'Equipment Code'];
+        
         returnData = {
           form: {
             ...form,
             form_section: [
               {
                 ...form.form_section[0],
-                section_field: firstSectionFieldList.filter((field) => field.field_name !== 'BOQ Code'),
+                section_field: firstSectionFieldList.filter((field) => !filteredRequestDetailsField.includes(field.field_name)),
               },
               form.form_section[1],
               form.form_section[2]

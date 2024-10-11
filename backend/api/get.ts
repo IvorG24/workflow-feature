@@ -6312,7 +6312,6 @@ export const checkUserSSSIDNumber = async (
     idNumber: string;
   }
 ) => {
-
   const { idNumber } = params;
   const { count, error } = await supabaseClient
     .schema("user_schema")
