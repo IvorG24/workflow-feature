@@ -131,8 +131,7 @@ const EditLiquidReimbursementRequestPage = ({
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -157,6 +156,7 @@ const EditLiquidReimbursementRequestPage = ({
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -167,6 +167,7 @@ const EditLiquidReimbursementRequestPage = ({
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         if (isUpdatedByAccountant) {
@@ -748,8 +749,7 @@ const EditLiquidReimbursementRequestPage = ({
         }
       );
       setEquipmentCodeOptionList(equipmentCodeOptions);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch equipment code list. Please contact IT",
         color: "red",

@@ -103,6 +103,7 @@ const CreatePettyCashVoucherBalancePage = ({
         isFormslyForm: true,
         projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       const redirectUrl = `/${formatTeamNameToUrlKey(

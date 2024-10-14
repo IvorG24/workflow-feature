@@ -47,7 +47,6 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-
   const requestorProfile = useUserProfile();
 
   const formDetails = {
@@ -74,8 +73,7 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember || !connectedRequest) return;
+      if (!requestorProfile || !teamMember || !connectedRequest) return;
 
       setIsLoading(true);
 
@@ -90,6 +88,7 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
         isFormslyForm: true,
         projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

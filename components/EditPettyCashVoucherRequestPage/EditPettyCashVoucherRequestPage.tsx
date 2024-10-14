@@ -128,8 +128,7 @@ const EditPettyCashVoucherRequestPage = ({
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -155,6 +154,7 @@ const EditPettyCashVoucherRequestPage = ({
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -165,6 +165,7 @@ const EditPettyCashVoucherRequestPage = ({
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       }
 
