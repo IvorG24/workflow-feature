@@ -4,7 +4,7 @@ import {
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
 } from "@/backend/api/get";
-import { createRequest, editRequest } from "@/backend/api/post";
+import { createRequest, editRequest, insertError } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -14,7 +14,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { CSI_HIDDEN_FIELDS } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -184,6 +184,15 @@ const EditPettyCashVoucherRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onSubmit",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

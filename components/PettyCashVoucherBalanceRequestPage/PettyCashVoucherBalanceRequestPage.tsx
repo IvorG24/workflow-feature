@@ -4,7 +4,7 @@ import {
   getRequestComment,
   getRequestFieldResponse,
 } from "@/backend/api/get";
-import { createComment } from "@/backend/api/post";
+import { createComment, insertError } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelPCVRequestByCostEngineer,
@@ -25,7 +25,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -202,6 +202,15 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleUpdateRequest",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

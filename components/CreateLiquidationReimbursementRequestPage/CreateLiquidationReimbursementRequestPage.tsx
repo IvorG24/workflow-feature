@@ -2,7 +2,7 @@ import {
   getProjectSignerWithTeamMember,
   getPropertyNumberOptions,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createRequest, insertError } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -11,7 +11,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { calculateInvoiceAmountWithVAT } from "@/utils/functions";
+import { calculateInvoiceAmountWithVAT, isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -149,6 +149,15 @@ const CreateLiquidationReimbursementRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCreateRequest",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
