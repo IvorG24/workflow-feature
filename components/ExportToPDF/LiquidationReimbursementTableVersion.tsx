@@ -200,13 +200,6 @@ const LiquidationReimbursementTableVersion = ({
   requestItems,
   approverDetails,
 }: Props) => {
-  console.log(
-    requestDetails,
-    requestorDetails,
-    requestIDs,
-    requestItems,
-    approverDetails
-  );
   const formatStatus = (status: string) => {
     switch (status) {
       case "APPROVED":

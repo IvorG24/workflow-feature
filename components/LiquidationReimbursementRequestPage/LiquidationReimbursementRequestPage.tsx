@@ -480,7 +480,6 @@ const LiquidationReimbursementRequestPage = ({
       });
       return jiraTicket;
     } catch (e) {
-      console.log(e);
       const errorMessage = (e as Error).message;
       notifications.show({
         message: `Error: ${errorMessage}`,
