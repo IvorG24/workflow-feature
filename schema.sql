@@ -13915,7 +13915,7 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND user_email IN (${emailListCondition})
     `
-  ).map(data => user_email);
+  ).map(data => data.user_email);
 });
 return returnData;
 $$ LANGUAGE plv8;
