@@ -329,9 +329,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       const amount = safeParse(
         requestSectionFieldList[5].field_response[0].request_response
       );
-      const particulars = safeParse(
-        requestSectionFieldList[7].field_response[0].request_response
-      );
       const isForOfficialBusiness = Boolean(
         safeParse(requestSectionFieldList[8].field_response[0].request_response)
       );
@@ -350,7 +347,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         amount,
         isForOfficialBusiness,
         approvedOfficialBusiness,
-        particulars,
         department,
       });
 
