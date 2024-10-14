@@ -47,7 +47,6 @@ const TicketFormFields = ({
   ticketField,
   ticketFieldIdx,
   ticketSectionIdx,
-  isEdit,
   requestItemCSIMethods,
   requestItemOptionMethods,
   itemRequestMethods,
