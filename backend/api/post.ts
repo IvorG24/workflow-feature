@@ -636,9 +636,9 @@ export const createRequest = async (
         } else if (
           ["TEXT", "TEXTAREA", "AUTOCOMPLETE"].includes(field.field_type)
         ) {
-          responseValue = responseValue
-            ? `${responseValue}`
-            : "".trim().replace(/\s\s+/g, " ");
+          responseValue = (responseValue ? `${responseValue}` : "")
+            .trim()
+            .replace(/\s\s+/g, " ");
         }
 
         if (
