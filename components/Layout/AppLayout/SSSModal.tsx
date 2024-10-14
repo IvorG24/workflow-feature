@@ -64,6 +64,7 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sf",
             userId,
+            sssId: data.sss_number,
           })
         ).publicUrl;
       }
@@ -75,6 +76,7 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sb",
             userId,
+            sssId: data.sss_number,
           })
         ).publicUrl;
       }
@@ -94,10 +96,6 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
       });
       modals.closeAll();
     } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
     } finally {
       setIsLoading(false);
     }

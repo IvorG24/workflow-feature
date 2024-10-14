@@ -19900,18 +19900,7 @@ AS $$
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
     let sssIDNumber = "";
 
-    if (userId) {
-      const userData = plv8.execute(
-        `
-          SELECT user_sss_number
-          FROM user_schema.user_table
-          INNER JOIN user_schema.user_sss_table ON user_id = user_sss_user_id
-          WHERE user_id = '${userId}'
-        `
-      );
-      if(!userData.length) throw new Error("The user has not yet uploaded an SSS ID.");
-      sssIDNumber = userData[0].user_sss_number;
-    } else if (sssId) {
+    if (sssId) {
       sssIDNumber = sssId;
     } else if (applicationInformationFormslyId) {
       const sssData = plv8.execute(`
@@ -19923,6 +19912,17 @@ AS $$
       `);
       if(!sssData.length) throw new Error();
       sssIDNumber = JSON.parse(sssData[0].request_response);
+    } else if (userId) {
+      const userData = plv8.execute(
+        `
+          SELECT user_sss_number
+          FROM user_schema.user_table
+          INNER JOIN user_schema.user_sss_table ON user_id = user_sss_user_id
+          WHERE user_id = '${userId}'
+        `
+      );
+      if(!userData.length) throw new Error("The user has not yet uploaded an SSS ID.");
+      sssIDNumber = userData[0].user_sss_number;
     } else {
       throw new Error();
     }

@@ -90,7 +90,7 @@ const RequestCommentList = ({
               attachment_name: attachment.name,
               attachment_value: "",
             },
-            fileType: "c",
+            fileType: newCommentId,
             userId: user.user_id,
           });
           commentAttachmentList.push({ ...data, attachment_public_url: url });

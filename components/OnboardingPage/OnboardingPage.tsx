@@ -65,6 +65,7 @@ const OnboardingPage = ({ user }: Props) => {
             bucket: "USER_AVATARS",
             fileType: "a",
             userId: user.id,
+            sssId: data.sss_number,
           })
         ).publicUrl;
       }
@@ -77,6 +78,7 @@ const OnboardingPage = ({ user }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sf",
             userId: user.id,
+            sssId: data.sss_number,
           })
         ).publicUrl;
       }
@@ -88,6 +90,7 @@ const OnboardingPage = ({ user }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sb",
             userId: user.id,
+            sssId: data.sss_number,
           })
         ).publicUrl;
       }

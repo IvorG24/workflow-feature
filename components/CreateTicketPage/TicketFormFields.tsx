@@ -1,8 +1,4 @@
-import {
-  MAX_FILE_SIZE,
-  MAX_FILE_SIZE_IN_MB,
-  createTicketFilePlaceholder,
-} from "@/utils/constant";
+import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
@@ -266,11 +262,7 @@ const TicketFormFields = ({
               <FileInput
                 {...inputProps}
                 icon={<IconFile size={16} />}
-                value={
-                  isEdit && typeof field.value === "string"
-                    ? createTicketFilePlaceholder(`${field.value}`)
-                    : (field.value as File | null)
-                }
+                value={field.value as File | null}
                 clearable
                 multiple={false}
                 onChange={field.onChange}
