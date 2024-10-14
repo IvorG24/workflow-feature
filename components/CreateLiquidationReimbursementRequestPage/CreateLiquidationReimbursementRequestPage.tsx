@@ -55,6 +55,7 @@ const CreateLiquidationReimbursementRequestPage = ({
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const requestorProfile = useUserProfile();
+
   const { setIsLoading } = useLoadingActions();
   const { equipmentCodeOptionList, setEquipmentCodeOptionList } =
     useEquipmentCodeOptionListStore();
@@ -108,8 +109,7 @@ const CreateLiquidationReimbursementRequestPage = ({
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -131,6 +131,7 @@ const CreateLiquidationReimbursementRequestPage = ({
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({
@@ -664,8 +665,7 @@ const CreateLiquidationReimbursementRequestPage = ({
         }
       );
       setEquipmentCodeOptionList(equipmentCodeOptions);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch equipment code list. Please contact IT",
         color: "red",

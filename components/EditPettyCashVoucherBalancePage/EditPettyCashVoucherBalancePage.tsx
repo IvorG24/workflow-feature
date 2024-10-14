@@ -94,8 +94,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
 
   const onSubmit = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -121,6 +120,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -131,6 +131,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         // add comment
