@@ -356,17 +356,24 @@ const EditLiquidReimbursementRequestPage = ({
       }
       // remove payment if pure liquidation type
       const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
+      const liquidationWithPR =
+        value?.toLowerCase() === "liquidation with provisional receipt";
       const paymentSectionIsRemoved =
         getValues(`sections`).some(
           (section) => section.section_name === "Payment"
         ) === false;
 
-      if (valueIsPureLiquidation) {
+      if (valueIsPureLiquidation || liquidationWithPR) {
         const paymentSectionIndex = getValues(`sections`).findIndex(
           (section) => section.section_name === "Payment"
         );
-        removeSection(paymentSectionIndex);
-      } else if (!valueIsPureLiquidation && paymentSectionIsRemoved) {
+        if (paymentSectionIndex > 0) {
+          removeSection(paymentSectionIndex);
+        }
+      } else if (
+        !(valueIsPureLiquidation || liquidationWithPR) &&
+        paymentSectionIsRemoved
+      ) {
         insertSection(formSections.length, form.form_section[2], {
           shouldFocus: false,
         });
