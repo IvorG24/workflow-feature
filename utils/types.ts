@@ -2073,6 +2073,7 @@ export type JiraLRFTicketPayloadProps = {
   workingAdvances: string;
   ticketId: string;
   requestor: string;
+  amount: number;
 };
 
 export type ConnectedRequestFormProps = {
@@ -2098,6 +2099,7 @@ export type JiraPTRFTicketPayloadProps = {
 export type JiraWAVTicketPayloadProps = {
   requestId: string;
   requestUrl: string;
+  requestor: string;
   jiraProjectSiteId: string;
   amount: string;
   department: string;
