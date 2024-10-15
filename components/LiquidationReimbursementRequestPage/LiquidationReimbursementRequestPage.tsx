@@ -5,6 +5,7 @@ import {
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
+import { insertError } from "@/backend/api/post";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
@@ -23,7 +24,7 @@ import {
   ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
   formatDate,
 } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraLRFRequisitionPayload,
@@ -406,8 +407,12 @@ const LiquidationReimbursementRequestPage = ({
         throw new Error("Error fetching Jira project data.");
       }
 
+      const isPED = selectedDepartment === "Plants and Equipment";
+
       const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=27&requestType=406",
+        `/api/jira/get-form?serviceDeskId=${isPED ? "27" : "23"}&requestType=${
+          isPED ? "406" : "367"
+        }`,
         {
           method: "GET",
           headers: {
@@ -489,7 +494,6 @@ const LiquidationReimbursementRequestPage = ({
         ticketId,
         amount,
       });
-
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
@@ -512,6 +516,15 @@ const LiquidationReimbursementRequestPage = ({
         message: `Error: ${errorMessage}`,
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
       return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);

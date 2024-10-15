@@ -383,6 +383,15 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         message: `Error: ${errorMessage}`,
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
       return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
