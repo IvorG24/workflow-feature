@@ -7,7 +7,6 @@ import {
   ApiKeyData,
   AppType,
   BackgroundCheckSpreadsheetData,
-  DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
@@ -1427,43 +1426,6 @@ export const updateTechnicalInterviewSchedule = async (
 ) => {
   const { error } = await supabaseClient.rpc(
     "update_technical_interview_schedule",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-};
-
-export const updateDirectorInterviewStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    status: string;
-    teamMemberId: string;
-    data: DirectorInterviewSpreadsheetData;
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_director_interview_status",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-};
-
-export const updateDirectorInterviewSchedule = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-    schedule: string;
-    requestReferenceId: string;
-    userEmail: string;
-    applicationInformationFormslyId: string;
-    notificationMessage: string;
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_director_interview_schedule",
     {
       input_data: params,
     }
