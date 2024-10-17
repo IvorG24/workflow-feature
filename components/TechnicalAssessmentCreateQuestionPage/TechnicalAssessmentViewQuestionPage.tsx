@@ -489,6 +489,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                                 }
                               />
                               <TextInput
+                                label={`Question Choice ${choiceIndex + 1}`}
                                 required={
                                   choiceIndex === 0 || choiceIndex === 1
                                 }
