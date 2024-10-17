@@ -6542,7 +6542,7 @@ AS $$
         field_id
       FROM request_schema.request_response_table
       INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        AND field_id IN = '362bff3d-54fa-413b-992c-fd344d8552c6'
+        AND field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
       WHERE
         request_response_request_id = '${technicalAssessmentId}'
         ORDER BY field_order
@@ -15085,7 +15085,7 @@ AS $$
                 'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
                 '362bff3d-54fa-413b-992c-fd344d8552c6'
               )
-              request_response = '"${request.request_formsly_id}"'
+              AND request_response = '"${request.request_formsly_id}"'
           `
         )[0].count;
         if(!connectedRequestCount){
@@ -16728,7 +16728,7 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
-          applicationInformation.request_status = 'APPROVED'
+          AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
@@ -17271,7 +17271,7 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
-          applicationInformation.request_status = 'APPROVED'
+          AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
