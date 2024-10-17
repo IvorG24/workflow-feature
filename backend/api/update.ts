@@ -35,6 +35,7 @@ import {
   SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
+  TechnicalAssessmentTableRow,
   TechnicalInterviewSpreadsheetData,
   TechnicalQuestionFormValues,
   TicketTableRow,
@@ -1707,4 +1708,24 @@ export const disableApikey = async (
   if (error) throw error;
 
   return data as unknown as ApiKeyData[];
+};
+
+export const updateQuestionnaireName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+    questionnaireName: string;
+  }
+) => {
+  const { questionnaireId, questionnaireName } = params;
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .update({ questionnaire_name: questionnaireName })
+    .eq("questionnaire_id", questionnaireId)
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as TechnicalAssessmentTableRow[];
 };
