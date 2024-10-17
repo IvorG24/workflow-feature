@@ -225,7 +225,7 @@ const TechnicalQuestionnairePage = () => {
     try {
       if (questionnaireName !== fieldValue) {
         const checkIfExist = await checkQuestionnaireName(supabaseClient, {
-          questionnaireName: fieldValue,
+          questionnaireName: fieldValue.trim(),
         });
         if (checkIfExist.length > 0) {
           notifications.show({
@@ -238,7 +238,7 @@ const TechnicalQuestionnairePage = () => {
 
       await updateQuestionnaireName(supabaseClient, {
         questionnaireId,
-        questionnaireName: fieldValue,
+        questionnaireName: fieldValue.trim(),
       });
 
       setQuestionnnaireList(

@@ -270,7 +270,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -2475,7 +2475,7 @@ export const checkQuestionnaireName = async (
     .schema("form_schema")
     .from("questionnaire_table")
     .select("*")
-    .eq("questionnaire_name", params.questionnaireName)
+    .ilike("questionnaire_name", params.questionnaireName)
     .limit(1);
 
   if (error) throw error;
