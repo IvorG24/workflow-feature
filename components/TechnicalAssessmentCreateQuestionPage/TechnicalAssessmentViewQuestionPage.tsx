@@ -174,7 +174,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
       )
         return;
 
-      const trimmedQuestion = data.question.trim().toLowerCase();
+      const trimmedQuestion = data.question.trim();
       if (trimmedQuestion === "") {
         notifications.show({
           message: "Technical question is required.",
@@ -489,7 +489,6 @@ const TechnicalAssessmentCreateQuestionPage = ({
                                 }
                               />
                               <TextInput
-                                label={`Question Choice ${choiceIndex + 1}`}
                                 required={
                                   choiceIndex === 0 || choiceIndex === 1
                                 }
