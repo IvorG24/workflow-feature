@@ -61,7 +61,6 @@ type HRIndicatorCountType = {
   tradeTest: number;
   technicalInterview1: number;
   technicalInterview2: number;
-  directorInterview: number;
   backgroundCheck: number;
   jobOffer: number;
 };
@@ -78,7 +77,6 @@ const ReviewAppNavLink = () => {
     tradeTest: 0,
     technicalInterview1: 0,
     technicalInterview2: 0,
-    directorInterview: 0,
     backgroundCheck: 0,
     jobOffer: 0,
   });
@@ -494,17 +492,6 @@ const ReviewAppNavLink = () => {
       href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
       withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
       indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
-    },
-    {
-      label: `Director Interview`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconBriefcase {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/director-interview-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.directorInterview),
-      indicatorLabel: `${hrIndicatorCount.directorInterview}`,
     },
     {
       label: `Background Check`,
