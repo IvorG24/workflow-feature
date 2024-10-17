@@ -28,7 +28,6 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
-  IconBriefcase,
   IconCode,
   IconDashboard,
   IconFile,
