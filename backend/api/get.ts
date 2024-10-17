@@ -5779,12 +5779,17 @@ export const getRequestFieldResponse = async (
 
 export const getExistingConnectedRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  parentRequestId: string
+  params: {
+    parentRequestId: string;
+    fieldId: string;
+  }
 ) => {
+  const { parentRequestId, fieldId } = params;
   const { data, error } = await supabaseClient
     .schema("request_schema")
     .from("request_response_table")
     .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response_field_id", fieldId)
     .eq("request_response", JSON.stringify(parentRequestId))
     .in("request.request_status", ["PENDING", "APPROVED"])
     .maybeSingle();
