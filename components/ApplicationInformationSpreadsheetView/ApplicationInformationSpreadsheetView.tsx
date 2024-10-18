@@ -89,6 +89,7 @@ const ApplicationInformationSpreadsheetView = ({
   });
 
   const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
+    console.log(data);
     try {
       if (!user) return;
       setIsLoading(true);
@@ -282,7 +283,10 @@ const ApplicationInformationSpreadsheetView = ({
 
           <Button
             leftIcon={<IconReload size={16} />}
-            onClick={() => fetchData()}
+            onClick={() => {
+              setPage(1);
+              fetchData({ page: 1 });
+            }}
             disabled={isLoading}
           >
             Refresh
