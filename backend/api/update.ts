@@ -1715,13 +1715,19 @@ export const updateQuestionnaireName = async (
   params: {
     questionnaireId: string;
     questionnaireName: string;
+    teamMemberId: string;
   }
 ) => {
-  const { questionnaireId, questionnaireName } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const { questionnaireId, questionnaireName, teamMemberId } = params;
   const { data, error } = await supabaseClient
     .schema("form_schema")
     .from("questionnaire_table")
-    .update({ questionnaire_name: questionnaireName })
+    .update({
+      questionnaire_name: questionnaireName,
+      questionnaire_updated_by: teamMemberId,
+      questionnaire_date_updated: currentDate,
+    })
     .eq("questionnaire_id", questionnaireId)
     .select("*");
 
