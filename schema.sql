@@ -15679,9 +15679,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, hr_phone_interview_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
