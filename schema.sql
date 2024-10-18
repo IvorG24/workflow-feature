@@ -3981,14 +3981,14 @@ AS $$
 
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
         `
-          SELECT DISTINCT 
-            request_response_duplicatable_section_id, 
-            section_id, 
-            section_order 
+          SELECT DISTINCT
+            request_response_duplicatable_section_id,
+            section_id,
+            section_order
           FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           INNER JOIN form_schema.section_table ON section_id = field_section_id
-          WHERE 
+          WHERE
             request_response_request_id = '${requestData.request_id}'
           ORDER BY section_order
         `
@@ -4453,12 +4453,12 @@ AS $$
 
     const requestResponseData = plv8.execute(
       `
-        SELECT 
-          request_response_table.*, 
-          field_name, field_order 
-        FROM request_schema.request_response_table 
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
-        WHERE 
+        SELECT
+          request_response_table.*,
+          field_name, field_order
+        FROM request_schema.request_response_table
+        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+        WHERE
           request_response_request_id='${requestId}'
       `
     );
@@ -5720,7 +5720,7 @@ AS $$
         });
 
         const filteredRequestDetailsField = ['BOQ Code', 'Equipment Code'];
-        
+
         returnData = {
           form: {
             ...form,
@@ -6223,7 +6223,7 @@ AS $$
           const parentRequestIdField = plv8.execute(`
             SELECT request_response
             FROM request_schema.request_response_table
-            WHERE 
+            WHERE
               request_response_request_id = '${connectedRequest.request_id}'
               AND request_response_field_id IN (
                 '9a112d6f-a34e-4767-b3c1-7f30af858f8f',
@@ -6243,7 +6243,7 @@ AS $$
               const connectedRequestChargeToProjectName = plv8.execute(`
                 SELECT request_response
                 FROM request_schema.request_response_table
-                WHERE 
+                WHERE
                   request_response_request_id = '${parentRequestIdFieldResponse}'
                   AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
               `)[0];
@@ -7689,7 +7689,7 @@ plv8.subtransaction(function(){
       FROM form_schema.field_table
         INNER JOIN form_schema.section_table ON section_id = field_section_id
         INNER JOIN form_schema.form_table ON form_id = section_form_id
-          AND form_name = 'Item' 
+          AND form_name = 'Item'
           AND form_is_formsly_form = true
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           AND team_member_team_id = '${teamId}'
@@ -10571,7 +10571,7 @@ AS $$
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
             it.item_general_name = '${section.itemName}'
-            AND it.item_is_disabled = false  
+            AND it.item_is_disabled = false
         `
       );
 
@@ -15329,7 +15329,7 @@ AS $$
         FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           AND request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
-          AND request_response = '"${requestId}"' 
+          AND request_response = '"${requestId}"'
       `
     );
     if (!generalAssessmentData.length) {
@@ -15678,10 +15678,10 @@ AS $$
           ${hrPhoneInterviewScheduleCondition}
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id   
-        ORDER BY ${sort.sortBy} ${sort.order}, hr_phone_interview_date_created DESC
-        LIMIT ${limit}
-        OFFSET ${offset}
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
       `
     );
 
@@ -18640,7 +18640,7 @@ plv8.subtransaction(function(){
       WHERE
         request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
         AND request_status = 'PENDING'
-        
+
     `
   )[0].count;
 
@@ -19520,7 +19520,7 @@ AS $$
     } else if (applicationInformationFormslyId) {
       const sssData = plv8.execute(`
         SELECT request_response
-        FROM public.request_view 
+        FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
           AND request_response_field_id = 'ab7bf673-c22d-4290-b858-7cba2c4d2474'
         WHERE request_formsly_id = '${applicationInformationFormslyId}'
@@ -19548,6 +19548,218 @@ AS $$
     }
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_questionnaire_position(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+
+  plv8.subtransaction(function() {
+    const { questionnaireId, teamMemberId, position } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = null
+        WHERE position_questionnaire_id = $1
+    `, [questionnaireId]);
+
+     position.forEach(pos => {
+        const positionData = plv8.execute(`
+            SELECT position_id
+            FROM lookup_schema.position_table
+            WHERE position_alias = $1
+        `, [pos])[0];
+
+        if (positionData && positionData.position_id) {
+            plv8.execute(`
+                UPDATE lookup_schema.position_table
+                SET position_questionnaire_id = $1
+                WHERE position_id = $2
+            `, [questionnaireId, positionData.position_id]);
+        }
+    });
+
+     plv8.execute(`
+        UPDATE form_schema.questionnaire_table
+        SET
+            questionnaire_updated_by = $1,
+            questionnaire_date_updated = $2
+         WHERE questionnaire_id = $3
+    `, [teamMemberId, currentDate, questionnaireId]);
+    });
+
+    return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_question_option(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+    let returnData = [];
+
+    plv8.subtransaction(function() {
+        const { questionnaireId, teamMemberId, correctAnswerEscaped, escapedQuestion, escapedChoices, fieldId } = input_data;
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+        plv8.execute(`
+            UPDATE lookup_schema.position_table
+            SET position_questionnaire_id = null
+            WHERE position_questionnaire_id = $1
+        `, [questionnaireId]);
+
+
+        plv8.execute(`
+            UPDATE form_schema.correct_response_table
+            SET correct_response_value = $1
+            WHERE correct_response_field_id = $2
+        `, [correctAnswerEscaped, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.field_table
+            SET field_name = $1
+            WHERE field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_question_table
+            SET questionnaire_question = $1
+            WHERE questionnaire_question_field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        escapedChoices.map((choice) => {
+            plv8.execute(`
+                UPDATE form_schema.question_option_table
+                SET question_option_value = $1
+                WHERE question_option_id = $2
+            `, [choice.choices, choice.fieldId]);
+        });
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_table
+            SET
+              questionnaire_updated_by = $1,
+              questionnaire_date_updated = $2
+            WHERE questionnaire_id = $3
+        `, [teamMemberId, currentDate, questionnaireId]);
+
+        returnData.push({ status: 'success' });
+    });
+
+    return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_questionnaire_position(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+
+  plv8.subtransaction(function() {
+    const { questionnaireId, teamMemberId, position } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = null
+        WHERE position_questionnaire_id = $1
+    `, [questionnaireId]);
+
+     position.forEach(pos => {
+        const positionData = plv8.execute(`
+            SELECT position_id
+            FROM lookup_schema.position_table
+            WHERE position_alias = $1
+        `, [pos])[0];
+
+        if (positionData && positionData.position_id) {
+            plv8.execute(`
+                UPDATE lookup_schema.position_table
+                SET position_questionnaire_id = $1
+                WHERE position_id = $2
+            `, [questionnaireId, positionData.position_id]);
+        }
+    });
+
+     plv8.execute(`
+        UPDATE form_schema.questionnaire_table
+        SET
+            questionnaire_updated_by = $1,
+            questionnaire_date_updated = $2
+         WHERE questionnaire_id = $3
+    `, [teamMemberId, currentDate, questionnaireId]);
+    });
+
+    return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_question_option(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+    let returnData = [];
+
+    plv8.subtransaction(function() {
+        const { questionnaireId, teamMemberId, correctAnswerEscaped, escapedQuestion, escapedChoices, fieldId } = input_data;
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+        plv8.execute(`
+            UPDATE lookup_schema.position_table
+            SET position_questionnaire_id = null
+            WHERE position_questionnaire_id = $1
+        `, [questionnaireId]);
+
+
+        plv8.execute(`
+            UPDATE form_schema.correct_response_table
+            SET correct_response_value = $1
+            WHERE correct_response_field_id = $2
+        `, [correctAnswerEscaped, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.field_table
+            SET field_name = $1
+            WHERE field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_question_table
+            SET questionnaire_question = $1
+            WHERE questionnaire_question_field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        escapedChoices.map((choice) => {
+            plv8.execute(`
+                UPDATE form_schema.question_option_table
+                SET question_option_value = $1
+                WHERE question_option_id = $2
+            `, [choice.choices, choice.fieldId]);
+        });
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_table
+            SET
+              questionnaire_updated_by = $1,
+              questionnaire_date_updated = $2
+            WHERE questionnaire_id = $3
+        `, [teamMemberId, currentDate, questionnaireId]);
+
+        returnData.push({ status: 'success' });
+    });
+
+    return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
