@@ -1014,19 +1014,6 @@ CREATE TABLE hr_schema.hr_phone_interview_table (
   hr_phone_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
-CREATE TABLE hr_schema.trade_test_table (
-  trade_test_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  trade_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
-  trade_test_status_date_updated TIMESTAMPTZ,
-  trade_test_schedule TIMESTAMPTZ,
-  trade_test_meeting_link VARCHAR(4000),
-
-  trade_test_address_id UUID REFERENCES address_table(address_id),
-  trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
-);
-
 CREATE TABLE hr_schema.technical_interview_table (
   technical_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   technical_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -1038,6 +1025,19 @@ CREATE TABLE hr_schema.technical_interview_table (
 
   technical_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.trade_test_table (
+  trade_test_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  trade_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  trade_test_status_date_updated TIMESTAMPTZ,
+  trade_test_schedule TIMESTAMPTZ,
+  trade_test_meeting_link VARCHAR(4000),
+
+  trade_test_address_id UUID REFERENCES address_table(address_id),
+  trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
 CREATE TABLE hr_schema.background_check_table (
@@ -1185,9 +1185,9 @@ CREATE TABLE lookup_schema.position_table (
   position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
   position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
 
-  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_1 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_2 BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
@@ -15135,19 +15135,6 @@ AS $$
           return true;
         }
 
-        const tradeTestCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.trade_test_table
-            WHERE
-              trade_test_request_id = '${requestId}'
-              AND trade_test_schedule IS NULL
-          `
-        )[0].count;
-        if(tradeTestCount){
-          return true;
-        }
-
         const technicalInterviewCount = plv8.execute(
           `
             SELECT COUNT(*)
@@ -15158,6 +15145,19 @@ AS $$
           `
         )[0].count;
         if(technicalInterviewCount){
+          return true;
+        }
+
+        const tradeTestCount = plv8.execute(
+          `
+            SELECT COUNT(*)
+            FROM hr_schema.trade_test_table
+            WHERE
+              trade_test_request_id = '${requestId}'
+              AND trade_test_schedule IS NULL
+          `
+        )[0].count;
+        if(tradeTestCount){
           return true;
         }
 
@@ -15291,9 +15291,9 @@ AS $$
       = hrPhoneInterviewData
       = jobOfferData
       = undefined;
-    let tradeTestData
-      = technicalInterview1Data
+    let technicalInterview1Data
       = technicalInterview2Data
+      = tradeTestData
       = backgroundCheckData
       = null;
 
@@ -15301,14 +15301,14 @@ AS $$
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
 
-    if (positionData.position_is_with_trade_test) {
-      tradeTestData = undefined;
-    }
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = undefined;
     }
     if (positionData.position_is_with_technical_interview_2) {
       technicalInterview2Data = undefined;
+    }
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = undefined;
     }
     if (positionData.position_is_with_background_check) {
       backgroundCheckData = undefined;
@@ -15338,9 +15338,9 @@ AS $$
         generalAssessmentData: undefined,
         technicalAssessmentData,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
@@ -15391,13 +15391,12 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData: undefined,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
-      return;
     }
     technicalAssessmentData = technicalAssessmentData[0];
 
@@ -15408,34 +15407,14 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData,
         hrPhoneInterviewData: undefined,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
-      return;
     }
     hrPhoneInterviewData = hrPhoneInterviewData[0];
-
-    if (positionData.position_is_with_trade_test) {
-      tradeTestData = plv8.execute(`SELECT * FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestUUID}'`);
-       if (!tradeTestData.length) {
-        returnData = {
-          applicationInformationData,
-          generalAssessmentData,
-          technicalAssessmentData,
-          hrPhoneInterviewData,
-          tradeTestData: undefined,
-          technicalInterview1Data,
-          technicalInterview2Data,
-          backgroundCheckData,
-          jobOfferData
-        }
-        return;
-      }
-      tradeTestData = tradeTestData[0];
-    }
 
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}' AND technical_interview_number = 1`);
@@ -15445,13 +15424,12 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data: undefined,
           technicalInterview2Data,
+          tradeTestData,
           backgroundCheckData,
           jobOfferData
         }
-        return;
       }
       technicalInterview1Data = technicalInterview1Data[0];
     }
@@ -15464,15 +15442,32 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data: undefined,
+          tradeTestData,
           backgroundCheckData,
           jobOfferData
         }
-        return;
       }
       technicalInterview2Data = technicalInterview2Data[0];
+    }
+
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = plv8.execute(`SELECT * FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestUUID}'`);
+       if (!tradeTestData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          technicalInterview1Data,
+          technicalInterview2Data,
+          tradeTestData: undefined,
+          backgroundCheckData,
+          jobOfferData
+        }
+      }
+      tradeTestData = tradeTestData[0];
     }
 
     if (positionData.position_is_with_background_check) {
@@ -15483,13 +15478,12 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data,
+          tradeTestData,
           backgroundCheckData: undefined,
           jobOfferData
         }
-        return;
       }
       backgroundCheckData = backgroundCheckData[0];
     }
@@ -15512,13 +15506,12 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData: undefined
       }
-      return;
     }
     jobOfferData = jobOfferData[0];
 
@@ -15527,9 +15520,9 @@ AS $$
       generalAssessmentData,
       technicalAssessmentData,
       hrPhoneInterviewData,
-      tradeTestData,
       technicalInterview1Data,
       technicalInterview2Data,
+      tradeTestData,
       backgroundCheckData,
       jobOfferData
     }
@@ -15737,21 +15730,42 @@ AS $$
 
     const steps = [
       'hr_phone_interview',
-      'trade_test',
       'technical_interview_1',
       'technical_interview_2',
+      'trade_test',
       'background_check'
     ];
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${position}' LIMIT 1`)[0];
     const currentStep = steps.indexOf(qualifiedStep);
 
-    if (positionData.position_is_with_trade_test && currentStep <= 0) {
-      plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_technical_interview_1 && currentStep <= 1) {
+    if (positionData.position_is_with_technical_interview_1 && currentStep <= 0) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 1`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview_1", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 1)`);
-    } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 2) {
+    } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 1) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 2`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview_2", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 2)`);
+    } else if (positionData.position_is_with_trade_test && currentStep <= 2) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestId}'`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "trade_test", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
+      plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
     } else if (positionData.position_is_with_background_check && currentStep <= 3) {
+      const isAlreadyDoneWithTechnical = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 1`)[0].count;
+      if(!isAlreadyDoneWithTechnical) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "hr_phone_interview", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
+
       const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
@@ -16196,18 +16210,18 @@ AS $$
         LEFT JOIN hr_schema.hr_phone_interview_table p
           ON p.hr_phone_interview_id = iom.interview_meeting_interview_id
           AND p.hr_phone_interview_status = 'PENDING'
-        LEFT JOIN hr_schema.trade_test_table t
-          ON t.trade_test_id = iom.interview_meeting_interview_id
-          AND t.trade_test_status = 'PENDING'
         LEFT JOIN hr_schema.technical_interview_table ti
           ON ti.technical_interview_id = iom.interview_meeting_interview_id
           AND ti.technical_interview_status = 'PENDING'
+        LEFT JOIN hr_schema.trade_test_table t
+          ON t.trade_test_id = iom.interview_meeting_interview_id
+          AND t.trade_test_status = 'PENDING'
         WHERE iom.interview_meeting_is_disabled = false
           AND iom.interview_meeting_schedule = '${validStartTime.toISOString()}'
           AND (
             p.hr_phone_interview_status = 'PENDING'
-            OR t.trade_test_status = 'PENDING'
             OR ti.technical_interview_status = 'PENDING'
+            OR t.trade_test_status = 'PENDING'
           )
       `);
 
@@ -18654,16 +18668,6 @@ plv8.subtransaction(function(){
     `
   )[0].count;
 
-  const tradeTestCount = plv8.execute(
-    `
-      SELECT COUNT(*)
-      FROM hr_schema.trade_test_table
-      WHERE
-        trade_test_status = 'PENDING'
-        AND trade_test_team_member_id = '${teamMemberId}'
-    `
-  )[0].count;
-
   const technicalInterview1Count = plv8.execute(
     `
       SELECT COUNT(*)
@@ -18683,6 +18687,16 @@ plv8.subtransaction(function(){
         technical_interview_status = 'PENDING'
         AND technical_interview_team_member_id = '${teamMemberId}'
         AND technical_interview_number = 2
+    `
+  )[0].count;
+
+  const tradeTestCount = plv8.execute(
+    `
+      SELECT COUNT(*)
+      FROM hr_schema.trade_test_table
+      WHERE
+        trade_test_status = 'PENDING'
+        AND trade_test_team_member_id = '${teamMemberId}'
     `
   )[0].count;
 
@@ -18718,9 +18732,9 @@ plv8.subtransaction(function(){
   returnData = {
     applicationInformation: Number(applicationInformationCount),
     hrPhoneInterview: Number(hrPhoneInterviewCount),
-    tradeTest: Number(tradeTestCount),
     technicalInterview1: Number(technicalInterview1Count),
     technicalInterview2: Number(technicalInterview2Count),
+    tradeTest: Number(tradeTestCount),
     backgroundCheck: Number(backgroundCheckCount),
     jobOffer: Number(jobOfferCount)
   }
