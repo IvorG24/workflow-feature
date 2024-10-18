@@ -1657,6 +1657,13 @@ export const updateQuestionnairePosition = async (
 ) => {
   const { questionnaireId, teamMemberId, position } = params;
 
+  await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .update({
+      position_questionnaire_id: null,
+    })
+    .eq("position_questionnaire_id", questionnaireId);
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
 
   const results = [];
@@ -1670,7 +1677,6 @@ export const updateQuestionnairePosition = async (
       .eq("position_alias", pos);
 
     if (error) {
-      console.error(`Failed to update position ${pos}:`, error);
       throw error;
     }
 
