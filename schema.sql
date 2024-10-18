@@ -14983,8 +14983,8 @@ AS $$
           ${search}
           ${form}
         ORDER BY ${columnAccessor} ${sort}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -15679,9 +15679,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, hr_phone_interview_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -16038,9 +16038,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, trade_test_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -16753,9 +16753,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, technical_interview_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -17053,9 +17053,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, background_check_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -17300,9 +17300,9 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        ORDER BY ${sort.sortBy} ${sort.order}, job_offer_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -19548,6 +19548,112 @@ AS $$
     }
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_questionnaire_position(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+
+  plv8.subtransaction(function() {
+    const { questionnaireId, teamMemberId, position } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = null
+        WHERE position_questionnaire_id = $1
+    `, [questionnaireId]);
+
+     position.forEach(pos => {
+        const positionData = plv8.execute(`
+            SELECT position_id
+            FROM lookup_schema.position_table
+            WHERE position_alias = $1
+        `, [pos])[0];
+
+        if (positionData && positionData.position_id) {
+            plv8.execute(`
+                UPDATE lookup_schema.position_table
+                SET position_questionnaire_id = $1
+                WHERE position_id = $2
+            `, [questionnaireId, positionData.position_id]);
+        }
+    });
+
+     plv8.execute(`
+        UPDATE form_schema.questionnaire_table
+        SET
+            questionnaire_updated_by = $1,
+            questionnaire_date_updated = $2
+         WHERE questionnaire_id = $3
+    `, [teamMemberId, currentDate, questionnaireId]);
+    });
+
+    return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_question_option(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+    let returnData = [];
+
+    plv8.subtransaction(function() {
+        const { questionnaireId, teamMemberId, correctAnswerEscaped, escapedQuestion, escapedChoices, fieldId } = input_data;
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+        plv8.execute(`
+            UPDATE lookup_schema.position_table
+            SET position_questionnaire_id = null
+            WHERE position_questionnaire_id = $1
+        `, [questionnaireId]);
+
+
+        plv8.execute(`
+            UPDATE form_schema.correct_response_table
+            SET correct_response_value = $1
+            WHERE correct_response_field_id = $2
+        `, [correctAnswerEscaped, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.field_table
+            SET field_name = $1
+            WHERE field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_question_table
+            SET questionnaire_question = $1
+            WHERE questionnaire_question_field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        escapedChoices.map((choice) => {
+            plv8.execute(`
+                UPDATE form_schema.question_option_table
+                SET question_option_value = $1
+                WHERE question_option_id = $2
+            `, [choice.choices, choice.fieldId]);
+        });
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_table
+            SET
+              questionnaire_updated_by = $1,
+              questionnaire_date_updated = $2
+            WHERE questionnaire_id = $3
+        `, [teamMemberId, currentDate, questionnaireId]);
+
+        returnData.push({ status: 'success' });
+    });
+
+    return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_questionnaire_position(
