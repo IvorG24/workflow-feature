@@ -514,15 +514,19 @@ const ReviewAppNavLink = () => {
       withIndicator: Boolean(hrIndicatorCount.jobOffer),
       indicatorLabel: `${hrIndicatorCount.jobOffer}`,
     },
-    {
-      label: `Questionnaire List`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconQuestionMark {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/technical-question`,
-    },
+    ...(userTeamMemberData?.team_member_role === "ADMIN"
+      ? [
+          {
+            label: `Questionnaire List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconQuestionMark {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/technical-question`,
+          },
+        ]
+      : []),
   ];
 
   // const teamSection = [
