@@ -6160,8 +6160,9 @@ export const getApplicationInformationSummaryData = async (
     `
         : ""
     }
-    LIMIT '${limit}'
-    OFFSET '${offset}'
+    , request_date_created DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
   `;
 
   const { data, error } = await supabaseClient.rpc(

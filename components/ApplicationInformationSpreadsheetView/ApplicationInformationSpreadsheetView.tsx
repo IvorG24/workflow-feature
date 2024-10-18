@@ -89,7 +89,6 @@ const ApplicationInformationSpreadsheetView = ({
   });
 
   const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
-    console.log(data);
     try {
       if (!user) return;
       setIsLoading(true);
