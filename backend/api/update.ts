@@ -1666,3 +1666,16 @@ export const updateQuestionnaireName = async (
 
   return data as unknown as TechnicalAssessmentTableRow[];
 };
+
+export const overrideRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestSignerId: string; teamMemberId: string }
+) => {
+  const { error } = await supabaseClient
+    .rpc("override_request", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+};

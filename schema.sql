@@ -19776,6 +19776,43 @@ AS $$
     return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION override_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function() {
+    const {
+      requestSignerId,
+      teamMemberId
+    } = input_data;
+
+    const signerData = plv8.execute(
+      `
+        SELECT signer_id
+        FROM form_schema.signer_table
+        WHERE
+          signer_is_primary_signer = true
+          AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+          AND signer_team_member_id = '${teamMemberId}'
+        LIMIT 1
+      `
+    );
+    if(!signerData.length) throw new Error("No signer found");
+
+    plv8.execute(
+      `
+        UPDATE request_schema.request_signer_table
+        SET
+          request_signer_signer_id = '${signerData[0].signer_id}'
+        WHERE
+          request_signer_id = '${requestSignerId}'
+      `
+    );
+  });
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
