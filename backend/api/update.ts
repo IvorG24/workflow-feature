@@ -1478,6 +1478,7 @@ export const updateJobOfferStatus = async (
     manpowerLoadingId: string;
     manpowerLoadingReferenceCreatedBy: string;
     compensation: string;
+    email?: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("update_job_offer_status", {

@@ -17474,7 +17474,8 @@ AS $$
       projectAddress,
       manpowerLoadingId,
       manpowerLoadingReferenceCreatedBy,
-      compensation
+      compensation,
+      email
     } = input_data;
 
     const jobOfferId = plv8.execute(
@@ -17525,6 +17526,108 @@ AS $$
         `
       );
     }
+
+    if (status !== 'ACCEPTED') return;
+
+    const requestData = plv8.execute(
+      `
+        SELECT request_response_request_id
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+          AND request_response = '"${email}"'
+      `
+    );
+    if (!requestData.length) return;
+
+    const requestIdList = requestData.map(request => `'${request.request_response_request_id}'`);
+
+    plv8.execute(
+      `
+        UPDATE request_schema.request_table
+        SET request_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          request_status = 'PENDING'
+          AND request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.hr_phone_interview_table
+        SET hr_phone_interview_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          hr_phone_interview_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND hr_phone_interview_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.technical_interview_table
+        SET technical_interview_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          technical_interview_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND technical_interview_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET trade_test_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          trade_test_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND trade_test_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.background_check_table
+        SET background_check_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          background_check_status = 'PENDING'
+          AND background_check_request_id IN (${requestIdList})
+      `
+    );
+
+    const jobOfferList = plv8.execute(
+      `
+        WITH LatestJobOffers AS (
+          SELECT 
+            job_offer_table.*,
+            ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY job_offer_date_created DESC) AS rn
+          FROM 
+            hr_schema.job_offer_table
+          WHERE 
+            job_offer_status IN ('PENDING', 'WAITING FOR OFFER', 'FOR POOLING')
+            AND job_offer_request_id IN (${requestIdList})
+            AND job_offer_request_id != '${requestReferenceId}'
+        )
+        SELECT job_offer_request_id
+        FROM 
+          LatestJobOffers
+        WHERE 
+          rn = 2;
+      `
+    )
+    if(!jobOfferList.length) return;
+
+    const jobOfferInput = jobOfferList.map(jobOffer => {
+      return `('WITH ACCEPTED OFFER', '${jobOffer.job_offer_request_id}')`;
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO hr_schema.job_offer_table
+        (
+          job_offer_status,
+          job_offer_request_id
+        )
+        VALUES ${jobOfferInput}
+      `
+    );
   });
   return returnData;
 $$ LANGUAGE plv8;
@@ -17556,26 +17659,31 @@ AS $$
         attachmentData = plv8.execute(`SELECT * FROM public.attachment_table WHERE attachment_id = '${jobOffer.job_offer_attachment_id}'`);
       }
 
-      const teamMemberData = plv8.execute(
-        `
-          SELECT
-            team_member_id,
-            user_first_name,
-            user_last_name
-          FROM team_schema.team_member_table
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-          WHERE
-            team_member_id = '${jobOffer.job_offer_team_member_id}'
-          LIMIT 1
-        `
-      )[0];
+      let teamMemberData;
+      if (jobOffer.job_offer_team_member_id) {
+        teamMemberData = plv8.execute(
+          `
+            SELECT
+              team_member_id,
+              user_first_name,
+              user_last_name
+            FROM team_schema.team_member_table
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              team_member_id = '${jobOffer.job_offer_team_member_id}'
+            LIMIT 1
+          `
+        )[0];
+      }
+
+      
 
       return {
         ...jobOffer,
         job_offer_attachment: attachmentData.length ? attachmentData[0] : null,
         job_offer_team_member: {
-          team_member_id: teamMemberData.team_member_id,
-          team_member_full_name: `${teamMemberData.user_first_name} ${teamMemberData.user_last_name}`
+          team_member_id: teamMemberData ? teamMemberData.team_member_id : "",
+          team_member_full_name: teamMemberData ? `${teamMemberData.user_first_name} ${teamMemberData.user_last_name}` : ""
         }
       }
     });

@@ -60,6 +60,7 @@ const JobOffer = ({
 
   const handleUpdateJobOffer = async (action: string, reason?: string) => {
     try {
+      if (!user?.email) throw new Error("Missing user email");
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
       await updateJobOfferStatus(supabaseClient, {
@@ -76,6 +77,7 @@ const JobOffer = ({
         manpowerLoadingReferenceCreatedBy:
           jobOfferData.job_offer_manpower_loading_reference_created_by as string,
         compensation: jobOfferData.job_offer_compensation as string,
+        email: user.email,
       });
 
       setJobOfferStatus(newStatus);
@@ -85,6 +87,7 @@ const JobOffer = ({
       });
       modals.closeAll();
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -232,14 +235,15 @@ const JobOffer = ({
             </Group>
           </Group>
         )}
-        {jobOfferStatus === "ACCEPTED" && (
-          <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
-            <Text>
-              We appreciate you taking us up on our job offer. Kindly expect to
-              get the message from HR.
-            </Text>
-          </Alert>
-        )}
+        {jobOfferStatus === "ACCEPTED" ||
+          (jobOfferStatus === "WITH ACCEPTED OFFER" && (
+            <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+              <Text>
+                We appreciate you taking us up on our job offer. Kindly expect
+                to get the message from HR.
+              </Text>
+            </Alert>
+          ))}
         {jobOfferStatus === "WAITING FOR OFFER" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
