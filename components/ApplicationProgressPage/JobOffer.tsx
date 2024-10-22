@@ -1,7 +1,7 @@
 import { insertError } from "@/backend/api/post";
 import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
@@ -20,7 +20,7 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSession, useUser } from "@supabase/auth-helpers-react";
 import { IconFile, IconMap, IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -39,6 +39,7 @@ const JobOffer = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const user = useUser();
+  const session = useSession();
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const { setIsLoading } = useLoadingActions();
 
@@ -79,6 +80,21 @@ const JobOffer = ({
         compensation: jobOfferData.job_offer_compensation as string,
         email: user.email,
       });
+
+      if (action === "Accept") {
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requestReferenceId: jobOfferData.job_offer_request_id,
+            email: user.email,
+            token: `Bearer ${session?.access_token}`,
+          }),
+        };
+        await fetch(`${BASE_URL}/api/formsly/accept-job-offer`, requestOptions);
+      }
 
       setJobOfferStatus(newStatus);
       notifications.show({

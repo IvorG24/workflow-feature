@@ -17526,8 +17526,22 @@ AS $$
         `
       );
     }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
 
-    if (status !== 'ACCEPTED') return;
+CREATE OR REPLACE FUNCTION accept_job_offer_fetch_request_id_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      requestReferenceId,
+      email
+    } = input_data;
 
     const requestData = plv8.execute(
       `
@@ -17540,7 +17554,21 @@ AS $$
     );
     if (!requestData.length) return;
 
-    const requestIdList = requestData.map(request => `'${request.request_response_request_id}'`);
+    returnData = requestData.map(request => `'${request.request_response_request_id}'`);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_job_offer_update_status(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      requestIdList
+    } = input_data;
 
     plv8.execute(
       `
@@ -17591,8 +17619,23 @@ AS $$
           AND background_check_request_id IN (${requestIdList})
       `
     );
+  });
+$$ LANGUAGE plv8;
 
-    const jobOfferList = plv8.execute(
+CREATE OR REPLACE FUNCTION accept_job_offer_fetch_job_offer_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      requestIdList,
+      requestReferenceId
+    } = input_data;
+
+    returnData = plv8.execute(
       `
         SELECT
           request_id
@@ -17609,8 +17652,21 @@ AS $$
         AND job_offer_status IN ('PENDING', 'REJECTED', 'WAITING FOR OFFER', 'FOR POOLING')
         ORDER BY job_offer_date_created DESC
       `
-    )
-    if(!jobOfferList.length) return;
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_job_offer_update_job_offer(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      jobOfferList
+    } = input_data;
 
     const jobOfferInput = jobOfferList.map(jobOffer => {
       return `('WITH ACCEPTED OFFER', '${jobOffer.request_id}')`;
@@ -17627,7 +17683,6 @@ AS $$
       `
     );
   });
-  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_job_history(
@@ -20706,66 +20761,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests or a
 CREATE POLICY "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (
-  request_team_member_id IN (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-      )
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table
-    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
-    INNER JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
-    WHERE
-      team_member_user_id = (SELECT auth.uid())
-      AND request_signer_request_id = request_id
-  )
-)
-WITH CHECK (
-  request_team_member_id IN (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-  )
-);
+USING (true)
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_schema.request_table;
 CREATE POLICY "Allow DELETE for authenticated users on own requests" ON request_schema.request_table
