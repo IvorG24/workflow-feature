@@ -17594,28 +17594,26 @@ AS $$
 
     const jobOfferList = plv8.execute(
       `
-        WITH LatestJobOffers AS (
-          SELECT 
-            job_offer_table.*,
+        SELECT
+          request_id
+        FROM request_schema.request_table
+        INNER JOIN (
+          SELECT *,
             ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY job_offer_date_created DESC) AS rn
-          FROM 
-            hr_schema.job_offer_table
-          WHERE 
-            job_offer_status IN ('PENDING', 'WAITING FOR OFFER', 'FOR POOLING')
-            AND job_offer_request_id IN (${requestIdList})
+          FROM hr_schema.job_offer_table
+          WHERE
+            job_offer_request_id IN (${requestIdList})
             AND job_offer_request_id != '${requestReferenceId}'
-        )
-        SELECT job_offer_request_id
-        FROM 
-          LatestJobOffers
-        WHERE 
-          rn = 2;
+        ) jo ON job_offer_request_id = request_id
+        AND jo.rn = 1
+        AND job_offer_status IN ('PENDING', 'REJECTED', 'WAITING FOR OFFER', 'FOR POOLING')
+        ORDER BY job_offer_date_created DESC
       `
     )
     if(!jobOfferList.length) return;
 
     const jobOfferInput = jobOfferList.map(jobOffer => {
-      return `('WITH ACCEPTED OFFER', '${jobOffer.job_offer_request_id}')`;
+      return `('WITH ACCEPTED OFFER', '${jobOffer.request_id}')`;
     }).join(", ");
 
     plv8.execute(
