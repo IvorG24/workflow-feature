@@ -17474,8 +17474,7 @@ AS $$
       projectAddress,
       manpowerLoadingId,
       manpowerLoadingReferenceCreatedBy,
-      compensation,
-      email
+      compensation
     } = input_data;
 
     const jobOfferId = plv8.execute(
