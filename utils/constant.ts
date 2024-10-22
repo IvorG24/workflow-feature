@@ -63,6 +63,8 @@ export const unsortableFieldList = [
   "Assigned HR",
   "Action",
   "Meeting Link",
+  "Job Offer Attachment",
+  "Job Offer History",
 ];
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
