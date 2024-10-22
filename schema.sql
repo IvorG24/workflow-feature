@@ -4077,16 +4077,43 @@ AS $$
       groupCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
-    const memberProjectToSelect = plv8.execute(`SELECT tpmt2.team_project_member_id, tpt2.team_project_name FROM team_schema.team_project_member_table tpmt2 INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id WHERE tpmt2.team_member_id='${teamMemberId}' ORDER BY tpt2.team_project_name ASC LIMIT 10`);
+    const memberProjectToSelect = plv8.execute(
+      `
+        SELECT 
+          tpmt2.team_project_member_id, 
+          tpt2.team_project_name 
+        FROM team_schema.team_project_member_table tpmt2 
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
+        WHERE 
+          tpmt2.team_member_id='${teamMemberId}' 
+        ORDER BY tpt2.team_project_name ASC 
+        LIMIT 10
+      `
+    );
 
     let projectList = []
     let projectCount = 0
     if(memberProjectToSelect.length > 0){
       const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
 
-      projectList = plv8.execute(`SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_schema.team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id) AS team_project FROM team_schema.team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' AND tpmt.team_project_member_id IN (${memberProjectToSelectArray});`);
+      projectList = plv8.execute(
+        `
+          SELECT 
+            tpmt.team_project_member_id, 
+            ( 
+              SELECT row_to_json(tpt) 
+              FROM team_schema.team_project_table tpt 
+              WHERE 
+                tpt.team_project_id = tpmt.team_project_id
+            ) AS team_project 
+            FROM team_schema.team_project_member_table tpmt 
+            WHERE 
+              tpmt.team_member_id='${teamMemberId}' 
+              AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
+        `
+      );
 
-      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
     team_member_data = {member: member, userValidId, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
@@ -19875,6 +19902,72 @@ AS $$
       `
     );
   });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_member_project_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let team_member_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      offset,
+      search,
+      limit
+    } = input_data;
+
+    let searchValue = "";
+    if(search) {
+      searchValue = "AND team_project_name ILIKE '%${search}%'";
+    }
+
+    const memberProjectToSelect = plv8.execute(
+      `
+        SELECT 
+          tpmt2.team_project_member_id, 
+          tpt2.team_project_name 
+        FROM team_schema.team_project_member_table tpmt2 
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
+        WHERE 
+          tpmt2.team_member_id='${teamMemberId}'
+          ${searchValue}
+        ORDER BY tpt2.team_project_name ASC
+        OFFSET ${offset}
+        LIMIT ${limit}
+      `
+    );
+
+    let projectList = []
+    let projectCount = 0
+    if(memberProjectToSelect.length > 0){
+      const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
+
+      projectList = plv8.execute(
+        `
+          SELECT 
+            tpmt.team_project_member_id, 
+            ( 
+              SELECT row_to_json(tpt) 
+              FROM team_schema.team_project_table tpt 
+              WHERE 
+                tpt.team_project_id = tpmt.team_project_id
+            ) AS team_project 
+            FROM team_schema.team_project_member_table tpmt 
+            WHERE 
+              tpmt.team_member_id='${teamMemberId}' 
+              AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
+        `
+      );
+
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+    }
+
+    team_member_data = {projectList, projectCount: `${projectCount}`}
+ });
+ return team_member_data;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
