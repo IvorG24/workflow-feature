@@ -668,11 +668,11 @@ const RequestFormFields = ({
                     `sections.${sectionIndex}.section_field.${
                       fieldIndex - 1
                     }.field_response`
-                  ) as string;
+                  );
 
                   if (
                     value &&
-                    workingAdvancesFieldValue.includes("Petty Cash Fund")
+                    `${workingAdvancesFieldValue}`.includes("Petty Cash Fund")
                   ) {
                     const currentValue = (value as string).trim();
                     const isValid = currentValue.includes("PCV-");
