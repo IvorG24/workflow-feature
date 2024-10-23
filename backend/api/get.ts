@@ -99,6 +99,7 @@ import {
   TechnicalAssessmentTableRow,
   TechnicalInterviewFilterFormValues,
   TechnicalInterviewSpreadsheetData,
+  TechnicalInterviewTableRow,
   TicketListOnLoad,
   TicketListType,
   TicketPageOnLoad,
@@ -1772,7 +1773,6 @@ export const getTeamMemberProjectList = async (
     limit: number;
   }
 ) => {
-
   const { data, error } = await supabaseClient
     .rpc("get_team_member_project_list", { input_data: params })
     .select("*");
@@ -7465,4 +7465,45 @@ export const checkPhoneNumber = async (
 
   if (error) throw error;
   return !Boolean(count);
+};
+
+export const checkInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+  const { count, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("technical_interview_table")
+    .select("*", { count: "exact", head: true })
+    .eq("technical_interview_status", "PENDING")
+    .eq("technical_interview_request_id", requestId)
+    .limit(1);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+export const getEvaluationResultAutomaticResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    interviewId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_evaluation_result_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    candidateFirstName: string;
+    candidateMiddleName: string;
+    candidateLastName: string;
+    candidateEmail: string;
+    position: string;
+    email: string;
+    interviewData: TechnicalInterviewTableRow & { request_formsly_id: string };
+  };
+  return formattedData;
 };

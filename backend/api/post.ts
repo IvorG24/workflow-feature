@@ -270,7 +270,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert,
+    } & TeamMemberTableInsert
   ];
 };
 
@@ -570,6 +570,18 @@ export const createRequest = async (
     userId: string;
     sssId?: string;
     applicationInformationFormslyId?: string;
+    interviewParams?: {
+      status: string;
+      teamMemberId: string;
+      data: {
+        hr_request_reference_id: string;
+        application_information_email: string;
+        application_information_request_id: string;
+        position: string;
+      };
+      technicalInterviewNumber: number;
+      technicalInterviewId: string;
+    };
   }
 ) => {
   const {
@@ -588,6 +600,7 @@ export const createRequest = async (
     userId,
     sssId,
     applicationInformationFormslyId,
+    interviewParams,
   } = params;
 
   const requestId = uuidv4();
@@ -734,6 +747,7 @@ export const createRequest = async (
         requestScore,
         rootFormslyRequestId,
         recruiter,
+        interviewParams,
       },
     })
     .select()

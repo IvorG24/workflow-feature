@@ -149,7 +149,7 @@ export const approveOrRejectRequest = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("approve_or_reject_request", {
-      input_data: { ...params },
+      input_data: params,
     })
     .select("*")
     .single();
@@ -1674,6 +1674,25 @@ export const overrideRequest = async (
 ) => {
   const { error } = await supabaseClient
     .rpc("override_request", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+};
+
+export const updateAssignedEvaluator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    link: string;
+    notificationLink: string;
+    teamMemberId: string;
+    interviewId: string;
+    formslyId: string;
+  }
+) => {
+  const { error } = await supabaseClient
+    .rpc("update_evaluator", {
       input_data: params,
     })
     .select("*")

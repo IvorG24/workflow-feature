@@ -1,3 +1,4 @@
+import { getTeamGroupMember } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   useUserTeamMember,
@@ -16,11 +17,17 @@ import {
   CopyButton,
   createStyles,
   Flex,
+  Group,
+  Select,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCopy, IconSquareCheck, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -38,6 +45,11 @@ type Props = {
     data: TechnicalInterviewSpreadsheetData
   ) => void;
   handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
+  handleAssignEvaluator: (
+    data: { evaluatorId: string; evaluatorName: string },
+    interviewId: string,
+    formslyId: string
+  ) => Promise<void>;
 };
 
 const TechnicalInterviewMainTableRow = ({
@@ -45,14 +57,25 @@ const TechnicalInterviewMainTableRow = ({
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
   handleCheckRow,
+  handleAssignEvaluator,
 }: Props) => {
   const { classes } = useStyles();
+  const supabaseClient = useSupabaseClient();
 
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const [isOverriding, setIsOverriding] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [evaluatorOptions, setEvaluatorOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const { control, handleSubmit, reset, setValue } = useForm<{
+    evaluatorId: string;
+    evaluatorName: string;
+  }>({ defaultValues: { evaluatorId: "", evaluatorName: "" } });
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -71,6 +94,105 @@ const TechnicalInterviewMainTableRow = ({
       confirmProps: { color: statusColor[action] },
       onConfirm: async () => handleUpdateTechnicalInterviewStatus(action, item),
     });
+
+  const assignEvaluatorModal = (options: { label: string; value: string }[]) =>
+    modals.open({
+      title: <Text>Assign Evaluator</Text>,
+      onClose: () => {
+        reset();
+      },
+      children: (
+        <>
+          <form
+            onSubmit={handleSubmit(async (data) => {
+              await handleAssignEvaluator(
+                data,
+                item.technical_interview_id,
+                item.application_information_request_id
+              );
+              modals.closeAll();
+            })}
+          >
+            <Controller
+              name="evaluatorId"
+              control={control}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Evaluator is required.",
+                },
+              }}
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  label="Evaluator"
+                  searchable
+                  placeholder="Select Evaluator"
+                  data={options}
+                  value={value}
+                  onChange={(value) => {
+                    if (value) {
+                      const evaluator = options.find(
+                        (data) => data.value === value
+                      );
+                      if (!evaluator) return;
+                      setValue("evaluatorName", evaluator.label);
+                    }
+                    onChange(value);
+                  }}
+                  required
+                  withinPortal
+                />
+              )}
+            />
+            <Group position="right" mt="xl">
+              <Button
+                color="red"
+                variant="default"
+                onClick={() => modals.closeAll()}
+              >
+                Cancel
+              </Button>
+              <Button color="blue" type="submit">
+                Confirm
+              </Button>
+            </Group>
+          </form>
+        </>
+      ),
+      centered: true,
+    });
+
+  const handleOpenEvaluatorModal = async () => {
+    try {
+      setIsFetching(true);
+      let options = evaluatorOptions;
+      if (!options.length) {
+        const data = await getTeamGroupMember(supabaseClient, {
+          groupId: "fb2bdd4f-c2dd-4dd8-ab02-25deee7ca13d",
+        });
+        const groupMemberList = data.map((evaluator) => {
+          return {
+            value: evaluator.team_member_id,
+            label: [
+              evaluator.team_member_user.user_first_name,
+              evaluator.team_member_user.user_last_name,
+            ].join(" "),
+          };
+        });
+        setEvaluatorOptions(groupMemberList);
+        options = groupMemberList;
+      }
+
+      assignEvaluatorModal(options);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   if (!team.team_name) return null;
   return (
@@ -190,38 +312,117 @@ const TechnicalInterviewMainTableRow = ({
       )}
       {!hiddenColumnList.includes("meeting_link") && (
         <td>
-          {item.meeting_link && (
-            <Flex align="center" justify="center" gap="xs">
+          {item.meeting_link &&
+            item.technical_interview_status === "PENDING" && (
+              <Flex align="center" justify="center" gap="xs">
+                <Button
+                  className="meeting-link"
+                  onClick={() => window.open(item.meeting_link, "_blank")}
+                  variant="outline"
+                  leftIcon={<IconVideo size={14} />}
+                >
+                  Join Meeting
+                </Button>
+                <CopyButton value={item.meeting_link}>
+                  {({ copied, copy }) =>
+                    copied ? (
+                      <ActionIcon onClick={copy} color="green" variant="light">
+                        <IconSquareCheck size={14} />
+                      </ActionIcon>
+                    ) : (
+                      <ActionIcon onClick={copy} color="blue" variant="light">
+                        <IconCopy size={14} />
+                      </ActionIcon>
+                    )
+                  }
+                </CopyButton>
+              </Flex>
+            )}
+        </td>
+      )}
+      {!hiddenColumnList.includes("evaluation") && (
+        <td>
+          {item.technical_interview_evaluator_team_member_id &&
+            !item.technical_interview_evaluation_request_id && (
+              <Flex align="center" gap="xs">
+                <Text sx={{ whiteSpace: "nowrap" }}>
+                  Evaluator:{" "}
+                  <b>{item.technical_interview_assigned_evaluator}</b>
+                </Text>
+                <CopyButton value={item.technical_interview_evaluation_link}>
+                  {({ copied, copy }) =>
+                    copied ? (
+                      <ActionIcon onClick={copy} color="green" variant="light">
+                        <IconSquareCheck size={14} />
+                      </ActionIcon>
+                    ) : (
+                      <Tooltip label="Copy evaluation form link">
+                        <ActionIcon onClick={copy} color="blue" variant="light">
+                          <IconCopy size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                    )
+                  }
+                </CopyButton>
+              </Flex>
+            )}
+          {item.technical_interview_evaluation_request_id ? (
+            <Anchor
+              target="_blank"
+              href={`/${formatTeamNameToUrlKey(team.team_name)}/requests/${
+                item.technical_interview_evaluation_request_id
+              }`}
+            >
+              {item.technical_interview_evaluation_request_id}
+            </Anchor>
+          ) : null}
+          {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+            teamMemberGroupList.includes("HUMAN RESOURCES") &&
+            !isOverriding &&
+            item.technical_interview_status === "PENDING" &&
+            !item.technical_interview_evaluator_team_member_id && (
               <Button
-                className="meeting-link"
-                onClick={() => window.open(item.meeting_link, "_blank")}
-                variant="outline"
-                leftIcon={<IconVideo size={14} />}
-              >
-                Join Meeting
-              </Button>
-              <CopyButton value={item.meeting_link}>
-                {({ copied, copy }) =>
-                  copied ? (
-                    <ActionIcon onClick={copy} color="green" variant="light">
-                      <IconSquareCheck size={14} />
-                    </ActionIcon>
-                  ) : (
-                    <ActionIcon onClick={copy} color="blue" variant="light">
-                      <IconCopy size={14} />
-                    </ActionIcon>
-                  )
+                w={140}
+                onClick={() =>
+                  modals.openConfirmModal({
+                    title: "Confirm Override",
+                    centered: true,
+                    children: (
+                      <Text size="sm">
+                        Are you sure you want to override this application?
+                      </Text>
+                    ),
+                    labels: { confirm: "Confirm", cancel: "Cancel" },
+                    onConfirm: async () => {
+                      const result = await handleCheckRow(item);
+                      if (result) {
+                        setIsOverriding(true);
+                      }
+                    },
+                  })
                 }
-              </CopyButton>
-            </Flex>
-          )}
+              >
+                Override
+              </Button>
+            )}
+          {(teamMember?.team_member_id === item.assigned_hr_team_member_id ||
+            isOverriding) &&
+            item.technical_interview_status === "PENDING" &&
+            !item.technical_interview_evaluator_team_member_id && (
+              <Flex align="center" justify="center" gap="xs" wrap="wrap">
+                <Button onClick={handleOpenEvaluatorModal} loading={isFetching}>
+                  Assign Evaluator
+                </Button>
+              </Flex>
+            )}
         </td>
       )}
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
           teamMemberGroupList.includes("HUMAN RESOURCES") &&
           !isOverriding &&
-          item.technical_interview_status === "PENDING" && (
+          item.technical_interview_status === "PENDING" &&
+          !item.technical_interview_evaluator_team_member_id && (
             <Button
               w={140}
               onClick={() =>
@@ -248,7 +449,8 @@ const TechnicalInterviewMainTableRow = ({
           )}
         {(teamMember?.team_member_id === item.assigned_hr_team_member_id ||
           isOverriding) &&
-          item.technical_interview_status === "PENDING" && (
+          item.technical_interview_status === "PENDING" &&
+          !item.technical_interview_evaluator_team_member_id && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button
                 color="green"

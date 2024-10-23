@@ -37,6 +37,11 @@ type Props = {
   ) => void;
   handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
   technicalInterviewNumber: number;
+  handleAssignEvaluator: (
+    data: { evaluatorId: string; evaluatorName: string },
+    interviewId: string,
+    formslyId: string
+  ) => Promise<void>;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -51,6 +56,7 @@ const TechnicalInterviewSpreadsheetTable = ({
   handleUpdateTechnicalInterviewStatus,
   handleCheckRow,
   technicalInterviewNumber,
+  handleAssignEvaluator,
 }: Props) => {
   const { classes } = useStyles();
   const label = technicalInterviewNumber === 1 ? "Derpartment" : "Requestor";
@@ -101,6 +107,7 @@ const TechnicalInterviewSpreadsheetTable = ({
     },
     { field_id: "assigned_hr", field_name: "Assigned HR" },
     { field_id: "meeting_link", field_name: "Meeting Link" },
+    { field_id: "evaluation", field_name: "Evaluation" },
     { field_id: "action", field_name: "Action" },
   ];
 
@@ -181,6 +188,7 @@ const TechnicalInterviewSpreadsheetTable = ({
                     handleUpdateTechnicalInterviewStatus
                   }
                   handleCheckRow={handleCheckRow}
+                  handleAssignEvaluator={handleAssignEvaluator}
                 />
               ))}
             </tbody>

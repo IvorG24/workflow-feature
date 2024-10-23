@@ -2,9 +2,12 @@ import {
   checkSpreadsheetRowStatus,
   getTechnicalInterviewSummaryData,
 } from "@/backend/api/get";
-import { updateTechnicalInterviewStatus } from "@/backend/api/update";
+import {
+  updateAssignedEvaluator,
+  updateTechnicalInterviewStatus,
+} from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { BASE_URL, DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
   OptionType,
   TechnicalInterviewFilterFormValues,
@@ -20,6 +23,8 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
 
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
 
@@ -75,6 +80,7 @@ const TechnicalInterviewSpreadsheetView = ({
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
+  const team = useActiveTeam();
   const [data, setData] = useState<TechnicalInterviewSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -266,6 +272,60 @@ const TechnicalInterviewSpreadsheetView = ({
     }
   };
 
+  const handleAssignEvaluator = async (
+    data: { evaluatorId: string; evaluatorName: string },
+    interviewId: string,
+    formslyId: string
+  ) => {
+    try {
+      setIsLoading(true);
+      const link = `${BASE_URL}/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/b86026fd-1d2b-4ddb-af7b-873f5211acbf/create?interviewId=${interviewId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+      const notificationLink = `/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/b86026fd-1d2b-4ddb-af7b-873f5211acbf/create?interviewId=${interviewId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+
+      await updateAssignedEvaluator(supabaseClient, {
+        link,
+        notificationLink,
+        teamMemberId: data.evaluatorId,
+        interviewId,
+        formslyId,
+      });
+
+      // send email
+
+      setData((prev) =>
+        prev.map((prevData) => {
+          if (prevData.technical_interview_id !== interviewId) return prevData;
+
+          return {
+            ...prevData,
+            technical_interview_assigned_evaluator: data.evaluatorName,
+            technical_interview_evaluator_team_member_id: data.evaluatorId,
+            technical_interview_evaluation_link: link,
+          };
+        })
+      );
+      notifications.show({
+        message: "Evaluation updated.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -316,6 +376,7 @@ const TechnicalInterviewSpreadsheetView = ({
         }
         handleCheckRow={handleCheckRow}
         technicalInterviewNumber={technicalInterviewNumber}
+        handleAssignEvaluator={handleAssignEvaluator}
       />
     </Stack>
   );
