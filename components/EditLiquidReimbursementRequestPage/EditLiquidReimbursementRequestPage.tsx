@@ -888,11 +888,13 @@ const EditLiquidReimbursementRequestPage = ({
           }`
         );
 
-        const isNotLiquidation = !requestTypeResponse
-          .toLowerCase()
-          .includes("liquidation");
+        const requestTypeWithWAV = ["liquidation", "petty cash fund"];
 
-        if (isNotLiquidation) {
+        const isLiquidationOrPCF = requestTypeWithWAV.some((type) =>
+          requestTypeResponse.toLowerCase().includes(type)
+        );
+
+        if (!isLiquidationOrPCF) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
               (field) =>
