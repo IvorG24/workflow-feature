@@ -876,7 +876,7 @@ const EditLiquidReimbursementRequestPage = ({
 
         const isPED = requestDetailsSectionFieldList.some(
           (field) =>
-            field.field_name === "Department" &&
+            field.field_id === "041579d9-aff1-4508-a5a7-ac20e7bc7cb7" &&
             field.field_response === "Plants and Equipment"
         );
 
