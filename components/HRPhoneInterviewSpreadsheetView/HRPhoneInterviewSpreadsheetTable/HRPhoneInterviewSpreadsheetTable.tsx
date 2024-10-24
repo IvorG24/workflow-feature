@@ -116,7 +116,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateHRPhoneInterviewStatus,
   handleCheckRow,
-  handleOverride
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
 

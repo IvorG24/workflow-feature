@@ -287,7 +287,7 @@ const HRPhoneInterviewSpreadsheetView = ({
       );
 
       notifications.show({
-        message: "The applicant is successfully assigned.",
+        message: "The applicant is successfully reassigned.",
         color: "green",
       });
     } catch (e) {
