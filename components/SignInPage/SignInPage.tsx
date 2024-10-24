@@ -81,13 +81,24 @@ const SignInPage = () => {
         email: data.email,
         password: data.password,
       });
+
       if (error?.toLowerCase().includes("invalid login credentials")) {
         notifications.show({
           message: "Invalid login credentials.",
           color: "red",
         });
         return;
-      }
+      } else if (
+        error?.toLowerCase().includes("authapierror: email not confirmed")
+      ) {
+        notifications.show({
+          message:
+            "You need to verify your email first before proceeding to formsly. If you don't received the verification email, you can try to sign up again",
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      } else if (error) throw error;
       notifications.show({
         message: "Sign in successful.",
         color: "green",
