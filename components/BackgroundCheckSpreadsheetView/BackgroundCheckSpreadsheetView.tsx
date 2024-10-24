@@ -17,6 +17,8 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import BackgroundCheckColumnsMenu from "./BackgroundCheckColumnsMenu";
 
+import { startCase } from "@/utils/string";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import BackgroundCheckFilterMenu from "./BackgroundCheckFilterMenu";
 import BackgroundCheckSpreadsheetTable from "./BackgroundCheckSpreadsheetTable/BackgroundCheckSpreadsheetTable";
 
@@ -186,11 +188,45 @@ const BackgroundCheckSpreadsheetView = ({
     try {
       if (!teamMember?.team_member_id) throw new Error();
 
-      await updateBackgroundCheckStatus(supabaseClient, {
+      const applicantData = await updateBackgroundCheckStatus(supabaseClient, {
         status,
         teamMemberId: teamMember.team_member_id,
         data,
       });
+
+      if (status.toUpperCase() === "NOT QUALIFIED") {
+        const emailNotificationProps: {
+          to: string;
+          subject: string;
+        } & EmailNotificationTemplateProps = {
+          to: applicantData.user_email,
+          subject: `Application Status | Sta. Clara International Corporation`,
+          greetingPhrase: `Dear ${startCase(
+            applicantData.user_first_name
+          )} ${startCase(applicantData.user_last_name)},`,
+          message: `
+              <p>
+               We sincerely appreciate your interest in joining Sta. Clara International Corporation under the Application ID: ${data.application_information_request_id}
+              </p>
+              <p>
+                After careful consideration, we regret to inform you that we will not be moving forward with your application at this time.
+              </p>
+              <p>
+                We wish you success in your future professional endeavors.
+              </p>
+          `,
+          closingPhrase: "Best regards,",
+          signature: "Sta. Clara International Corporation Recruitment Team",
+        };
+        await fetch("/api/resend/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailNotificationProps),
+        });
+      }
+
       setData((prev) =>
         prev.map((prevData) => {
           if (prevData.hr_request_reference_id !== data.hr_request_reference_id)

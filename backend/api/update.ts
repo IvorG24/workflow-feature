@@ -1443,10 +1443,12 @@ export const updateBackgroundCheckStatus = async (
     data: BackgroundCheckSpreadsheetData;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("update_background_check_status", {
+  const { data, error } = await supabaseClient.rpc("update_background_check_status", {
     input_data: params,
   });
   if (error) throw error;
+
+  return data as UserTableRow;
 };
 
 export const addJobOffer = async (

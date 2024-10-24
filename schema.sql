@@ -17253,8 +17253,20 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length){
+    const userData = plv8.execute(
+      `
+        SELECT 
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_email
+        FROM user_schema.user_table 
+        WHERE 
+          user_email = '${data.application_information_email.toLowerCase()}' 
+        LIMIT 1
+      `
+    );
+    if(userData.length){
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -17270,7 +17282,7 @@ AS $$
             '${status}',
             'Background Check status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
-            '${userId[0].user_id}'
+            '${userData[0].user_id}'
           )
         `
       );
@@ -17280,6 +17292,8 @@ AS $$
       const parsedPosition = data.position.replaceAll('"', '');
       plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "background_check", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
     }
+
+    returNData = userData;
   });
   return returnData;
 $$ LANGUAGE plv8;
