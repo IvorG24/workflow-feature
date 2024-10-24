@@ -39,23 +39,6 @@ const CreateNewEmployee = ({
 
   const handleUpdateEmployee = async (data: SCICEmployeeTableUpdate) => {
     try {
-      if (
-        selectedEmployee?.scic_employee_hris_id_number !==
-        data.scic_employee_hris_id_number
-      ) {
-        const isHRISUnique = await checkHRISNumber(supabaseClient, {
-          hrisNumber: data.scic_employee_hris_id_number || "",
-        });
-
-        if (isHRISUnique) {
-          notifications.show({
-            message: "HRIS Number exist",
-            color: "orange",
-          });
-          return;
-        }
-      }
-
       await updateEmployee(supabaseClient, {
         employeeData: data,
       });
@@ -90,15 +73,29 @@ const CreateNewEmployee = ({
             <Controller
               name="scic_employee_hris_id_number"
               control={control}
-              rules={{ required: "HRIS ID number is required" }}
+              rules={{
+                required: "HRIS ID number is required",
+                validate: async (value) => {
+                  if (selectedEmployee?.scic_employee_hris_id_number === value)
+                    return true;
+
+                  const isHRISUnique = await checkHRISNumber(supabaseClient, {
+                    hrisNumber: value || "",
+                  });
+
+                  return isHRISUnique
+                    ? "HRIS ID number is already taken"
+                    : true;
+                },
+              }}
               render={({ field, fieldState }) => (
                 <TextInput
                   {...field}
                   type="number"
                   withAsterisk
                   label="HRIS ID Number"
-                  readOnly={!isOwnerOrAdmin}
                   w="100%"
+                  value={field.value || ""}
                   error={fieldState.error?.message}
                 />
               )}

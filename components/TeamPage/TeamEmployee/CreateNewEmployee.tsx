@@ -30,32 +30,23 @@ const CreateNewEmployee = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const { control, formState, handleSubmit } = useForm<SCICEmployeeTableInsert>(
-    {
-      defaultValues: {
-        scic_employee_hris_id_number: undefined,
-        scic_employee_first_name: "",
-        scic_employee_middle_name: "",
-        scic_employee_last_name: "",
-        scic_employee_suffix: "",
-      },
-    }
-  );
+  const {
+    control,
+    formState: { isSubmitting, isValid },
+    handleSubmit,
+  } = useForm<SCICEmployeeTableInsert>({
+    mode: "onChange", // Validates fields on every change
+    defaultValues: {
+      scic_employee_hris_id_number: "",
+      scic_employee_first_name: "",
+      scic_employee_middle_name: "",
+      scic_employee_last_name: "",
+      scic_employee_suffix: "",
+    },
+  });
 
   const handleCreateNewEmployee = async (data: SCICEmployeeTableInsert) => {
     try {
-      const isHRISUnique = await checkHRISNumber(supabaseClient, {
-        hrisNumber: data.scic_employee_hris_id_number,
-      });
-
-      if (isHRISUnique) {
-        notifications.show({
-          message: "HRIS Number exist",
-          color: "orange",
-        });
-        return;
-      }
-
       await createNewEmployee(supabaseClient, {
         employeeData: data,
       });
@@ -76,19 +67,29 @@ const CreateNewEmployee = ({
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Add New Employee
         </Title>
         <Divider mb="xl" />
 
-        <form onSubmit={handleSubmit(handleCreateNewEmployee)}>
+        <form onSubmit={handleSubmit(handleCreateNewEmployee)} noValidate>
           <Flex direction="column" gap={16}>
             <Controller
               name="scic_employee_hris_id_number"
               control={control}
-              rules={{ required: "HRIS ID number is required" }}
+              rules={{
+                required: "HRIS ID number is required",
+                validate: async (value) => {
+                  const isHRISUnique = await checkHRISNumber(supabaseClient, {
+                    hrisNumber: value || "",
+                  });
+                  return isHRISUnique
+                    ? "HRIS ID number is already taken"
+                    : true;
+                },
+              }}
               render={({ field, fieldState }) => (
                 <TextInput
                   {...field}
@@ -96,6 +97,7 @@ const CreateNewEmployee = ({
                   withAsterisk
                   label="HRIS ID Number"
                   w="100%"
+                  value={field.value || ""}
                   error={fieldState.error?.message}
                 />
               )}
@@ -179,7 +181,13 @@ const CreateNewEmployee = ({
             />
           </Flex>
 
-          <Button type="submit" miw={100} mt={30} mr={14}>
+          <Button
+            type="submit"
+            miw={100}
+            mt={30}
+            mr={14}
+            disabled={!isValid || isSubmitting} // Ensure form is valid and not submitting
+          >
             Save
           </Button>
           <Button

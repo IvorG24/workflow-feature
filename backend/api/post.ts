@@ -2589,6 +2589,7 @@ export const checkHRISNumber = async (
   if (data.length > 0) {
     isUnique = true;
   }
+
   return isUnique;
 };
 
