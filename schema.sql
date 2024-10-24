@@ -23210,20 +23210,6 @@ USING (
   )
 );
 
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role"
-ON lookup_schema.employee_job_title_table
-AS PERMISSIVE FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
-
 --- form_schema.special_field_template_table
 ALTER TABLE form_schema.special_field_template_table ENABLE ROW LEVEL SECURITY;
 
