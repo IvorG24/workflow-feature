@@ -135,7 +135,6 @@ const SignInPage = () => {
         return;
       }
       await router.push("/onboarding");
-      console.log("HERERE");
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
