@@ -41,6 +41,7 @@ import {
   TicketTableRow,
   TicketType,
   TradeTestSpreadsheetData,
+  UserTableRow,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -1691,11 +1692,13 @@ export const updateAssignedEvaluator = async (
     formslyId: string;
   }
 ) => {
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .rpc("update_evaluator", {
       input_data: params,
     })
     .select("*")
     .single();
   if (error) throw error;
+
+  return data as UserTableRow;
 };

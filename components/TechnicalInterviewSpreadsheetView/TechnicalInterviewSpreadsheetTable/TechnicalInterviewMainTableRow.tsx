@@ -48,7 +48,11 @@ type Props = {
   handleAssignEvaluator: (
     data: { evaluatorId: string; evaluatorName: string },
     interviewId: string,
-    formslyId: string
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    }
   ) => Promise<void>;
 };
 
@@ -108,7 +112,11 @@ const TechnicalInterviewMainTableRow = ({
               await handleAssignEvaluator(
                 data,
                 item.technical_interview_id,
-                item.application_information_request_id
+                item.application_information_request_id,
+                {
+                  name: item.application_information_full_name,
+                  position: item.position,
+                }
               );
               modals.closeAll();
             })}

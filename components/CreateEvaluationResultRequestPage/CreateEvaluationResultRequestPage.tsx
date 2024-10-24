@@ -252,13 +252,6 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
         },
       });
 
-      // await updateTechnicalInterviewStatus(supabaseClient, {
-      //   status,
-      //   teamMemberId: teamMember.team_member_id,
-      //   data,
-      //   technicalInterviewNumber,
-      // });
-
       notifications.show({
         message: "Request created.",
         color: "green",

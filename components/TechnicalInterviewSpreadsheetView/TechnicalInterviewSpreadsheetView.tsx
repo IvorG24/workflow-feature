@@ -24,7 +24,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
 
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
 
@@ -275,7 +276,11 @@ const TechnicalInterviewSpreadsheetView = ({
   const handleAssignEvaluator = async (
     data: { evaluatorId: string; evaluatorName: string },
     interviewId: string,
-    formslyId: string
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    }
   ) => {
     try {
       setIsLoading(true);
@@ -290,7 +295,7 @@ const TechnicalInterviewSpreadsheetView = ({
         data.evaluatorId
       }`;
 
-      await updateAssignedEvaluator(supabaseClient, {
+      const evaluatorUserData = await updateAssignedEvaluator(supabaseClient, {
         link,
         notificationLink,
         teamMemberId: data.evaluatorId,
@@ -298,7 +303,45 @@ const TechnicalInterviewSpreadsheetView = ({
         formslyId,
       });
 
-      // send email
+      const emailNotificationProps: {
+        to: string;
+        subject: string;
+      } & EmailNotificationTemplateProps = {
+        to: evaluatorUserData.user_email,
+        subject: `Evaluation Form - ${startCase(candidateData.name)} - ${
+          candidateData.position
+        }`,
+        greetingPhrase: `Dear ${startCase(
+          evaluatorUserData.user_first_name
+        )} ${startCase(evaluatorUserData.user_last_name)},`,
+        message: `
+              <p>
+                Thank you for taking the time to conduct the ${
+                  technicalInterviewNumber === 1 ? "Department" : "Requestor"
+                } Interview with ${startCase(candidateData.name)} for the ${
+          candidateData.position
+        } position. As part of the process, we would appreciate your evaluation of the candidate.
+              </p>
+              <p>
+                Kindly fill out and complete the evaluation form on your formsly account or click on the link below to proceed with the evaluation.
+              </p>
+              <p>
+                <a href=${link}>${link}</a>
+              </p>
+              <p>
+                Your immediate insights are crucial to our assessment process and needed to move forward in the next steps.
+              </p>
+          `,
+        closingPhrase: "Best regards,",
+        signature: "Sta. Clara International Corporation Recruitment Team",
+      };
+      await fetch("/api/resend/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailNotificationProps),
+      });
 
       setData((prev) =>
         prev.map((prevData) => {

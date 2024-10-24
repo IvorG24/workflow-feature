@@ -20043,9 +20043,10 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_evaluator(
   input_data JSON
 )
-RETURNS VOID
+RETURNS JSON
 SET search_path TO ''
 AS $$
+  let returnData;
   plv8.subtransaction(function(){
     const {
       link,
@@ -20086,7 +20087,10 @@ AS $$
         )
       `
     );
+
+    returnData = plv8.execute(`SELECT user_first_name, user_last_name, user_email FROM user_schema.user_table WHERE user_id = '${userId}'`)[0];
  });
+ return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_evaluation_result_data(

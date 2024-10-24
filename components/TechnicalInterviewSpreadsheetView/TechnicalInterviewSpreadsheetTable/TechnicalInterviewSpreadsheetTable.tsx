@@ -40,7 +40,11 @@ type Props = {
   handleAssignEvaluator: (
     data: { evaluatorId: string; evaluatorName: string },
     interviewId: string,
-    formslyId: string
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    }
   ) => Promise<void>;
 };
 
