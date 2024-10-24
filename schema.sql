@@ -7731,7 +7731,7 @@ plv8.subtransaction(function(){
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           AND team_member_team_id = '${teamId}'
       WHERE
-        field_name = 'General Name' AND
+        field_name = 'General Name'
     `
   )[0].field_id;
 
