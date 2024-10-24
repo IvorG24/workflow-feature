@@ -87,6 +87,7 @@ const SignInPage = () => {
           message: "Invalid login credentials.",
           color: "red",
         });
+        setIsLoading(false);
         return;
       } else if (
         error?.toLowerCase().includes("authapierror: email not confirmed")
@@ -97,6 +98,7 @@ const SignInPage = () => {
           color: "orange",
           autoClose: false,
         });
+        setIsLoading(false);
         return;
       } else if (error) throw error;
       notifications.show({
@@ -133,12 +135,12 @@ const SignInPage = () => {
         return;
       }
       await router.push("/onboarding");
+      console.log("HERERE");
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -250,8 +252,9 @@ const SignInPage = () => {
                     size="md"
                     type="submit"
                     data-cy="signin-button-submit"
+                    disabled={isLoading}
                   >
-                    Sign in
+                    Sign In
                   </Button>
                 </Stack>
               </form>

@@ -214,7 +214,7 @@ const SignUpPage = () => {
                     })}
                   />
                   <Button type="submit" size="md">
-                    Sign up
+                    Sign Up
                   </Button>
                 </Stack>
               </form>
