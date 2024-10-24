@@ -83,6 +83,7 @@ import {
   RequestResponseTableRow,
   RequestTableRow,
   RequestWithResponseType,
+  SCICEmployeeTableRow,
   SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
@@ -1772,7 +1773,6 @@ export const getTeamMemberProjectList = async (
     limit: number;
   }
 ) => {
-
   const { data, error } = await supabaseClient
     .rpc("get_team_member_project_list", { input_data: params })
     .select("*");
@@ -1790,8 +1790,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -7465,4 +7465,36 @@ export const checkPhoneNumber = async (
 
   if (error) throw error;
   return !Boolean(count);
+};
+
+export const getSCICEmployeeList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    search?: string;
+    limit: number;
+    page: number;
+  }
+) => {
+  const { search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
+  let query = supabaseClient
+    .schema("lookup_schema")
+    .from("scic_employee_table")
+    .select("*", { count: "exact" })
+    .range(start, end);
+
+  if (search) {
+    query = query.ilike("scic_employee_hris_id_number", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data: data as SCICEmployeeTableRow[],
+    totalCount: count ?? 0,
+  };
 };
