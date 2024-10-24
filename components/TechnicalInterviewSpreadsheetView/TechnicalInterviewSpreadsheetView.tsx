@@ -280,7 +280,8 @@ const TechnicalInterviewSpreadsheetView = ({
     candidateData: {
       name: string;
       position: string;
-    }
+    },
+    meetingLink: string
   ) => {
     try {
       setIsLoading(true);
@@ -302,7 +303,7 @@ const TechnicalInterviewSpreadsheetView = ({
         interviewId,
         formslyId,
       });
-
+      // TODO: wait for ma'am claire's updated email format
       const emailNotificationProps: {
         to: string;
         subject: string;
@@ -321,6 +322,9 @@ const TechnicalInterviewSpreadsheetView = ({
                 } Interview with ${startCase(candidateData.name)} for the ${
           candidateData.position
         } position. As part of the process, we would appreciate your evaluation of the candidate.
+              </p>
+               <p>
+                <a href=${meetingLink}>${meetingLink}</a>
               </p>
               <p>
                 Kindly fill out and complete the evaluation form on your formsly account or click on the link below to proceed with the evaluation.

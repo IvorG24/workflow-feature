@@ -44,7 +44,8 @@ type Props = {
     candidateData: {
       name: string;
       position: string;
-    }
+    },
+    meetingLink: string
   ) => Promise<void>;
 };
 

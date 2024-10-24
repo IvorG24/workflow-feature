@@ -19,6 +19,7 @@ import {
   Flex,
   Group,
   Select,
+  Stack,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -52,7 +53,8 @@ type Props = {
     candidateData: {
       name: string;
       position: string;
-    }
+    },
+    meetingLink: string
   ) => Promise<void>;
 };
 
@@ -116,7 +118,8 @@ const TechnicalInterviewMainTableRow = ({
                 {
                   name: item.application_information_full_name,
                   position: item.position,
-                }
+                },
+                item.meeting_link
               );
               modals.closeAll();
             })}
@@ -352,27 +355,44 @@ const TechnicalInterviewMainTableRow = ({
         <td>
           {item.technical_interview_evaluator_team_member_id &&
             !item.technical_interview_evaluation_request_id && (
-              <Flex align="center" gap="xs">
-                <Text sx={{ whiteSpace: "nowrap" }}>
-                  Evaluator:{" "}
-                  <b>{item.technical_interview_assigned_evaluator}</b>
-                </Text>
-                <CopyButton value={item.technical_interview_evaluation_link}>
-                  {({ copied, copy }) =>
-                    copied ? (
-                      <ActionIcon onClick={copy} color="green" variant="light">
-                        <IconSquareCheck size={14} />
-                      </ActionIcon>
-                    ) : (
-                      <Tooltip label="Copy evaluation form link">
-                        <ActionIcon onClick={copy} color="blue" variant="light">
-                          <IconCopy size={14} />
+              <Stack spacing="xs">
+                <Flex align="center" gap="xs">
+                  <Text sx={{ whiteSpace: "nowrap" }}>
+                    Evaluator:{" "}
+                    <b>{item.technical_interview_assigned_evaluator}</b>
+                  </Text>
+                  <CopyButton value={item.technical_interview_evaluation_link}>
+                    {({ copied, copy }) =>
+                      copied ? (
+                        <ActionIcon
+                          onClick={copy}
+                          color="green"
+                          variant="light"
+                        >
+                          <IconSquareCheck size={14} />
                         </ActionIcon>
-                      </Tooltip>
-                    )
-                  }
-                </CopyButton>
-              </Flex>
+                      ) : (
+                        <Tooltip label="Copy evaluation form link">
+                          <ActionIcon
+                            onClick={copy}
+                            color="blue"
+                            variant="light"
+                          >
+                            <IconCopy size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )
+                    }
+                  </CopyButton>
+                </Flex>
+                <Button
+                  variant="outline"
+                  onClick={handleOpenEvaluatorModal}
+                  loading={isFetching}
+                >
+                  Change Evaluator
+                </Button>
+              </Stack>
             )}
           {item.technical_interview_evaluation_request_id ? (
             <Anchor
