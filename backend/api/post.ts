@@ -2637,3 +2637,22 @@ export const updateEmployee = async (
     .eq("scic_employee_id", employeeData.scic_employee_id as string);
   if (error) throw error;
 };
+
+export const createRequesterPrimarySigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    requesterTeamMemberId: string[];
+    signerTeamMemberId: string;
+    signerAction: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "create_requester_primary_signer",
+    {
+      input_data: params,
+    }
+  );
+  console.log(error);
+  if (error) throw error;
+};
