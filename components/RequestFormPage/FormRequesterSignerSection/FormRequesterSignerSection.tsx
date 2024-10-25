@@ -113,7 +113,6 @@ const FormRequesterSignerSection = ({ formId }: Props) => {
         ),
         centered: true,
         labels: { confirm: "Confirm", cancel: "Cancel" },
-        onCancel: () => console.log("Cancel"),
         onConfirm: async () => {
           await removeRequesterSigner(
             supabaseClient,
