@@ -49,6 +49,7 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import moment from "moment";
 import { getCurrentDate, getMemoFormat } from "./get";
 import { createNotification, uploadImage } from "./post";
 
@@ -983,7 +984,7 @@ export const approveOrRejectValidId = async (
     status: "APPROVED" | "REJECTED";
   }
 ) => {
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const currentDate = moment(await getCurrentDate(supabaseClient)).format();
 
   const { error } = await supabaseClient
     .schema("user_schema")
@@ -1007,7 +1008,7 @@ export const updateSLAHours = async (
   }
 ) => {
   const { form_sla_hours, form_sla_id } = params;
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const currentDate = moment(await getCurrentDate(supabaseClient)).format();
 
   const { data, error } = await supabaseClient
     .schema("form_schema")
@@ -1529,7 +1530,7 @@ export const cancelInterview = async (
 ) => {
   const { targetId, status, table, meetingTypeNumber } = params;
 
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const currentDate = moment(await getCurrentDate(supabaseClient)).format();
   let query = supabaseClient
     .schema("hr_schema")
     .from(`${table}_table`)
@@ -1660,7 +1661,7 @@ export const updateQuestionnaireName = async (
     teamMemberId: string;
   }
 ) => {
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const currentDate = moment(await getCurrentDate(supabaseClient)).format();
   const { questionnaireId, questionnaireName, teamMemberId } = params;
   const { data, error } = await supabaseClient
     .schema("form_schema")
