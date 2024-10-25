@@ -37,7 +37,7 @@ const FormRequesterSignerForm = ({
     label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
   }));
   const approverList = teamMemberList.filter(
-    (member) => member.team_member_role === "APPROVER"
+    (member) => member.team_member_role !== "MEMBER"
   );
   const approverOptions = approverList.map((member) => ({
     value: member.team_member_id,
