@@ -1514,6 +1514,7 @@ export const updateInterviewOnlineMeeting = async (
   const { data, error } = await supabaseClient.rpc("update_schedule", {
     input_data: params,
   });
+
   if (error) throw error;
 
   return data as unknown as InterviewOnlineMeetingTableRow;
