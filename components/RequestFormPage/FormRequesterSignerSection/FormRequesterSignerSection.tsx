@@ -29,6 +29,7 @@ import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import FormRequesterSignerForm from "./FormRequesterSignerForm";
 
 type Props = {
@@ -73,6 +74,19 @@ const FormRequesterSignerSection = ({ formId }: Props) => {
         signerAction: signer_action,
       });
 
+      const temp_requester_primary_signer_signer_id = uuidv4();
+      const tempNewRequesterSignerList = requester_team_member_id.map(
+        (requester) => ({
+          requester_primary_signer_id: uuidv4(),
+          requester_primary_signer_signer_id:
+            temp_requester_primary_signer_signer_id,
+          requester_team_member_id: requester,
+          requester_primary_signer_signer_team_member_id:
+            requester_primary_signer_signer_id,
+        })
+      );
+
+      setRequestSignerList((prev) => [...prev, ...tempNewRequesterSignerList]);
       notifications.show({
         message: "Requester signer created.",
         color: "green",

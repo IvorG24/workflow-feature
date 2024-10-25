@@ -12359,14 +12359,6 @@ plv8.subtransaction(function() {
     `;
 
     const params = [projectId, formId];
-
-    if (departmentId) {
-        condition += ` AND signer_team_department_id = $3`;
-        params.push(departmentId);
-    } else {
-        condition += ` AND signer_team_department_id IS NULL`;
-    }
-
     let signerData = [];
 
     if (hasSpecialSigner) {
@@ -12375,13 +12367,15 @@ plv8.subtransaction(function() {
         condition += ` AND signer_team_department_id = $3`;
         params.push(departmentId);
         signerData = fetchSignerData(condition, params);
-    } else if (signerData.length <= 0) {
+    } 
+    
+    if (signerData.length <= 0) {
         signerData = fetchSignerData(`
             WHERE signer_team_project_id = $1
             AND signer_form_id = $2
             AND signer_team_department_id IS NULL
             AND signer_is_disabled = false
-        `, params);
+        `, [projectId, formId]);
     }
 
     returnData = signerData.map(signer => ({
