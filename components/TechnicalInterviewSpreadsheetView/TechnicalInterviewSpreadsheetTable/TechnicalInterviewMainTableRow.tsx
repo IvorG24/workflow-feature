@@ -54,7 +54,8 @@ type Props = {
       name: string;
       position: string;
     },
-    meetingLink: string
+    meetingLink: string,
+    schedule: string
   ) => Promise<void>;
 };
 
@@ -119,7 +120,8 @@ const TechnicalInterviewMainTableRow = ({
                   name: item.application_information_full_name,
                   position: item.position,
                 },
-                item.meeting_link
+                item.meeting_link,
+                item.technical_interview_schedule
               );
               modals.closeAll();
             })}

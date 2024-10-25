@@ -7,7 +7,12 @@ import {
   updateTechnicalInterviewStatus,
 } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { BASE_URL, DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import {
+  BASE_URL,
+  DEFAULT_NUMBER_SSOT_ROWS,
+  formatDate,
+  formatTime,
+} from "@/utils/constant";
 import {
   OptionType,
   TechnicalInterviewFilterFormValues,
@@ -281,7 +286,8 @@ const TechnicalInterviewSpreadsheetView = ({
       name: string;
       position: string;
     },
-    meetingLink: string
+    meetingLink: string,
+    schedule: string
   ) => {
     try {
       setIsLoading(true);
@@ -303,37 +309,52 @@ const TechnicalInterviewSpreadsheetView = ({
         interviewId,
         formslyId,
       });
+
+      const scheduledDate = new Date(schedule);
+      const formattedDate = formatDate(scheduledDate);
+      const formattedTime = formatTime(scheduledDate);
       // TODO: wait for ma'am claire's updated email format
       const emailNotificationProps: {
         to: string;
         subject: string;
       } & EmailNotificationTemplateProps = {
         to: evaluatorUserData.user_email,
-        subject: `Evaluation Form - ${startCase(candidateData.name)} - ${
-          candidateData.position
-        }`,
+        subject: `${
+          technicalInterviewNumber === 1 ? "Department" : "Requestor"
+        } Interview - ${formattedDate} ${formattedTime} - ${startCase(
+          candidateData.name
+        )} - ${candidateData.position}`,
         greetingPhrase: `Dear ${startCase(
           evaluatorUserData.user_first_name
         )} ${startCase(evaluatorUserData.user_last_name)},`,
         message: `
               <p>
-                Thank you for taking the time to conduct the ${
-                  technicalInterviewNumber === 1 ? "Department" : "Requestor"
-                } Interview with ${startCase(candidateData.name)} for the ${
+                This is to inform you that an interview with ${startCase(
+                  candidateData.name
+                )} for the position of ${
           candidateData.position
-        } position. As part of the process, we would appreciate your evaluation of the candidate.
-              </p>
-               <p>
-                <a href=${meetingLink}>${meetingLink}</a>
+        } has been scheduled with the following details below:
               </p>
               <p>
-                Kindly fill out and complete the evaluation form on your formsly account or click on the link below to proceed with the evaluation.
+                <b>Date: </b>${formattedDate}
+              </p>
+              <p>
+                <b>Time: </b>${formattedTime}
+              </p>
+              <p>
+                <b>Meeting Link: </b><a href=${meetingLink}>${meetingLink}</a>
+              </p>
+              <p>
+                Following the interview, we kindly request your prompt insights and evaluation of the candidate to facilitate the next steps in the hiring process. Please complete the evaluation form through your Formsly account, or you can click the link below to proceed:
               </p>
               <p>
                 <a href=${link}>${link}</a>
               </p>
               <p>
-                Your immediate insights are crucial to our assessment process and needed to move forward in the next steps.
+                Should you require any further information or adjustments, please don't hesitate to reach out to the Recruitment Team.
+              </p>
+              <p>
+                Please note that this is an automated email; do not reply to this message.
               </p>
           `,
         closingPhrase: "Best regards,",

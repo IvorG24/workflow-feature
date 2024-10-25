@@ -45,7 +45,8 @@ type Props = {
       name: string;
       position: string;
     },
-    meetingLink: string
+    meetingLink: string,
+    schedule: string
   ) => Promise<void>;
 };
 
