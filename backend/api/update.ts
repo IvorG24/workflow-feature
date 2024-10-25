@@ -2,7 +2,11 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
+import {
+  escapeQuotes,
+  escapeQuotesForObject,
+  formatTeamNameToUrlKey,
+} from "@/utils/string";
 import {
   ApiKeyData,
   AppType,
@@ -1488,7 +1492,7 @@ export const updateJobOfferStatus = async (
   }
 ) => {
   const { error } = await supabaseClient.rpc("update_job_offer_status", {
-    input_data: params,
+    input_data: escapeQuotesForObject(params),
   });
   if (error) throw error;
 };
