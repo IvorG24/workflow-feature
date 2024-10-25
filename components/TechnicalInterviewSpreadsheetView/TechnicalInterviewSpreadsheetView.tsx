@@ -3,9 +3,11 @@ import {
   getTechnicalInterviewSummaryData,
 } from "@/backend/api/get";
 import {
+  overrideStep,
   updateAssignedEvaluator,
   updateTechnicalInterviewStatus,
 } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
@@ -13,6 +15,7 @@ import {
   formatDate,
   formatTime,
 } from "@/utils/constant";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   OptionType,
   TechnicalInterviewFilterFormValues,
@@ -26,11 +29,8 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
-
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
+import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
 import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
 
@@ -278,6 +278,44 @@ const TechnicalInterviewSpreadsheetView = ({
     }
   };
 
+  const handleOverride = async (hrTeamMemberId: string, rowId: string) => {
+    try {
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      await overrideStep(supabaseClient, {
+        hrTeamMemberId: teamMember?.team_member_id,
+        rowId,
+        table: "technical_interview",
+      });
+
+      setData((prev) =>
+        prev.map((thisItem) => {
+          if (thisItem.technical_interview_id !== rowId) return thisItem;
+          return {
+            ...thisItem,
+            assigned_hr: startCase(
+              `${user?.user_first_name} ${user?.user_last_name}`
+            ),
+            assigned_hr_team_member_id: hrTeamMemberId,
+          };
+        })
+      );
+
+      notifications.show({
+        message: "The applicant is successfully reassigned.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAssignEvaluator = async (
     data: { evaluatorId: string; evaluatorName: string },
     interviewId: string,
@@ -301,7 +339,6 @@ const TechnicalInterviewSpreadsheetView = ({
       )}/forms/b86026fd-1d2b-4ddb-af7b-873f5211acbf/create?interviewId=${interviewId}&teamMemberId=${
         data.evaluatorId
       }`;
-
       const evaluatorUserData = await updateAssignedEvaluator(supabaseClient, {
         link,
         notificationLink,
@@ -445,6 +482,7 @@ const TechnicalInterviewSpreadsheetView = ({
         handleCheckRow={handleCheckRow}
         technicalInterviewNumber={technicalInterviewNumber}
         handleAssignEvaluator={handleAssignEvaluator}
+        handleOverride={handleOverride}
       />
     </Stack>
   );

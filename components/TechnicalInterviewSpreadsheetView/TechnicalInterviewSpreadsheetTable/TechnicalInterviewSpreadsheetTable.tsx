@@ -48,6 +48,7 @@ type Props = {
     meetingLink: string,
     schedule: string
   ) => Promise<void>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -63,6 +64,7 @@ const TechnicalInterviewSpreadsheetTable = ({
   handleCheckRow,
   technicalInterviewNumber,
   handleAssignEvaluator,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
   const label = technicalInterviewNumber === 1 ? "Derpartment" : "Requestor";
@@ -195,6 +197,7 @@ const TechnicalInterviewSpreadsheetTable = ({
                   }
                   handleCheckRow={handleCheckRow}
                   handleAssignEvaluator={handleAssignEvaluator}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

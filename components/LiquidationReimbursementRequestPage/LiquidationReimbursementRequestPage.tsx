@@ -471,18 +471,25 @@ const LiquidationReimbursementRequestPage = ({
         typeOfRequest.toLowerCase() === "petty cash fund"
       ) {
         const requestWorkingAdvances = safeParse(
-          sortedRequestDetails[5].field_response[0].request_response
+          sortedRequestDetails[5].field_response[0]
+            ? sortedRequestDetails[5].field_response[0].request_response
+            : ""
         );
         const choiceMatch = workingAdvanceList.find(
           (workingAdvanceItem: { id: string; name: string }) =>
             workingAdvanceItem.name.toLowerCase() ===
             requestWorkingAdvances.toLowerCase()
         );
-        workingAdvances = choiceMatch.id;
-        ticketId = safeParse(
-          sortedRequestDetails[6].field_response[0].request_response
-        );
+        if (choiceMatch && choiceMatch.id) {
+          workingAdvances = choiceMatch.id;
+          ticketId = safeParse(
+            sortedRequestDetails[6].field_response[0]
+              ? sortedRequestDetails[6].field_response[0].request_response
+              : ""
+          );
+        }
       }
+
       const typeOfRequestId = typeList.find(
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
@@ -513,6 +520,7 @@ const LiquidationReimbursementRequestPage = ({
         ticketId,
         amount,
       });
+
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
@@ -705,14 +713,16 @@ const LiquidationReimbursementRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {canCreateBOQ && (
-          <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
-        )}
-        <ExportToPdfMenu
-          isFormslyForm={request.request_form.form_is_formsly_form}
-          formName={request.request_form.form_name}
-          requestId={request.request_formsly_id ?? request.request_id}
-        />
+        <Flex gap="sm">
+          {canCreateBOQ && (
+            <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
+          )}
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Flex>
       </Flex>
 
       <Stack spacing="xl" mt="xl">

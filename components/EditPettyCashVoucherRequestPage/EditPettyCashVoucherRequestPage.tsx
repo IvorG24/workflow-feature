@@ -39,6 +39,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -140,6 +141,16 @@ const EditPettyCashVoucherRequestPage = ({
       )?.option_id as string;
 
       const additionalSignerList: FormType["form_signer"] = [];
+
+      if (![...signerList, ...additionalSignerList].length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
       let request: RequestTableRow;
       if (isReferenceOnly) {
@@ -979,21 +990,21 @@ const EditPettyCashVoucherRequestPage = ({
               );
               let field_option = field.field_option ?? [];
 
-              switch (field.field_name) {
-                case "Requesting Project":
-                case "Project":
+              switch (field.field_id) {
+                case "a1fdfcbb-5a2f-4b9d-8c6a-8c45e64e1d3b":
+                case "2bac0084-53f4-419f-aba7-fb1f77403e00":
                   field_option = projectOptions;
                   break;
-                case "Department":
+                case "694465de-8aa9-4361-be52-f8c091c13fde":
                   field_option = departmentOptions;
                   break;
-                case "Payment Option":
+                case "25420062-032b-4f87-a691-b49df749b3f1":
                   field_option = bankListOptions;
                   break;
-                case "Unit of Measure":
+                case "583bbdfa-cd76-44f5-a44f-8a4e8f232482":
                   field_option = uomOptions;
                   break;
-                case "Equipment Code":
+                case "51404d52-6751-427e-9713-7c96a066472c":
                   field_option = equipmentCodeOptions;
                   break;
                 default:
