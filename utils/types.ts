@@ -585,6 +585,13 @@ export type UserSSSTableInsert =
 export type UserSSSTableUpdate =
   Database["user_schema"]["Tables"]["user_sss_table"]["Update"];
 
+export type RequesterPrimarySignerTableRow =
+  Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Row"];
+export type RequesterPrimarySignerTableInsert =
+  Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Insert"];
+export type RequesterPrimarySignerTableUpdate =
+  Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -2591,4 +2598,14 @@ export type UnformattedRequestListItemRequestSigner = {
   request_signer_status: string;
   signer_team_member_id: string;
   signer_is_primary_signer: boolean;
+};
+
+export type RequesterPrimarySignerFormValues = {
+  requester_team_member_id: string[];
+  requester_primary_signer_signer_id: string;
+  signer_action: string;
+};
+
+export type RequesterPrimarySignerType = RequesterPrimarySignerTableRow & {
+  requester_primary_signer_signer_team_member_id: string;
 };
