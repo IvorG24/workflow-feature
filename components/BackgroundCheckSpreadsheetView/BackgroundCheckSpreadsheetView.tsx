@@ -8,6 +8,7 @@ import {
 } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { startCase } from "@/utils/string";
 import {
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
@@ -21,11 +22,8 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import BackgroundCheckColumnsMenu from "./BackgroundCheckColumnsMenu";
-
-import { startCase } from "@/utils/string";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
-import { startCase } from "@/utils/string";
+import BackgroundCheckColumnsMenu from "./BackgroundCheckColumnsMenu";
 import BackgroundCheckFilterMenu from "./BackgroundCheckFilterMenu";
 import BackgroundCheckSpreadsheetTable from "./BackgroundCheckSpreadsheetTable/BackgroundCheckSpreadsheetTable";
 
