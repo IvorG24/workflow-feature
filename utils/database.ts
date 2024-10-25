@@ -1136,6 +1136,9 @@ export type Database = {
       technical_interview_table: {
         Row: {
           technical_interview_date_created: string
+          technical_interview_evaluation_link: string | null
+          technical_interview_evaluation_request_id: string | null
+          technical_interview_evaluator_team_member_id: string | null
           technical_interview_id: string
           technical_interview_meeting_link: string | null
           technical_interview_number: number
@@ -1147,6 +1150,9 @@ export type Database = {
         }
         Insert: {
           technical_interview_date_created?: string
+          technical_interview_evaluation_link?: string | null
+          technical_interview_evaluation_request_id?: string | null
+          technical_interview_evaluator_team_member_id?: string | null
           technical_interview_id?: string
           technical_interview_meeting_link?: string | null
           technical_interview_number?: number
@@ -1158,6 +1164,9 @@ export type Database = {
         }
         Update: {
           technical_interview_date_created?: string
+          technical_interview_evaluation_link?: string | null
+          technical_interview_evaluation_request_id?: string | null
+          technical_interview_evaluator_team_member_id?: string | null
           technical_interview_id?: string
           technical_interview_meeting_link?: string | null
           technical_interview_number?: number
@@ -3262,6 +3271,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_evaluation_result_data: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_field_of_study_options: {
         Args: {
           input_data: Json
@@ -3843,6 +3858,12 @@ export type Database = {
         Returns: undefined
       }
       update_background_check_status: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      update_evaluator: {
         Args: {
           input_data: Json
         }

@@ -4,7 +4,11 @@ import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import { startCase } from "./string";
-import { JiraItemUserTableData } from "./types";
+import {
+  JiraItemUserTableData,
+  SCICEmployeeTableInsert,
+  SCICEmployeeTableUpdate,
+} from "./types";
 
 // check if a value is empty
 export const isEmpty = (value: any) => {
@@ -371,4 +375,16 @@ export const getFilterConditionFromArray = ({
 
 export const shortId = () => {
   return Math.random().toString(36).substring(2, 6);
+};
+
+export const transformEmployeeData = (
+  data: SCICEmployeeTableInsert | SCICEmployeeTableUpdate
+): SCICEmployeeTableInsert => {
+  return Object.entries(data).reduce((acc, [key, value]) => {
+    acc[key as keyof SCICEmployeeTableInsert] =
+      typeof value === "string" && value.trim() !== ""
+        ? value.toUpperCase()
+        : "";
+    return acc;
+  }, {} as SCICEmployeeTableInsert);
 };
