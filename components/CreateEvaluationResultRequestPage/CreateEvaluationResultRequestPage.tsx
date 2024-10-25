@@ -253,7 +253,7 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
       });
 
       notifications.show({
-        message: "Request created.",
+        message: "Evaluation created.",
         color: "green",
       });
 
@@ -285,7 +285,7 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        Create Evaluation
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>

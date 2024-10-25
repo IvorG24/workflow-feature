@@ -55,7 +55,7 @@ const EvaluationResultRequestPage = ({ request }: Props) => {
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
-          Request
+          Evaluation
         </Title>
       </Flex>
       <Stack spacing="xl" mt="xl">

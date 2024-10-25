@@ -281,7 +281,6 @@ const BackgroundCheckSpreadsheetView = ({
       }
       return true;
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -321,7 +320,6 @@ const BackgroundCheckSpreadsheetView = ({
         color: "green",
       });
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
