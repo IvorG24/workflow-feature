@@ -592,6 +592,13 @@ export type RequesterPrimarySignerTableInsert =
 export type RequesterPrimarySignerTableUpdate =
   Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Update"];
 
+export type TeamMembershipRequestTableRow =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Row"];
+export type TeamMembershipRequestTableInsert =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Insert"];
+export type TeamMembershipRequestTableUpdate =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

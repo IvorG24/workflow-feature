@@ -7565,3 +7565,45 @@ export const getRequesterPrimarySignerList = async (
     count: number;
   };
 };
+
+export const getExistingTeams = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page: number; search?: string }
+) => {
+  const { page, search } = params;
+  const start = (page - 1) * ROW_PER_PAGE;
+  const end = start + ROW_PER_PAGE - 1;
+
+  let query = supabaseClient
+    .schema("team_schema")
+    .from("team_table")
+    .select("team_id, team_name, team_logo", { count: "exact" });
+
+  if (search) {
+    query = query.ilike("team_name", search);
+  }
+  query.range(start, end);
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data,
+    count: Number(count),
+  };
+};
+
+export const getUserTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  userId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_membership_request_table")
+    .select("*")
+    .eq("team_membership_request_from_user_id", userId);
+
+  if (error) throw error;
+
+  return data;
+};

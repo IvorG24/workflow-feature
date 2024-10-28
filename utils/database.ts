@@ -4551,6 +4551,32 @@ export type Database = {
           },
         ]
       }
+      team_membership_request_table: {
+        Row: {
+          team_membership_request_from_user_id: string
+          team_membership_request_id: string
+          team_membership_request_to_team_id: string
+        }
+        Insert: {
+          team_membership_request_from_user_id: string
+          team_membership_request_id?: string
+          team_membership_request_to_team_id: string
+        }
+        Update: {
+          team_membership_request_from_user_id?: string
+          team_membership_request_id?: string
+          team_membership_request_to_team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_membership_request_table_team_membership_request_to_t_fkey"
+            columns: ["team_membership_request_to_team_id"]
+            isOneToOne: false
+            referencedRelation: "team_table"
+            referencedColumns: ["team_id"]
+          },
+        ]
+      }
       team_project_member_table: {
         Row: {
           team_member_id: string
