@@ -35,6 +35,7 @@ import {
   AttachmentTableRow,
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
+  BackgroundCheckTableRow,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
@@ -7539,4 +7540,29 @@ export const getSCICEmployeeList = async (
     data: data as SCICEmployeeTableRow[],
     totalCount: count ?? 0,
   };
+};
+
+export const getBackgroundCheckData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    backgroundCheckId: string;
+  }
+) => {
+
+  const { data, error } = await supabaseClient
+    .rpc("get_background_check_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    candidateFirstName: string;
+    candidateMiddleName: string;
+    candidateLastName: string;
+    candidateEmail: string;
+    position: string;
+    email: string;
+    backgroundCheckData: BackgroundCheckTableRow & {
+      request_formsly_id: string;
+    };
+  };
+  return formattedData;
 };

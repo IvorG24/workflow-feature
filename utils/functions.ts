@@ -388,3 +388,13 @@ export const transformEmployeeData = (
     return acc;
   }, {} as SCICEmployeeTableInsert);
 };
+
+export const setFileInputFromUrl = async (url: string) => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+
+  // Create a new file object from the blob
+  const fileName = url.split("/").pop() || "default_file";
+  const file = new File([blob], fileName, { type: blob.type });
+  return file;
+};

@@ -76,10 +76,6 @@ type Props = {
   setSort: Dispatch<SetStateAction<{ sortBy: string; order: string }>>;
   isMax: boolean;
   hiddenColumnList: string[];
-  handleUpdateBackgroundCheckStatus: (
-    status: string,
-    data: BackgroundCheckSpreadsheetData
-  ) => void;
   setData: Dispatch<SetStateAction<BackgroundCheckSpreadsheetData[]>>;
   handleCheckRow: (item: BackgroundCheckSpreadsheetData) => Promise<boolean>;
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
@@ -94,7 +90,6 @@ const BackgroundCheckSpreadsheetTable = ({
   setSort,
   isMax,
   hiddenColumnList,
-  handleUpdateBackgroundCheckStatus,
   setData,
   handleCheckRow,
   handleOverride,
@@ -174,9 +169,6 @@ const BackgroundCheckSpreadsheetTable = ({
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
-                  handleUpdateBackgroundCheckStatus={
-                    handleUpdateBackgroundCheckStatus
-                  }
                   setData={setData}
                   handleCheckRow={handleCheckRow}
                   handleOverride={handleOverride}

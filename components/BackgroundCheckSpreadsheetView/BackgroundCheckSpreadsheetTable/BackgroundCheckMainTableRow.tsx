@@ -3,7 +3,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
@@ -23,10 +23,6 @@ const useStyles = createStyles((theme) => ({
 type Props = {
   item: BackgroundCheckSpreadsheetData;
   hiddenColumnList: string[];
-  handleUpdateBackgroundCheckStatus: (
-    status: string,
-    data: BackgroundCheckSpreadsheetData
-  ) => void;
   setData: Dispatch<SetStateAction<BackgroundCheckSpreadsheetData[]>>;
   handleCheckRow: (item: BackgroundCheckSpreadsheetData) => Promise<boolean>;
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
@@ -35,7 +31,6 @@ type Props = {
 const BackgroundCheckMainTableRow = ({
   item,
   hiddenColumnList,
-  handleUpdateBackgroundCheckStatus,
   handleCheckRow,
   handleOverride,
 }: Props) => {
@@ -43,24 +38,6 @@ const BackgroundCheckMainTableRow = ({
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const teamMemberGroupList = useUserTeamMemberGroupList();
-
-  const statusColor: Record<string, string> = {
-    QUALIFIED: "green",
-    "NOT QUALIFIED": "red",
-    "NOT RESPONSIVE": "gray",
-  };
-
-  const openModal = (action: string) =>
-    modals.openConfirmModal({
-      title: <Text>Please confirm your action.</Text>,
-      children: (
-        <Text>{`Are you sure this applicant is ${action.toLocaleLowerCase()}?`}</Text>
-      ),
-      labels: { confirm: "Confirm", cancel: "Cancel" },
-      centered: true,
-      confirmProps: { color: statusColor[action] },
-      onConfirm: async () => handleUpdateBackgroundCheckStatus(action, item),
-    });
 
   if (!team.team_name) return null;
   return (
@@ -205,18 +182,20 @@ const BackgroundCheckMainTableRow = ({
           teamMember?.team_member_id === item.assigned_hr_team_member_id && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button
-                color="green"
+                color="blue"
                 w={140}
-                onClick={() => openModal("QUALIFIED")}
+                onClick={() =>
+                  window.open(
+                    `${BASE_URL}/${formatTeamNameToUrlKey(
+                      team.team_name
+                    )}/forms/7a68b494-0459-4d9a-9cf3-b86fe106489a/create?backgroundCheckId=${
+                      item.background_check_id
+                    }`,
+                    "_blank"
+                  )
+                }
               >
-                Qualified
-              </Button>
-              <Button
-                color="red"
-                w={140}
-                onClick={() => openModal("NOT QUALIFIED")}
-              >
-                Not Qualified
+                Evaluate
               </Button>
             </Flex>
           )}
