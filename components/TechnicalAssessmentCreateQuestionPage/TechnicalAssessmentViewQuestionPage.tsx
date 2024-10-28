@@ -14,6 +14,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -315,6 +316,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
       setIsLoading(true);
       const positionOptions = await getPositionTypeOptions(supabaseClient, {
         teamId: activeTeam.team_id,
+        limit: FETCH_OPTION_LIMIT,
       });
       setPositionOptions(positionOptions);
       const positions = await getPositionPerQuestionnaire(supabaseClient, {

@@ -7277,9 +7277,9 @@ export const getTechnicalOptionsItem = async (
 
 export const getPositionTypeOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; limit: number }
 ) => {
-  const limit = 500;
+  const { teamId, limit } = params;
   let start = 0;
   let allData: OptionTableRow[] = [];
 
@@ -7289,7 +7289,7 @@ export const getPositionTypeOptions = async (
       .schema("lookup_schema")
       .from("position_table")
       .select("*")
-      .eq("position_team_id", params.teamId)
+      .eq("position_team_id", teamId)
       .order("position_alias")
       .range(start, end);
 
