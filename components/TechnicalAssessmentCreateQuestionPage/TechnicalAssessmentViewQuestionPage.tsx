@@ -348,10 +348,14 @@ const TechnicalAssessmentCreateQuestionPage = ({
   useEffect(() => {
     if (positionOptions && watchedFieldResponse) {
       const isButtonDisabled =
-        currentPosition.length === (watchedFieldResponse as string[]).length;
+        currentPosition.length === watchedFieldResponse.length &&
+        currentPosition.every(
+          (value, index) => value === watchedFieldResponse[index]
+        );
+
       setIsButtonDisabled(isButtonDisabled);
     }
-  }, [currentPosition, watchedFieldResponse]);
+  }, [currentPosition, watchedFieldResponse, positionOptions]);
 
   return (
     <Container>
