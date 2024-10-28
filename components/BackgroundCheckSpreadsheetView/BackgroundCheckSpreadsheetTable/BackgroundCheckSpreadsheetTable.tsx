@@ -64,6 +64,10 @@ const columnList = [
     field_name: "Background Check Status",
   },
   { field_id: "assigned_hr", field_name: "Assigned HR" },
+  {
+    field_id: "background_investigation",
+    field_name: "Background Investigation",
+  },
   { field_id: "action", field_name: "Action" },
 ];
 

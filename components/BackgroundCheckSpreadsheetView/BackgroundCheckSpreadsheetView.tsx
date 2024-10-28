@@ -54,10 +54,7 @@ const formDefaultValues = {
     end: "",
   },
   background_check_status: [],
-  background_check_schedule: {
-    start: null,
-    end: null,
-  },
+  background_investigation: "",
   assigned_hr: [],
 };
 

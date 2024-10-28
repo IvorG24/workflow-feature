@@ -384,7 +384,6 @@ CREATE TABLE form_schema.requester_primary_signer_table (
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
-
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
@@ -17185,7 +17184,8 @@ AS $$
           background_check_date_created,
           background_check_status,
           background_check_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
+          bi.request_formsly_id AS background_check_evaluation_request_id
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -17211,6 +17211,7 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN public.request_view AS bi ON bi.request_id = background_check_evaluation_request_id
         ORDER BY ${sort.sortBy} ${sort.order}, background_check_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -20237,116 +20238,6 @@ AS $$
     }
  });
  return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION create_requester_primary_signer(
-  input_data JSON
-)
-RETURNS VOID
-SET search_path TO ''
-AS $$
-plv8.subtransaction(function() {
-    const {
-        formId,
-        requesterTeamMemberId,
-        signerTeamMemberId,
-        signerAction
-    } = input_data;
-
-    let signerData = plv8.execute(`
-        SELECT *
-        FROM form_schema.signer_table
-        WHERE
-            signer_is_requester_signer = TRUE
-            AND signer_form_id = $1
-            AND signer_team_member_id = $2
-        LIMIT 1
-    `, [formId, signerTeamMemberId])[0];
-
-    if (!signerData) {
-        const signerIsPrimary = true;
-        const signerIsRequesterSigner = true;
-        const signerOrder = 1;
-
-        signerData = plv8.execute(`
-            INSERT INTO form_schema.signer_table 
-                (signer_is_primary_signer, signer_action, signer_is_requester_signer, signer_form_id, signer_team_member_id, signer_order)
-            VALUES
-                ($1, $2, $3, $4, $5, $6)
-            RETURNING *;  
-        `, [signerIsPrimary, signerAction, signerIsRequesterSigner, formId, signerTeamMemberId, signerOrder])[0];
-    }
-
-    requesterTeamMemberId.forEach((requester) => {
-        const duplicateCount = plv8.execute(`
-            SELECT COUNT(*)
-            FROM form_schema.requester_primary_signer_table
-            WHERE
-                requester_team_member_id = $1
-                AND requester_primary_signer_signer_id = $2
-        `, [requester, signerData.signer_id])[0].count;
-
-        if (Number(duplicateCount) === 0) {
-            plv8.execute(`
-                INSERT INTO form_schema.requester_primary_signer_table 
-                    (requester_team_member_id, requester_primary_signer_signer_id)
-                VALUES
-                    ($1, $2)
-            `, [requester, signerData.signer_id]);
-        }
-    });
-});
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION get_requester_signer_list(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    page,
-    limit,
-    search,
-    formId
-  } = input_data;
-
-    const start = (page - 1) * limit;
-
-    const requesterSignerCount = plv8.execute(`SELECT COUNT(*) FROM form_schema.requester_primary_signer_table`)[0].count;
-
-    let query = `
-        SELECT
-            requester_primary_signer_id,
-            requester_team_member_id,
-            requester_primary_signer_signer_id,
-            signer_team_member_id AS requester_primary_signer_signer_team_member_id
-        FROM form_schema.requester_primary_signer_table
-        INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
-        INNER JOIN team_schema.team_member_table signer_team_member ON signer_team_member.team_member_id = signer_team_member_id
-        INNER JOIN user_schema.user_table signer_user ON signer_user.user_id = signer_team_member.team_member_user_id
-        INNER JOIN team_schema.team_member_table requester_team_member ON requester_team_member.team_member_id = requester_team_member_id
-        INNER JOIN user_schema.user_table requester_user ON requester_user.user_id = requester_team_member.team_member_user_id
-        WHERE
-            signer_form_id = $1
-            AND signer_is_disabled = false
-            AND signer_is_requester_signer = true
-        `;
-    let params = [formId, limit, start];
-    if (search) {
-        query += ` AND (CONCAT(signer_user.user_first_name, ' ', signer_user.user_last_name) ILIKE $4 OR CONCAT(requester_user.user_first_name, ' ', requester_user.user_last_name) ILIKE $4)`;
-        params.push(`%${search}%`)
-    }
-
-    query += ` LIMIT $2 OFFSET $3`;
-
-    const requesterSignerList = plv8.execute(query, params);
-
-    returnData = {data: requesterSignerList, count: Number(requesterSignerCount)};
-});
-return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_requester_primary_signer(

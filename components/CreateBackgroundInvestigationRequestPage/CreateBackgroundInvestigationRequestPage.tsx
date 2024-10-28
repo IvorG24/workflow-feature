@@ -11,7 +11,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError, setFileInputFromUrl } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   BackgroundCheckTableRow,
   FormType,
@@ -34,6 +34,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -237,8 +238,8 @@ const CreateBackgroundInvestigationRequestPage = ({ form }: Props) => {
 
       if (!requestorProfile || !teamMember || !backgroundCheckData) return;
 
-      const backgroudnCheckStatus =
-        data.sections[5].section_field[0].field_response;
+      const backgroundCheckStatus = data.sections[5].section_field[0]
+        .field_response as string;
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
@@ -254,7 +255,7 @@ const CreateBackgroundInvestigationRequestPage = ({ form }: Props) => {
         userId: requestorProfile.user_id,
         status: "APPROVED",
         backgroundCheckParams: {
-          status: (backgroudnCheckStatus as string).toUpperCase(),
+          status: backgroundCheckStatus.toUpperCase(),
           teamMemberId:
             backgroundCheckData?.background_check_team_member_id as string,
           data: {
@@ -271,11 +272,43 @@ const CreateBackgroundInvestigationRequestPage = ({ form }: Props) => {
         },
       });
 
+      if (backgroundCheckStatus.toUpperCase() === "NOT QUALIFIED") {
+        const emailNotificationProps: {
+          to: string;
+          subject: string;
+        } & EmailNotificationTemplateProps = {
+          to: backgroundCheckData.email,
+          subject: `Application Status | Sta. Clara International Corporation`,
+          greetingPhrase: `Dear ${startCase(
+            data.sections[0].section_field[0].field_response as string
+          )},`,
+          message: `
+                    <p>
+                     We sincerely appreciate your interest in joining Sta. Clara International Corporation under the Application ID: ${backgroundCheckData.request_formsly_id}
+                    </p>
+                    <p>
+                      After careful consideration, we regret to inform you that we will not be moving forward with your application at this time.
+                    </p>
+                    <p>
+                      We wish you success in your future professional endeavors.
+                    </p>
+                `,
+          closingPhrase: "Best regards,",
+          signature: "Sta. Clara International Corporation Recruitment Team",
+        };
+        await fetch("/api/resend/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailNotificationProps),
+        });
+      }
+
       notifications.show({
         message: "Evaluation created.",
         color: "green",
       });
-
       await router.push(`/public-request/${request.request_id}`);
     } catch (e) {
       notifications.show({

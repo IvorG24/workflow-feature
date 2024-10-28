@@ -146,6 +146,18 @@ const BackgroundCheckMainTableRow = ({
           <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
         </td>
       )}
+      {!hiddenColumnList.includes("background_investigation") && (
+        <td>
+          <Anchor
+            target="_blank"
+            href={`/${formatTeamNameToUrlKey(team.team_name)}/requests/${
+              item.background_check_evaluation_request_id
+            }`}
+          >
+            {item.background_check_evaluation_request_id}
+          </Anchor>
+        </td>
+      )}
       <td>
         {item.background_check_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
