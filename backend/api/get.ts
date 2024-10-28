@@ -1793,8 +1793,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -7274,29 +7274,43 @@ export const getTechnicalOptionsItem = async (
 
   return data as unknown as QuestionnaireData;
 };
+
 export const getPositionTypeOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; limit: number }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("*")
-    .eq("position_team_id", params.teamId)
-    .order("position_alias");
+  const { teamId, limit } = params;
+  let start = 0;
+  let allData: OptionTableRow[] = [];
 
-  if (error) throw error;
+  while (true) {
+    const end = start + limit - 1;
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("*")
+      .eq("position_team_id", teamId)
+      .order("position_alias")
+      .range(start, end);
 
-  const returnData = data.map((item, index) => {
-    return {
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    const returnData = data.map((item, index) => ({
       option_value: item.position_alias,
       option_id: item.position_id,
       option_field_id: uuidv4(),
-      option_order: index,
-    };
-  });
+      option_order: start + index,
+    }));
 
-  return returnData as OptionTableRow[];
+    allData = allData.concat(returnData);
+    start += limit;
+  }
+
+  return allData;
 };
 
 export const getHRApplicantAnalytics = async (
