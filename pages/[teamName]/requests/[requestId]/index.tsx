@@ -1,5 +1,6 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import ApplicationInformationV1RequestPage from "@/components/ApplicationInformationV1RequestPage/ApplicationInformationV1RequestPage";
+import BackgroundInvestigationRequestPage from "@/components/BackgroundInvestigationRequestPage/BackgroundInvestigationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import EvaluationResultRequestPage from "@/components/EvaluationResultRequestPage/EvaluationResultRequestPage";
@@ -187,6 +188,8 @@ const Page = ({
       return <TechnicalAssessmentRequestPage request={request} />;
     } else if (request.request_form.form_name === "Evaluation Result") {
       return <EvaluationResultRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Background Investigation") {
+      return <BackgroundInvestigationRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

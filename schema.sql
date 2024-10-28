@@ -384,7 +384,6 @@ CREATE TABLE form_schema.requester_primary_signer_table (
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
-
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
@@ -1058,7 +1057,8 @@ CREATE TABLE hr_schema.background_check_table (
   background_check_status_date_updated TIMESTAMPTZ,
 
   background_check_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  background_check_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+  background_check_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  background_check_evaluation_request_id UUID REFERENCES request_schema.request_table(request_id)
 );
 
 CREATE TABLE hr_schema.job_offer_table (
@@ -1661,7 +1661,8 @@ AS $$
       requestScore,
       rootFormslyRequestId,
       recruiter,
-      interviewParams
+      interviewParams,
+      backgroundCheckParams
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1730,6 +1731,8 @@ AS $$
         endId = `TA`;
       } else if(formName === 'Evaluation Result') {
         endId = `ER`;
+      } else if(formName === 'Background Investigation') {
+        endId = `BI`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -1916,6 +1919,17 @@ AS $$
       );
       const query = 'SELECT public.update_technical_interview_status($1::json)';
       plv8.execute(query, [JSON.stringify(interviewParams)]);
+    } else if (backgroundCheckParams) {
+      plv8.execute(
+        `
+          UPDATE hr_schema.background_check_table
+          SET background_check_evaluation_request_id = '${requestId}' 
+          WHERE
+            background_check_id = '${backgroundCheckParams.backgroundCheckId}'
+        `
+      );
+      const query = 'SELECT public.update_background_check_status($1::json)';
+      plv8.execute(query, [JSON.stringify(backgroundCheckParams)]);
     }
  });
  return request_data;
@@ -3992,7 +4006,20 @@ AS $$
       }
     }
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information v1', 'Application Information', 'General Assessment', 'Technical Assessment', 'Evaluation Result'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (
+        request.form_is_formsly_form && [
+            'Subcon', 'Request For Payment v1', 
+            'Petty Cash Voucher', 
+            'Petty Cash Voucher Balance', 
+            'Application Information v1', 
+            'Application Information', 
+            'General Assessment',
+            'Technical Assessment', 
+            'Evaluation Result', 
+            'Background Investigation'
+          ].includes(request.form_name)
+        )
+      ) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -17157,7 +17184,8 @@ AS $$
           background_check_date_created,
           background_check_status,
           background_check_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
+          bi.request_formsly_id AS background_check_evaluation_request_id
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -17183,6 +17211,7 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN public.request_view AS bi ON bi.request_id = background_check_evaluation_request_id
         ORDER BY ${sort.sortBy} ${sort.order}, background_check_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -20319,6 +20348,101 @@ plv8.subtransaction(function() {
     returnData = {data: requesterSignerList, count: Number(requesterSignerCount)};
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_background_check_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      backgroundCheckId
+    } = input_data;
+
+    const requestId = plv8.execute(
+      `
+        SELECT background_check_request_id
+        FROM hr_schema.background_check_table
+        WHERE
+          background_check_id = '${backgroundCheckId}'
+      `
+    )[0].background_check_request_id;
+
+    const firstName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
+        LIMIT 1
+      `
+    );
+    const middleName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
+        LIMIT 1
+      `
+    );
+    const lastName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
+        LIMIT 1
+      `
+    );
+    const position = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        LIMIT 1
+      `
+    );
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+        LIMIT 1
+      `
+    );
+
+    const backgroundCheckData = plv8.execute(
+      `
+        SELECT background_check_table.*, request_formsly_id
+        FROM hr_schema.background_check_table
+        INNER JOIN public.request_view ON request_id = background_check_request_id
+        WHERE
+          background_check_id = '${backgroundCheckId}'
+        LIMIT 1
+      `
+    );
+
+    returnData = {
+      candidateFirstName: JSON.parse(firstName[0].request_response),
+      candidateMiddleName: middleName.length ? JSON.parse(middleName[0].request_response) : "",
+      candidateLastName: JSON.parse(lastName[0].request_response),
+      position: JSON.parse(position[0].request_response),
+      email: JSON.parse(email[0].request_response),
+      backgroundCheckData: backgroundCheckData[0]
+    }
+ });
+ return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
