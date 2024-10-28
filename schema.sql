@@ -1900,7 +1900,7 @@ AS $$
 
     if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
       plv8.execute(`INSERT INTO hr_schema.request_connection_table (request_connection_application_information_request_id) VALUES ('${requestId}')`)
-    } else if (formId === '71f569a0-70a8-4609-82d2-5cc26ac1fe8c') {
+    } else if (formId === '2f9100a9-f322-405f-acda-68bbf94236b0') {
       const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
       plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_general_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
     } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
@@ -3995,6 +3995,7 @@ AS $$
             request_response_field_id IN (
               '44edd3e4-9595-4b7c-a924-98b084346d36',
               'be0e130b-455b-47e0-a804-f90943f7bc07',
+              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
               'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
               '362bff3d-54fa-413b-992c-fd344d8552c6'
             )
@@ -4012,7 +4013,8 @@ AS $$
             'Petty Cash Voucher', 
             'Petty Cash Voucher Balance', 
             'Application Information v1', 
-            'Application Information', 
+            'Application Information',
+            'General Assessment v1',
             'General Assessment',
             'Technical Assessment', 
             'Evaluation Result', 
@@ -6708,7 +6710,12 @@ AS $$
             '5c5284cd-7647-4307-b558-40b9076d9f7f',
             'f1c516bd-e483-4f32-a5b0-5223b186afb5',
             'd209aed6-e560-49a8-aa77-66c9cada168d',
-            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6',
+            'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
+            '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
+            '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
+            '69a2664f-c34d-4381-b19c-749c4a9a012b',
+            '8abe5d1a-8370-4472-b88e-3580f724d12d'
           )
         WHERE
           request_response_request_id = '${requestId}'
@@ -14691,11 +14698,11 @@ plv8.subtransaction(function(){
           FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
             AND field_id IN (
-              'be0e130b-455b-47e0-a804-f90943f7bc07',
-              '5c5284cd-7647-4307-b558-40b9076d9f7f',
-              'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-              'd209aed6-e560-49a8-aa77-66c9cada168d',
-              'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
+              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
+              '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
+              '69a2664f-c34d-4381-b19c-749c4a9a012b',
+              '8abe5d1a-8370-4472-b88e-3580f724d12d'
             )
           WHERE
             request_response_request_id = '${requestId}'
@@ -14807,14 +14814,14 @@ plv8.subtransaction(function(){
                 {
                   ...form.form_section[1].section_field[3],
                   field_response:
-                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
                   ? safeParse(applicantData[3].request_response)
                   : '',
                 },
                 {
                   ...form.form_section[1].section_field[4],
                   field_response:
-                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
                   ? safeParse(applicantData[4].request_response)
                   : safeParse(applicantData[3].request_response),
                 },
@@ -15108,6 +15115,7 @@ AS $$
             AND field_id IN (
               '56438f2d-da70-4fa4-ade6-855f2f29823b',
               '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
               '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
             )
           WHERE
@@ -15210,7 +15218,7 @@ AS $$
       });
 
       let isWithViewIndicator = false;
-      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment'].includes(request.form_name)){
+      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment v1', 'General Assessment'].includes(request.form_name)){
         const connectedRequestCount = plv8.execute(
           `
             SELECT COUNT(*)
@@ -15218,6 +15226,7 @@ AS $$
             WHERE
               request_response_field_id IN (
                 'be0e130b-455b-47e0-a804-f90943f7bc07',
+                'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
                 'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
                 '362bff3d-54fa-413b-992c-fd344d8552c6'
               )
@@ -15235,7 +15244,10 @@ AS $$
             SELECT COUNT(*)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
+              AND request_form_id IN (
+                '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
+                '2f9100a9-f322-405f-acda-68bbf94236b0'
+              )
             WHERE
               request_response = '"${formslyId}"'
           `
@@ -15464,7 +15476,10 @@ AS $$
         SELECT request_view.*
         FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          AND request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+          AND request_response_field_id IN (
+            'be0e130b-455b-47e0-a804-f90943f7bc07',
+            'c3225996-d3e8-4fb4-87d8-f5ced778adcf'
+          )
           AND request_response = '"${requestId}"'
       `
     );

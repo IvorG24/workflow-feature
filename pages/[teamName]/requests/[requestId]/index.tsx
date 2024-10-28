@@ -182,7 +182,7 @@ const Page = ({
       return <ApplicationInformationV1RequestPage request={request} />;
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
-    } else if (request.request_form.form_name === "General Assessment") {
+    } else if (request.request_form.form_name.includes("General Assessment")) {
       return <GeneralAssessmentRequestPage request={request} />;
     } else if (request.request_form.form_name === "Technical Assessment") {
       return <TechnicalAssessmentRequestPage request={request} />;
