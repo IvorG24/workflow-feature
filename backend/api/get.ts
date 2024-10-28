@@ -13,6 +13,7 @@ import {
   IT_ASSET_FIELD_ID_LIST,
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  ROW_PER_PAGE,
   SELECT_OPTION_LIMIT,
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
@@ -79,6 +80,7 @@ import {
   PendingInviteType,
   QuestionnaireData,
   ReferenceMemoType,
+  RequesterPrimarySignerType,
   RequestListItemType,
   RequestListOnLoad,
   RequestResponseTableRow,
@@ -1792,8 +1794,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -1987,6 +1989,7 @@ export const getProjectSignerWithTeamMember = async (
     projectId: string;
     formId: string;
     departmentId?: string;
+    requesterTeamMemberId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -7272,29 +7275,43 @@ export const getTechnicalOptionsItem = async (
 
   return data as unknown as QuestionnaireData;
 };
+
 export const getPositionTypeOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; limit: number }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("*")
-    .eq("position_team_id", params.teamId)
-    .order("position_alias");
+  const { teamId, limit } = params;
+  let start = 0;
+  let allData: OptionTableRow[] = [];
 
-  if (error) throw error;
+  while (true) {
+    const end = start + limit - 1;
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("*")
+      .eq("position_team_id", teamId)
+      .order("position_alias")
+      .range(start, end);
 
-  const returnData = data.map((item, index) => {
-    return {
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    const returnData = data.map((item, index) => ({
       option_value: item.position_alias,
       option_id: item.position_id,
       option_field_id: uuidv4(),
-      option_order: index,
-    };
-  });
+      option_order: start + index,
+    }));
 
-  return returnData as OptionTableRow[];
+    allData = allData.concat(returnData);
+    start += limit;
+  }
+
+  return allData;
 };
 
 export const getHRApplicantAnalytics = async (
@@ -7539,6 +7556,28 @@ export const getSCICEmployeeList = async (
   return {
     data: data as SCICEmployeeTableRow[],
     totalCount: count ?? 0,
+  };
+};
+
+export const getRequesterPrimarySignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_requester_signer_list",
+    {
+      input_data: { ...params, limit: ROW_PER_PAGE },
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    data: RequesterPrimarySignerType[];
+    count: number;
   };
 };
 
