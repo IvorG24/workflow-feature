@@ -37,6 +37,7 @@ import {
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
   BackgroundCheckTableRow,
+  CreatePracticalTestFormType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
@@ -78,6 +79,7 @@ import {
   OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
+  PracticalTestType,
   QuestionnaireData,
   ReferenceMemoType,
   RequesterPrimarySignerType,
@@ -1794,8 +1796,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };
@@ -7171,12 +7173,22 @@ export const getQuestionnaireList = async (
     page: number;
     limit: number;
     creator?: string;
+    columnAccessor: string;
     isAscendingSort: boolean;
     search?: string;
   }
 ) => {
-  const { teamId, page, limit, creator, isAscendingSort, search } = params;
-  const sortCondition = isAscendingSort ? "asc" : "desc";
+  const {
+    teamId,
+    page,
+    limit,
+    creator,
+    isAscendingSort,
+    search,
+    columnAccessor,
+  } = params;
+  const sortBy = isAscendingSort ? "asc" : "desc";
+  const sortCondition = `${columnAccessor} ${sortBy}`;
 
   const creatorCondition =
     creator && validate(creator)
@@ -7587,7 +7599,6 @@ export const getBackgroundCheckData = async (
     backgroundCheckId: string;
   }
 ) => {
-
   const { data, error } = await supabaseClient
     .rpc("get_background_check_data", { input_data: params })
     .select("*");
@@ -7604,4 +7615,92 @@ export const getBackgroundCheckData = async (
     };
   };
   return formattedData;
+};
+
+export const getPracticalTestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    creator?: string;
+    columnAccessor: string;
+    isAscendingSort: boolean;
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    creator,
+    isAscendingSort,
+    search,
+    columnAccessor,
+  } = params;
+  const sortBy = isAscendingSort ? "asc" : "desc";
+  const sortCondition = `${columnAccessor} ${sortBy}`;
+
+  const creatorCondition =
+    creator && validate(creator)
+      ? `practical_test_created_by = '${creator}'`
+      : `practical_test_created_by '%' || '${creator}' || '%'`;
+
+  const searchCondition =
+    search && validate(search)
+      ? `practical_test_label = '${search}'`
+      : `practical_test_label ILIKE '%' || '${search}' || '%'`;
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_practical_test_form_on_load",
+    {
+      input_data: {
+        teamId,
+        search: search ? `AND (${searchCondition})` : "",
+        creator: creator ? `AND (${creatorCondition})` : "",
+        page,
+        isAscendingSort: sortCondition,
+        limit,
+      },
+    }
+  );
+  if (error) throw error;
+
+  return data as unknown as {
+    data: PracticalTestType[];
+    count: number;
+  };
+};
+
+export const checkPracticalTestLabel = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+  }
+) => {
+  const { label } = params;
+
+  const { count, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("practical_test_table")
+    .select("*", { count: "exact", head: true })
+    .eq("practical_test_label", label)
+    .limit(1);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+export const getPracticalTestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    practicalTestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_practical_test_form", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as unknown as CreatePracticalTestFormType;
 };

@@ -1211,6 +1211,39 @@ CREATE TABLE user_schema.email_resend_table (
   email_resend_email VARCHAR(4000) NOT NULL
 );
 
+CREATE TABLE hr_schema.practical_test_table (
+  practical_test_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  practical_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  practical_test_date_updated TIMESTAMPTZ,
+  practical_test_label VARCHAR(4000) NOT NULL,
+  practical_test_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  practical_test_passing_score INT NOT NULL,
+
+  practical_test_created_by UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  practical_test_updated_by UUID REFERENCES team_schema.team_member_table(team_member_id),
+  practical_test_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE hr_schema.practical_test_question_table (
+  practical_test_question_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  practical_test_question_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  practical_test_question VARCHAR(4000) NOT NULL,
+  practical_test_question_weight INT NOT NULL,
+  practical_test_question_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  practical_test_question_order INT NOT NULL,
+
+  practical_test_question_field_id UUID REFERENCES form_schema.field_table(field_id) ON DELETE CASCADE NOT NULL,
+  practical_test_question_practical_test_id UUID REFERENCES hr_schema.practical_test_table(practical_test_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE hr_schema.practical_test_position_table (
+  practical_test_position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  practical_test_position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+  practical_test_position_practical_test_id UUID REFERENCES hr_schema.practical_test_table(practical_test_id) ON DELETE CASCADE NOT NULL,
+  practical_test_position_position_id UUID REFERENCES lookup_schema.position_table(position_id) ON DELETE CASCADE NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -19382,7 +19415,7 @@ plv8.subtransaction(function() {
         q.questionnaire_team_id = $1
         ${creator}
         ${search}
-      ORDER BY q.questionnaire_date_created ${isAscendingSort}
+      ORDER BY ${isAscendingSort}
       LIMIT $2 OFFSET $3
       `, [teamId, limit, offset]);
 
@@ -20458,6 +20491,255 @@ AS $$
     }
  });
  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_practical_test_form_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    data: [],
+    count: 0
+  };
+  plv8.subtransaction(function() {
+    const {
+      teamId,
+      search = '',
+      creator = '',
+      page = 1,
+      isAscendingSort = 'ASC',
+      limit
+    } = input_data;
+
+    const totalCountResult = plv8.execute(`
+      SELECT COUNT(*)::INT AS total_count
+      FROM hr_schema.practical_test_table
+      JOIN team_schema.team_member_table tm
+        ON tm.team_member_id = practical_test_created_by
+      JOIN user_schema.user_table u
+        ON u.user_id = tm.team_member_user_id
+      LEFT JOIN team_schema.team_member_table tm2
+        ON tm2.team_member_id = practical_test_updated_by
+      LEFT JOIN user_schema.user_table u2
+        ON u2.user_id = tm2.team_member_user_id
+      WHERE 
+        practical_test_team_id = $1
+        ${creator}
+        ${search}
+    `, [teamId]);
+
+    if (totalCountResult.length > 0) {
+      returnData.count = totalCountResult[0].total_count;
+    }
+
+    const offset = (page - 1) * limit;
+
+    const practicalTestData = plv8.execute(`
+      SELECT 
+        practical_test_table.*,
+        u.user_id AS created_user_id,
+        u.user_first_name AS created_user_first_name,
+        u.user_last_name AS created_user_last_name,
+        u.user_avatar AS created_user_avatar,
+        u2.user_id AS updated_user_id,
+        u2.user_first_name AS updated_user_first_name,
+        u2.user_last_name AS updated_user_last_name,
+        u2.user_avatar AS updated_user_avatar
+      FROM hr_schema.practical_test_table
+      JOIN team_schema.team_member_table tm
+      ON tm.team_member_id = practical_test_created_by
+      JOIN user_schema.user_table u
+      ON u.user_id = tm.team_member_user_id
+      LEFT JOIN team_schema.team_member_table tm2
+      ON tm2.team_member_id = practical_test_updated_by
+      LEFT JOIN user_schema.user_table u2
+      ON u2.user_id = tm2.team_member_user_id
+      WHERE
+        practical_test_team_id = $1
+        ${creator}
+        ${search}
+      ORDER BY ${isAscendingSort}
+      LIMIT $2 OFFSET $3
+      `, [teamId, limit, offset]);
+
+    returnData.data = practicalTestData.map(response => {
+      const {
+        created_user_id,
+        created_user_first_name,
+        created_user_last_name,
+        created_user_avatar,
+        updated_user_id,
+        updated_user_first_name,
+        updated_user_last_name,
+        updated_user_avatar,
+        ...rest
+      } = response;
+
+      return {
+        ...rest,
+        practical_test_created_by_user: {
+          user_id: created_user_id,
+          user_first_name: created_user_first_name,
+          user_last_name: created_user_last_name,
+          user_avatar: created_user_avatar
+        },
+        practical_test_updated_by_user: updated_user_id ? {
+          user_id: updated_user_id,
+          user_first_name: updated_user_first_name,
+          user_last_name: updated_user_last_name,
+          user_avatar: updated_user_avatar
+        } : null
+      };
+    });
+  });
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_practical_test_form(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function() {
+    const {
+      practicalTestQuery,
+      practicalTestPositionInput,
+      fieldInput,
+      practicalTestQuestionInput,
+      practicalTestId,
+      positionList
+    } = input_data;
+
+    if (practicalTestId) {
+      plv8.execute(
+        `
+          UPDATE hr_schema.practical_test_question_table
+          SET practical_test_question_is_disabled = true
+          WHERE practical_test_question_practical_test_id = '${practicalTestId}'
+        `
+      );
+      plv8.execute(
+        `
+          DELETE FROM hr_schema.practical_test_position_table
+          WHERE practical_test_position_practical_test_id = '${practicalTestId}'
+        `
+      )
+    }
+
+    plv8.execute(
+      `
+        DELETE FROM hr_schema.practical_test_position_table
+        WHERE practical_test_position_position_id IN (${positionList})
+      `
+    )
+    plv8.execute(practicalTestQuery);
+
+    if (practicalTestPositionInput.length) {
+      plv8.execute(
+        `
+          INSERT INTO hr_schema.practical_test_position_table
+          (
+            practical_test_position_practical_test_id,
+            practical_test_position_position_id
+          ) 
+          VALUES ${practicalTestPositionInput}
+        `
+      );
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO form_schema.field_table 
+        (
+          field_id,
+          field_name,
+          field_is_required,
+          field_type,
+          field_order,
+          field_section_id
+        ) 
+        VALUES ${fieldInput}
+      `
+    );
+
+    plv8.execute(
+      `
+        INSERT INTO hr_schema.practical_test_question_table
+        (
+          practical_test_question,
+          practical_test_question_weight,
+          practical_test_question_order,
+          practical_test_question_field_id,
+          practical_test_question_practical_test_id
+        ) 
+        VALUES ${practicalTestQuestionInput}
+      `
+    );
+  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_practical_test_form(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function() {
+    const {
+      practicalTestId
+    } = input_data;
+
+    const practicalTestData = plv8.execute(
+      `
+        SELECT
+          practical_test_id,
+          practical_test_label,
+          practical_test_passing_score
+        FROM hr_schema.practical_test_table
+        WHERE
+          practical_test_id = '${practicalTestId}'
+      `
+    )[0];
+
+    const practical_test_position_list = plv8.execute(
+      `
+        SELECT
+          position_id
+        FROM hr_schema.practical_test_position_table
+        INNER JOIN lookup_schema.position_table ON position_id = practical_test_position_position_id 
+        WHERE
+          practical_test_position_practical_test_id = '${practicalTestId}'
+      `
+    ).map(position => position.position_id);
+
+    const practical_test_question_list = plv8.execute(
+      `
+        SELECT
+          practical_test_question,
+          practical_test_question_weight
+        FROM hr_schema.practical_test_question_table 
+        WHERE
+          practical_test_question_practical_test_id = '${practicalTestId}'
+          AND practical_test_question_is_disabled = false
+      `
+    ).map(question => {
+      return {
+        practical_test_question: question.practical_test_question,
+        practical_test_question_weight: question.practical_test_question_weight
+      }
+    });
+
+    returnData = {
+      ...practicalTestData,
+      practical_test_position_list,
+      practical_test_question_list
+    }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
