@@ -7164,7 +7164,8 @@ export const getQuestionnaireList = async (
     columnAccessor,
   } = params;
   const sortBy = isAscendingSort ? "asc" : "desc";
-  const sortCondition = `q.${columnAccessor} ${sortBy}`;
+  const sortCondition = `${columnAccessor} ${sortBy}`;
+
   const creatorCondition =
     creator && validate(creator)
       ? `q.questionnaire_created_by = '${creator}'`
