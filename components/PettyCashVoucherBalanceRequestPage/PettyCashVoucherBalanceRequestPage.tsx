@@ -384,7 +384,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       });
 
       const jiraTicket = await createJiraTicket({
-        requestType: "Working Advance Voucher",
+        requestType: "Petty Cash Voucher",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
