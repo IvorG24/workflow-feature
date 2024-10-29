@@ -20,7 +20,7 @@ const LiquidationReimbursementSummary = ({ summaryData }: Props) => {
     );
     return (acc += amount);
   }, 0);
-  console.log(invoiceAmountTotal);
+
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">

@@ -2425,6 +2425,7 @@ export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
   background_check_id: string;
   background_check_date_created: string;
   background_check_status: string;
+  background_check_evaluation_request_id: string;
   application_information_nickname: string;
 };
 

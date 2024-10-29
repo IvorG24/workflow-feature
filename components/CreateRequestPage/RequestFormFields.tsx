@@ -1397,12 +1397,7 @@ const RequestFormFields = ({
                 );
               } else {
                 const minDate =
-                  liquidationReimbursementFormMethods &&
-                  field.field_name === "Date"
-                    ? new Date("January 1, 2001")
-                    : formslyFormName
-                    ? new Date()
-                    : undefined;
+                  field.field_name === "Date Needed" ? new Date() : undefined;
 
                 return (
                   <DateInput
@@ -1470,7 +1465,7 @@ const RequestFormFields = ({
                 <FileInput
                   {...inputProps}
                   icon={<IconFile size={16} />}
-                  clearable
+                  clearable={!field.field_is_read_only}
                   multiple={false}
                   value={value as File | null | undefined}
                   onChange={onChange}
