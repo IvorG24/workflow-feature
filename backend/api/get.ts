@@ -1793,8 +1793,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };
@@ -5349,28 +5349,6 @@ export const getFieldResponseByRequestId = async (
   return data;
 };
 
-export const getRequestTypeFieldResponse = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-    fieldId: string;
-  }
-) => {
-  const { requestId, fieldId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_response_table")
-    .select("request_response")
-    .eq("request_response_request_id", requestId)
-    .eq("request_response_field_id", fieldId)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return data;
-};
-
 export const getAdminTicketAnalytics = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7578,4 +7556,23 @@ export const getRequesterPrimarySignerList = async (
     data: RequesterPrimarySignerType[];
     count: number;
   };
+};
+
+export const getRequestIdFromFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyId: string;
+    requestFormId: string;
+  }
+) => {
+  const { formslyId, requestFormId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_view")
+    .select("request_id")
+    .eq("request_form_id", requestFormId)
+    .eq("request_formsly_id", formslyId)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0] ? data[0].request_id : null;
 };

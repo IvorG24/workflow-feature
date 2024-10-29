@@ -71,7 +71,7 @@ type Props = {
   requestId: string;
 };
 
-const EditLiquidReimbursementRequestPage = ({
+const EditLiquidationReimbursementRequestPage = ({
   form,
   projectOptions,
   duplicatableSectionIdList,
@@ -1192,6 +1192,10 @@ const EditLiquidReimbursementRequestPage = ({
           requestDetailsSectionFieldList[0].field_response
         );
 
+        const noPaymentSection =
+          requestTypeResponse === "Liquidation" ||
+          requestTypeResponse === "Liquidation with Provisional Receipt";
+
         const finalInitialRequestDetails = [
           {
             ...form.form_section[0],
@@ -1200,9 +1204,7 @@ const EditLiquidReimbursementRequestPage = ({
           ...sectionWithDuplicatableId,
           { ...form.form_section[2], section_field: paymentSectionFieldList },
         ].filter((section) =>
-          requestTypeResponse === "Liquidation"
-            ? section.section_name !== "Payment"
-            : true
+          noPaymentSection ? section.section_name !== "Payment" : true
         );
 
         replaceSection(finalInitialRequestDetails);
@@ -1291,4 +1293,4 @@ const EditLiquidReimbursementRequestPage = ({
   );
 };
 
-export default EditLiquidReimbursementRequestPage;
+export default EditLiquidationReimbursementRequestPage;
