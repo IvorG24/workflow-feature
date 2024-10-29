@@ -45,6 +45,7 @@ import ApproverGroup from "./TeamGroup/ApproverGroup";
 import TeamGroups from "./TeamGroup/TeamGroups/TeamGroups";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
+import TeamMembershipRequestAdminView from "./TeamMembershipRequest/TeamMembershipRequestAdminView";
 import TeamProject from "./TeamProject/TeamProject";
 import ValidIDVerificationList from "./ValidIDVerificationList";
 
@@ -424,14 +425,14 @@ const TeamPage = ({
         isOwnerOrAdmin={isOwnerOrAdmin}
         teamId={initialTeam.team_id}
       />
-      {isOwnerOrAdmin && (
-        <TeamEmployee
-          isOwnerOrAdmin={isOwnerOrAdmin}
-          teamId={initialTeam.team_id}
-        />
-      )}
-      {isOwnerOrAdmin && (
+
+      {isOwnerOrAdmin ? (
         <>
+          <TeamEmployee
+            isOwnerOrAdmin={isOwnerOrAdmin}
+            teamId={initialTeam.team_id}
+          />
+          <TeamMembershipRequestAdminView teamId={team.team_id} />
           <InviteMember
             isOwnerOrAdmin={isOwnerOrAdmin}
             memberEmailList={memberEmailList}
@@ -440,7 +441,7 @@ const TeamPage = ({
           <QuickOnboarding memberEmailList={memberEmailList} />
           <ValidIDVerificationList pendingValidIDList={pendingValidIDList} />
         </>
-      )}
+      ) : null}
 
       {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
       {!isOwner && <LeaveTeamSection onLeaveTeam={handleLeaveTeam} />}

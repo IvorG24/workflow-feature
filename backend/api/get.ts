@@ -100,6 +100,7 @@ import {
   TeamOnLoad,
   TeamProjectTableRow,
   TeamTableRow,
+  TeamTeamMembershipRequest,
   TechnicalAssessmentTableRow,
   TechnicalInterviewFilterFormValues,
   TechnicalInterviewSpreadsheetData,
@@ -7645,4 +7646,24 @@ export const getBackgroundCheckData = async (
     };
   };
   return formattedData;
+};
+
+export const getTeamTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    page: number;
+    teamId: string;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_team_team_membership_request",
+    {
+      input_data: { ...params, limit: ROW_PER_PAGE },
+    }
+  );
+
+  if (error) throw error;
+
+  return data as { data: TeamTeamMembershipRequest[]; count: number };
 };

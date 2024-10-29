@@ -2621,3 +2621,9 @@ export type RequesterPrimarySignerFormValues = {
 export type RequesterPrimarySignerType = RequesterPrimarySignerTableRow & {
   requester_primary_signer_signer_team_member_id: string;
 };
+
+export type TeamTeamMembershipRequest = Pick<
+  TeamMemberType["team_member_user"],
+  "user_first_name" | "user_last_name" | "user_id" | "user_email"
+> &
+  Pick<TeamMembershipRequestTableRow, "team_membership_request_id">;

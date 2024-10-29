@@ -20331,7 +20331,13 @@ plv8.subtransaction(function() {
 
     const start = (page - 1) * limit;
 
-    const requesterSignerCount = plv8.execute(`SELECT COUNT(*) FROM form_schema.requester_primary_signer_table`)[0].count;
+    const requesterSignerCount = plv8.execute(`
+      SELECT COUNT(*) 
+      FROM form_schema.requester_primary_signer_table
+      INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+      WHERE
+        signer_form_id = $1
+    `, [formId])[0].count;
 
     let query = `
         SELECT

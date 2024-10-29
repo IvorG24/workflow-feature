@@ -3704,6 +3704,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_team_team_membership_request: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_technical_interview_summary_table: {
         Args: {
           input_data: Json

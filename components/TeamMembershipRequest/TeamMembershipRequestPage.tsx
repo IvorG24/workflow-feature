@@ -1,3 +1,4 @@
+import { deleteTeamMembershipRequest } from "@/backend/api/delete";
 import { getUserTeamMembershipRequest } from "@/backend/api/get";
 import { insertError, sendRequestToJoinTeam } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -8,6 +9,7 @@ import { TeamMembershipRequestTableRow, TeamTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
+  Badge,
   Box,
   Button,
   Container,
@@ -139,6 +141,39 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
     }
   };
 
+  const handleCancelRequestToJoin = async (teamId: string) => {
+    try {
+      setIsLoading(true);
+      await deleteTeamMembershipRequest(supabaseClient, {
+        teamId,
+        userId: `${user?.id}`,
+      });
+      setTeamMembershipRequest((prev) =>
+        prev.filter(
+          (team) => team.team_membership_request_to_team_id !== teamId
+        )
+      );
+    } catch (error) {
+      notifications.show({
+        message: "Failed to cancel team membership request",
+        color: "red",
+      });
+      if (isError(error)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: error.message,
+            error_url: router.asPath,
+            error_function: "handleCancelRequestToJoin",
+            error_user_email: user?.email,
+            error_user_id: user?.id,
+          },
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user && user.id) {
       handleFetchTeamMembershipRequest();
@@ -177,7 +212,10 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
             {
               accessor: "team_name",
               title: "Team Name",
-              render: ({ team_name, team_logo }) => {
+              render: ({ team_id, team_name, team_logo }) => {
+                const hasUserSentRequest =
+                  teamMembershipRequestId.includes(team_id);
+
                 return (
                   <Flex gap="xs" align="center" wrap="wrap">
                     <Avatar
@@ -188,24 +226,40 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
                       {(team_name[0] + team_name[1]).toUpperCase()}
                     </Avatar>
                     <Text>{team_name}</Text>
+                    {hasUserSentRequest && <Badge>Request Sent</Badge>}
                   </Flex>
                 );
               },
             },
             {
               accessor: "team_id",
-              title: "Join",
+              title: "Join Team",
+              width: 240,
+              textAlignment: "center",
               render: ({ team_id }) => {
                 const hasUserSentRequest =
                   teamMembershipRequestId.includes(team_id);
                 return (
-                  <Button
-                    size="sm"
-                    onClick={() => handleSendRequestToJoin(team_id)}
-                    disabled={hasUserSentRequest || isLoading}
-                  >
-                    {hasUserSentRequest ? "Request sent" : "Join"}
-                  </Button>
+                  <Flex gap="sm" align="center" justify="center">
+                    {hasUserSentRequest ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelRequestToJoin(team_id)}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleSendRequestToJoin(team_id)}
+                        disabled={hasUserSentRequest || isLoading}
+                      >
+                        Join
+                      </Button>
+                    )}
+                  </Flex>
                 );
               },
             },
