@@ -307,8 +307,8 @@ CREATE TABLE form_schema.signer_table (
   signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
-  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,            
-  signer_is_requester_signer BOOLEAN DEFAULT FALSE NOT NULL,                                                            
+  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  signer_is_requester_signer BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
@@ -379,7 +379,7 @@ CREATE TABLE form_schema.form_team_group_table (
 );
 
 CREATE TABLE form_schema.requester_primary_signer_table (
-  requester_primary_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,                                               
+  requester_primary_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   requester_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
@@ -1912,7 +1912,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.technical_interview_table
-          SET technical_interview_evaluation_request_id = '${requestId}' 
+          SET technical_interview_evaluation_request_id = '${requestId}'
           WHERE
             technical_interview_id = '${interviewParams.technicalInterviewId}'
         `
@@ -1923,7 +1923,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.background_check_table
-          SET background_check_evaluation_request_id = '${requestId}' 
+          SET background_check_evaluation_request_id = '${requestId}'
           WHERE
             background_check_id = '${backgroundCheckParams.backgroundCheckId}'
         `
@@ -4009,15 +4009,15 @@ AS $$
 
     if (!request.form_is_formsly_form || (
         request.form_is_formsly_form && [
-            'Subcon', 'Request For Payment v1', 
-            'Petty Cash Voucher', 
-            'Petty Cash Voucher Balance', 
-            'Application Information v1', 
+            'Subcon', 'Request For Payment v1',
+            'Petty Cash Voucher',
+            'Petty Cash Voucher Balance',
+            'Application Information v1',
             'Application Information',
             'General Assessment v1',
             'General Assessment',
-            'Technical Assessment', 
-            'Evaluation Result', 
+            'Technical Assessment',
+            'Evaluation Result',
             'Background Investigation'
           ].includes(request.form_name)
         )
@@ -6367,7 +6367,7 @@ AS $$
             }
 
             const chargeToProjectField = plv8.execute(`
-                SELECT 
+                SELECT
                     request_response
                 FROM request_schema.request_response_table
                 WHERE
@@ -6401,7 +6401,7 @@ AS $$
                 `, [connectedRequestChargeToProjectId]);
             } else {
                 const pcvWavField = plv8.execute(`
-                    SELECT 
+                    SELECT
                         request_response
                     FROM request_schema.request_response_table
                     WHERE
@@ -12461,8 +12461,8 @@ plv8.subtransaction(function() {
         condition += ` AND signer_team_department_id = $3`;
         params.push(departmentId);
         signerData = fetchSignerData(condition, params);
-    } 
-    
+    }
+
     if (signerData.length <= 0) {
         signerData = fetchSignerData(`
             WHERE signer_team_project_id = $1
@@ -17368,14 +17368,14 @@ AS $$
 
     const userData = plv8.execute(
       `
-        SELECT 
+        SELECT
           user_id,
           user_first_name,
           user_last_name,
           user_email
-        FROM user_schema.user_table 
-        WHERE 
-          user_email = '${data.application_information_email.toLowerCase()}' 
+        FROM user_schema.user_table
+        WHERE
+          user_email = '${data.application_information_email.toLowerCase()}'
         LIMIT 1
       `
     );
@@ -19442,7 +19442,7 @@ plv8.subtransaction(function() {
         q.questionnaire_team_id = $1
         ${creator}
         ${search}
-      ORDER BY q.questionnaire_date_created ${isAscendingSort}
+      ORDER BY ${isAscendingSort}
       LIMIT $2 OFFSET $3
       `, [teamId, limit, offset]);
 
@@ -20345,11 +20345,11 @@ plv8.subtransaction(function() {
         const signerOrder = 1;
 
         signerData = plv8.execute(`
-            INSERT INTO form_schema.signer_table 
+            INSERT INTO form_schema.signer_table
                 (signer_is_primary_signer, signer_action, signer_is_requester_signer, signer_form_id, signer_team_member_id, signer_order)
             VALUES
                 ($1, $2, $3, $4, $5, $6)
-            RETURNING *;  
+            RETURNING *;
         `, [signerIsPrimary, signerAction, signerIsRequesterSigner, formId, signerTeamMemberId, signerOrder])[0];
     }
 
@@ -20364,7 +20364,7 @@ plv8.subtransaction(function() {
 
         if (Number(duplicateCount) === 0) {
             plv8.execute(`
-                INSERT INTO form_schema.requester_primary_signer_table 
+                INSERT INTO form_schema.requester_primary_signer_table
                     (requester_team_member_id, requester_primary_signer_signer_id)
                 VALUES
                     ($1, $2)
