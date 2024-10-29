@@ -721,7 +721,7 @@ const LiquidationReimbursementRequestPage = ({
       request.request_form.form_section[0].section_field.find(
         (field) => field.field_name === "Ticket ID"
       );
-    if (!ticketIdField) return;
+    if (!ticketIdField?.field_response[0]) return;
 
     const ticketIdFieldResponse = safeParse(
       ticketIdField.field_response[0].request_response
