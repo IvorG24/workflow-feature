@@ -906,6 +906,7 @@ export type Database = {
       background_check_table: {
         Row: {
           background_check_date_created: string
+          background_check_evaluation_request_id: string | null
           background_check_id: string
           background_check_request_id: string
           background_check_status: string
@@ -914,6 +915,7 @@ export type Database = {
         }
         Insert: {
           background_check_date_created?: string
+          background_check_evaluation_request_id?: string | null
           background_check_id?: string
           background_check_request_id: string
           background_check_status?: string
@@ -922,6 +924,7 @@ export type Database = {
         }
         Update: {
           background_check_date_created?: string
+          background_check_evaluation_request_id?: string | null
           background_check_id?: string
           background_check_request_id?: string
           background_check_status?: string
@@ -3226,6 +3229,12 @@ export type Database = {
         Returns: number
       }
       get_approver_unresolved_request_count: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_background_check_data: {
         Args: {
           input_data: Json
         }

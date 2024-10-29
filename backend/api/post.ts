@@ -584,6 +584,17 @@ export const createRequest = async (
       technicalInterviewNumber: number;
       technicalInterviewId: string;
     };
+    backgroundCheckParams?: {
+      status: string;
+      teamMemberId: string;
+      data: {
+        hr_request_reference_id: string;
+        application_information_email: string;
+        application_information_request_id: string;
+        position: string;
+      };
+      backgroundCheckId: string;
+    };
   }
 ) => {
   const {
@@ -603,6 +614,7 @@ export const createRequest = async (
     sssId,
     applicationInformationFormslyId,
     interviewParams,
+    backgroundCheckParams,
   } = params;
 
   const requestId = uuidv4();
@@ -750,6 +762,7 @@ export const createRequest = async (
         rootFormslyRequestId,
         recruiter,
         interviewParams,
+        backgroundCheckParams,
       },
     })
     .select()
