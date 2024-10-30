@@ -598,6 +598,17 @@ export const createRequest = async (
       };
       backgroundCheckId: string;
     };
+    tradeTestParams?: {
+      status: string;
+      teamMemberId: string;
+      data: {
+        hr_request_reference_id: string;
+        application_information_email: string;
+        application_information_request_id: string;
+        position: string;
+      };
+      tradeTestId: string;
+    };
   }
 ) => {
   const {
@@ -618,6 +629,7 @@ export const createRequest = async (
     applicationInformationFormslyId,
     interviewParams,
     backgroundCheckParams,
+    tradeTestParams
   } = params;
 
   const requestId = uuidv4();
@@ -766,6 +778,7 @@ export const createRequest = async (
         recruiter,
         interviewParams,
         backgroundCheckParams,
+        tradeTestParams
       },
     })
     .select()

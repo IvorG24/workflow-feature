@@ -598,6 +598,14 @@ export type PracticalTestTableInsert =
   Database["hr_schema"]["Tables"]["practical_test_table"]["Insert"];
 export type PracticalTestTableUpdate =
   Database["hr_schema"]["Tables"]["practical_test_table"]["Update"];
+
+export type PracticalTestQuestionTableRow =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Row"];
+export type PracticalTestQuestionTableInsert =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Insert"];
+export type PracticalTestQuestionTableUpdate =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -920,6 +928,7 @@ export type FormWithResponseType = {
       field_response?: unknown;
       field_prefix?: string;
       field_is_correct?: boolean;
+      field_weight?: number;
     })[];
   })[];
   form_team_group: {

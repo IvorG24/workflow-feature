@@ -207,7 +207,7 @@ const TradeTestMainTableRow = ({
       assignEvaluatorModal(options);
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -363,7 +363,8 @@ const TradeTestMainTableRow = ({
       {!hiddenColumnList.includes("evaluation") && (
         <td>
           {item.trade_test_evaluator_team_member_id &&
-            !item.trade_test_evaluation_request_id && (
+            !item.trade_test_evaluation_request_id &&
+            item.trade_test_status === "PENDING" && (
               <Stack spacing="xs">
                 <Flex align="center" gap="xs">
                   <Text sx={{ whiteSpace: "nowrap" }}>

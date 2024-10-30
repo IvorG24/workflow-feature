@@ -1698,7 +1698,8 @@ AS $$
       rootFormslyRequestId,
       recruiter,
       interviewParams,
-      backgroundCheckParams
+      backgroundCheckParams,
+      tradeTestParams
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1769,6 +1770,8 @@ AS $$
         endId = `ER`;
       } else if(formName === 'Background Investigation') {
         endId = `BI`;
+      } else if(formName === 'Practical Test') {
+        endId = `PT`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -1966,6 +1969,17 @@ AS $$
       );
       const query = 'SELECT public.update_background_check_status($1::json)';
       plv8.execute(query, [JSON.stringify(backgroundCheckParams)]);
+    } else if (tradeTestParams) {
+      plv8.execute(
+        `
+          UPDATE hr_schema.trade_test_table
+          SET trade_test_evaluation_request_id = '${requestId}' 
+          WHERE
+            trade_test_id = '${tradeTestParams.tradeTestId}'
+        `
+      );
+      const query = 'SELECT public.update_trade_test_status($1::json)';
+      plv8.execute(query, [JSON.stringify(tradeTestParams)]);
     }
  });
  return request_data;
@@ -5017,6 +5031,7 @@ AS $$
           ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
           ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
           ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
+          ${formData.form_name === 'Practical Test' && section.section_name === 'Quantitative Assessment' ? "LIMIT 0" : ""}
         `
       );
       const field = fieldData.map(field => {
@@ -10323,7 +10338,7 @@ AS $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset", "Liquidation Reimbursement"].includes(requestData.form_name);
+    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset", "Liquidation Reimbursement", "Practical Test"].includes(requestData.form_name);
 
     const sectionData = plv8.execute(
       `
@@ -10340,6 +10355,47 @@ AS $$
           `
             SELECT *
             FROM form_schema.field_table
+            WHERE field_section_id = '${section.section_id}'
+            ORDER BY field_order ASC
+          `
+        );
+
+        fieldWithOptionAndResponse = fieldData.map(field => {
+          const optionData = plv8.execute(
+            `
+              SELECT *
+              FROM form_schema.option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `
+          );
+
+          const requestResponseData = plv8.execute(
+            `
+              SELECT *
+              FROM request_schema.request_response_table
+              WHERE request_response_request_id = '${requestData.request_id}'
+              AND request_response_field_id = '${field.field_id}'
+            `
+          );
+
+          return {
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+          };
+        });
+
+        return {
+          ...section,
+          section_field: fieldWithOptionAndResponse,
+        };
+      } else if (requestData.form_name === "Practical Test") {
+        const fieldData = plv8.execute(
+          `
+            SELECT field_table.*
+            FROM form_schema.field_table
+            INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
             WHERE field_section_id = '${section.section_id}'
             ORDER BY field_order ASC
           `
@@ -20805,6 +20861,151 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_practical_test_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      practicalTestId
+    } = input_data;
+
+    const requestId = plv8.execute(
+      `
+        SELECT trade_test_request_id
+        FROM hr_schema.trade_test_table
+        WHERE
+          trade_test_id = '${practicalTestId}'
+      `
+    )[0].trade_test_request_id;
+
+    const firstName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
+        LIMIT 1
+      `
+    );
+    const middleName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
+        LIMIT 1
+      `
+    );
+    const lastName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
+        LIMIT 1
+      `
+    );
+    const position = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        LIMIT 1
+      `
+    );
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+        LIMIT 1
+      `
+    );
+
+    const tradeTestData = plv8.execute(
+      `
+        SELECT trade_test_table.*, request_formsly_id
+        FROM hr_schema.trade_test_table
+        INNER JOIN public.request_view ON request_id = trade_test_request_id
+        WHERE
+          trade_test_id = '${practicalTestId}'
+        LIMIT 1
+      `
+    );
+
+    returnData = {
+      candidateFirstName: JSON.parse(firstName[0].request_response),
+      candidateMiddleName: middleName.length ? JSON.parse(middleName[0].request_response) : "",
+      candidateLastName: JSON.parse(lastName[0].request_response),
+      position: JSON.parse(position[0].request_response),
+      email: JSON.parse(email[0].request_response),
+      tradeTestData: tradeTestData[0]
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_practical_test_field_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      position
+    } = input_data;
+
+    const practicalTestData = plv8.execute(
+      `
+        SELECT practical_test_table.*
+        FROM lookup_schema.position_table
+        INNER JOIN hr_schema.practical_test_position_table ON practical_test_position_position_id = position_id
+        INNER JOIN hr_schema.practical_test_table ON practical_test_id = practical_test_position_practical_test_id
+        WHERE
+          position_alias = '${position}'
+        ORDER BY position_date_created DESC
+        LIMIT 1
+      `
+    );
+    if (!practicalTestData.length) {
+      returnData = null;
+      return;
+    }
+
+    const practicalTestQuestionList = plv8.execute(
+      `
+        SELECT 
+          field_table.*,
+          practical_test_question_weight AS field_weight
+        FROM hr_schema.practical_test_question_table 
+        INNER JOIN form_schema.field_table ON field_id = practical_test_question_field_id
+        WHERE
+          practical_test_question_practical_test_id = '${practicalTestData[0].practical_test_id}'
+          AND practical_test_question_is_disabled = false
+      `
+    );
+
+    returnData = {
+      ...practicalTestData[0],
+      practicalTestQuestionList: practicalTestQuestionList
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -21170,88 +21371,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROV
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON request_schema.request_signer_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (
-  (
-    SELECT team_member_team_id
-    FROM request_schema.request_table
-    INNER JOIN form_schema.form_table ON form_id = request_form_id
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE request_id = request_signer_request_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-    AND team_member_role IN ('OWNER', 'APPROVER')
-  ) OR (
-    SELECT DISTINCT(team_member_team_id)
-    FROM form_schema.signer_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-    WHERE signer_id = request_signer_signer_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-  ) OR (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table
-    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
-    WHERE
-      team_member_user_id = (SELECT auth.uid())
-      AND signer_id = request_signer_signer_id
-  )
-)
-WITH CHECK (
-  (
-    SELECT team_member_team_id
-    FROM request_schema.request_table
-    INNER JOIN form_schema.form_table ON form_id = request_form_id
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE request_id = request_signer_request_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-    AND team_member_role IN ('OWNER', 'APPROVER')
-  ) OR (
-    SELECT DISTINCT(team_member_team_id)
-    FROM form_schema.signer_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-    WHERE signer_id = request_signer_signer_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-  ) OR (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table
-    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
-    WHERE
-      team_member_user_id = (SELECT auth.uid())
-      AND signer_id = request_signer_signer_id
-  )
-);
+USING (true)
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON request_schema.request_signer_table

@@ -79,6 +79,7 @@ import {
   OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
+  PracticalTestTableRow,
   PracticalTestType,
   QuestionnaireData,
   ReferenceMemoType,
@@ -112,6 +113,7 @@ import {
   TicketStatusType,
   TradeTestFilterFormValues,
   TradeTestSpreadsheetData,
+  TradeTestTableRow,
   TransactionTableRow,
   UnformattedRequestListItemRequestSigner,
   UserIssuedItem,
@@ -5915,6 +5917,29 @@ export const getApplicationInformationPositionOptions = async (
   return data;
 };
 
+export const getAllApplicationInformationPositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .eq("position_is_disabled", false)
+    .eq("position_is_available", true)
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
 export const getApplicationInformationSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: ApplicationInformationFilterFormValues & {
@@ -7703,4 +7728,46 @@ export const getPracticalTestForm = async (
   if (error) throw error;
 
   return data as unknown as CreatePracticalTestFormType;
+};
+
+export const getPracticalTestAutomaticResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    practicalTestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_practical_test_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    candidateFirstName: string;
+    candidateMiddleName: string;
+    candidateLastName: string;
+    candidateEmail: string;
+    position: string;
+    email: string;
+    tradeTestData: TradeTestTableRow & { request_formsly_id: string };
+  };
+  return formattedData;
+};
+
+export const getPracticalTestFieldList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    position: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_practical_test_field_list", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+  const formattedData = data as unknown as
+    | (PracticalTestTableRow & {
+        practicalTestQuestionList: (FieldTableRow & { field_weight: number })[];
+      })
+    | null;
+
+  return formattedData;
 };
