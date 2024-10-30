@@ -10396,6 +10396,7 @@ AS $$
             SELECT field_table.*
             FROM form_schema.field_table
             INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
+              AND request_response_request_id = '${requestData.request_id}'
             WHERE field_section_id = '${section.section_id}'
             ORDER BY field_order ASC
           `
