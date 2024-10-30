@@ -1044,10 +1044,13 @@ CREATE TABLE hr_schema.trade_test_table (
   trade_test_status_date_updated TIMESTAMPTZ,
   trade_test_schedule TIMESTAMPTZ,
   trade_test_meeting_link VARCHAR(4000),
+  trade_test_evaluation_link VARCHAR(4000),
 
   trade_test_address_id UUID REFERENCES address_table(address_id),
   trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  trade_test_evaluator_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  trade_test_evaluation_request_id UUID REFERENCES request_schema.request_table(request_id)
 );
 
 CREATE TABLE hr_schema.background_check_table (
@@ -16209,7 +16212,11 @@ AS $$
           trade_test_status,
           trade_test_schedule,
           trade_test_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          trade_test_evaluation_link,
+          trade_test_evaluator_team_member_id,
+          CONCAT(hru.user_first_name, ' ', hru.user_last_name) AS assigned_hr,
+          CONCAT(eu.user_first_name, ' ', eu.user_last_name) AS trade_test_assigned_evaluator,
+          er.request_formsly_id AS trade_test_evaluation_request_id
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -16234,8 +16241,11 @@ AS $$
           ${tradeTestCondition}
           ${tradeTestScheduleCondition}
           ${assignedHRCondition}
-        LEFT JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS hrtm ON hrtm.team_member_id = trade_test_team_member_id
+        LEFT JOIN user_schema.user_table AS hru ON hru.user_id = hrtm.team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS etm ON etm.team_member_id = trade_test_evaluator_team_member_id
+        LEFT JOIN user_schema.user_table AS eu ON eu.user_id = etm.team_member_user_id
+        LEFT JOIN public.request_view AS er ON er.request_id = trade_test_evaluation_request_id
         ORDER BY ${sort.sortBy} ${sort.order}, trade_test_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -20164,6 +20174,59 @@ AS $$
           technical_interview_evaluator_team_member_id = '${teamMemberId}'
         WHERE
           technical_interview_id = '${interviewId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT team_member_user_id FROM team_schema.team_member_table WHERE team_member_id = '${teamMemberId}'`)[0].team_member_user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES
+        (
+          'REQUEST',
+          'REQUEST',
+          'You are assigned to evaluate ${formslyId} applicant',
+          '${notificationLink}',
+          '${userId}'
+        )
+      `
+    );
+
+    returnData = plv8.execute(`SELECT user_first_name, user_last_name, user_email FROM user_schema.user_table WHERE user_id = '${userId}'`)[0];
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_practical_test_evaluator(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      link,
+      notificationLink,
+      teamMemberId,
+      practicalTestId,
+      formslyId
+    } = input_data;
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET
+          trade_test_evaluation_link = '${link}',
+          trade_test_evaluator_team_member_id = '${teamMemberId}'
+        WHERE
+          trade_test_id = '${practicalTestId}'
       `
     );
 

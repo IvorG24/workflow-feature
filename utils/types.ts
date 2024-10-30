@@ -2387,6 +2387,10 @@ export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
   trade_test_date_created: string;
   trade_test_status: string;
   trade_test_schedule: string;
+  trade_test_evaluation_link: string;
+  trade_test_evaluator_team_member_id: string;
+  trade_test_assigned_evaluator: string;
+  trade_test_evaluation_request_id: string;
   meeting_link: string;
 };
 
