@@ -592,6 +592,20 @@ export type RequesterPrimarySignerTableInsert =
 export type RequesterPrimarySignerTableUpdate =
   Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Update"];
 
+export type PracticalTestTableRow =
+  Database["hr_schema"]["Tables"]["practical_test_table"]["Row"];
+export type PracticalTestTableInsert =
+  Database["hr_schema"]["Tables"]["practical_test_table"]["Insert"];
+export type PracticalTestTableUpdate =
+  Database["hr_schema"]["Tables"]["practical_test_table"]["Update"];
+
+export type PracticalTestQuestionTableRow =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Row"];
+export type PracticalTestQuestionTableInsert =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Insert"];
+export type PracticalTestQuestionTableUpdate =
+  Database["hr_schema"]["Tables"]["practical_test_question_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -914,6 +928,7 @@ export type FormWithResponseType = {
       field_response?: unknown;
       field_prefix?: string;
       field_is_correct?: boolean;
+      field_weight?: number;
     })[];
   })[];
   form_team_group: {
@@ -2381,6 +2396,10 @@ export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
   trade_test_date_created: string;
   trade_test_status: string;
   trade_test_schedule: string;
+  trade_test_evaluation_link: string;
+  trade_test_evaluator_team_member_id: string;
+  trade_test_assigned_evaluator: string;
+  trade_test_evaluation_request_id: string;
   meeting_link: string;
 };
 
@@ -2613,4 +2632,30 @@ export type RequesterPrimarySignerFormValues = {
 
 export type RequesterPrimarySignerType = RequesterPrimarySignerTableRow & {
   requester_primary_signer_signer_team_member_id: string;
+};
+
+export type PracticalTestType = PracticalTestTableRow & {
+  practical_test_created_by_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+  };
+  practical_test_updated_by_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+  } | null;
+};
+
+export type CreatePracticalTestFormType = {
+  practical_test_id: string;
+  practical_test_label: string;
+  practical_test_passing_score: number;
+  practical_test_position_list: string[];
+  practical_test_question_list: {
+    practical_test_question: string;
+    practical_test_question_weight: number;
+  }[];
 };
