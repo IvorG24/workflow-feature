@@ -630,7 +630,7 @@ export const createRequest = async (
     applicationInformationFormslyId,
     interviewParams,
     backgroundCheckParams,
-    tradeTestParams
+    tradeTestParams,
   } = params;
 
   const requestId = uuidv4();
@@ -779,7 +779,7 @@ export const createRequest = async (
         recruiter,
         interviewParams,
         backgroundCheckParams,
-        tradeTestParams
+        tradeTestParams,
       },
     })
     .select()
