@@ -3439,8 +3439,7 @@ export const getMemoList = async (
       columnAccessor,
     },
   });
-
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as { data: MemoListItemType[]; count: number };
 };

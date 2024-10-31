@@ -71,6 +71,7 @@ import {
   TechnicalAssessmentTableRow,
   TechnicalQuestionFormValues,
   TicketCommentTableInsert,
+  TicketCommentTableRow,
   TicketResponseTableInsert,
   TicketTableRow,
   UserSSSTableInsert,
@@ -1116,7 +1117,7 @@ export const cancelTeamInvitation = async (
     .eq("invitation_id", invitation_id)
     .select();
 
-  if (error) throw Error;
+  if (error) throw error;
 };
 
 export const downloadFromStorage = (
@@ -1172,17 +1173,17 @@ export const createServiceScopeChoice = async (
 // Create ticket comment
 export const createTicketComment = async (
   supabaseClient: SupabaseClient<Database>,
-  params: TicketCommentTableInsert
+  params: {
+    commentInput: TicketCommentTableInsert;
+    notificationInput: NotificationTableInsert[];
+  }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("ticket_schema")
-    .from("ticket_comment_table")
-    .insert(params)
-    .select("*")
-    .single();
+  const { data, error } = await supabaseClient.rpc("create_ticket_comment", {
+    input_data: params,
+  });
   if (error) throw error;
 
-  return { data, error };
+  return data as TicketCommentTableRow;
 };
 
 // Create row in lookup table
@@ -1257,7 +1258,7 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as MemoTableRow;
 };
@@ -1400,7 +1401,7 @@ export const createReferenceMemo = async (
     input_data,
   });
 
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as unknown as ReferenceMemoType;
 };

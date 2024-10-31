@@ -21121,6 +21121,74 @@ AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION create_ticket_comment(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      commentInput,
+      notificationInput
+    } = input_data;
+
+    const commentData = plv8.execute(
+      `
+        INSERT INTO ticket_schema.ticket_comment_table
+        (
+          ticket_comment_id,
+          ticket_comment_content,
+          ticket_comment_type,
+          ticket_comment_team_member_id,
+          ticket_comment_ticket_id
+        )
+        VALUES
+        (
+          '${commentInput.ticket_comment_id}',
+          '${commentInput.ticket_comment_content}',
+          '${commentInput.ticket_comment_type}',
+          '${commentInput.ticket_comment_team_member_id}',
+          '${commentInput.ticket_comment_ticket_id}'
+        )
+        RETURNING *
+      `
+    );
+
+    const notificationQuery = notificationInput.map(notification => {
+      return `
+        (
+          '${notification.notification_app}',
+          '${notification.notification_type}',
+          '${notification.notification_content}',
+          '${notification.notification_redirect_url}',
+          '${notification.notification_user_id}',
+          '${notification.notification_team_id}'
+        )
+      `
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id,
+          notification_team_id
+        )
+        VALUES ${notificationQuery}
+      `
+    );
+
+    returnData = commentData[0];
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
