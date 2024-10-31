@@ -682,6 +682,7 @@ CREATE TABLE item_schema.item_level_three_description_table (
   item_level_three_description_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   item_level_three_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_level_three_description VARCHAR(4000) NOT NULL,
+  item_level_three_description_csi_code_section VARCHAR(4000) NOT NULL,
 
   item_level_three_description_item_id UUID REFERENCES item_schema.item_table(item_id)
 );
@@ -2281,10 +2282,36 @@ AS $$
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
-    let itemDivisionDescription;
-    if (item_level_three_description) {
-      itemDivisionDescription = plv8.execute(`INSERT INTO item_schema.item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
-    }
+
+    const csiCodeSection = plv8.execute(
+      `
+        SELECT csi_code_section
+        FROM lookup_schema.csi_code_table
+        WHERE
+          csi_code_division_id IN (${item_division_id_list.join(", ")})
+          AND csi_code_level_three_description = '${item_level_three_description}'
+        LIMIT 1
+      `
+    )[0].csi_code_section;
+
+    const itemDivisionDescription = plv8.execute(
+      `
+        INSERT INTO item_schema.item_level_three_description_table 
+        (
+          item_level_three_description_item_id, 
+          item_level_three_description,
+          item_level_three_description_csi_code_section
+        ) 
+        VALUES 
+        (
+          '${item_result.item_id}', 
+          '${item_level_three_description}',
+          '${csiCodeSection}'
+        ) 
+        RETURNING *
+      `
+    )[0].item_level_three_description;
+
     const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const itemDescriptionInput = [];
@@ -2476,10 +2503,34 @@ AS $$
 
     const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
-    let itemLevelThreeDescription = "";
-    if(item_level_three_description){
-      itemLevelThreeDescription = plv8.execute(`INSERT INTO item_schema.item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
-    }
+    const csiCodeSection = plv8.execute(
+      `
+        SELECT csi_code_section
+        FROM lookup_schema.csi_code_table
+        WHERE
+          csi_code_division_id IN (${item_division_id_list.join(", ")})
+          AND csi_code_level_three_description = '${item_level_three_description}'
+        LIMIT 1
+      `
+    )[0].csi_code_section;
+
+    const itemLevelThreeDescription = plv8.execute(
+      `
+        INSERT INTO item_schema.item_level_three_description_table 
+        (
+          item_level_three_description_item_id, 
+          item_level_three_description,
+          item_level_three_description_csi_code_section
+        ) 
+        VALUES 
+        (
+          '${item_id}', 
+          '${item_level_three_description}',
+          '${csiCodeSection}'
+        )
+        RETURNING *
+      `
+    )[0].item_level_three_description;
 
     item_data = {
       ...item_result,
