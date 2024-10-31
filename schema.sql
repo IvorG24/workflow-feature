@@ -15583,7 +15583,8 @@ AS $$
   let returnData = {};
   plv8.subtransaction(function(){
     const {
-      requestId
+      requestId,
+      userEmail
     } = input_data;
 
     let applicationInformationData
@@ -15599,6 +15600,8 @@ AS $$
       = null;
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
+    const emailValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'`)[0].request_response.replaceAll('"', "");
+    if (userEmail !== emailValue) throw new Error('403') 
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
 
