@@ -2742,6 +2742,12 @@ export type Database = {
         }
         Returns: Json
       }
+      accept_team_member_request: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
       add_job_offer: {
         Args: {
           input_data: Json

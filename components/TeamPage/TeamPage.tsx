@@ -8,7 +8,6 @@ import {
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -45,7 +44,7 @@ import ApproverGroup from "./TeamGroup/ApproverGroup";
 import TeamGroups from "./TeamGroup/TeamGroups/TeamGroups";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
-import TeamMembershipRequestAdminView from "./TeamMembershipRequest/TeamMembershipRequestAdminView";
+import TeamMembershipRequestAdminView from "./TeamMembershipRequestAdminView/TeamMembershipRequestAdminView";
 import TeamProject from "./TeamProject/TeamProject";
 import ValidIDVerificationList from "./ValidIDVerificationList";
 

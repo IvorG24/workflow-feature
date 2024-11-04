@@ -225,16 +225,16 @@ export const deleteTeamMembershipRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
-    userId: string;
+    userIdList: string[];
   }
 ) => {
-  const { teamId, userId } = params;
+  const { teamId, userIdList } = params;
   const { error } = await supabaseClient
     .schema("team_schema")
     .from("team_membership_request_table")
     .delete()
-    .eq("team_membership_request_from_user_id", userId)
-    .eq("team_membership_request_to_team_id", teamId);
+    .eq("team_membership_request_to_team_id", teamId)
+    .in("team_membership_request_from_user_id", userIdList);
 
   if (error) throw error;
 };

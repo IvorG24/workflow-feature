@@ -2691,3 +2691,17 @@ export const sendRequestToJoinTeam = async (
 
   return data[0];
 };
+
+export const acceptTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userIdList: string[];
+    teamId: string;
+    memberRole: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("accept_team_member_request", {
+    input_data: params,
+  });
+  if (error) throw error;
+};

@@ -7596,9 +7596,10 @@ export const getExistingTeams = async (
     .select("team_id, team_name, team_logo", { count: "exact" });
 
   if (search) {
-    query = query.ilike("team_name", search);
+    query = query.ilike("team_name", `%${search}%`);
   }
   query.range(start, end);
+
   const { data, count, error } = await query;
 
   if (error) throw error;
@@ -7611,13 +7612,21 @@ export const getExistingTeams = async (
 
 export const getUserTeamMembershipRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  userId: string
+  params: {
+    userId: string;
+    offset: number;
+  }
 ) => {
+  const { userId, offset } = params;
+  const start = offset * ROW_PER_PAGE;
+  const end = start + ROW_PER_PAGE;
+
   const { data, error } = await supabaseClient
     .schema("team_schema")
     .from("team_membership_request_table")
     .select("*")
-    .eq("team_membership_request_from_user_id", userId);
+    .eq("team_membership_request_from_user_id", userId)
+    .range(start, end);
 
   if (error) throw error;
 
