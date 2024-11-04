@@ -25240,6 +25240,46 @@ ALTER TABLE lookup_schema.degree_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.degree_table;
 CREATE POLICY "Allow READ for anon users" ON lookup_schema.degree_table
 AS PERMISSIVE FOR SELECT
+USING (true)
+WITH CHECK (true)
+
+--- user_schema.user_sss_table
+ALTER TABLE user_schema.user_sss_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for own user" ON user_schema.user_sss_table;
+CREATE POLICY "Allow CREATE access for own user" ON user_schema.user_sss_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (user_sss_user_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_schema.user_sss_table;
+CREATE POLICY "Allow READ for authenticated users" ON user_schema.user_sss_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (user_sss_user_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Allow UPDATE for own user" ON user_schema.user_sss_table;
+CREATE POLICY "Allow UPDATE for own user" ON user_schema.user_sss_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING(true);
+
+--- user_schema.email_resend_table
+ALTER TABLE user_schema.email_resend_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow CREATE access for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow READ for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow UPDATE for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR UPDATE
 USING (true);
 
 ----- END: POLICIES
