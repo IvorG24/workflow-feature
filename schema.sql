@@ -25234,6 +25234,14 @@ USING (
   )
 );
 
+--- lookup_schema.query_table
+ALTER TABLE lookup_schema.degree_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.degree_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.degree_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: SCHEDULED FUNCTIONS
