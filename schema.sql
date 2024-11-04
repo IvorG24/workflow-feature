@@ -25551,6 +25551,14 @@ CREATE POLICY "Allow UPDATE for anon users" ON hr_schema.request_connection_tabl
 AS PERMISSIVE FOR UPDATE
 USING (true);
 
+--- error_table
+ALTER TABLE error_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON error_table;
+CREATE POLICY "Allow CREATE access for anon users" ON error_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
 ----- END: POLICIES
 
 ----- START: SCHEDULED FUNCTIONS
