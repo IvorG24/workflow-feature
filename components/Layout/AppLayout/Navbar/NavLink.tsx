@@ -569,6 +569,18 @@ const ReviewAppNavLink = () => {
     },
   ];
 
+  const joinTeamSection = [
+    {
+      label: "Join Team",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconUsersGroup {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/user/join-team`,
+    },
+  ];
+
   useEffect(() => {
     const fetchApproverRequestCount = async (
       userTeamMemberData: TeamMemberTableRow
@@ -657,6 +669,14 @@ const ReviewAppNavLink = () => {
         <NavLinkSection
           label={"Team"}
           links={teamSectionWithManageTeam}
+          {...defaultNavLinkProps}
+        />
+      )}
+
+      {!hasTeam && (
+        <NavLinkSection
+          label="Team"
+          links={joinTeamSection}
           {...defaultNavLinkProps}
         />
       )}
