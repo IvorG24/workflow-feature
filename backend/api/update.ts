@@ -524,8 +524,7 @@ export const cancelTeamInvitation = async (
     .update({ invitation_is_disabled: true })
     .eq("invitation_id", invitation_id)
     .select();
-
-  if (error) throw Error;
+  if (error) throw error;
 };
 
 // Update item
@@ -804,8 +803,7 @@ export const updateMemo = async (
   };
 
   const { error } = await supabaseClient.rpc("edit_memo", { input_data });
-
-  if (error) throw Error;
+  if (error) throw error;
 };
 
 const processAllMemoLineItems = async (
@@ -920,8 +918,7 @@ export const updateMemoFormat = async (
       .schema("memo_schema")
       .from("memo_format_attachment_table")
       .upsert(memoFormatAttachmentData);
-
-    if (error) throw Error;
+    if (error) throw error;
   }
 
   const existingAttachmentIdList = memoFormatAttachmentData.map(
@@ -1725,4 +1722,25 @@ export const overrideStep = async (
     .update({ [`${table}_team_member_id`]: hrTeamMemberId })
     .eq(`${table}_id`, rowId);
   if (error) throw error;
+};
+
+export const updatePracticalTestEvaluator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    link: string;
+    notificationLink: string;
+    teamMemberId: string;
+    practicalTestId: string;
+    formslyId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_practical_test_evaluator", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data as UserTableRow;
 };

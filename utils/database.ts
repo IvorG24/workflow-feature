@@ -1097,6 +1097,112 @@ export type Database = {
         }
         Relationships: []
       }
+      practical_test_position_table: {
+        Row: {
+          practical_test_position_date_created: string
+          practical_test_position_id: string
+          practical_test_position_position_id: string
+          practical_test_position_practical_test_id: string
+        }
+        Insert: {
+          practical_test_position_date_created?: string
+          practical_test_position_id?: string
+          practical_test_position_position_id: string
+          practical_test_position_practical_test_id: string
+        }
+        Update: {
+          practical_test_position_date_created?: string
+          practical_test_position_id?: string
+          practical_test_position_position_id?: string
+          practical_test_position_practical_test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practical_test_position_table_practical_test_position_prac_fkey"
+            columns: ["practical_test_position_practical_test_id"]
+            isOneToOne: false
+            referencedRelation: "practical_test_table"
+            referencedColumns: ["practical_test_id"]
+          },
+        ]
+      }
+      practical_test_question_table: {
+        Row: {
+          practical_test_question: string
+          practical_test_question_date_created: string
+          practical_test_question_field_id: string
+          practical_test_question_id: string
+          practical_test_question_is_disabled: boolean
+          practical_test_question_order: number
+          practical_test_question_practical_test_id: string
+          practical_test_question_weight: number
+        }
+        Insert: {
+          practical_test_question: string
+          practical_test_question_date_created?: string
+          practical_test_question_field_id: string
+          practical_test_question_id?: string
+          practical_test_question_is_disabled?: boolean
+          practical_test_question_order: number
+          practical_test_question_practical_test_id: string
+          practical_test_question_weight: number
+        }
+        Update: {
+          practical_test_question?: string
+          practical_test_question_date_created?: string
+          practical_test_question_field_id?: string
+          practical_test_question_id?: string
+          practical_test_question_is_disabled?: boolean
+          practical_test_question_order?: number
+          practical_test_question_practical_test_id?: string
+          practical_test_question_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practical_test_question_table_practical_test_question_prac_fkey"
+            columns: ["practical_test_question_practical_test_id"]
+            isOneToOne: false
+            referencedRelation: "practical_test_table"
+            referencedColumns: ["practical_test_id"]
+          },
+        ]
+      }
+      practical_test_table: {
+        Row: {
+          practical_test_created_by: string
+          practical_test_date_created: string
+          practical_test_date_updated: string | null
+          practical_test_id: string
+          practical_test_is_disabled: boolean
+          practical_test_label: string
+          practical_test_passing_score: number
+          practical_test_team_id: string
+          practical_test_updated_by: string | null
+        }
+        Insert: {
+          practical_test_created_by: string
+          practical_test_date_created?: string
+          practical_test_date_updated?: string | null
+          practical_test_id?: string
+          practical_test_is_disabled?: boolean
+          practical_test_label: string
+          practical_test_passing_score: number
+          practical_test_team_id: string
+          practical_test_updated_by?: string | null
+        }
+        Update: {
+          practical_test_created_by?: string
+          practical_test_date_created?: string
+          practical_test_date_updated?: string | null
+          practical_test_id?: string
+          practical_test_is_disabled?: boolean
+          practical_test_label?: string
+          practical_test_passing_score?: number
+          practical_test_team_id?: string
+          practical_test_updated_by?: string | null
+        }
+        Relationships: []
+      }
       recruitment_table: {
         Row: {
           recruitment_id: string
@@ -1185,6 +1291,9 @@ export type Database = {
         Row: {
           trade_test_address_id: string | null
           trade_test_date_created: string
+          trade_test_evaluation_link: string | null
+          trade_test_evaluation_request_id: string | null
+          trade_test_evaluator_team_member_id: string | null
           trade_test_id: string
           trade_test_meeting_link: string | null
           trade_test_request_id: string
@@ -1196,6 +1305,9 @@ export type Database = {
         Insert: {
           trade_test_address_id?: string | null
           trade_test_date_created?: string
+          trade_test_evaluation_link?: string | null
+          trade_test_evaluation_request_id?: string | null
+          trade_test_evaluator_team_member_id?: string | null
           trade_test_id?: string
           trade_test_meeting_link?: string | null
           trade_test_request_id: string
@@ -1207,6 +1319,9 @@ export type Database = {
         Update: {
           trade_test_address_id?: string | null
           trade_test_date_created?: string
+          trade_test_evaluation_link?: string | null
+          trade_test_evaluation_request_id?: string | null
+          trade_test_evaluator_team_member_id?: string | null
           trade_test_id?: string
           trade_test_meeting_link?: string | null
           trade_test_request_id?: string
@@ -1394,18 +1509,21 @@ export type Database = {
       item_level_three_description_table: {
         Row: {
           item_level_three_description: string
+          item_level_three_description_csi_code_section: string
           item_level_three_description_date_created: string
           item_level_three_description_id: string
           item_level_three_description_item_id: string | null
         }
         Insert: {
           item_level_three_description: string
+          item_level_three_description_csi_code_section: string
           item_level_three_description_date_created?: string
           item_level_three_description_id?: string
           item_level_three_description_item_id?: string | null
         }
         Update: {
           item_level_three_description?: string
+          item_level_three_description_csi_code_section?: string
           item_level_three_description_date_created?: string
           item_level_three_description_id?: string
           item_level_three_description_item_id?: string | null
@@ -2963,6 +3081,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_practical_test_form: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
       create_public_request_page_on_load: {
         Args: {
           input_data: Json
@@ -3030,6 +3154,12 @@ export type Database = {
         Returns: Json
       }
       create_ticket: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      create_ticket_comment: {
         Args: {
           input_data: Json
         }
@@ -3518,6 +3648,30 @@ export type Database = {
         }
         Returns: Json
       }
+      get_practical_test_data: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_practical_test_field_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_practical_test_form: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_practical_test_form_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_project_signer_with_team_member: {
         Args: {
           input_data: Json
@@ -3933,6 +4087,12 @@ export type Database = {
         Returns: Json
       }
       update_multiple_approver: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      update_practical_test_evaluator: {
         Args: {
           input_data: Json
         }

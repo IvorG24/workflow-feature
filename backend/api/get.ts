@@ -37,6 +37,7 @@ import {
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
   BackgroundCheckTableRow,
+  CreatePracticalTestFormType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
@@ -78,6 +79,8 @@ import {
   OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
+  PracticalTestTableRow,
+  PracticalTestType,
   QuestionnaireData,
   ReferenceMemoType,
   RequesterPrimarySignerType,
@@ -111,6 +114,7 @@ import {
   TicketStatusType,
   TradeTestFilterFormValues,
   TradeTestSpreadsheetData,
+  TradeTestTableRow,
   TransactionTableRow,
   UnformattedRequestListItemRequestSigner,
   UserIssuedItem,
@@ -3436,8 +3440,7 @@ export const getMemoList = async (
       columnAccessor,
     },
   });
-
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as { data: MemoListItemType[]; count: number };
 };
@@ -5351,28 +5354,6 @@ export const getFieldResponseByRequestId = async (
   return data;
 };
 
-export const getRequestTypeFieldResponse = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-    fieldId: string;
-  }
-) => {
-  const { requestId, fieldId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_response_table")
-    .select("request_response")
-    .eq("request_response_request_id", requestId)
-    .eq("request_response_field_id", fieldId)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return data;
-};
-
 export const getAdminTicketAnalytics = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5907,6 +5888,29 @@ export const getApplicationInformationPositionOptions = async (
     .eq("position_is_available", true)
     .not("position_alias", "ilike", "JUNIOR%")
     .not("position_alias", "ilike", "SENIOR%")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+export const getAllApplicationInformationPositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .eq("position_is_disabled", false)
+    .eq("position_is_available", true)
     .limit(limit)
     .range(index, index + limit - 1);
   if (error) throw error;
@@ -7172,12 +7176,22 @@ export const getQuestionnaireList = async (
     page: number;
     limit: number;
     creator?: string;
+    columnAccessor: string;
     isAscendingSort: boolean;
     search?: string;
   }
 ) => {
-  const { teamId, page, limit, creator, isAscendingSort, search } = params;
-  const sortCondition = isAscendingSort ? "asc" : "desc";
+  const {
+    teamId,
+    page,
+    limit,
+    creator,
+    isAscendingSort,
+    search,
+    columnAccessor,
+  } = params;
+  const sortBy = isAscendingSort ? "asc" : "desc";
+  const sortCondition = `${columnAccessor} ${sortBy}`;
 
   const creatorCondition =
     creator && validate(creator)
@@ -7633,6 +7647,25 @@ export const getUserTeamMembershipRequest = async (
   return data;
 };
 
+export const getRequestIdFromFormslyId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyId: string;
+    requestFormId: string;
+  }
+) => {
+  const { formslyId, requestFormId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_view")
+    .select("request_id")
+    .eq("request_form_id", requestFormId)
+    .eq("request_formsly_id", formslyId)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0] ? data[0].request_id : null;
+};
+
 export const getBackgroundCheckData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7675,4 +7708,134 @@ export const getTeamTeamMembershipRequest = async (
   if (error) throw error;
 
   return data as { data: TeamTeamMembershipRequest[]; count: number };
+};
+
+export const getPracticalTestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    creator?: string;
+    columnAccessor: string;
+    isAscendingSort: boolean;
+    search?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    creator,
+    isAscendingSort,
+    search,
+    columnAccessor,
+  } = params;
+  const sortBy = isAscendingSort ? "asc" : "desc";
+  const sortCondition = `${columnAccessor} ${sortBy}`;
+
+  const creatorCondition =
+    creator && validate(creator)
+      ? `practical_test_created_by = '${creator}'`
+      : `practical_test_created_by '%' || '${creator}' || '%'`;
+
+  const searchCondition =
+    search && validate(search)
+      ? `practical_test_label = '${search}'`
+      : `practical_test_label ILIKE '%' || '${search}' || '%'`;
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_practical_test_form_on_load",
+    {
+      input_data: {
+        teamId,
+        search: search ? `AND (${searchCondition})` : "",
+        creator: creator ? `AND (${creatorCondition})` : "",
+        page,
+        isAscendingSort: sortCondition,
+        limit,
+      },
+    }
+  );
+  if (error) throw error;
+
+  return data as unknown as {
+    data: PracticalTestType[];
+    count: number;
+  };
+};
+
+export const checkPracticalTestLabel = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+  }
+) => {
+  const { label } = params;
+
+  const { count, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("practical_test_table")
+    .select("*", { count: "exact", head: true })
+    .eq("practical_test_label", label)
+    .limit(1);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+export const getPracticalTestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    practicalTestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_practical_test_form", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as unknown as CreatePracticalTestFormType;
+};
+
+export const getPracticalTestAutomaticResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    practicalTestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_practical_test_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    candidateFirstName: string;
+    candidateMiddleName: string;
+    candidateLastName: string;
+    candidateEmail: string;
+    position: string;
+    email: string;
+    tradeTestData: TradeTestTableRow & { request_formsly_id: string };
+  };
+  return formattedData;
+};
+
+export const getPracticalTestFieldList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    position: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_practical_test_field_list", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+  const formattedData = data as unknown as
+    | (PracticalTestTableRow & {
+        practicalTestQuestionList: (FieldTableRow & { field_weight: number })[];
+      })
+    | null;
+
+  return formattedData;
 };

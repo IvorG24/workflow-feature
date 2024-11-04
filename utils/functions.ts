@@ -398,3 +398,16 @@ export const setFileInputFromUrl = async (url: string) => {
   const file = new File([blob], fileName, { type: blob.type });
   return file;
 };
+
+export const removeDuplicates = (
+  array: Record<string, string>[],
+  key: string
+) => {
+  const uniqueObjects = new Map();
+
+  array.forEach((item) => {
+    uniqueObjects.set(item[key], item);
+  });
+
+  return Array.from(uniqueObjects.values());
+};

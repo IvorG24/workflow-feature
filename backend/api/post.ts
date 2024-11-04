@@ -21,6 +21,7 @@ import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
+  CreatePracticalTestFormType,
   CreateTicketFormValues,
   EquipmentDescriptionTableInsert,
   EquipmentPartTableInsert,
@@ -70,6 +71,7 @@ import {
   TechnicalAssessmentTableRow,
   TechnicalQuestionFormValues,
   TicketCommentTableInsert,
+  TicketCommentTableRow,
   TicketResponseTableInsert,
   TicketTableRow,
   UserSSSTableInsert,
@@ -79,7 +81,9 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
+import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
+import { getCurrentDate } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -595,6 +599,17 @@ export const createRequest = async (
       };
       backgroundCheckId: string;
     };
+    tradeTestParams?: {
+      status: string;
+      teamMemberId: string;
+      data: {
+        hr_request_reference_id: string;
+        application_information_email: string;
+        application_information_request_id: string;
+        position: string;
+      };
+      tradeTestId: string;
+    };
   }
 ) => {
   const {
@@ -615,6 +630,7 @@ export const createRequest = async (
     applicationInformationFormslyId,
     interviewParams,
     backgroundCheckParams,
+    tradeTestParams,
   } = params;
 
   const requestId = uuidv4();
@@ -763,6 +779,7 @@ export const createRequest = async (
         recruiter,
         interviewParams,
         backgroundCheckParams,
+        tradeTestParams,
       },
     })
     .select()
@@ -1100,7 +1117,7 @@ export const cancelTeamInvitation = async (
     .eq("invitation_id", invitation_id)
     .select();
 
-  if (error) throw Error;
+  if (error) throw error;
 };
 
 export const downloadFromStorage = (
@@ -1156,17 +1173,17 @@ export const createServiceScopeChoice = async (
 // Create ticket comment
 export const createTicketComment = async (
   supabaseClient: SupabaseClient<Database>,
-  params: TicketCommentTableInsert
+  params: {
+    commentInput: TicketCommentTableInsert;
+    notificationInput: NotificationTableInsert[];
+  }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("ticket_schema")
-    .from("ticket_comment_table")
-    .insert(params)
-    .select("*")
-    .single();
+  const { data, error } = await supabaseClient.rpc("create_ticket_comment", {
+    input_data: params,
+  });
   if (error) throw error;
 
-  return { data, error };
+  return data as TicketCommentTableRow;
 };
 
 // Create row in lookup table
@@ -1241,7 +1258,7 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as MemoTableRow;
 };
@@ -1384,7 +1401,7 @@ export const createReferenceMemo = async (
     input_data,
   });
 
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as unknown as ReferenceMemoType;
 };
@@ -2666,7 +2683,98 @@ export const createRequesterPrimarySigner = async (
       input_data: params,
     }
   );
+  if (error) throw error;
+};
 
+export const createPracticalTestForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: CreatePracticalTestFormType & { teamMemberId: string; teamId: string }
+) => {
+  const {
+    practical_test_id,
+    practical_test_label,
+    practical_test_passing_score,
+    practical_test_position_list,
+    practical_test_question_list,
+    teamMemberId,
+    teamId,
+  } = params;
+
+  const currentDate = moment(await getCurrentDate(supabaseClient)).format();
+  const isEdit = Boolean(practical_test_id);
+  const practicalTestId = isEdit ? practical_test_id : uuidv4();
+
+  let practicalTestQuery = "";
+  if (isEdit) {
+    practicalTestQuery = `
+      UPDATE hr_schema.practical_test_table
+      SET
+        practical_test_date_updated = '${currentDate}',
+        practical_test_label = '${practical_test_label.trim()}',
+        practical_test_passing_score = ${practical_test_passing_score},
+        practical_test_updated_by = '${teamMemberId}'
+      WHERE practical_test_id = '${practicalTestId}'
+    `;
+  } else {
+    practicalTestQuery = `
+      INSERT INTO hr_schema.practical_test_table
+      (
+        practical_test_id,
+        practical_test_label,
+        practical_test_passing_score,
+        practical_test_created_by,
+        practical_test_team_id
+      )
+      VALUES
+      (
+        '${practicalTestId}', 
+        '${practical_test_label.trim()}', 
+        ${practical_test_passing_score}, 
+        '${teamMemberId}', 
+        '${teamId}'
+      )
+    `;
+  }
+
+  const practicalTestPositionList: string[] = [];
+  const positionList: string[] = [];
+  practical_test_position_list.forEach((position) => {
+    practicalTestPositionList.push(`('${practicalTestId}', '${position}')`);
+    positionList.push(`'${position}'`);
+  });
+
+  const practicalTestPositionInput = practicalTestPositionList.join(", ");
+
+  const fieldList: string[] = [];
+  const practicalTestQuestionList: string[] = [];
+
+  practical_test_question_list.forEach((question, index) => {
+    const fieldId = uuidv4();
+    fieldList.push(
+      `('${fieldId}', '${question.practical_test_question.trim()}', true, 'NUMBER', ${
+        index + 1
+      }, 'ebda2641-77c2-4d0b-a117-84daadd5eb27')`
+    );
+    practicalTestQuestionList.push(
+      `('${question.practical_test_question.trim()}', ${
+        question.practical_test_question_weight
+      }, ${index + 1}, '${fieldId}', '${practicalTestId}')`
+    );
+  });
+
+  const fieldInput = fieldList.join(", ");
+  const practicalTestQuestionInput = practicalTestQuestionList.join(", ");
+
+  const { error } = await supabaseClient.rpc("create_practical_test_form", {
+    input_data: {
+      practicalTestQuery,
+      practicalTestPositionInput,
+      fieldInput,
+      practicalTestQuestionInput,
+      practicalTestId: isEdit ? practicalTestId : "",
+      positionList: positionList.join(", "),
+    },
+  });
   if (error) throw error;
 };
 
