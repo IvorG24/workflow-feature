@@ -205,27 +205,27 @@ CREATE TABLE team_schema.supplier_table (
 );
 
 CREATE TABLE team_schema.team_key_table (
-    team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_api_key VARCHAR(4000) NOT NULL,
-    team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_label VARCHAR(4000) NOT NULL,
-    team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_api_key VARCHAR(4000) NOT NULL,
+  team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_label VARCHAR(4000) NOT NULL,
+  team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-    team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+  team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE team_schema.team_key_record_table (
-    team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_record_access_api VARCHAR(5000) NOT NULL,
+  team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_record_access_api VARCHAR(5000) NOT NULL,
 
-    team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
+  team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
 );
 
 CREATE TABLE team_schema.team_membership_request_table (
-    team_membership_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_membership_request_to_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
-    team_membership_request_from_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
+  team_membership_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_membership_request_to_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
+  team_membership_request_from_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE user_schema.user_valid_id_table (
@@ -21692,8 +21692,12 @@ WITH CHECK (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -21714,8 +21718,12 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -21731,8 +21739,12 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -24983,6 +24995,242 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR (
     team_membership_request_from_user_id = auth.uid()
+  )
+);
+
+--- form_schema.questionnaire_table
+ALTER TABLE form_schema.questionnaire_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- form_schema.questionnaire_question_table
+ALTER TABLE form_schema.questionnaire_question_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+---  form_schema.question_option_table
+ALTER TABLE form_schema.question_option_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.question_option_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.question_option_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- form_schema.correct_response_table
+ALTER TABLE form_schema.correct_response_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.correct_response_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.correct_response_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
