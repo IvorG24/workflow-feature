@@ -25282,6 +25282,275 @@ CREATE POLICY "Allow UPDATE for anon users" ON user_schema.email_resend_table
 AS PERMISSIVE FOR UPDATE
 USING (true);
 
+--- hr_schema.background_check_table
+ALTER TABLE hr_schema.background_check_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.hr_phone_interview_table
+ALTER TABLE hr_schema.hr_phone_interview_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.hr_project_table
+ALTER TABLE hr_schema.hr_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.interview_online_meeting_table
+ALTER TABLE hr_schema.interview_online_meeting_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.job_offer_reason_for_rejection_table
+ALTER TABLE hr_schema.job_offer_reason_for_rejection_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.job_offer_table
+ALTER TABLE hr_schema.job_offer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_position_table
+ALTER TABLE hr_schema.practical_test_position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_question_table
+ALTER TABLE hr_schema.practical_test_question_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_table
+ALTER TABLE hr_schema.practical_test_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.technical_interview_table
+ALTER TABLE hr_schema.technical_interview_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.trade_test_table
+ALTER TABLE hr_schema.trade_test_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.recruitment_table
+ALTER TABLE hr_schema.recruitment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow CREATE access for anon users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.request_connection_table
+ALTER TABLE hr_schema.request_connection_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow CREATE access for anon users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow UPDATE for anon users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR UPDATE
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: SCHEDULED FUNCTIONS
