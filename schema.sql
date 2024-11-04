@@ -21181,20 +21181,22 @@ AS $$
       `
     }).join(", ");
 
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id,
-          notification_team_id
-        )
-        VALUES ${notificationQuery}
-      `
-    );
+    if (notificationQuery.length) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id,
+            notification_team_id
+          )
+          VALUES ${notificationQuery}
+        `
+      );
+    }
 
     returnData = commentData[0];
  });
@@ -21299,6 +21301,90 @@ AS $$
       `, [userId, teamId]);
 
     })
+ });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION join_team_group_by_ticket_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      groupList,
+      teamMemberId,
+      teamId
+    } = input_data;
+
+    const teamGroupIdList = plv8.execute(
+      `
+        SELECT
+          team_group_id
+        FROM team_schema.team_group_table
+        WHERE
+          team_group_name IN (${groupList})
+          AND team_group_team_id = '${teamId}'
+      `
+    );
+
+    const insertData = teamGroupIdList.map(groupId => {
+      return `('${teamMemberId}', '${groupId.team_group_id}')`
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_group_member_table
+        (
+          team_member_id,
+          team_group_id
+        )
+        VALUES ${insertData}
+        ON CONFLICT (team_member_id, team_group_id) DO NOTHING
+      `
+    );
+ });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION join_team_project_by_ticket_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      projectList,
+      teamMemberId,
+      teamId
+    } = input_data;
+
+    const teamProjectIdList = plv8.execute(
+      `
+        SELECT
+          team_project_id
+        FROM team_schema.team_project_table
+        WHERE
+          team_project_name IN (${projectList})
+          AND team_project_team_id = '${teamId}'
+      `
+    );
+
+    const insertData = teamProjectIdList.map(projectId => {
+      return `('${teamMemberId}', '${projectId.team_project_id}')`
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_project_member_table
+        (
+          team_member_id,
+          team_project_id
+        )
+        VALUES ${insertData}
+        ON CONFLICT (team_member_id, team_project_id) DO NOTHING
+      `
+    );
  });
 $$ LANGUAGE plv8;
 
