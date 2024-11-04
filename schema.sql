@@ -25748,6 +25748,20 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (true);
 
+--- request_schema.request_score_table
+ALTER TABLE request_schema.request_score_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON request_schema.request_score_table;
+CREATE POLICY "Allow CREATE access for anon users" ON request_schema.request_score_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON request_schema.request_score_table;
+CREATE POLICY "Allow READ for authenticated users" ON request_schema.request_score_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: SCHEDULED FUNCTIONS
