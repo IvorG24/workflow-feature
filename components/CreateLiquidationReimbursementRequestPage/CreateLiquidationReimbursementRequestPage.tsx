@@ -689,15 +689,21 @@ const CreateLiquidationReimbursementRequestPage = ({
         );
       };
 
+      const rirNumberDoesNotExistInSection = !currentPayeeSectionFieldList.some(
+        (field) => field.field_name === "RIR Number"
+      );
+
+      const isMaterialsOption = `${value}`.includes("Materials");
+
       if (value === "Other") {
         addField(3);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
-      } else if (value && value.includes("Materials")) {
-        const rirNumberDoesNotExistInSection =
-          !currentPayeeSectionFieldList.some(
-            (field) => field.field_name === "RIR Number"
-          );
+        // add rir number if true
+        if (isMaterialsOption && rirNumberDoesNotExistInSection) {
+          addField(8);
+        }
+      } else if (isMaterialsOption) {
         // add rir number if true
         if (rirNumberDoesNotExistInSection) {
           addField(8);
