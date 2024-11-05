@@ -1447,4 +1447,5 @@ export const costCodeExemptionList = [
   "YARD",
   "CENTRAL OFFICE",
   "SANTISIMO LOGISTICS",
+  "BATCHING PLANT",
 ];

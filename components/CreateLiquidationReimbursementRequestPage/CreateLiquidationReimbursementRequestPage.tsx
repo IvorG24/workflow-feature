@@ -236,7 +236,7 @@ const CreateLiquidationReimbursementRequestPage = ({
           (section) => ({
             ...section,
             section_field:
-              section.section_field[2].field_response === "Materials"
+              `${section.section_field[2].field_response}`.includes("Materials")
                 ? [
                     ...section.section_field,
                     {
@@ -693,7 +693,7 @@ const CreateLiquidationReimbursementRequestPage = ({
         addField(3);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
-      } else if (value === "Materials") {
+      } else if (value && value.includes("Materials")) {
         const rirNumberDoesNotExistInSection =
           !currentPayeeSectionFieldList.some(
             (field) => field.field_name === "RIR Number"
@@ -727,7 +727,7 @@ const CreateLiquidationReimbursementRequestPage = ({
         }
       }
 
-      if (value !== "Materials") {
+      if (!value?.includes("Materials")) {
         // RIR number
         removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
         // Equipment Code
