@@ -55,6 +55,7 @@ import {
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
   HRProjectType,
+  HRRecruitmentData,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   ItemCategoryType,
@@ -7845,4 +7846,20 @@ export const getPracticalTestFieldList = async (
     | null;
 
   return formattedData;
+};
+
+export const getRecruitmentData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startDate: string;
+    endDate: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_hr_recruitment_data", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as HRRecruitmentData[];
 };
