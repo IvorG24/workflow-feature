@@ -177,7 +177,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   };
 
   useEffect(() => {
-    if (activeTeam.team_id && teamMember) {
+    if (activeTeam.team_id && teamMember && teamMemberList.length) {
       handlePagination(activePage);
     }
   }, [activeTeam, teamMember, teamMemberList]);
