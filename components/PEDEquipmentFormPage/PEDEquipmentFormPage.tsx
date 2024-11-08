@@ -317,7 +317,8 @@ const PEDEquipmentFormPage = ({
     projectName: string
   ) => {
     try {
-      if (isFetchingProjectSigner) return;
+      if (isFetchingProjectSigner || selectedProject?.projectId === projectId)
+        return;
       setSelectedProject(null);
       setIsFetchingProjectSigner(true);
       const data = await getProjectSigner(supabaseClient, {
