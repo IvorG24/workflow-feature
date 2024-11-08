@@ -66,8 +66,9 @@ const TeamProject = ({
             selectedProject={selectedProject}
             isOwnerOrAdmin={isOwnerOrAdmin}
             handleFetch={handleFetch}
-            setIsLoading={setIsLoading}
             isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            isFetchingMembers={isFetchingMembers}
             projectCount={projectCount}
           />
         ) : null}

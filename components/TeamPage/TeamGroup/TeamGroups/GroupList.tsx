@@ -48,11 +48,11 @@ type Props = {
   setIsCreatingGroup: Dispatch<SetStateAction<boolean>>;
   setSelectedGroup: Dispatch<SetStateAction<TeamGroupTableRow | null>>;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
   selectedGroup: TeamGroupTableRow | null;
   isOwnerOrAdmin: boolean;
-  handleFetch: (search: string, page: number) => void;
   isLoading: boolean;
+  handleFetch: (search: string, page: number) => void;
+  isFetchingMembers: boolean;
   groupCount: number;
 };
 
@@ -65,9 +65,8 @@ const GroupList = ({
   selectedGroup,
   isOwnerOrAdmin,
   handleFetch,
-  setIsLoading,
-  isLoading,
   groupCount,
+  isFetchingMembers,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
@@ -132,16 +131,12 @@ const GroupList = ({
 
   const handleColumnClick = (group_id: string) => {
     if (selectedGroup?.team_group_id === group_id) return;
-    setIsLoading(true);
     setIsFetchingMembers(true);
     const newSelectedGroup = groupList.find(
       (group) => group.team_group_id === group_id
     );
 
     setSelectedGroup(newSelectedGroup || null);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
   };
 
   const columnData: DataTableColumn<TeamGroupTableRow>[] = [
@@ -261,7 +256,7 @@ const GroupList = ({
         fw="bolder"
         c="dimmed"
         minHeight={390}
-        fetching={isLoading}
+        fetching={isFetchingMembers}
         records={groupList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={groupCount}

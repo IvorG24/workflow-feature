@@ -63,12 +63,13 @@ type Props = {
   setSelectedProject: Dispatch<
     SetStateAction<TeamProjectWithAddressType | null>
   >;
+  isLoading: boolean;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   selectedProject: TeamProjectWithAddressType | null;
   isOwnerOrAdmin: boolean;
-  handleFetch: (search: string, page: number) => void;
-  isLoading: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  handleFetch: (search: string, page: number) => void;
+  isFetchingMembers: boolean;
   projectCount: number;
 };
 
@@ -81,7 +82,7 @@ const ProjectList = ({
   selectedProject,
   isOwnerOrAdmin,
   handleFetch,
-  isLoading,
+  isFetchingMembers,
   setIsLoading,
   projectCount,
 }: Props) => {
@@ -153,7 +154,6 @@ const ProjectList = ({
     if (selectedProject?.team_project_id === project_id) return;
 
     setIsFetchingMembers(true);
-    setIsLoading(true);
     const newSelectedProject = projectList.find(
       (project) => project.team_project_id === project_id
     );
@@ -460,7 +460,7 @@ const ProjectList = ({
         fw="bolder"
         c="dimmed"
         minHeight={390}
-        fetching={isLoading}
+        fetching={isFetchingMembers}
         records={projectList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={projectCount}

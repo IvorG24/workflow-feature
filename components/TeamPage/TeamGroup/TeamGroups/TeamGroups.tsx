@@ -67,9 +67,9 @@ const TeamGroups = ({
             setIsFetchingMembers={setIsFetchingMembers}
             selectedGroup={selectedGroup}
             isOwnerOrAdmin={isOwnerOrAdmin}
-            handleFetch={handleFetch}
-            setIsLoading={setIsLoading}
             isLoading={isLoading}
+            handleFetch={handleFetch}
+            isFetchingMembers={isFetchingMembers}
             groupCount={groupCount}
           />
         ) : null}
