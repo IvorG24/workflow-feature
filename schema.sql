@@ -7146,9 +7146,9 @@ AS $$
       teamId,
     } = input_data;
 
-    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category = '${category}' LIMIT 1`)[0];
 
-    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
+    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id = '${categoryData.ticket_category_id}'`);
 
     const sectionList = sectionData.map(section => {
       const fieldData = plv8.execute(
@@ -7208,7 +7208,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request Item CSI"){
       const itemList = plv8.execute(`
         SELECT * FROM item_schema.item_table
@@ -7247,7 +7246,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request Item Option"){
       const itemList = plv8.execute(`
         SELECT * FROM item_schema.item_table
@@ -7292,7 +7290,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Incident Report for Employees"){
         const memberList = plv8.execute(`
           SELECT
@@ -7332,7 +7329,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request PED Equipment Part"){
       const equipmentNameList = plv8.execute(
         `
@@ -7457,9 +7453,7 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-    }
-
-    else {
+    } else {
       returnData = { ticket_sections: sectionList }
     }
  });
@@ -7541,45 +7535,48 @@ AS $$
       userId
     } = input_data;
 
-    const ticket = plv8.execute(`SELECT tt.*, tct.ticket_category
-      FROM ticket_schema.ticket_table tt
-      INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-      WHERE ticket_id='${ticketId}';
-    `)[0];
+    const ticket = plv8.execute(
+      `
+        SELECT 
+          tt.*, 
+          tct.ticket_category
+        FROM ticket_schema.ticket_table tt
+        INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+        WHERE ticket_id = '${ticketId}'
+      `
+    )[0];
 
-    const requester = plv8.execute(`
-      SELECT jsonb_build_object(
-        'team_member_id', tm.team_member_id,
-        'team_member_team_id', tm.team_member_team_id,
-        'team_member_role', tm.team_member_role,
-        'team_member_user', jsonb_build_object(
-          'user_id', u.user_id,
-          'user_first_name', u.user_first_name,
-          'user_last_name', u.user_last_name,
-          'user_email', u.user_email,
-          'user_avatar', u.user_avatar
-        )
-      ) AS member
-      FROM team_schema.team_member_table tm
-      JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}'
-    `)[0]
+    const requester = plv8.execute(
+      `
+        SELECT
+          team_member_id,
+          team_member_team_id,
+          team_member_role,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_email,
+          user_avatar
+        FROM team_schema.team_member_table
+        JOIN user_schema.user_table ON team_member_user_id = user_id
+        WHERE team_member_id = '${ticket.ticket_requester_team_member_id}'
+      `
+    )[0];
 
-    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
+    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.team_member_team_id}"}')`)[0].get_ticket_form;
 
-    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}'`);
 
     const originalTicketSections = ticketForm.ticket_sections.map(section=>({
-        ...section,
-        field_section_duplicatable_id: null,
-        ticket_section_fields: section.ticket_section_fields.map(field=>{
-          return {
-            ...field,
-            ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
-          }
-        })
-      }))
-
+      ...section,
+      field_section_duplicatable_id: null,
+      ticket_section_fields: section.ticket_section_fields.map(field=>{
+        return {
+          ...field,
+          ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
+        }
+      })
+    }));
 
     const sectionWithDuplicateList = [];
     originalTicketSections.forEach((section) => {
@@ -7726,7 +7723,17 @@ AS $$
     returnData = {
       ticket: {
         ...ticket,
-        ticket_requester: requester.member,
+        ticket_requester: {
+          team_member_id: requester.team_member_id,
+          team_member_role: requester.team_member_role,
+          team_member_user: {
+            user_id: requester.user_id,
+            user_first_name: requester.user_first_name,
+            user_last_name: requester.user_last_name,
+            user_avatar: requester.user_avatar,
+            user_email: requester.user_email
+          }
+        },
         ticket_approver: approver ? approver.member : null,
         ticket_comment: ticketCommentData.map(ticketComment => {
           return {
@@ -7752,8 +7759,8 @@ AS $$
           }
         }
       )},
-    user: member,
-    ticketForm: ticketFormWithResponse,
+      user: member,
+      ticketForm: ticketFormWithResponse,
     }
  });
  return returnData;
@@ -15323,8 +15330,7 @@ AS $$
             AND form_is_public_form = true
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response = '"${email}"'
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND field_id IN (
+            AND request_response_field_id IN (
               '56438f2d-da70-4fa4-ade6-855f2f29823b',
               '5c5284cd-7647-4307-b558-40b9076d9f7f',
               '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
@@ -15437,10 +15443,8 @@ AS $$
             FROM request_schema.request_response_table
             WHERE
               request_response_field_id IN (
-                'be0e130b-455b-47e0-a804-f90943f7bc07',
-                'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
-                'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
-                '362bff3d-54fa-413b-992c-fd344d8552c6'
+                ${request.form_name === 'Application Information' ? "'be0e130b-455b-47e0-a804-f90943f7bc07', 'c3225996-d3e8-4fb4-87d8-f5ced778adcf'" : ""}
+                ${request.form_name.includes('General Assessment') ? "'362bff3d-54fa-413b-992c-fd344d8552c6'" : ""}
               )
               AND request_response = '"${request.request_formsly_id}"'
           `
@@ -25905,7 +25909,7 @@ ON request_schema.request_signer_table (request_signer_request_id);
 CREATE INDEX request_signer_table_request_signer_signer_id_idx
 ON request_schema.request_signer_table (request_signer_signer_id);
 
-CREATE INDEX comment_team_member_id_comment_rqeuest_id
+CREATE INDEX comment_team_member_id_comment_request_idx
 ON request_schema.comment_table (comment_team_member_id, comment_request_id);
 
 CREATE INDEX notification_user_id_notification_app_notification_team_id_idx
@@ -25913,6 +25917,18 @@ ON public.notification_table (notification_user_id, notification_app, notificati
 
 CREATE INDEX team_member_user_id_idx
 ON team_schema.team_member_table (team_member_user_id);
+
+CREATE INDEX item_is_disabled_item_is_available_item_team_id_idx
+ON item_schema.item_table (item_is_disabled, item_is_available, item_team_id);
+
+CREATE INDEX item_description_item_id_item_description_is_disabled_item_description_is_available_idx
+ON item_schema.item_description_table (item_description_item_id, item_description_is_disabled, item_description_is_available);
+
+CREATE INDEX item_description_field_item_description_id_item_description_field_is_disabled_item_description_field_is_available_idx
+ON item_schema.item_description_field_table (item_description_field_item_description_id, item_description_field_is_disabled, item_description_field_is_available);
+
+CREATE INDEX request_signer_signer_id_request_signer_request_id_request_signer_status_idx
+ON request_schema.request_signer_table (request_signer_signer_id, request_signer_request_id, request_signer_status);
 
 ----- END: INDEXES
 
