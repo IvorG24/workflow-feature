@@ -24,12 +24,13 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
 
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import TradeTestFilterMenu from "./TradeTestFilterMenu";
