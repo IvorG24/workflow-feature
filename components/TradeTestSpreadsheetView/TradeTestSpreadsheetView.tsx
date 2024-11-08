@@ -96,6 +96,11 @@ const TradeTestSpreadsheetView = ({
     defaultValue: [],
   });
 
+  const prevSortRef = useRef<{
+    sortBy: string;
+    order: string;
+  }>();
+
   const filterFormMethods = useForm<TradeTestFilterFormValues>({
     defaultValues: formDefaultValues as unknown as TradeTestFilterFormValues,
   });
@@ -167,29 +172,31 @@ const TradeTestSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id) {
+      handleSorting();
+    }
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      await fetchData({
-        page: 1,
-      });
       const storedData = localStorage.getItem("tradeTestSpreadsheetView");
       if (storedData) {
         const filterData: TradeTestFilterFormValues = JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
         filterFormMethods.reset(filterData as TradeTestFilterFormValues);
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
   }, [user?.user_id]);
 
   const handleUpdateTradeTestStatus = async (
