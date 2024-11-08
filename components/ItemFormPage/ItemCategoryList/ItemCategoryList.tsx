@@ -164,6 +164,7 @@ const ItemCategoryList = ({
   const handleUpdateStatus = async (itemCategoryId: string, value: boolean) => {
     const savedRecord = itemCategoryList;
     try {
+      setIsLoading(true);
       setItemCategoryList((prev) =>
         prev.map((itemCategory) => {
           if (itemCategory.item_category_id !== itemCategoryId)
@@ -180,12 +181,18 @@ const ItemCategoryList = ({
         status: value,
         schema: "item_schema",
       });
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setItemCategoryList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 

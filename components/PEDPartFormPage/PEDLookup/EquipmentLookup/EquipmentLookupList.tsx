@@ -164,6 +164,7 @@ const EquipmentLookupList = ({
   ) => {
     const savedRecord = equipmentLookupList;
     try {
+      setIsLoading(true);
       setEquipmentLookupList((prev) =>
         prev.map((equipmentLookup) => {
           if (equipmentLookup.id !== equipmentLookupId) return equipmentLookup;
@@ -179,12 +180,18 @@ const EquipmentLookupList = ({
         status: value,
         schema: lookup.schema,
       });
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setEquipmentLookupList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 

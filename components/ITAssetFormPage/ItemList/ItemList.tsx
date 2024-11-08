@@ -247,6 +247,7 @@ const ItemList = ({
   const handleUpdateStatus = async (itemId: string, value: boolean) => {
     const savedRecord = itemList;
     try {
+      setIsLoading(true);
       setItemList((prev) =>
         prev.map((item) => {
           if (item.item_id !== itemId) return item;
@@ -262,12 +263,18 @@ const ItemList = ({
         status: value,
         schema: "item_schema",
       });
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setItemList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 
