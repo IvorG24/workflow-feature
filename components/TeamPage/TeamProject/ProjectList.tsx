@@ -154,10 +154,14 @@ const ProjectList = ({
     if (selectedProject?.team_project_id === project_id) return;
 
     setIsFetchingMembers(true);
+    setIsLoading(true);
     const newSelectedProject = projectList.find(
       (project) => project.team_project_id === project_id
     );
     setSelectedProject(newSelectedProject || null);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   };
 
   const handleFileClick = async (path: string) => {

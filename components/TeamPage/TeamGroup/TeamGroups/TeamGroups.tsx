@@ -68,6 +68,7 @@ const TeamGroups = ({
             selectedGroup={selectedGroup}
             isOwnerOrAdmin={isOwnerOrAdmin}
             handleFetch={handleFetch}
+            setIsLoading={setIsLoading}
             isLoading={isLoading}
             groupCount={groupCount}
           />
