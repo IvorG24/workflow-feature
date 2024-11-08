@@ -41,6 +41,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { useStyles } from "@/utils/styling";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
@@ -71,6 +72,7 @@ const ServicesFormPage = ({
   const teamMember = useUserTeamMember();
   const formList = useFormList();
   const { setFormList } = useFormActions();
+  const { classes } = useStyles();
 
   const initialSignerIds: string[] = [];
 
@@ -303,6 +305,8 @@ const ServicesFormPage = ({
     projectName: string
   ) => {
     try {
+      if (isFetchingProjectSigner || selectedProject?.projectId === projectId)
+        return;
       setSelectedProject(null);
       setIsFetchingProjectSigner(true);
       const data = await getProjectSigner(supabaseClient, {
@@ -481,7 +485,11 @@ const ServicesFormPage = ({
               title: "Project",
               render: ({ team_project_name, team_project_id }) => (
                 <Text
-                  sx={{ cursor: "pointer" }}
+                  className={
+                    isFetchingProjectSigner
+                      ? classes.disabledColumn
+                      : classes.clickableColumn
+                  }
                   onClick={() =>
                     handleFetchProjectSigner(team_project_id, team_project_name)
                   }
