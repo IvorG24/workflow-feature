@@ -126,7 +126,6 @@ const ProjectList = ({
   const handleDelete = async () => {
     const saveCheckList = checkList;
     const savedRecord = projectList;
-
     try {
       setCheckList([]);
       await deleteRow(supabaseClient, {
