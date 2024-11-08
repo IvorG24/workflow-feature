@@ -39,6 +39,13 @@ const useStyles = createStyles((theme) => ({
     },
     cursor: "pointer",
   },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
 }));
 
 type Props = {
@@ -65,6 +72,7 @@ const GroupList = ({
   selectedGroup,
   isOwnerOrAdmin,
   handleFetch,
+  isLoading,
   groupCount,
   isFetchingMembers,
 }: Props) => {
@@ -130,7 +138,7 @@ const GroupList = ({
   };
 
   const handleColumnClick = (group_id: string) => {
-    if (selectedGroup?.team_group_id === group_id) return;
+    if (selectedGroup?.team_group_id === group_id || isFetchingMembers) return;
     setIsFetchingMembers(true);
     const newSelectedGroup = groupList.find(
       (group) => group.team_group_id === group_id
@@ -170,7 +178,9 @@ const GroupList = ({
       title: "Group Name",
       render: ({ team_group_name, team_group_id }) => (
         <Text
-          className={classes.clickableColumn}
+          className={
+            isFetchingMembers ? classes.disabledColumn : classes.clickableColumn
+          }
           onClick={() => {
             handleColumnClick(team_group_id);
           }}
@@ -256,7 +266,7 @@ const GroupList = ({
         fw="bolder"
         c="dimmed"
         minHeight={390}
-        fetching={isFetchingMembers}
+        fetching={isLoading}
         records={groupList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={groupCount}

@@ -54,6 +54,13 @@ const useStyles = createStyles((theme) => ({
     },
     cursor: "pointer",
   },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
 }));
 
 type Props = {
@@ -84,6 +91,7 @@ const ProjectList = ({
   handleFetch,
   isFetchingMembers,
   setIsLoading,
+  isLoading,
   projectCount,
 }: Props) => {
   const { classes } = useStyles();
@@ -151,7 +159,8 @@ const ProjectList = ({
   };
 
   const handleColumnClick = (project_id: string) => {
-    if (selectedProject?.team_project_id === project_id) return;
+    if (selectedProject?.team_project_id === project_id || isFetchingMembers)
+      return;
 
     setIsFetchingMembers(true);
     const newSelectedProject = projectList.find(
@@ -212,7 +221,9 @@ const ProjectList = ({
       title: "Project Name",
       render: ({ team_project_name, team_project_id }) => (
         <Text
-          className={classes.clickableColumn}
+          className={
+            isFetchingMembers ? classes.disabledColumn : classes.clickableColumn
+          }
           onClick={() => {
             handleColumnClick(team_project_id);
           }}
@@ -226,9 +237,11 @@ const ProjectList = ({
       title: "Code",
       render: ({ team_project_code, team_project_id }) => (
         <Text
-          className={classes.clickableColumn}
+          className={
+            isFetchingMembers ? classes.disabledColumn : classes.clickableColumn
+          }
           onClick={() => {
-            handleColumnClick(team_project_id);
+            if (!isFetchingMembers) handleColumnClick(team_project_id);
           }}
         >
           {team_project_code}
@@ -460,7 +473,7 @@ const ProjectList = ({
         fw="bolder"
         c="dimmed"
         minHeight={390}
-        fetching={isFetchingMembers}
+        fetching={isLoading}
         records={projectList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={projectCount}
