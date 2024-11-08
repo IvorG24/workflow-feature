@@ -21,6 +21,7 @@ import {
   Button,
   Center,
   Container,
+  createStyles,
   Flex,
   Group,
   LoadingOverlay,
@@ -62,6 +63,24 @@ type Props = {
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
+const useStyles = createStyles((theme) => ({
+  clickableColumn: {
+    "&:hover": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[7]
+          : theme.colors.gray[5],
+    },
+    cursor: "pointer",
+  },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
+}));
 
 const PEDEquipmentFormPage = ({
   form,
@@ -76,6 +95,7 @@ const PEDEquipmentFormPage = ({
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const formList = useFormList();
+  const { classes } = useStyles();
   const { setFormList } = useFormActions();
 
   const initialSignerIds: string[] = [];
@@ -87,7 +107,7 @@ const PEDEquipmentFormPage = ({
     EquipmentWithCategoryType[]
   >([]);
   const [equipmentCount, setEquipmentCount] = useState(0);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
     form.form_signer.map((signer) => {
@@ -316,6 +336,7 @@ const PEDEquipmentFormPage = ({
     projectName: string
   ) => {
     try {
+      if (isFetchingProjectSigner) return;
       setSelectedProject(null);
       setIsFetchingProjectSigner(true);
       const data = await getProjectSigner(supabaseClient, {
@@ -339,6 +360,7 @@ const PEDEquipmentFormPage = ({
 
   return (
     <Container>
+      <LoadingOverlay visible={isLoading} />
       <Flex justify="space-between">
         <Title order={2} color="dimmed">
           Form Preview
@@ -522,7 +544,11 @@ const PEDEquipmentFormPage = ({
               title: "Project",
               render: ({ team_project_name, team_project_id }) => (
                 <Text
-                  sx={{ cursor: "pointer" }}
+                  className={
+                    isFetchingProjectSigner
+                      ? classes.disabledColumn
+                      : classes.clickableColumn
+                  }
                   onClick={() =>
                     handleFetchProjectSigner(team_project_id, team_project_name)
                   }
