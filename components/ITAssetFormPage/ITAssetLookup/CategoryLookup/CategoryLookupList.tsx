@@ -163,6 +163,7 @@ const CategoryLookupList = ({
   ) => {
     const savedRecord = categoryLookupList;
     try {
+      setIsLoading(true);
       setCategoryLookupList((prev) =>
         prev.map((categoryLookup) => {
           if (categoryLookup.id !== categoryLookupId) return categoryLookup;
@@ -178,12 +179,18 @@ const CategoryLookupList = ({
         status: value,
         schema: lookup.schema,
       });
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setCategoryLookupList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 

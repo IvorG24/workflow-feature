@@ -21,7 +21,6 @@ import {
   Button,
   Center,
   Container,
-  createStyles,
   Flex,
   Group,
   LoadingOverlay,
@@ -44,6 +43,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { useStyles } from "@/utils/styling";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
@@ -63,24 +63,6 @@ type Props = {
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
-const useStyles = createStyles((theme) => ({
-  clickableColumn: {
-    "&:hover": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[7]
-          : theme.colors.gray[5],
-    },
-    cursor: "pointer",
-  },
-  disabledColumn: {
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.gray[7]
-        : theme.colors.gray[5],
-    cursor: "pointer",
-  },
-}));
 
 const PEDEquipmentFormPage = ({
   form,
@@ -107,7 +89,6 @@ const PEDEquipmentFormPage = ({
     EquipmentWithCategoryType[]
   >([]);
   const [equipmentCount, setEquipmentCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
     form.form_signer.map((signer) => {
@@ -360,7 +341,6 @@ const PEDEquipmentFormPage = ({
 
   return (
     <Container>
-      <LoadingOverlay visible={isLoading} />
       <Flex justify="space-between">
         <Title order={2} color="dimmed">
           Form Preview
