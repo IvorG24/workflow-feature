@@ -311,7 +311,12 @@ const RequestListFilter = ({
               />
             )}
           />
-          <Button onClick={() => handleFilterForms()}>Apply Filter</Button>
+          <Button
+            disabled={isFetchingRequestList}
+            onClick={() => handleFilterForms()}
+          >
+            Apply Filter
+          </Button>
         </Flex>
       )}
     </>
