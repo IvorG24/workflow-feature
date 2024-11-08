@@ -25903,12 +25903,6 @@ ON request_schema.request_response_table (request_response_request_id);
 CREATE INDEX request_response_request_response_field_id_idx
 ON request_schema.request_response_table (SUBSTRING(request_response FROM 1 FOR 255), request_response_field_id);
 
-CREATE INDEX request_signer_table_request_signer_request_id_idx
-ON request_schema.request_signer_table (request_signer_request_id);
-
-CREATE INDEX request_signer_table_request_signer_signer_id_idx
-ON request_schema.request_signer_table (request_signer_signer_id);
-
 CREATE INDEX comment_team_member_id_comment_request_idx
 ON request_schema.comment_table (comment_team_member_id, comment_request_id);
 
