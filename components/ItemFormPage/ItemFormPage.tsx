@@ -498,7 +498,10 @@ const ItemFormPage = ({
             miw={250}
             placeholder="Project"
             rightSection={
-              <ActionIcon onClick={() => handleFetchProject(1, projectSearch)}>
+              <ActionIcon
+                disabled={isFetchingProject}
+                onClick={() => handleFetchProject(1, projectSearch)}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }

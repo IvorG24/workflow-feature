@@ -220,7 +220,10 @@ const EquipmentList = ({
             miw={250}
             placeholder="Name"
             rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
+              <ActionIcon
+                disabled={isLoading}
+                onClick={() => search && handleSearch()}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }
