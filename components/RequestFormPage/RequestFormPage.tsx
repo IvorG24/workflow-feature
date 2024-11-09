@@ -434,6 +434,7 @@ const RequestFormPage = ({
                   placeholder="Project"
                   rightSection={
                     <ActionIcon
+                      disabled={isFetchingProject}
                       onClick={() => handleFetchProject(1, projectSearch)}
                     >
                       <IconSearch size={16} />

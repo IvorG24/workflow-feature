@@ -505,7 +505,7 @@ const ItemList = ({
             {...register("generalName")}
             placeholder="General Name"
             rightSection={
-              <ActionIcon type="submit">
+              <ActionIcon disabled={isLoading} type="submit">
                 <IconSearch size={16} />
               </ActionIcon>
             }
@@ -516,7 +516,7 @@ const ItemList = ({
             {...register("description")}
             placeholder="Description"
             rightSection={
-              <ActionIcon type="submit">
+              <ActionIcon disabled={isLoading} type="submit">
                 <IconSearch size={16} />
               </ActionIcon>
             }
