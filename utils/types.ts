@@ -2696,3 +2696,22 @@ export type HRRecruitmentData = {
   "Job Offer Assigned HR": string | null;
   "Date Created": string;
 };
+
+export type ApplicationListItemType = {
+  request_id: string;
+  request_formsly_id: string;
+  request_status: string;
+  request_date_created: string;
+  request_is_with_progress_indicator: boolean;
+  request_application_information_position: string;
+};
+
+export type ApplicationListFilterValues = {
+  search?: string;
+  isAscendingSort: boolean;
+};
+
+export type UserApplicationListFilterValues = {
+  search?: string;
+  isAscendingSort: boolean;
+};
