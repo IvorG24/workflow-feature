@@ -4,7 +4,10 @@ import {
   formatDate,
 } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { ApplicationListItemType } from "@/utils/types";
+import {
+  ApplicationListFilterValues,
+  ApplicationListItemType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -19,6 +22,7 @@ import { IconCopy, IconGraph } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
+import { UseFormSetValue } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 
 type Props = {
@@ -37,7 +41,7 @@ type Props = {
   tableColumnList: { value: string; label: string }[];
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  setValue: UseFormSetValue<UserRequestListFilterValues>;
+  setValue: UseFormSetValue<ApplicationListFilterValues>;
 };
 
 const UserApplicationListTable = ({

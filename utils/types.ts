@@ -2700,7 +2700,7 @@ export type HRRecruitmentData = {
 export type ApplicationListItemType = {
   request_id: string;
   request_formsly_id: string;
-  request_status:
+  request_status: string;
   request_date_created: string;
   request_is_with_progress_indicator: boolean;
   request_application_information_position: string;
