@@ -15368,35 +15368,23 @@ CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let return_value
+  let returnData;
   plv8.subtransaction(function(){
     const {
-      requestList
+      requestIdCondition
     } = input_data;
 
-    return_value = requestList.map(request => {
-      const position = plv8.execute(
-        `
-          SELECT request_response
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.request_id}'
-            AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
-          LIMIT 1
-        `
-      )[0].request_response;
-     
-      return {
-        request_id: request.request_id,
-        request_formsly_id: request.request_formsly_id,
-        request_status: request.request_status,
-        request_date_created: request.request_date_created,
-        request_is_with_progress_indicator: false,
-        request_application_information_position: position
-      }
-    });
+    returnData = plv8.execute(
+      `
+        SELECT request_response_request_id, request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id IN (${requestIdCondition})
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+      `
+    );
   });
-  return return_value
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_user_request_indicator(

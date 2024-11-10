@@ -66,7 +66,7 @@ const UserApplicationListPage = () => {
         page: page,
         limit: DEFAULT_APPLICATION_LIST_LIMIT,
         isAscendingSort,
-        email: "alilingsheenlei@gmail.com",
+        email: currentUser.email,
         search,
       };
 
