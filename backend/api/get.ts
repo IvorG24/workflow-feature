@@ -30,6 +30,7 @@ import {
   AddressTableRow,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
+  ApplicationListItemType,
   ApproverUnresolvedRequestCountType,
   AppType,
   AttachmentBucketType,
@@ -6240,29 +6241,21 @@ export const getFormSectionWithFieldList = async (
   };
 };
 
-export const getUserRequestList = async (
+export const getUserApplicationList = async (
   supabaseClient: SupabaseClient<Database>,
   params: FetchUserRequestListParams
 ) => {
   const {
     page,
     limit,
-    status,
-    search,
     isAscendingSort,
-    columnAccessor = "request_date_created",
     email,
-    form,
+    search,
+    columnAccessor = "request_date_created",
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
 
-  const statusCondition = status
-    ?.map((value) => `a.request_status = '${value}'`)
-    .join(" OR ");
-  const formCondition = form
-    ?.map((value) => `a.request_form_id = '${value}'`)
-    .join(" OR ");
   const searchCondition =
     search && validate(search)
       ? `a.request_id = '${search}'`
@@ -6273,18 +6266,16 @@ export const getUserRequestList = async (
       input_data: {
         page: page,
         limit: limit,
-        status: statusCondition ? `AND (${statusCondition})` : "",
-        search: search ? `AND (${searchCondition})` : "",
         sort,
-        columnAccessor,
         email,
-        form: formCondition ? `AND (${formCondition})` : "",
+        search: search ? `AND (${searchCondition})` : "",
+        columnAccessor,
       },
     });
   if (requestListError) throw requestListError;
 
   const dataFormat = requestList as unknown as {
-    data: RequestListItemType[];
+    data: ApplicationListItemType[];
     count: number;
   };
 
@@ -6297,7 +6288,7 @@ export const getUserRequestList = async (
   if (requestListDataError) throw requestListDataError;
 
   return {
-    data: requestListData as RequestListItemType[],
+    data: requestListData as ApplicationListItemType[],
     count: dataFormat.count,
   };
 };
@@ -7858,8 +7849,23 @@ export const getRecruitmentData = async (
   const { data, error } = await supabaseClient.rpc("get_hr_recruitment_data", {
     input_data: params,
   });
-
   if (error) throw error;
 
   return data as HRRecruitmentData[];
+};
+
+export const getApplicationInformationIndicator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    request: ApplicationListItemType;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_user_request_indicator",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as boolean;
 };
