@@ -6279,16 +6279,44 @@ export const getUserApplicationList = async (
     count: number;
   };
 
+  if (!dataFormat.data.length) {
+    return {
+      data: [],
+      count: dataFormat.count,
+    };
+  }
+
+  const requestIdCondition = dataFormat.data
+    .map((request) => `'${request.request_id}'`)
+    .join(", ");
+
   const { data: requestListData, error: requestListDataError } =
     await supabaseClient.rpc("fetch_user_request_list_data", {
       input_data: {
-        requestList: dataFormat.data,
+        requestIdCondition,
       },
     });
   if (requestListDataError) throw requestListDataError;
+  const formattedRequestListData = requestListData as unknown as {
+    request_response_request_id: string;
+    request_response: string;
+  }[];
+
+  const returnData = dataFormat.data.map((request) => {
+    const matchedRequest = formattedRequestListData.find(
+      (thisRequest) =>
+        request.request_id === thisRequest.request_response_request_id
+    );
+
+    return {
+      ...request,
+      request_application_information_position:
+        matchedRequest?.request_response,
+    };
+  });
 
   return {
-    data: requestListData as ApplicationListItemType[],
+    data: returnData as ApplicationListItemType[],
     count: dataFormat.count,
   };
 };
