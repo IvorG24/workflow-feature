@@ -581,6 +581,8 @@ export const createRequest = async (
       firstName: string;
       middleName: string;
       lastName: string;
+      contactNumber: string;
+      email: string;
     };
     interviewParams?: {
       status: string;
