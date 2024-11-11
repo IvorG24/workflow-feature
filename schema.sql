@@ -1260,6 +1260,16 @@ CREATE TABLE hr_schema.practical_test_position_table (
   practical_test_position_position_id UUID REFERENCES lookup_schema.position_table(position_id) ON DELETE CASCADE NOT NULL
 );
 
+CREATE TABLE hr_schema.application_information_additional_details_table (
+  application_information_additional_details_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  application_information_additional_details_position VARCHAR(4000) NOT NULL,
+  application_information_additional_details_first_name VARCHAR(4000) NOT NULL,
+  application_information_additional_details_middle_name VARCHAR(4000) NOT NULL,
+  application_information_additional_details_last_name VARCHAR(4000) NOT NULL,
+  
+  application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -1710,6 +1720,7 @@ AS $$
       requestScore,
       rootFormslyRequestId,
       recruiter,
+      applicationInformationParams,
       interviewParams,
       backgroundCheckParams,
       tradeTestParams
@@ -1980,6 +1991,27 @@ AS $$
       );
       const query = 'SELECT public.update_trade_test_status($1::json)';
       plv8.execute(query, [JSON.stringify(tradeTestParams)]);
+    } else if (applicationInformationParams) {
+      plv8.execute(
+        `
+          INSERT INTO hr_schema.application_information_additional_details_table
+          (
+            application_information_additional_details_position,
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name,
+            application_information_additional_details_request_id
+          )
+          VALUES
+          (
+            '${applicationInformationParams.position}',
+            '${applicationInformationParams.firstName}',
+            ${applicationInformationParams.middleName ? `'${applicationInformationParams.middleName}'` : "NULL"},
+            '${applicationInformationParams.lastName}',
+            '${requestId}'
+          )
+        `
+      );
     }
  });
  return request_data;
