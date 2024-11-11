@@ -5987,7 +5987,6 @@ export const getApplicationInformationSummaryData = async (
     sort,
     page = 1,
     limit = DEFAULT_NUMBER_SSOT_ROWS,
-    responseFilter,
     requestFilter,
   } = updatedParams;
 
@@ -6000,69 +5999,6 @@ export const getApplicationInformationSummaryData = async (
   const isSortByResponse = isUUID(sort?.field ?? "");
 
   const offset = (page - 1) * limit;
-
-  const responseFilterCondition = [];
-  const fieldIdCondition = [];
-
-  if (responseFilter.position || responseFilter.seniority) {
-    fieldIdCondition.push("'0fd115df-c2fe-4375-b5cf-6f899b47ec56'");
-  }
-
-  if (
-    Boolean(responseFilter.seniority) &&
-    responseFilter?.seniority?.length &&
-    Boolean(responseFilter.position) &&
-    responseFilter?.position?.length
-  ) {
-    const seniority =
-      responseFilter.seniority === "MID" ? "" : `${responseFilter.seniority} `;
-    responseFilterCondition.push(
-      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
-        .map((value) => `'"${seniority}${value}"'`)
-        .join(", ")}))`
-    );
-  } else if (
-    Boolean(responseFilter.seniority) &&
-    responseFilter?.seniority?.length
-  ) {
-    if (responseFilter.seniority === "MID") {
-      responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response NOT ILIKE '"JUNIOR%' AND request_response NOT ILIKE '"SENIOR%')`
-      );
-    } else {
-      responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response ILIKE '"${responseFilter.seniority}%')`
-      );
-    }
-  } else if (
-    Boolean(responseFilter.position) &&
-    responseFilter?.position?.length
-  ) {
-    responseFilterCondition.push(
-      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
-        .map((value) => `'"${value}"'`)
-        .join(", ")}))`
-    );
-  }
-
-  if (responseFilter.firstName) {
-    responseFilterCondition.push(
-      `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`
-    );
-    fieldIdCondition.push("'e48e7297-c250-4595-ba61-2945bf559a25'");
-  }
-  if (responseFilter.middleName) {
-    responseFilterCondition.push(
-      `(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`
-    );
-    fieldIdCondition.push("'7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'");
-  }
-  if (responseFilter.lastName) {
-    responseFilterCondition.push(
-      `(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`
-    );
-    fieldIdCondition.push("'9322b870-a0a1-4788-93f0-2895be713f9c'");
-  }
 
   const requestFilterCondition = [];
   Boolean(requestFilter.requestId)
@@ -6119,8 +6055,6 @@ export const getApplicationInformationSummaryData = async (
       )})`)
     : null;
 
-  const filterCount = responseFilterCondition.length;
-
   const castRequestResponse = (value: string) => {
     switch (sort?.dataType) {
       case "NUMBER":
@@ -6139,61 +6073,18 @@ export const getApplicationInformationSummaryData = async (
       request_status,
       request_status_date_updated,
       request_score_value
-    FROM (
-      SELECT
-        request_id,
-        request_formsly_id,
-        request_date_created,
-        request_status,
-        request_status_date_updated,
-        ${responseFilterCondition.length ? "request_response," : ""}
-        request_score_value,
-        ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-      FROM public.request_view
+    FROM public.request_view
+    INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
       ${
-        responseFilterCondition.length
-          ? `
-            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-              AND request_response_field_id IN (
-                ${fieldIdCondition.join(",")}
-              )
-              AND (${responseFilterCondition.join(" OR ")})
-            `
+        requestScoreFilterCondition.length
+          ? `AND (${requestScoreFilterCondition.join(" OR ")})`
           : ""
       }
-      INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
-        ${
-          requestScoreFilterCondition.length
-            ? `AND (${requestScoreFilterCondition.join(" OR ")})`
-            : ""
-        }
-      WHERE
-        request_is_disabled = FALSE
-        AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-    ) AS a
+    AND request_is_disabled = FALSE
+    AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
       ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
-    WHERE
-      a.rowNumber = ${filterCount ? filterCount : 1}
-      ${
-        requestFilterCondition.length
-          ? `AND (${requestFilterCondition.join(" AND ")})`
-          : ""
-      }
     ${!isSortByResponse ? `ORDER BY ${sort?.field} ${sort?.order}` : ""}
-    ${
-      isSortByResponse
-        ? `
-      ORDER BY ${castRequestResponse(`(
-      SELECT request_response
-      FROM request_schema.request_response_table
-      WHERE
-        request_response_request_id = request_id
-        AND request_response_field_id = '${sort?.field}'
-      )`)} ${sort?.order}
-    `
-        : ""
-    }
     , request_date_created DESC
     LIMIT ${limit}
     OFFSET ${offset}

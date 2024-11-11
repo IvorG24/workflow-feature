@@ -25825,6 +25825,8 @@ CREATE INDEX form_is_disabled_public_idx ON form_schema.form_table(form_is_disab
 
 CREATE INDEX request_team_member_id_idx ON request_schema.request_table(request_team_member_id);
 
+CREATE INDEX request_date_created_idx ON request_schema.request_table(request_date_created);
+
 CREATE INDEX request_response_field_id_request_response_request_id_idx
 ON request_schema.request_response_table (request_response_field_id, request_response_request_id);
 
@@ -25854,6 +25856,9 @@ ON item_schema.item_description_field_table (item_description_field_item_descrip
 
 CREATE INDEX request_signer_signer_id_request_signer_request_id_request_signer_status_idx
 ON request_schema.request_signer_table (request_signer_signer_id, request_signer_request_id, request_signer_status);
+
+CREATE INDEX request_signer_request_id_idx
+ON request_schema.request_signer_table (request_signer_request_id);
 
 ----- END: INDEXES
 
