@@ -15087,25 +15087,6 @@ AS $$
 
     const requestListWithResponses = [];
     parentRequests.forEach((parentRequest) => {
-      const responseList = plv8.execute(
-        `
-          SELECT
-            request_response_table.*,
-            field_id
-          FROM
-            request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND request_response_field_id IN (
-              '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
-              'e48e7297-c250-4595-ba61-2945bf559a25',
-              '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-              '9322b870-a0a1-4788-93f0-2895be713f9c'
-            )
-          WHERE
-            request_response_request_id = '${parentRequest.request_id}'
-        `
-      );
-
       const signerList = plv8.execute(
         `
           SELECT
@@ -15133,7 +15114,10 @@ AS $$
         request_status: parentRequest.request_status,
         request_status_date_updated: parentRequest.request_status_date_updated,
         request_score_value: parentRequest.request_score_value,
-        request_response_list: responseList,
+        application_information_additional_details_position: parentRequest.application_information_additional_details_position,
+        application_information_additional_details_first_name: parentRequest.application_information_additional_details_first_name,
+        application_information_additional_details_middle_name: parentRequest.application_information_additional_details_middle_name,
+        application_information_additional_details_last_name: parentRequest.application_information_additional_details_last_name,
         request_signer_list: signerList.map(signer => {
           return {
             request_signer_id: signer.request_signer_id,
@@ -15187,16 +15171,6 @@ AS $$
 
     const optionList = [];
 
-    const sectionList = plv8.execute(
-      `
-        SELECT *
-        FROM form_schema.section_table
-        WHERE
-          section_form_id = '${formId}'
-        ORDER BY section_order
-      `
-    );
-
     const signerIdList = plv8.execute(
       `
         SELECT DISTINCT(signer_id)
@@ -15226,42 +15200,6 @@ AS $$
     }
 
     returnData = {
-      sectionList: sectionList.map(section => {
-        const fieldData = plv8.execute(
-          `
-            SELECT *
-            FROM form_schema.field_table
-            WHERE
-              field_section_id = '${section.section_id}'
-            ORDER BY field_order
-          `
-        );
-
-        const fieldWithOptionData = fieldData.map(field => {
-          const fieldOptionData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE
-                option_field_id = '${field.field_id}'
-            `
-          );
-
-          if(fieldOptionData.length){
-            optionList.push({
-              field_name: field.field_name,
-              field_option: fieldOptionData
-            });
-          }
-
-          return field;
-        });
-
-        return {
-          ...section,
-          section_field: fieldWithOptionData
-        }
-      }),
       optionList,
       approverOptionList: approverOptionList.map(approver => {
         return {
