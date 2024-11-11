@@ -66,7 +66,7 @@ const Overview = ({
   const [isFetchingMonthlyStatistics, setIsFetchingMonthlyStatistics] =
     useState(false);
   const [requestorList, setRequestorList] = useState<
-    RequestorAndSignerDataType[]
+    DashboardRequestorAndSignerType[]
   >([]);
   const [signerList, setSignerList] = useState<
     DashboardRequestorAndSignerType[]

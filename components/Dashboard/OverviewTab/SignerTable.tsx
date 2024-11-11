@@ -84,6 +84,9 @@ const SignerTable = ({
               );
               if (!teamMemberMatch) return <></>;
               const user = teamMemberMatch.team_member_user;
+              const signerFullname = startCase(
+                `${user.user_first_name} ${user.user_last_name}`
+              );
               const progressSections = signer.request
                 .map(({ label, value }) => ({
                   value: (value / signer.total) * 100,
@@ -95,9 +98,7 @@ const SignerTable = ({
               return (
                 <Stack key={user.user_id} spacing="xs">
                   <Group position="apart">
-                    <Tooltip
-                      label={`${user.user_first_name} ${user.user_last_name}`}
-                    >
+                    <Tooltip label={signerFullname}>
                       <Group spacing="xs">
                         <Avatar
                           size="sm"
@@ -110,11 +111,9 @@ const SignerTable = ({
                           {!user.user_avatar &&
                             `${user.user_first_name[0]}${user.user_last_name[0]}`}
                         </Avatar>
-                        <Text
-                          weight={500}
-                          maw={120}
-                          truncate
-                        >{`${user.user_first_name} ${user.user_last_name}`}</Text>
+                        <Text weight={500} maw={120} truncate>
+                          {signerFullname}
+                        </Text>
                       </Group>
                     </Tooltip>
 
