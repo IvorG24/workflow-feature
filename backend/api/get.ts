@@ -7847,6 +7847,8 @@ export const getRecruitmentData = async (
   params: {
     startDate: string;
     endDate: string;
+    offset: number;
+    limit: number;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_hr_recruitment_data", {

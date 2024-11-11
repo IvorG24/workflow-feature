@@ -26,7 +26,7 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
       <Stack spacing="sm">
         <Flex gap="sm" wrap="wrap">
           <Title order={2}>Human Resources Analytics Page</Title>
-          <Button disabled={true} onClick={() => setOpenExportToCSVModal(true)}>
+          <Button onClick={() => setOpenExportToCSVModal(true)}>
             Export to CSV
           </Button>
         </Flex>
