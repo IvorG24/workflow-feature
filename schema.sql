@@ -21199,7 +21199,9 @@ AS $$
   plv8.subtransaction(function(){
     const {
       startDate,
-      endDate
+      endDate,
+      limit = 100,
+      offset = 0
     } = input_data;
 
     let query = `
@@ -21275,7 +21277,7 @@ AS $$
         query += ' AND (request_date_created >= $1 AND request_date_created <= $2)'
     };
 
-    query += ' ORDER BY request_date_created DESC';
+    query += ` ORDER BY request_date_created DESC LIMIT ${limit} OFFSET ${offset}`;
     
     const recruitment_data = plv8.execute(query, params);
 
