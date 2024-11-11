@@ -2,7 +2,6 @@ import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
-import { escapeQuotes } from "@/utils/string";
 import {
   getAvatarColor,
   getFileType,
@@ -73,7 +72,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       setIsSubmittingForm(true);
       await updateComment(supabaseClient, {
         commentId: comment.comment_id,
-        newComment: escapeQuotes(data.comment),
+        newComment: data.comment,
       });
       setCommentContent(data.comment);
       setIsCommentEdited(true);

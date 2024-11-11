@@ -7,7 +7,7 @@ import {
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
-import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentAttachmentWithPublicUrl,
   RequestCommentType,
@@ -101,7 +101,7 @@ const RequestCommentList = ({
         comment_request_id: requestData.requestId,
         comment_team_member_id: teamMember.team_member_id,
         comment_type: "REQUEST_COMMENT",
-        comment_content: escapeQuotes(data.comment),
+        comment_content: data.comment,
         comment_id: newCommentId,
       });
 
