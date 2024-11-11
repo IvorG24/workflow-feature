@@ -15042,61 +15042,38 @@ AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
-      parentRequests
+      requestIdList
     } = input_data;
 
-    const requestListWithResponses = [];
-    parentRequests.forEach((parentRequest) => {
-      const signerList = plv8.execute(
+    returnData = requestIdList.map(requestId => {
+      const request_signer = plv8.execute(
         `
           SELECT
             request_signer_id,
             request_signer_status,
-            signer_team_member_id,
             signer_is_primary_signer,
-            user_id,
-            user_first_name,
-            user_last_name,
-            user_avatar
+            signer_team_member_id
           FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-          WHERE
-            request_signer_request_id = '${parentRequest.request_id}'
-        `
-      );
+          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
+          WHERE request_signer_request_id = $1
+        `,
+        [requestId]
+      )
 
-      requestListWithResponses.push({
-        request_id: parentRequest.request_id,
-        request_formsly_id: parentRequest.request_formsly_id,
-        request_date_created: parentRequest.request_date_created,
-        request_status: parentRequest.request_status,
-        request_status_date_updated: parentRequest.request_status_date_updated,
-        request_score_value: parentRequest.request_score_value,
-        application_information_additional_details_position: parentRequest.application_information_additional_details_position,
-        application_information_additional_details_first_name: parentRequest.application_information_additional_details_first_name,
-        application_information_additional_details_middle_name: parentRequest.application_information_additional_details_middle_name,
-        application_information_additional_details_last_name: parentRequest.application_information_additional_details_last_name,
-        request_signer_list: signerList.map(signer => {
+      return {
+        request_id: requestId,
+        request_signer: request_signer.map(signer => {
           return {
             request_signer_id: signer.request_signer_id,
             request_signer_status: signer.request_signer_status,
             request_signer: {
               signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer,
-            },
-            signer_team_member_user: {
-              user_id: signer.user_id,
-              user_first_name: signer.user_first_name,
-              user_last_name: signer.user_last_name,
-              user_avatar: signer.user_avatar
+              signer_is_primary_signer: signer.signer_is_primary_signer
             }
           }
-        })
-      });
+        }),
+      };
     });
-    returnData = requestListWithResponses;
   });
 return returnData;
 $$ LANGUAGE plv8;
