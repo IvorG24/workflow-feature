@@ -25671,6 +25671,24 @@ AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
+--- hr_schema.application_information_additional_details_table
+ALTER TABLE hr_schema.application_information_additional_details_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON hr_schema.application_information_additional_details_table;
+CREATE POLICY "Allow CREATE access for anon users" ON hr_schema.application_information_additional_details_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON hr_schema.application_information_additional_details_table;
+CREATE POLICY "Allow READ for anon users" ON hr_schema.application_information_additional_details_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON hr_schema.application_information_additional_details_table;;
+CREATE POLICY "Allow UPDATE for anon users" ON hr_schema.application_information_additional_details_table
+AS PERMISSIVE FOR UPDATE
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: SCHEDULED FUNCTIONS
