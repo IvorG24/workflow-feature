@@ -15296,12 +15296,10 @@ AS $$
     const {
       page,
       limit,
-      status,
-      sort,
+      email,
       search,
       columnAccessor,
-      email,
-      form
+      sort
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15312,38 +15310,24 @@ AS $$
           request_id,
           request_formsly_id,
           request_date_created,
-          request_status,
-          request_form_id,
-          form_name
+          request_status
         FROM (
           SELECT
             request_id,
             request_formsly_id,
             request_date_created,
             request_status,
-            request_form_id,
-            form_name,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
-          INNER JOIN form_schema.form_table ON form_id = request_form_id
-            AND form_table.form_is_disabled = false
-            AND form_is_public_form = true
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response = '"${email}"'
-            AND request_response_field_id IN (
-              '56438f2d-da70-4fa4-ade6-855f2f29823b',
-              '5c5284cd-7647-4307-b558-40b9076d9f7f',
-              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
-              '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
-            )
+            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
           WHERE
             request_is_disabled = false
         ) AS a
         WHERE
           a.rowNumber = 1
-          ${status}
           ${search}
-          ${form}
         ORDER BY ${columnAccessor} ${sort}
         LIMIT ${limit}
         OFFSET ${offset}
@@ -15357,14 +15341,8 @@ AS $$
             request_id,
             request_formsly_id,
             request_date_created,
-            request_status,
-            request_form_id,
-            form_name,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
-          INNER JOIN form_schema.form_table ON form_id = request_form_id
-            AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-            AND form_is_disabled = false
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
             AND request_response = '"${email}"'
@@ -15373,9 +15351,6 @@ AS $$
         ) AS a
         WHERE
           a.rowNumber = 1
-          ${status}
-          ${search}
-          ${form}
       `
     )[0];
 
@@ -15393,172 +15368,128 @@ CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let return_value
+  let returnData;
   plv8.subtransaction(function(){
     const {
-      requestList
+      requestIdCondition
     } = input_data;
 
-    return_value = requestList.map(request => {
-      const request_signer = plv8.execute(
-        `
-          SELECT
-            request_signer_id,
-            request_signer_status,
-            signer_team_member_id,
-            signer_is_primary_signer,
-            user_id,
-            user_first_name,
-            user_last_name,
-            user_avatar
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
-          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-          WHERE
-            request_signer_request_id = '${request.request_id}'
-        `
-      ).map(signer => {
-        return {
-          request_signer_id: signer.request_signer_id,
-          request_signer_status: signer.request_signer_status,
-          request_signer: {
-              signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
-          },
-          signer_team_member_user: {
-            user_id: signer.user_id,
-            user_first_name: signer.user_first_name,
-            user_last_name: signer.user_last_name,
-            user_avatar: signer.user_avatar
-          }
-        }
-      });
-
-      let isWithViewIndicator = false;
-      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment v1', 'General Assessment'].includes(request.form_name)){
-        const connectedRequestCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            WHERE
-              request_response_field_id IN (
-                ${request.form_name === 'Application Information' ? "'be0e130b-455b-47e0-a804-f90943f7bc07', 'c3225996-d3e8-4fb4-87d8-f5ced778adcf'" : ""}
-                ${request.form_name.includes('General Assessment') ? "'362bff3d-54fa-413b-992c-fd344d8552c6'" : ""}
-              )
-              AND request_response = '"${request.request_formsly_id}"'
-          `
-        )[0].count;
-        if(!connectedRequestCount){
-          isWithViewIndicator = true;
-        }
-      }
-
-      const checkProgress = (formslyId, requestId) => {
-        const generalAssessmentCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id IN (
-                '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
-                '2f9100a9-f322-405f-acda-68bbf94236b0'
-              )
-            WHERE
-              request_response = '"${formslyId}"'
-          `
-        )[0].count;
-        if(!generalAssessmentCount){
-          return true;
-        }
-
-        const technicalAssessmentCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
-            WHERE
-              request_response = '"${formslyId}"'
-          `
-        )[0].count;
-        if(!technicalAssessmentCount){
-          return true;
-        }
-
-        const hrPhoneInterviewCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.hr_phone_interview_table
-            WHERE
-              hr_phone_interview_request_id = '${requestId}'
-              AND hr_phone_interview_schedule IS NULL
-          `
-        )[0].count;
-        if(hrPhoneInterviewCount){
-          return true;
-        }
-
-        const technicalInterviewCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.technical_interview_table
-            WHERE
-              technical_interview_request_id = '${requestId}'
-              AND technical_interview_schedule IS NULL
-          `
-        )[0].count;
-        if(technicalInterviewCount){
-          return true;
-        }
-
-        const tradeTestCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.trade_test_table
-            WHERE
-              trade_test_request_id = '${requestId}'
-              AND trade_test_schedule IS NULL
-          `
-        )[0].count;
-        if(tradeTestCount){
-          return true;
-        }
-
-        const jobOfferData = plv8.execute(
-          `
-            SELECT job_offer_id, job_offer_status
-            FROM hr_schema.job_offer_table
-            WHERE
-              job_offer_request_id = '${requestId}'
-            ORDER BY job_offer_date_created DESC
-            LIMIT 1
-          `
-        );
-        if(jobOfferData.length && jobOfferData[0].job_offer_status === 'PENDING'){
-          return true;
-        }
-      }
-
-      let isWithProgressIndicator = false;
-      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
-        isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
-      }
-
-      return {
-        request_id: request.request_id,
-        request_formsly_id: request.request_formsly_id,
-        request_date_created: request.request_date_created,
-        request_status: request.request_status,
-        request_form_id: request.request_form_id,
-        form_name: request.form_name,
-        request_signer: request_signer,
-        request_is_with_view_indicator: isWithViewIndicator,
-        request_is_with_progress_indicator: isWithProgressIndicator
-      }
-    });
+    returnData = plv8.execute(
+      `
+        SELECT request_response_request_id, request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id IN (${requestIdCondition})
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+      `
+    );
   });
-  return return_value
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_user_request_indicator(
+  input_data JSON
+)
+RETURNS BOOLEAN
+SET search_path TO ''
+AS $$
+  let returnData
+  plv8.subtransaction(function(){
+    const {
+      request
+    } = input_data;
+
+    const checkProgress = (formslyId, requestId) => {
+      const generalAssessmentCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM request_schema.request_response_table
+          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            AND request_form_id IN (
+              '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
+              '2f9100a9-f322-405f-acda-68bbf94236b0'
+            )
+          WHERE
+            request_response = '"${formslyId}"'
+        `
+      )[0].count;
+      if(!generalAssessmentCount){
+        return true;
+      }
+
+      const technicalAssessmentCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM request_schema.request_response_table
+          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
+          WHERE
+            request_response = '"${formslyId}"'
+        `
+      )[0].count;
+      if(!technicalAssessmentCount){
+        return true;
+      }
+
+      const hrPhoneInterviewCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.hr_phone_interview_table
+          WHERE
+            hr_phone_interview_request_id = '${requestId}'
+            AND hr_phone_interview_schedule IS NULL
+        `
+      )[0].count;
+      if(hrPhoneInterviewCount){
+        return true;
+      }
+
+      const technicalInterviewCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.technical_interview_table
+          WHERE
+            technical_interview_request_id = '${requestId}'
+            AND technical_interview_schedule IS NULL
+        `
+      )[0].count;
+      if(technicalInterviewCount){
+        return true;
+      }
+
+      const tradeTestCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.trade_test_table
+          WHERE
+            trade_test_request_id = '${requestId}'
+            AND trade_test_schedule IS NULL
+        `
+      )[0].count;
+      if(tradeTestCount){
+        return true;
+      }
+
+      const jobOfferData = plv8.execute(
+        `
+          SELECT job_offer_id, job_offer_status
+          FROM hr_schema.job_offer_table
+          WHERE
+            job_offer_request_id = '${requestId}'
+          ORDER BY job_offer_date_created DESC
+          LIMIT 1
+        `
+      );
+      if(jobOfferData.length && jobOfferData[0].job_offer_status === 'PENDING'){
+        return true;
+      }
+    }
+    let isWithProgressIndicator = false;
+    isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
+
+    returnData = isWithProgressIndicator;
+  });
+  return returnData
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_user_id_in_application_information(
