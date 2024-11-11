@@ -1110,6 +1110,14 @@ const EditLiquidationReimbursementRequestPage = ({
           }`
         );
 
+        const wavResponse = safeParse(
+          `${
+            requestDetailsSectionFieldList.find(
+              (field) => field.field_name === "Working Advances"
+            )?.field_response
+          }`
+        );
+
         const requestTypeWithWAV = ["liquidation", "petty cash fund"];
 
         const isLiquidationOrPCF = requestTypeWithWAV.some((type) =>
@@ -1121,6 +1129,13 @@ const EditLiquidationReimbursementRequestPage = ({
             requestDetailsSectionFieldList.filter(
               (field) =>
                 !["Working Advances", "Ticket ID"].includes(field.field_name)
+            );
+        }
+
+        if (wavResponse && wavResponse === "Petty Cash Fund Reimbursement") {
+          requestDetailsSectionFieldList =
+            requestDetailsSectionFieldList.filter(
+              (field) => !["Ticket ID"].includes(field.field_name)
             );
         }
 
