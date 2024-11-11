@@ -5,10 +5,10 @@ import {
 import { RadialChartData } from "@/components/Chart/RadialChart";
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
-import { useTeamMemberStore } from "@/stores/useTeamMemberStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_ON_SCROLL_LIMIT } from "@/utils/constant";
-import { TeamMemberType } from "@/utils/types";
+import { DashboardRequestorAndSignerType, TeamMemberType } from "@/utils/types";
 import { Box, Flex, Loader, LoadingOverlay, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -52,7 +52,7 @@ const Overview = ({
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = useSupabaseClient();
-  const teamMemberList = useTeamMemberStore();
+  const teamMemberList = useTeamMemberList();
   const [requestStatusCount, setRequestStatusCount] = useState<
     RadialChartData[] | null
   >(null);
@@ -68,9 +68,9 @@ const Overview = ({
   const [requestorList, setRequestorList] = useState<
     RequestorAndSignerDataType[]
   >([]);
-  const [signerList, setSignerList] = useState<RequestorAndSignerDataType[]>(
-    []
-  );
+  const [signerList, setSignerList] = useState<
+    DashboardRequestorAndSignerType[]
+  >([]);
 
   const [requestorOffset, setRequestorOffset] = useState(1);
   const [isRequestorFetchable, setIsRequestorFetchable] = useState(true);
@@ -79,7 +79,8 @@ const Overview = ({
   const [isSignerFetchable, setIsSignerFetchable] = useState(false);
 
   useEffect(() => {
-    if (!startDateFilter || !endDateFilter) return;
+    if (!startDateFilter || !endDateFilter || teamMemberList.length === 0)
+      return;
     const fetchOverviewData = async (selectedForm: string, teamId: string) => {
       endDateFilter?.setHours(23, 59, 59, 999);
 
@@ -148,7 +149,7 @@ const Overview = ({
         setIsFetchingRequestor(false);
 
         // set signer data
-        const { data: sigerList, error: signerListError } =
+        const { data: signerList, error: signerListError } =
           await supabaseClient.rpc("fetch_dashboard_top_signer", {
             input_data: {
               formId: selectedForm,
@@ -159,7 +160,7 @@ const Overview = ({
             },
           });
         if (signerListError) throw signerListError;
-        setSignerList(sigerList);
+        setSignerList(signerList);
         setIsFetchingSigner(false);
       } catch (e) {
         notifications.show({

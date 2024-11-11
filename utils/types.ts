@@ -2715,3 +2715,9 @@ export type UserApplicationListFilterValues = {
   search?: string;
   isAscendingSort: boolean;
 };
+
+export type DashboardRequestorAndSignerType = {
+  total: number;
+  team_member_id: string;
+  request: { label: string; value: number }[];
+};
