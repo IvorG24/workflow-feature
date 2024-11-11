@@ -6158,18 +6158,40 @@ export const getApplicationInformationSummaryData = async (
       input_data: { parentRequestQuery },
     }
   );
-
   if (error) throw error;
+  const formattedData =
+    data as unknown as ApplicationInformationSpreadsheetData[];
 
   const { data: columnData, error: columnError } = await supabaseClient.rpc(
     "get_application_information_summary_table_columns",
     {
-      input_data: { parentRequests: data },
+      input_data: {
+        requestIdList: formattedData.map((request) => request.request_id),
+      },
     }
   );
   if (columnError) throw columnError;
+  const formattedColumnData = columnData as unknown as {
+    request_id: string;
+    request_signer: {
+      request_signer_id: string;
+      request_signer_status: string;
+      request_signer: {
+        signer_team_member_id: string;
+        signer_is_primary_signer: boolean;
+      }[];
+    };
+  }[];
 
-  return columnData as ApplicationInformationSpreadsheetData[];
+  return formattedData.map((data) => {
+    const signer = formattedColumnData.find(
+      (signer) => signer.request_id === data.request_id
+    );
+    return {
+      ...data,
+      request_signer_list: signer?.request_signer,
+    };
+  }) as unknown as ApplicationInformationSpreadsheetData[];
 };
 
 export const getFormSectionWithFieldList = async (

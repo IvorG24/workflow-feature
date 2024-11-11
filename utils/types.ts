@@ -1293,7 +1293,7 @@ export type RequestProjectSignerType = {
   };
 }[];
 
-export type requestSignerType = {
+export type RequestSignerType = {
   request_signer_id: string;
   request_signer_status: string;
   request_signer: {
@@ -1312,7 +1312,7 @@ export type RequestListItemType = {
   request_otp_id?: string;
   request_form_id: string;
   request_team_member_id: string;
-  request_signer: requestSignerType[];
+  request_signer: RequestSignerType[];
   user_id: string;
   user_first_name: string;
   user_last_name: string;
@@ -2206,7 +2206,14 @@ export type ApplicationInformationSpreadsheetData = {
   request_status_date_updated: string;
   request_score_value: string;
   request_ad_owner: string;
-  request_signer_list: RequestListItemSignerType[];
+  request_signer_list: {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_signer: {
+      signer_team_member_id: string;
+      signer_is_primary_signer: boolean;
+    };
+  }[];
   application_information_additional_details_position: string;
   application_information_additional_details_first_name: string;
   application_information_additional_details_middle_name: string | null;
@@ -2323,7 +2330,7 @@ export type UserRequestListItemType = {
   request_date_created: string;
   request_status: string;
   request_form_id: string;
-  request_signer: requestSignerType[];
+  request_signer: RequestSignerType[];
   form_name: string;
 };
 
