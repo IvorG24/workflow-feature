@@ -6055,16 +6055,16 @@ export const getApplicationInformationSummaryData = async (
       )})`)
     : null;
 
-  const castRequestResponse = (value: string) => {
-    switch (sort?.dataType) {
-      case "NUMBER":
-        return `CAST(${value} AS NUMERIC)`;
-      case "DATE":
-        return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
-      default:
-        return value;
-    }
-  };
+  // const castRequestResponse = (value: string) => {
+  //   switch (sort?.dataType) {
+  //     case "NUMBER":
+  //       return `CAST(${value} AS NUMERIC)`;
+  //     case "DATE":
+  //       return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
+  //     default:
+  //       return value;
+  //   }
+  // };
 
   const parentRequestQuery = `
     SELECT request_id,
@@ -6080,10 +6080,11 @@ export const getApplicationInformationSummaryData = async (
           ? `AND (${requestScoreFilterCondition.join(" OR ")})`
           : ""
       }
-    AND request_is_disabled = FALSE
-    AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
       ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
+    WHERE 
+      request_is_disabled = FALSE
+      AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     ${!isSortByResponse ? `ORDER BY ${sort?.field} ${sort?.order}` : ""}
     , request_date_created DESC
     LIMIT ${limit}
