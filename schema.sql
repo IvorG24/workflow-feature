@@ -1266,6 +1266,8 @@ CREATE TABLE hr_schema.application_information_additional_details_table (
   application_information_additional_details_first_name VARCHAR(4000) NOT NULL,
   application_information_additional_details_middle_name VARCHAR(4000),
   application_information_additional_details_last_name VARCHAR(4000) NOT NULL,
+  application_information_additional_details_contact_number VARCHAR(4000) NOT NULL,
+  application_information_additional_details_email VARCHAR(4000) NOT NULL,
   
   application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
 );
@@ -2000,6 +2002,8 @@ AS $$
             application_information_additional_details_first_name,
             application_information_additional_details_middle_name,
             application_information_additional_details_last_name,
+            application_information_additional_details_contact_number,
+            application_information_additional_details_email,
             application_information_additional_details_request_id
           )
           VALUES
@@ -2008,6 +2012,8 @@ AS $$
             '${applicationInformationParams.firstName}',
             ${applicationInformationParams.middleName ? `'${applicationInformationParams.middleName}'` : "NULL"},
             '${applicationInformationParams.lastName}',
+            '${applicationInformationParams.contactNumber}',
+            '${applicationInformationParams.email}',
             '${requestId}'
           )
         `
@@ -25320,6 +25326,12 @@ USING (true);
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table;
 CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table
 AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow DELETE for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (true);
 
