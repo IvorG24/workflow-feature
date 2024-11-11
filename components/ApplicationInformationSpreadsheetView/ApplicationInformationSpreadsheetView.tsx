@@ -13,7 +13,6 @@ import {
   ApplicationInformationSpreadsheetData,
   OptionTableRow,
   OptionType,
-  SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -62,13 +61,11 @@ const formDefaultValues = {
 };
 
 type Props = {
-  sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
   approverOptionList: OptionType[];
 };
 
 const ApplicationInformationSpreadsheetView = ({
-  sectionList,
   optionList: initialOptionList,
   approverOptionList,
 }: Props) => {
@@ -311,7 +308,6 @@ const ApplicationInformationSpreadsheetView = ({
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu
-            sectionList={sectionList}
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
           />
@@ -319,7 +315,6 @@ const ApplicationInformationSpreadsheetView = ({
       </Box>
       <ApplicationInformationSpreadsheetTable
         data={data}
-        sectionList={sectionList}
         isLoading={isLoading}
         page={page}
         handlePagination={handlePagination}

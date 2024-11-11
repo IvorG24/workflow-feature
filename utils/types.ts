@@ -2205,9 +2205,12 @@ export type ApplicationInformationSpreadsheetData = {
   request_status: string;
   request_status_date_updated: string;
   request_score_value: string;
-  request_response_list: (RequestResponseTableRow & { field_id: string })[];
-  request_signer_list: RequestListItemSignerType[];
   request_ad_owner: string;
+  request_signer_list: RequestListItemSignerType[];
+  application_information_additional_details_position: string;
+  application_information_additional_details_first_name: string;
+  application_information_additional_details_middle_name: string | null;
+  application_information_additional_details_last_name: string;
 };
 
 export type SectionWithFieldType = SectionTableRow & {
