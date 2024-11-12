@@ -94,9 +94,11 @@ const ApplicationInformationMainTableRow = ({
       )}
       {!hiddenColumnList.includes("Approver") && (
         <td className={classes["Request"]}>
-          <RequestSignerList
-            signerList={signerList as RequestListItemSignerType[]}
-          />
+          {signerList.length && teamMemberList.length ? (
+            <RequestSignerList
+              signerList={signerList as RequestListItemSignerType[]}
+            />
+          ) : null}
         </td>
       )}
       {!hiddenColumnList.includes("Score") && (
