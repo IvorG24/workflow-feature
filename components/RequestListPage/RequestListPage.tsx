@@ -208,7 +208,7 @@ const RequestListPage = ({ projectList }: Props) => {
             >
               SSOT
             </Menu.Item>
-            <Menu.Item
+            {/* <Menu.Item
               onClick={async () =>
                 await router.push(
                   `/${formatTeamNameToUrlKey(
@@ -218,7 +218,7 @@ const RequestListPage = ({ projectList }: Props) => {
               }
             >
               Liquidation
-            </Menu.Item>
+            </Menu.Item> */}
           </Menu.Dropdown>
         </Menu>
       </Flex>
