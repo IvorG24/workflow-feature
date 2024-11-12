@@ -15061,83 +15061,73 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_user_request_indicator(
   input_data JSON
 )
-RETURNS BOOLEAN
+RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData
+  let returnData;
   plv8.subtransaction(function(){
     const {
-      request
+      requestList
     } = input_data;
 
     const checkProgress = (formslyId, requestId) => {
-      const generalAssessmentCount = plv8.execute(
+      const generalAssessmentExists = plv8.execute(
         `
-          SELECT COUNT(*)
-          FROM request_schema.request_response_table
-          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-            AND request_form_id IN (
-              '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
-              '2f9100a9-f322-405f-acda-68bbf94236b0'
-            )
-          WHERE
-            request_response = '"${formslyId}"'
+          SELECT EXISTS (
+            SELECT 1
+            FROM hr_schema.request_connection_table
+            WHERE
+              request_connection_application_information_request_id = '${requestId}'
+              AND request_connection_general_assessment_request_id IS NULL
+          )
         `
-      )[0].count;
-      if(!generalAssessmentCount){
+      )[0].exists;
+      if(generalAssessmentExists){
         return true;
       }
 
-      const technicalAssessmentCount = plv8.execute(
+      const hrPhoneInterviewExists = plv8.execute(
         `
-          SELECT COUNT(*)
-          FROM request_schema.request_response_table
-          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-            AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
-          WHERE
-            request_response = '"${formslyId}"'
+          SELECT EXISTS (
+            SELECT 1
+            FROM hr_schema.hr_phone_interview_table
+            WHERE
+              hr_phone_interview_request_id = '${requestId}'
+              AND hr_phone_interview_schedule IS NULL
+          )
         `
-      )[0].count;
-      if(!technicalAssessmentCount){
+      )[0].exists;
+      if(hrPhoneInterviewExists){
         return true;
       }
 
-      const hrPhoneInterviewCount = plv8.execute(
+      const technicalInterviewExists = plv8.execute(
         `
-          SELECT COUNT(*)
-          FROM hr_schema.hr_phone_interview_table
-          WHERE
-            hr_phone_interview_request_id = '${requestId}'
-            AND hr_phone_interview_schedule IS NULL
+          SELECT EXISTS (
+            SELECT 1
+            FROM hr_schema.technical_interview_table
+            WHERE
+              technical_interview_request_id = '${requestId}'
+              AND technical_interview_schedule IS NULL
+          )
         `
-      )[0].count;
-      if(hrPhoneInterviewCount){
+      )[0].exists;
+      if(technicalInterviewExists){
         return true;
       }
 
-      const technicalInterviewCount = plv8.execute(
+      const tradeTestExists = plv8.execute(
         `
-          SELECT COUNT(*)
-          FROM hr_schema.technical_interview_table
-          WHERE
-            technical_interview_request_id = '${requestId}'
-            AND technical_interview_schedule IS NULL
+          SELECT EXISTS (
+            SELECT 1
+            FROM hr_schema.trade_test_table
+            WHERE
+              trade_test_request_id = '${requestId}'
+              AND trade_test_schedule IS NULL
+          )
         `
-      )[0].count;
-      if(technicalInterviewCount){
-        return true;
-      }
-
-      const tradeTestCount = plv8.execute(
-        `
-          SELECT COUNT(*)
-          FROM hr_schema.trade_test_table
-          WHERE
-            trade_test_request_id = '${requestId}'
-            AND trade_test_schedule IS NULL
-        `
-      )[0].count;
-      if(tradeTestCount){
+      )[0].exists;
+      if(tradeTestExists){
         return true;
       }
 
@@ -15155,10 +15145,18 @@ AS $$
         return true;
       }
     }
-    let isWithProgressIndicator = false;
-    isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
 
-    returnData = isWithProgressIndicator;
+    returnData = requestList.map(request => {
+      let isWithProgressIndicator = false;
+      if (request.request_status === 'APPROVED') {
+        isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
+      }
+
+      return {
+        ...request,
+        request_is_with_progress_indicator: isWithProgressIndicator
+      }
+    });
   });
   return returnData
 $$ LANGUAGE plv8;
