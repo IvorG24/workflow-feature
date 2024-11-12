@@ -1189,48 +1189,6 @@ export type SSOTType = {
   item_request_date_created: string;
   item_request_owner: SSOTRequestOwnerType;
   item_request_response: SSOTResponseType[];
-  item_quotation_request: {
-    quotation_request_id: string;
-    quotation_request_formsly_id: string;
-    quotation_request_date_created: string;
-    quotation_request_owner: SSOTRequestOwnerType;
-    quotation_request_response: SSOTResponseType[];
-    quotation_rir_request: {
-      rir_request_id: string;
-      rir_request_formsly_id: string;
-      rir_request_date_created: string;
-      rir_request_owner: SSOTRequestOwnerType;
-      rir_request_response: SSOTResponseType[];
-    }[];
-  }[];
-  item_sourced_item_request: {
-    sourced_item_request_id: string;
-    sourced_item_request_formsly_id: string;
-    sourced_item_request_date_created: string;
-    sourced_item_request_owner: SSOTRequestOwnerType;
-    sourced_item_request_response: SSOTResponseType[];
-    sourced_item_ro_request: {
-      ro_request_id: string;
-      ro_request_formsly_id: string;
-      ro_request_date_created: string;
-      ro_request_owner: SSOTRequestOwnerType;
-      ro_request_response: SSOTResponseType[];
-      ro_transfer_receipt_request: {
-        transfer_receipt_request_id: string;
-        transfer_receipt_request_formsly_id: string;
-        transfer_receipt_request_date_created: string;
-        transfer_receipt_request_owner: SSOTRequestOwnerType;
-        transfer_receipt_request_response: SSOTResponseType[];
-      }[];
-    }[];
-  }[];
-  item_cheque_reference_request: {
-    cheque_reference_request_id: string;
-    cheque_reference_request_formsly_id: string;
-    cheque_reference_request_date_created: string;
-    cheque_reference_request_response: SSOTResponseType[];
-    cheque_reference_request_owner: SSOTRequestOwnerType;
-  }[];
 };
 
 export type Section = SectionTableRow & {
