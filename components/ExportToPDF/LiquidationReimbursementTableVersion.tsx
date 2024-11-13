@@ -143,6 +143,19 @@ const LiquidationReimbursementTableVersion = ({
   );
   const formlsyId = requestIDs.find((detail) => detail.label === "Formsly ID:");
   const jiraId = requestIDs.find((detail) => detail.label === "Jira ID:");
+  const purpose = requestItems[0].fields.find(
+    (detail) => detail.label === "Purpose"
+  );
+  const payeeSectionList = requestItems.filter(
+    (section) => section.title === "Payee"
+  );
+  const invoiceAmountFieldList = payeeSectionList.flatMap((section) =>
+    section.fields.filter((field) => field.label === "Invoice Amount")
+  );
+  const totalAmount = invoiceAmountFieldList.reduce((sum, item) => {
+    const currentAmount = Number(item.value);
+    return (sum += currentAmount);
+  }, 0);
 
   const payeeTableColumns = [
     "Date",
@@ -197,6 +210,14 @@ const LiquidationReimbursementTableVersion = ({
               </View>
             </View>
           </View>
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <View style={styles.row}>
+                <Text style={{ fontWeight: 600 }}>Purpose:</Text>
+                <Text>{purpose?.value}</Text>
+              </View>
+            </View>
+          </View>
         </View>
         <View style={styles.divider} />
         <Fragment>
@@ -219,34 +240,37 @@ const LiquidationReimbursementTableVersion = ({
                   <Text style={styles.tableHeader}>Invoice Amount</Text>
                 </View>
               </View>
-              {requestItems
-                .filter((section) => section.title === "Payee")
-                .map((item, index) => {
-                  return (
-                    <View key={index} style={styles.tableRow} wrap={false}>
-                      {item.fields
-                        .filter((field) =>
-                          payeeTableColumns.includes(field.label)
-                        )
-                        .map((field, i) => (
-                          <View
-                            key={i}
-                            style={[
-                              styles.tableCell,
-                              ["Invoice Amount", "Date"].includes(field.label)
-                                ? styles.minCell
-                                : styles.fullCell,
-                            ]}
-                          >
-                            <Text>{field.value}</Text>
-                          </View>
-                        ))}
-                    </View>
-                  );
-                })}
+              {payeeSectionList.map((item, index) => {
+                return (
+                  <View key={index} style={styles.tableRow} wrap={false}>
+                    {item.fields
+                      .filter((field) =>
+                        payeeTableColumns.includes(field.label)
+                      )
+                      .map((field, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.tableCell,
+                            ["Invoice Amount", "Date"].includes(field.label)
+                              ? styles.minCell
+                              : styles.fullCell,
+                          ]}
+                        >
+                          <Text>{field.value}</Text>
+                        </View>
+                      ))}
+                  </View>
+                );
+              })}
             </View>
           </View>
         </Fragment>
+        <View>
+          <Text style={{ fontSize: 10, fontWeight: 600, marginTop: 8 }}>
+            Total amount: {totalAmount.toLocaleString()}
+          </Text>
+        </View>
         <Footer />
       </Page>
     </Document>
