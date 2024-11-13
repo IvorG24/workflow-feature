@@ -14981,23 +14981,15 @@ AS $$
           request_id,
           request_formsly_id,
           request_date_created,
-          request_status
-        FROM (
-          SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            request_status,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-            AND request_response = '"${email}"'
-            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-          WHERE
-            request_is_disabled = false
-        ) AS a
+          request_status,
+          request_response AS request_application_information_position
+        FROM public.request_view
+        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
+          AND application_information_additional_details_email = '${email}'
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
         WHERE
-          a.rowNumber = 1
+          request_is_disabled = false
           ${search}
         ORDER BY ${columnAccessor} ${sort}
         LIMIT ${limit}
@@ -15007,21 +14999,13 @@ AS $$
 
     let request_count = plv8.execute(
       `
-        SELECT COUNT(*) FROM (
-          SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-            AND request_response = '"${email}"'
-          WHERE
-            request_is_disabled = false
-        ) AS a
+        SELECT COUNT(*)
+        FROM public.request_view
+        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
+          AND application_information_additional_details_email = '${email}'
         WHERE
-          a.rowNumber = 1
+          request_is_disabled = false
+          ${search}
       `
     )[0];
 
