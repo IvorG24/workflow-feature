@@ -14911,10 +14911,18 @@ AS $$
       = null;
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
-    const emailValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'`)[0].request_response.replaceAll('"', "");
-    if (userEmail !== emailValue) throw new Error('403') 
-    const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
-    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
+    const applicantData = plv8.execute(
+      `
+        SELECT * 
+        FROM hr_schema.application_information_additional_details_table
+        WHERE 
+          application_information_additional_details_request_id = '${requestUUID}'
+        LIMIT 1
+      `
+    )[0];
+
+    if (userEmail !== applicantData.application_information_additional_details_email) throw new Error('403') 
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${applicantData.application_information_additional_details_position}' LIMIT 1`)[0];
 
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = undefined;
@@ -14933,24 +14941,14 @@ AS $$
       `
         SELECT *
         FROM public.request_view
+        INNER JOIN hr_schema.request_connection_table ON request_connection_application_information_request_id = request_id
         WHERE
           request_formsly_id = '${requestId}'
+        LIMIT 1
       `
     )[0];
 
-    generalAssessmentData = plv8.execute(
-      `
-        SELECT request_view.*
-        FROM public.request_view
-        INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          AND request_response_field_id IN (
-            'be0e130b-455b-47e0-a804-f90943f7bc07',
-            'c3225996-d3e8-4fb4-87d8-f5ced778adcf'
-          )
-          AND request_response = '"${requestId}"'
-      `
-    );
-    if (!generalAssessmentData.length) {
+    if (!applicationInformationData.request_connection_general_assessment_request_id) {
       returnData = {
         applicationInformationData,
         generalAssessmentData: undefined,
@@ -14964,46 +14962,18 @@ AS $$
       }
       return;
     }
-    generalAssessmentData = generalAssessmentData[0];
 
-    technicalAssessmentData = plv8.execute(
+    generalAssessmentData = plv8.execute(
       `
-        SELECT
-          request_date_created,
-          request_form_id,
-          request_formsly_id,
-          request_formsly_id_prefix,
-          request_formsly_id_serial,
-          request_id,
-          request_is_disabled,
-          request_jira_id,
-          request_jira_link,
-          request_otp_id,
-          request_project_id,
-          request_status,
-          request_status_date_updated,
-          request_team_member_id
-        FROM (
-          SELECT
-            request_view.*,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          WHERE
-            (
-              request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
-              AND request_response = '"${requestId}"'
-            )
-            OR
-            (
-              request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
-              AND request_response = '"${generalAssessmentData.request_formsly_id}"'
-            )
-        ) AS a
-        WHERE a.RowNumber = 2
+        SELECT request_view.*
+        FROM public.request_view
+        WHERE request_id = '${applicationInformationData.request_connection_general_assessment_request_id}'
+        LIMIT 1
       `
     );
-    if (!technicalAssessmentData.length) {
+    generalAssessmentData = generalAssessmentData[0];
+
+     if (!applicationInformationData.request_connection_technical_assessment_request_id) {
       returnData = {
         applicationInformationData,
         generalAssessmentData,
@@ -15015,7 +14985,17 @@ AS $$
         backgroundCheckData,
         jobOfferData
       }
+      return;
     }
+
+    technicalAssessmentData = plv8.execute(
+      `
+        SELECT request_view.*
+        FROM public.request_view
+        WHERE request_id = '${applicationInformationData.request_connection_technical_assessment_request_id}'
+        LIMIT 1
+      `
+    );
     technicalAssessmentData = technicalAssessmentData[0];
 
     hrPhoneInterviewData = plv8.execute(`SELECT * FROM hr_schema.hr_phone_interview_table WHERE hr_phone_interview_request_id = '${requestUUID}'`);
@@ -17079,22 +17059,20 @@ AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
-      requestReferenceId,
       email
     } = input_data;
 
     const requestData = plv8.execute(
       `
-        SELECT request_response_request_id
-        FROM request_schema.request_response_table
+        SELECT application_information_additional_details_request_id
+        FROM hr_schema.application_information_additional_details_table
         WHERE
-          request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-          AND request_response = '"${email}"'
+          application_information_additional_details_email = '${email}'
       `
     );
     if (!requestData.length) return;
 
-    returnData = requestData.map(request => `'${request.request_response_request_id}'`);
+    returnData = requestData.map(request => `'${request.application_information_additional_details_request_id}'`);
   });
   return returnData;
 $$ LANGUAGE plv8;
@@ -18853,23 +18831,42 @@ CREATE OR REPLACE FUNCTION check_assessment_create_request_page(
 RETURNS BOOLEAN
 SET search_path TO ''
 AS $$
-let returnData;
-plv8.subtransaction(function(){
-  const { fieldAndResponse } = input_data;
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      applicationInformationFormslyId,
+      generalAssessmentFormslyId
+    } = input_data;
 
-  const condition = fieldAndResponse.map(data => `(request_response_field_id = '${data.fieldId}' AND request_response = '"${data.response}"')`).join(" OR ")
-
-  const count = plv8.execute(
-    `
-      SELECT COUNT(*)
-      FROM request_schema.request_response_table
-      WHERE ${condition}
-    `
-  )[0].count
-
-  returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
-});
-return returnData;
+    if (applicationInformationFormslyId) {
+      returnData = plv8.execute(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM public.request_view
+            INNER JOIN hr_schema.request_connection_table ON request_connection_application_information_request_id = request_id
+            WHERE 
+              request_formsly_id = '${applicationInformationFormslyId}'
+              AND request_connection_general_assessment_request_id IS NOT NULL
+          )
+        `
+      )[0].exists;
+    } else if (generalAssessmentFormslyId) {
+      returnData = plv8.execute(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM public.request_view
+            INNER JOIN hr_schema.request_connection_table ON request_connection_general_assessment_request_id = request_id
+            WHERE 
+              request_formsly_id = '${generalAssessmentFormslyId}'
+              AND request_connection_technical_assessment_request_id IS NOT NULL
+          )
+        `
+      )[0].exists;
+    }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_team_group_member(

@@ -6233,8 +6233,8 @@ export const getUserApplicationList = async (
 
   const searchCondition =
     search && validate(search)
-      ? `a.request_id = '${search}'`
-      : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      ? `request_id = '${search}'`
+      : `request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
   const { data: requestList, error: requestListError } =
     await supabaseClient.rpc("fetch_user_request_list", {
@@ -7347,10 +7347,8 @@ export const getEmailResendTimer = async (
 export const checkAssessmentCreateRequestPage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    fieldAndResponse: {
-      fieldId: string;
-      response: string;
-    }[];
+    applicationInformationFormslyId?: string;
+    generalAssessmentFormslyId?: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
