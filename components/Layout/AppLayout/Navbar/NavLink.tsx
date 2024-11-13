@@ -31,6 +31,7 @@ import {
   IconClipboard,
   IconCode,
   IconDashboard,
+  IconDeviceIpadHorizontalQuestion,
   IconFile,
   IconFileCertificate,
   IconFileDescription,
@@ -540,6 +541,19 @@ const ReviewAppNavLink = () => {
               </Box>
             ),
             href: `/${activeTeamNameToUrl}/practical-test-form`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN"
+      ? [
+          {
+            label: `Preferred Position`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconDeviceIpadHorizontalQuestion {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/preferred-position`,
           },
         ]
       : []),

@@ -79,10 +79,12 @@ import {
   NotificationOnLoad,
   NotificationTableRow,
   OptionTableRow,
+  OptionType,
   OtherExpensesTypeTableRow,
   PendingInviteType,
   PracticalTestTableRow,
   PracticalTestType,
+  PreferredPositionType,
   QuestionnaireData,
   ReferenceMemoType,
   RequesterPrimarySignerType,
@@ -1801,8 +1803,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -6137,7 +6139,7 @@ export const getApplicationInformationSummaryData = async (
           ? `AND ${responseFilterCondition.join(" AND ")}`
           : ""
       }
-    WHERE 
+    WHERE
       request_is_disabled = FALSE
       AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
       ${
@@ -7299,7 +7301,7 @@ export const getPositionTypeOptions = async (
 ) => {
   const { teamId, limit } = params;
   let start = 0;
-  let allData: OptionTableRow[] = [];
+  let allData: OptionType[] = [];
 
   while (true) {
     const end = start + limit - 1;
@@ -7317,11 +7319,9 @@ export const getPositionTypeOptions = async (
       break;
     }
 
-    const returnData = data.map((item, index) => ({
-      option_value: item.position_alias,
-      option_id: item.position_id,
-      option_field_id: uuidv4(),
-      option_order: start + index,
+    const returnData = data.map((item) => ({
+      label: `${item.position_alias}`,
+      value: `${item.position_id}`,
     }));
 
     allData = allData.concat(returnData);
@@ -7873,4 +7873,44 @@ export const getApplicationInformationIndicator = async (
   );
   if (error) throw error;
   return data as boolean;
+};
+
+export const getPreferredPositionOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    limit?: number;
+    page?: number;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_preferred_position_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as { groupMemberData: PreferredPositionType[]; totalCount: 0 };
+};
+
+export const fetchPreferredHrPosition = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_preferred_position_per_member_id",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as unknown as {
+    positionAlias: string[];
+    positionId: string[];
+  };
 };

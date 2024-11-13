@@ -81,11 +81,7 @@ const CreatePracticalTestFormPage = ({ practicalTestData }: Props) => {
           teamId: activeTeam.team_id,
           limit: FETCH_OPTION_LIMIT,
         });
-        setPositionOptions(
-          positionOptions.map((position) => {
-            return { label: position.option_value, value: position.option_id };
-          })
-        );
+        setPositionOptions(positionOptions);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

@@ -399,7 +399,7 @@ CREATE TABLE form_schema.requester_primary_signer_table (
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
-  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))), 
+  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))),
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
@@ -1138,6 +1138,13 @@ CREATE TABLE hr_schema.hr_project_table (
   hr_project_address_id UUID REFERENCES public.address_table(address_id) NOT NULL
 );
 
+CREATE TABLE hr_schema.hr_preferred_position_table (
+  hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
+  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id),
+  UNIQUE (hr_preferred_position_position_id)
+);
+
 CREATE TABLE lookup_schema.degree_table (
   degree_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   degree_type VARCHAR(4000) NOT NULL,
@@ -1268,7 +1275,7 @@ CREATE TABLE hr_schema.application_information_additional_details_table (
   application_information_additional_details_last_name VARCHAR(4000) NOT NULL,
   application_information_additional_details_contact_number VARCHAR(4000) NOT NULL,
   application_information_additional_details_email VARCHAR(4000) NOT NULL,
-  
+
   application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
 );
 
@@ -1986,7 +1993,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.trade_test_table
-          SET trade_test_evaluation_request_id = '${requestId}' 
+          SET trade_test_evaluation_request_id = '${requestId}'
           WHERE
             trade_test_id = '${tradeTestParams.tradeTestId}'
         `
@@ -2333,18 +2340,18 @@ AS $$
 
     const itemDivisionDescription = plv8.execute(
       `
-        INSERT INTO item_schema.item_level_three_description_table 
+        INSERT INTO item_schema.item_level_three_description_table
         (
-          item_level_three_description_item_id, 
+          item_level_three_description_item_id,
           item_level_three_description,
           item_level_three_description_csi_code_section
-        ) 
-        VALUES 
+        )
+        VALUES
         (
-          '${item_result.item_id}', 
+          '${item_result.item_id}',
           '${item_level_three_description}',
           '${csiCodeSection}'
-        ) 
+        )
         RETURNING *
       `
     )[0].item_level_three_description;
@@ -2553,15 +2560,15 @@ AS $$
 
     const itemLevelThreeDescription = plv8.execute(
       `
-        INSERT INTO item_schema.item_level_three_description_table 
+        INSERT INTO item_schema.item_level_three_description_table
         (
-          item_level_three_description_item_id, 
+          item_level_three_description_item_id,
           item_level_three_description,
           item_level_three_description_csi_code_section
-        ) 
-        VALUES 
+        )
+        VALUES
         (
-          '${item_id}', 
+          '${item_id}',
           '${item_level_three_description}',
           '${csiCodeSection}'
         )
@@ -4487,7 +4494,7 @@ AS $$
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user
         FROM team_schema.team_member_table tmt
-        INNER JOIN user_schema.user_table usert 
+        INNER JOIN user_schema.user_table usert
           ON tmt.team_member_user_id = usert.user_id
           AND usert.user_is_disabled=false
           ${search && `AND (
@@ -6979,7 +6986,7 @@ AS $$
             const requestResponseData = plv8.execute(`
               SELECT *
               FROM request_schema.request_response_table
-              WHERE 
+              WHERE
                 request_response_field_id = '${field.field_id}'
                 AND request_response_request_id = '${technicalAssessmentId}'
             `);
@@ -7022,7 +7029,7 @@ AS $$
               `
                 SELECT *
                 FROM request_schema.request_response_table
-                WHERE 
+                WHERE
                   request_response_field_id = '${field.field_id}'
                   AND request_response_request_id = '${requestData.request_id}'
               `
@@ -7065,7 +7072,7 @@ AS $$
             `
               SELECT *
               FROM request_schema.request_response_table
-              WHERE 
+              WHERE
                 request_response_field_id = '${field.field_id}'
                 AND request_response_request_id = '${requestData.request_id}'
             `
@@ -7575,8 +7582,8 @@ AS $$
 
     const ticket = plv8.execute(
       `
-        SELECT 
-          tt.*, 
+        SELECT
+          tt.*,
           tct.ticket_category
         FROM ticket_schema.ticket_table tt
         INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
@@ -8479,10 +8486,10 @@ AS $$
           COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
           COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
         FROM request_schema.request_signer_table
-        INNER JOIN form_schema.signer_table 
+        INNER JOIN form_schema.signer_table
           ON signer_id = request_signer_signer_id
           AND signer_is_disabled = false
-        INNER JOIN request_schema.request_table 
+        INNER JOIN request_schema.request_table
           ON request_id = request_signer_request_id
           AND request_is_disabled = false
           AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
@@ -15465,7 +15472,7 @@ AS $$
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
     const emailValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'`)[0].request_response.replaceAll('"', "");
-    if (userEmail !== emailValue) throw new Error('403') 
+    if (userEmail !== emailValue) throw new Error('403')
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
 
@@ -20412,7 +20419,7 @@ plv8.subtransaction(function() {
     const start = (page - 1) * limit;
 
     const requesterSignerCount = plv8.execute(`
-      SELECT COUNT(*) 
+      SELECT COUNT(*)
       FROM form_schema.requester_primary_signer_table
       INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
       WHERE
@@ -20577,7 +20584,7 @@ AS $$
         ON tm2.team_member_id = practical_test_updated_by
       LEFT JOIN user_schema.user_table u2
         ON u2.user_id = tm2.team_member_user_id
-      WHERE 
+      WHERE
         practical_test_team_id = $1
         ${creator}
         ${search}
@@ -20590,7 +20597,7 @@ AS $$
     const offset = (page - 1) * limit;
 
     const practicalTestData = plv8.execute(`
-      SELECT 
+      SELECT
         practical_test_table.*,
         u.user_id AS created_user_id,
         u.user_first_name AS created_user_first_name,
@@ -20697,7 +20704,7 @@ AS $$
           (
             practical_test_position_practical_test_id,
             practical_test_position_position_id
-          ) 
+          )
           VALUES ${practicalTestPositionInput}
         `
       );
@@ -20705,7 +20712,7 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO form_schema.field_table 
+        INSERT INTO form_schema.field_table
         (
           field_id,
           field_name,
@@ -20713,7 +20720,7 @@ AS $$
           field_type,
           field_order,
           field_section_id
-        ) 
+        )
         VALUES ${fieldInput}
       `
     );
@@ -20727,7 +20734,7 @@ AS $$
           practical_test_question_order,
           practical_test_question_field_id,
           practical_test_question_practical_test_id
-        ) 
+        )
         VALUES ${practicalTestQuestionInput}
       `
     );
@@ -20763,7 +20770,7 @@ AS $$
         SELECT
           position_id
         FROM hr_schema.practical_test_position_table
-        INNER JOIN lookup_schema.position_table ON position_id = practical_test_position_position_id 
+        INNER JOIN lookup_schema.position_table ON position_id = practical_test_position_position_id
         WHERE
           practical_test_position_practical_test_id = '${practicalTestId}'
       `
@@ -20774,7 +20781,7 @@ AS $$
         SELECT
           practical_test_question,
           practical_test_question_weight
-        FROM hr_schema.practical_test_question_table 
+        FROM hr_schema.practical_test_question_table
         WHERE
           practical_test_question_practical_test_id = '${practicalTestId}'
           AND practical_test_question_is_disabled = false
@@ -20921,10 +20928,10 @@ AS $$
 
     const practicalTestQuestionList = plv8.execute(
       `
-        SELECT 
+        SELECT
           field_table.*,
           practical_test_question_weight AS field_weight
-        FROM hr_schema.practical_test_question_table 
+        FROM hr_schema.practical_test_question_table
         INNER JOIN form_schema.field_table ON field_id = practical_test_question_field_id
         WHERE
           practical_test_question_practical_test_id = '${practicalTestData[0].practical_test_id}'
@@ -21037,7 +21044,7 @@ AS $$
       FROM
         team_schema.team_membership_request_table
       INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
-      WHERE 
+      WHERE
         team_membership_request_to_team_id = $1
     `;
 
@@ -21054,7 +21061,7 @@ AS $$
       FROM
         team_schema.team_membership_request_table
       INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
-      WHERE 
+      WHERE
         team_membership_request_to_team_id = $1
         ${search ? `AND (CONCAT(user_first_name, ' ', user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')` : ''}
     `, [teamId])[0].count;
@@ -21064,7 +21071,7 @@ AS $$
       data: teamMembershipRequestList,
       count: Number(teamMembershipRequestCount)
     }
-    
+
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -21081,7 +21088,7 @@ AS $$
       teamId,
       memberRole
     } = input_data;
-    
+
     userIdList.forEach((userId) => {
 
       const teamMembershipRequestCount = plv8.execute(`
@@ -21095,8 +21102,8 @@ AS $$
       if (Number(teamMembershipRequestCount) === 0) return;
 
       plv8.execute(`
-        INSERT INTO team_schema.team_member_table 
-        (team_member_user_id, team_member_team_id, team_member_role) 
+        INSERT INTO team_schema.team_member_table
+        (team_member_user_id, team_member_team_id, team_member_role)
         VALUES ($1, $2, $3)
       `, [userId, teamId, memberRole]);
 
@@ -21211,7 +21218,7 @@ AS $$
     } = input_data;
 
     let query = `
-        SELECT 
+        SELECT
             request_formsly_id AS "Applicant Ref ID",
             REPLACE(CONCAT(first.request_response, ' ', middle.request_response, ' ', last.request_response), '"', '') AS "Name of Applicant",
             REPLACE(position.request_response, '"', '') AS "Position",
@@ -21236,7 +21243,7 @@ AS $$
             job_offer_date_created "Job Offer Date",
             CONCAT(jou.user_first_name, ' ', jou.user_last_name) AS "Job Offer Assigned HR",
             request_date_created AS "Date Created"
-        FROM public.request_view 
+        FROM public.request_view
         INNER JOIN request_schema.request_response_table AS first ON first.request_response_request_id = request_id
             AND first.request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
         LEFT JOIN request_schema.request_response_table AS middle ON middle.request_response_request_id = request_id
@@ -21273,7 +21280,7 @@ AS $$
         AND jo.rn = 1
         LEFT JOIN team_schema.team_member_table AS jotm ON jotm.team_member_id = job_offer_team_member_id
         LEFT JOIN user_schema.user_table AS jou ON jou.user_id = jotm.team_member_user_id
-        WHERE 
+        WHERE
             request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     `;
 
@@ -21284,13 +21291,146 @@ AS $$
     };
 
     query += ` ORDER BY request_date_created DESC LIMIT ${limit} OFFSET ${offset}`;
-    
+
     const recruitment_data = plv8.execute(query, params);
 
     data = recruitment_data;
  });
  return data;
 $$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_preferred_position_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    groupMemberData: [],
+    totalCount: 0
+  };
+  plv8.subtransaction(() => {
+    const {
+      teamId,
+      limit = 10,
+      page = 1,
+      search = ''
+    } = input_data;
+
+    const searchCondition = search
+      ? `AND (u.user_first_name || ' ' || u.user_last_name ILIKE '%${search}%')`
+      : '';
+
+    const offset = (page - 1) * limit;
+
+    const groupMemberData = plv8.execute(`
+      SELECT
+        tg.team_group_member_id,
+        u.user_first_name,
+        u.user_last_name
+      FROM team_schema.team_group_member_table tg
+      JOIN team_schema.team_member_table tm
+        ON tg.team_member_id = tm.team_member_id
+        AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+        AND tm.team_member_team_id = '${teamId}'
+      JOIN user_schema.user_table u
+        ON tm.team_member_user_id = u.user_id
+      WHERE 1=1
+      ${searchCondition}
+      ORDER BY u.user_first_name ASC
+      LIMIT ${limit} OFFSET ${offset};
+    `);
+
+    const groupMemberCount = plv8.execute(`
+      SELECT
+        COUNT(*)
+      FROM team_schema.team_group_member_table tg
+      JOIN team_schema.team_member_table tm
+        ON tg.team_member_id = tm.team_member_id
+        AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+        AND tm.team_member_team_id = '${teamId}'
+      JOIN user_schema.user_table u
+        ON tm.team_member_user_id = u.user_id
+      WHERE 1=1
+      ${searchCondition}
+
+    `)[0].count;
+
+
+    returnData.groupMemberData = groupMemberData.map(member => ({
+      group_member_id: member.team_group_member_id,
+      group_member_name: `${member.user_first_name} ${member.user_last_name}`
+    }));
+    returnData.totalCount = Number(groupMemberCount);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION insert_update_hr_preferred_position(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+        positionData,
+        memberId
+    } = input_data;
+
+    const hrPreferredPositionData = plv8.execute(`
+        SELECT *
+        FROM hr_schema.hr_preferred_position_table
+        WHERE hr_preferred_position_group_member_id = '${memberId}'
+    `);
+
+    if(hrPreferredPositionData.length > 0 ){
+      const hrPreferredPositionData = plv8.execute(`
+        DELETE FROM hr_schema.hr_preferred_position_table
+        WHERE hr_preferred_position_group_member_id = '${memberId}'
+    `);
+    };
+
+   positionData[memberId].forEach((position) => {
+      plv8.execute(`
+        INSERT INTO hr_schema.hr_preferred_position_table (
+          hr_preferred_position_group_member_id,
+          hr_preferred_position
+        ) VALUES ('${memberId}', '${position}')
+      `);
+    });
+
+  })
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_preferred_position_per_member_id(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+        memberId
+    } = input_data;
+
+    const hrPreferredPositionData = plv8.execute(`
+        SELECT p.position_alias
+        FROM hr_schema.hr_preferred_position_table pr
+        JOIN lookup_schema.position_table p
+        ON p.position_id = pr.hr_preferred_position_position_id
+        WHERE hr_preferred_position_group_member_id = '${memberId}'
+    `);
+
+     const positions = hrPreferredPositionData.map(row => row.position_name);
+
+    returnData.selectedPositions[memberId] = positions;
+  })
+  return returnData
+$$ LANGUAGE plv8;
+
 
 ----- END: FUNCTIONS
 
