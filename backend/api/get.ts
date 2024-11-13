@@ -6,7 +6,7 @@ import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup"
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
-  DEFAULT_NUMBER_SSOT_ROWS,
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
   FETCH_OPTION_LIMIT,
   formatDate,
   FORMSLY_FORM_ORDER,
@@ -5986,7 +5986,7 @@ export const getApplicationInformationSummaryData = async (
   const {
     sort,
     page = 1,
-    limit = DEFAULT_NUMBER_SSOT_ROWS,
+    limit = DEFAULT_NUMBER_HR_SSOT_ROWS,
     responseFilter,
     requestFilter,
   } = updatedParams;
