@@ -7862,7 +7862,7 @@ export const getRecruitmentData = async (
 export const getApplicationInformationIndicator = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    request: ApplicationListItemType;
+    requestList: ApplicationListItemType[];
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -7871,8 +7871,9 @@ export const getApplicationInformationIndicator = async (
       input_data: params,
     }
   );
+
   if (error) throw error;
-  return data as boolean;
+  return data as unknown as ApplicationListItemType[];
 };
 
 export const getPreferredPositionOnLoad = async (

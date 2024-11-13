@@ -378,7 +378,7 @@ const ReviewAppNavLink = () => {
 
   const listSection = [
     {
-      label: `Request List`,
+      label: activeTeam.team_id ? "Request List" : "Application List",
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconFiles {...defaultIconProps} />
