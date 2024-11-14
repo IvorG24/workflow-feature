@@ -3,10 +3,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import {
-  DEFAULT_REQUEST_LIST_LIMIT,
-  REQUEST_LIST_HIDDEN_FORMS,
-} from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   RequestListFilterValues,
@@ -72,10 +69,7 @@ const RequestListPage = ({ projectList }: Props) => {
   });
 
   const filteredFormList = formList
-    .filter(
-      ({ form_name, form_is_public_form }) =>
-        !REQUEST_LIST_HIDDEN_FORMS.includes(form_name) && !form_is_public_form
-    )
+    .filter(({ form_is_public_form }) => !form_is_public_form)
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 

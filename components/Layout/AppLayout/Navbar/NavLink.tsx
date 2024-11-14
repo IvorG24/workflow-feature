@@ -9,7 +9,6 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -95,13 +94,10 @@ const ReviewAppNavLink = () => {
   const teamMemberGroups = useUserTeamMemberGroupList();
 
   const router = useRouter();
-  const unhiddenForms = forms.filter(
-    (form) => !REQUEST_LIST_HIDDEN_FORMS.includes(form.form_name)
-  );
+
   const createRequestFormList = forms.filter(
     (form) =>
       ![
-        ...REQUEST_LIST_HIDDEN_FORMS,
         "Petty Cash Voucher Balance",
         "Request For Payment Code",
         "Bill of Quantity",
@@ -224,8 +220,7 @@ const ReviewAppNavLink = () => {
                 leftIcon={<IconFileText {...defaultIconProps} />}
                 variant="transparent"
               >
-                Manage Form{unhiddenForms.length > 1 ? "s" : ""} ({forms.length}
-                )
+                Manage Form{forms.length > 1 ? "s" : ""} ({forms.length})
               </Button>
             </Menu.Target>
             <Button
@@ -252,7 +247,7 @@ const ReviewAppNavLink = () => {
                 View All
               </Menu.Item>
               <Divider />
-              {unhiddenForms
+              {forms
                 .sort((a, b) => a.form_name.localeCompare(b.form_name))
                 .map((form) => (
                   <Menu.Item
@@ -640,7 +635,7 @@ const ReviewAppNavLink = () => {
       itemForm.form_is_hidden === false &&
       itemForm.form_team_group.length &&
       hasTeam ? (
-        unhiddenForms.length > 1 ? (
+        forms.length > 1 ? (
           renderCreateRequestMenu()
         ) : (
           <NavLinkSection

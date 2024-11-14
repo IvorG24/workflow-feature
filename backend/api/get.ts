@@ -1,20 +1,18 @@
 import { FilterChartValues } from "@/components/AnalyticsPage/Analytics";
+import { ResultType } from "@/components/ItemAnalyticsPage/ItemAnalyticsPage";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
-import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
   DEFAULT_NUMBER_HR_SSOT_ROWS,
   FETCH_OPTION_LIMIT,
   formatDate,
-  FORMSLY_FORM_ORDER,
   IT_ASSET_FIELD_ID_LIST,
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
   ROW_PER_PAGE,
-  SELECT_OPTION_LIMIT,
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -24,7 +22,6 @@ import {
   escapeQuotes,
   escapeQuotesForObject,
   parseJSONIfValid,
-  startCase,
 } from "@/utils/string";
 import {
   AddressTableRow,
@@ -38,10 +35,12 @@ import {
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
   BackgroundCheckTableRow,
+  ConnectedRequestFormProps,
   CreatePracticalTestFormType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
+  DashboardRequestorAndSignerType,
   Dataset,
   EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
@@ -52,6 +51,8 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  FormWithOwnerType,
+  FormWithResponseType,
   HRAnalyticsData,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
@@ -59,7 +60,6 @@ import {
   HRRecruitmentData,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
-  ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
@@ -88,17 +88,18 @@ import {
   RequesterPrimarySignerType,
   RequestListItemType,
   RequestListOnLoad,
-  RequestResponseTableRow,
   RequestTableRow,
   RequestWithResponseType,
   SCICEmployeeTableRow,
   SectionWithFieldType,
-  ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
   SSOTOnLoad,
+  SSOTType,
+  TeamGroupTableRow,
   TeamMemberOnLoad,
+  TeamMemberTableRow,
   TeamMemberType,
   TeamMemberWithUser,
   TeamMemberWithUserDetails,
@@ -135,7 +136,6 @@ import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
-// Get file url
 export async function getFileUrl(
   supabaseClient: SupabaseClient<Database>,
   params: { path: string; bucket: AttachmentBucketType }
@@ -150,7 +150,6 @@ export async function getFileUrl(
   return url;
 }
 
-// Get server's current date
 export const getCurrentDate = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -164,7 +163,6 @@ export const getCurrentDate = async (
   return new Date(data);
 };
 
-// Get server's current date string
 export const getCurrentDateString = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -177,7 +175,6 @@ export const getCurrentDateString = async (
   return formatDate(data);
 };
 
-// Get all the user's team
 export const getAllTeamOfUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -203,7 +200,6 @@ export const getAllTeamOfUser = async (
   return teamList;
 };
 
-// Get user
 export const getUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -222,7 +218,6 @@ export const getUser = async (
   return data;
 };
 
-// Get form list
 export const getFormList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -239,7 +234,6 @@ export const getFormList = async (
   return data;
 };
 
-// Get request list
 export const getRequestList = async (
   supabaseClient: SupabaseClient<Database>,
   params: FetchRequestListParams
@@ -343,7 +337,6 @@ export const getRequestList = async (
   return { data: formattedData, count: dataFormat.count };
 };
 
-// Get user's active team id
 export const getUserActiveTeamId = async (
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string }
@@ -359,7 +352,6 @@ export const getUserActiveTeamId = async (
   return activeTeamId;
 };
 
-// Get user with signature attachment
 export const getUserWithSignature = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -373,7 +365,6 @@ export const getUserWithSignature = async (
   return data;
 };
 
-// Check username if it already exists
 export const checkUsername = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -391,7 +382,6 @@ export const checkUsername = async (
   return Boolean(data);
 };
 
-// Get specific team
 export const getTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -412,7 +402,6 @@ export const getTeam = async (
   return data;
 };
 
-// Get user's team member id
 export const getUserTeamMemberData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -434,7 +423,6 @@ export const getUserTeamMemberData = async (
   return data;
 };
 
-// Get form list with filter
 export const getFormListWithFilter = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -456,12 +444,10 @@ export const getFormListWithFilter = async (
     data: FormTableRow[];
     count: number;
   };
-  const sortedFormList = sortFormList(formattedData.data, FORMSLY_FORM_ORDER);
 
-  return { data: sortedFormList, count: formattedData.count };
+  return { data: formattedData.data, count: formattedData.count };
 };
 
-// Get specific form
 export const getForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -476,7 +462,6 @@ export const getForm = async (
   return data as unknown as InitialFormType;
 };
 
-// Get notification
 export const getAllNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -497,7 +482,6 @@ export const getAllNotification = async (
   return data as { data: NotificationTableRow[]; count: number };
 };
 
-// Get item list
 export const getItemList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -636,7 +620,6 @@ export const getItemList = async (
   };
 };
 
-// Get all items
 export const getAllItems = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; search?: string }
@@ -661,43 +644,6 @@ export const getAllItems = async (
   return data;
 };
 
-// Get item description list
-export const getItemDescriptionList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { itemId: string; limit: number; page: number; search?: string }
-) => {
-  const { itemId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema("item_schema")
-    .from("item_description_table")
-    .select("*", {
-      count: "exact",
-    })
-    .eq("item_description_item_id", itemId)
-    .eq("item_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("item_description_label", `%${search}%`);
-  }
-
-  query.order("item_description_date_created", { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// Get item description field list
 export const getItemDescriptionFieldList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -741,7 +687,6 @@ export const getItemDescriptionFieldList = async (
   };
 };
 
-// get item
 export const getItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; itemName: string }
@@ -754,7 +699,6 @@ export const getItem = async (
   return data as unknown as ItemWithDescriptionAndField;
 };
 
-// check if Item form can be activated
 export const checkItemFormStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; formId: string }
@@ -773,26 +717,6 @@ export const checkItemFormStatus = async (
   return data === "true" ? true : (data as string);
 };
 
-// check if Subcon form can be activated
-export const checkSubconFormStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; formId: string }
-) => {
-  const { teamId, formId } = params;
-
-  const { data, error } = await supabaseClient
-    .rpc("check_subcon_form_status", {
-      form_id: formId,
-      team_id: teamId,
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
-
-  return data === "true" ? true : (data as string);
-};
-
-// check if item name already exists
 export const checkItemName = async (
   supabaseClient: SupabaseClient<Database>,
   params: { itemName: string; teamId: string }
@@ -811,7 +735,6 @@ export const checkItemName = async (
   return Boolean(count);
 };
 
-// check if item description already exists
 export const checkItemDescription = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -853,7 +776,6 @@ export const checkItemDescription = async (
   return Boolean(count);
 };
 
-// Get team member list
 export const getTeamMemberList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -871,7 +793,6 @@ export const getTeamMemberList = async (
   return data as unknown as TeamMemberType[];
 };
 
-// Get invitation
 export const getInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -886,7 +807,6 @@ export const getInvitation = async (
   return data;
 };
 
-// Get notification list
 export const getNotificationList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -931,331 +851,6 @@ export const getNotificationList = async (
   return { data, count };
 };
 
-// Get list of db that only have name column
-export const getNameList = async (
-  supabaseClient: SupabaseClient,
-  params: {
-    table: string;
-    teamId: string;
-    limit: number;
-    page: number;
-    search?: string;
-  }
-) => {
-  const { table, teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from(`${table}_table`)
-    .select("*", {
-      count: "exact",
-    })
-    .eq(`${table}_team_id`, teamId)
-    .eq(`${table}_is_disabled`, false);
-
-  if (search) {
-    query = query.ilike(`${table}_name`, `%${search}%`);
-  }
-
-  query.order(`${table}_date_created`, { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// Get all db that only have name column
-export const getAllNames = async (
-  supabaseClient: SupabaseClient,
-  params: { table: string; teamId: string }
-) => {
-  const { table, teamId } = params;
-  const { data, error } = await supabaseClient
-    .from(`${table}_table`)
-    .select("*")
-    .eq(`${table}_team_id`, teamId)
-    .eq(`${table}_is_disabled`, false)
-    .eq(`${table}_is_available`, true)
-    .order(`${table}_name`, { ascending: true });
-
-  if (error) throw error;
-
-  return data;
-};
-
-// check if db that only have name column's name already exists
-export const checkName = async (
-  supabaseClient: SupabaseClient,
-  params: { table: string; name: string; teamId: string }
-) => {
-  const { table, name, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from(`${table}_table`)
-    .select("*", { count: "exact", head: true })
-    .eq(`${table}_name`, name)
-    .eq(`${table}_is_disabled`, false)
-    .eq(`${table}_team_id`, teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get processor list
-export const getProcessorList = async (
-  supabaseClient: SupabaseClient,
-  params: {
-    processor: string;
-    teamId: string;
-    limit: number;
-    page: number;
-    search?: string;
-  }
-) => {
-  const { processor, teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from(`${processor}_processor_table`)
-    .select(`*`, {
-      count: `exact`,
-    })
-    .eq(`${processor}_processor_team_id`, teamId)
-    .eq(`${processor}_processor_is_disabled`, false);
-
-  if (search) {
-    query = query.or(
-      `${processor}_processor_first_name.ilike.%${search}%, ${processor}_processor_last_name.ilike.%${search}%, ${processor}_processor_employee_number.ilike.%${search}%`
-    );
-  }
-
-  query.order(`${processor}_processor_date_created`, { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// Get processors
-export const getAllProcessors = async (
-  supabaseClient: SupabaseClient,
-  params: { processor: string; teamId: string }
-) => {
-  const { processor, teamId } = params;
-  const { data, error } = await supabaseClient
-    .from(`${processor}_processor_table`)
-    .select(`*`)
-    .eq(`${processor}_processor_team_id`, teamId)
-    .eq(`${processor}_processor_is_disabled`, false)
-    .eq(`${processor}_processor_is_available`, true)
-    .order(`${processor}_processor_first_name`, { ascending: true });
-
-  if (error) throw error;
-
-  return data;
-};
-
-// check if procesor already exists
-export const checkProcessor = async (
-  supabaseClient: SupabaseClient,
-  params: {
-    processor: string;
-    firstName: string;
-    lastName: string;
-    employeeNumber: string;
-    teamId: string;
-  }
-) => {
-  const { processor, firstName, lastName, employeeNumber, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from(`${processor}_processor_table`)
-    .select(`*`, { count: `exact`, head: true })
-    .eq(`${processor}_processor_first_name`, firstName)
-    .eq(`${processor}_processor_last_name`, lastName)
-    .eq(`${processor}_processor_employee_number`, employeeNumber)
-    .eq(`${processor}_processor_is_disabled`, false)
-    .eq(`${processor}_processor_team_id`, teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get receiver list
-export const getReceiverList = async (
-  supabaseClient: SupabaseClient,
-  params: {
-    receiver: string;
-    teamId: string;
-    limit: number;
-    page: number;
-    search?: string;
-  }
-) => {
-  const { receiver, teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from(`${receiver}_receiver_table`)
-    .select(`*`, {
-      count: `exact`,
-    })
-    .eq(`${receiver}_receiver_team_id`, teamId)
-    .eq(`${receiver}_receiver_is_disabled`, false);
-
-  if (search) {
-    query = query.or(
-      `${receiver}_receiver_first_name.ilike.%${search}%, ${receiver}_receiver_last_name.ilike.%${search}%, ${receiver}_receiver_employee_number.ilike.%${search}%`
-    );
-  }
-
-  query.order(`${receiver}_receiver_date_created`, { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// Get receivers
-export const getAllReceivers = async (
-  supabaseClient: SupabaseClient,
-  params: { receiver: string; teamId: string }
-) => {
-  const { receiver, teamId } = params;
-  const { data, error } = await supabaseClient
-    .from(`${receiver}_receiver_table`)
-    .select(`*`)
-    .eq(`${receiver}_receiver_team_id`, teamId)
-    .eq(`${receiver}_receiver_is_disabled`, false)
-    .eq(`${receiver}_receiver_is_available`, true)
-    .order(`${receiver}_receiver_first_name`, { ascending: true });
-
-  if (error) throw error;
-
-  return data;
-};
-
-// check if receiver already exists
-export const checkReceiver = async (
-  supabaseClient: SupabaseClient,
-  params: {
-    receiver: string;
-    firstName: string;
-    lastName: string;
-    employeeNumber: string;
-    teamId: string;
-  }
-) => {
-  const { receiver, firstName, lastName, employeeNumber, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from(`${receiver}_receiver_table`)
-    .select(`*`, { count: `exact`, head: true })
-    .eq(`${receiver}_receiver_first_name`, firstName)
-    .eq(`${receiver}_receiver_last_name`, lastName)
-    .eq(`${receiver}_receiver_employee_number`, employeeNumber)
-    .eq(`${receiver}_receiver_is_disabled`, false)
-    .eq(`${receiver}_receiver_team_id`, teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Check if the request id exists and already approved
-export const checkRequest = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string[];
-  }
-) => {
-  const { requestId } = params;
-
-  let requestCondition = "";
-  requestId.forEach((id) => {
-    requestCondition += `request_id.eq.${id}, `;
-  });
-
-  const { count, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_table")
-    .select("*", { count: "exact" })
-    .or(requestCondition.slice(0, -2))
-    .eq("request_status", "APPROVED")
-    .eq("request_is_disabled", false);
-
-  if (error) throw error;
-  return count === requestId.length;
-};
-
-// Check if the request is pending
-export const checkRequsitionRequestForReleaseOrder = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    itemId: string;
-  }
-) => {
-  const { itemId } = params;
-
-  const { count, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_table")
-    .select("*", { count: "exact" })
-    .eq("request_id", itemId)
-    .eq("request_status", "PENDING")
-    .eq("request_is_disabled", false);
-
-  if (error) throw error;
-  return Boolean(count);
-};
-
-// Check if request is pending
-export const checkIfRequestIsEditable = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_signer_table")
-    .select("request_signer_status")
-    .eq("request_signer_request_id", requestId);
-  if (error) throw error;
-
-  const statusList = data as { request_signer_status: string }[];
-  const isPending = !statusList.some(
-    (status) => status.request_signer_status.toUpperCase() !== "PENDING"
-  );
-  return isPending;
-};
-
-// Get response data by keyword
 export const getResponseDataByKeyword = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1279,7 +874,6 @@ export const getResponseDataByKeyword = async (
   return data;
 };
 
-// Check user if owner or approver
 export const checkIfOwnerOrAdmin = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1301,84 +895,6 @@ export const checkIfOwnerOrAdmin = async (
   return role === "ADMIN" || role === "OWNER";
 };
 
-// Check if the approving or creating quotation or sourced item quantity are less than the item quantity
-export const checkItemQuantity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    itemID: string;
-    itemFieldList: RequestResponseTableRow[];
-    quantityFieldList: RequestResponseTableRow[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("check_item_quantity", { input_data: params })
-    .select("*");
-  if (error) throw error;
-
-  return data as string[];
-};
-
-// Check if the approving or creating rir item quantity are less than the quotation quantity
-export const checkRIRItemQuantity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    quotationId: string;
-    itemFieldId: string;
-    quantityFieldId: string;
-    itemFieldList: RequestResponseTableRow[];
-    quantityFieldList: RequestResponseTableRow[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("check_rir_item_quantity", { input_data: params })
-    .select("*");
-
-  if (error) throw error;
-
-  return data as string[];
-};
-
-// Check if the approving or creating release order item quantity are less than the quotation quantity
-export const checkROItemQuantity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    sourcedItemId: string;
-    itemFieldId: string;
-    quantityFieldId: string;
-    itemFieldList: RequestResponseTableRow[];
-    quantityFieldList: RequestResponseTableRow[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("check_ro_item_quantity", { input_data: params })
-    .select("*");
-
-  if (error) throw error;
-
-  return data as string[];
-};
-
-// Check if the approving or creating transfer receipt item quantity are less than the release order quantity
-export const checkTransferReceiptItemQuantity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    releaseOrderItemId: string;
-    itemFieldId: string;
-    quantityFieldId: string;
-    itemFieldList: RequestResponseTableRow[];
-    quantityFieldList: RequestResponseTableRow[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("check_tranfer_receipt_item_quantity", { input_data: params })
-    .select("*");
-
-  if (error) throw error;
-
-  return data as string[];
-};
-
-// Get request per status count
 export const getRequestStatusCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1404,42 +920,6 @@ export const getRequestStatusCount = async (
     requestStatusCountData: formattedData.data,
     totalCount: formattedData.totalCount,
   };
-};
-
-export const getRequestorData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    formId: string;
-    teamMemberId: string;
-    startDate: string;
-    endDate: string;
-  }
-) => {
-  const { formId, teamMemberId, startDate, endDate } = params;
-
-  const getRequestCount = (status: string) =>
-    supabaseClient
-      .schema("request_schema")
-      .from("request_table")
-      .select("*", { count: "exact", head: true })
-      .eq("request_form_id", formId)
-      .eq("request_status", status)
-      .eq("request_team_member_id", teamMemberId)
-      .gte("request_date_created", startDate)
-      .lte("request_date_created", endDate);
-
-  const data = await Promise.all(
-    REQUEST_STATUS_LIST.map(async (status) => {
-      const { count: statusCount } = await getRequestCount(status);
-
-      return {
-        label: startCase(status.toLowerCase()),
-        value: statusCount || 0,
-      };
-    })
-  );
-
-  return data;
 };
 
 export const getRequestStatusMonthlyCount = async (
@@ -1507,64 +987,6 @@ export const getRequestStatusMonthlyCount = async (
   };
 };
 
-// Get supplier
-export const getSupplier = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { supplier: string; teamId: string; fieldId: string }
-) => {
-  const { supplier, teamId, fieldId } = params;
-  const { data, error } = await supabaseClient
-    .schema("team_schema")
-    .from("supplier_table")
-    .select("supplier")
-    .eq("supplier_team_id", teamId)
-    .ilike("supplier", `${supplier}%`)
-    .order("supplier", { ascending: true })
-    .limit(100);
-  if (error) throw error;
-
-  const supplierList = data.map((supplier, index) => {
-    return {
-      option_field_id: fieldId,
-      option_id: uuidv4(),
-      option_order: index + 1,
-      option_value: supplier.supplier,
-    };
-  });
-
-  return supplierList;
-};
-
-// Get CSI
-export const getCSI = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { csi: string; fieldId: string; divisionIdList: string[] }
-) => {
-  const { csi, fieldId, divisionIdList } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("csi_code_level_three_description")
-    .ilike("csi_code_level_three_description", `${csi}%`)
-    .order("csi_code_level_three_description", { ascending: true })
-    .in("csi_code_division_id", divisionIdList)
-    .limit(100);
-  if (error) throw error;
-
-  const csiList = data.map((csi, index) => {
-    return {
-      option_field_id: fieldId,
-      option_id: uuidv4(),
-      option_order: index + 1,
-      option_value: csi.csi_code_level_three_description,
-    };
-  });
-
-  return csiList;
-};
-
-// Get team member on load
 export const getTeamMemberOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamMemberId: string }
@@ -1577,7 +999,6 @@ export const getTeamMemberOnLoad = async (
   return data as unknown as TeamMemberOnLoad;
 };
 
-// Get team group list
 export const getTeamGroupList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1611,7 +1032,6 @@ export const getTeamGroupList = async (
   return { data, count };
 };
 
-// Get team project list
 export const getTeamProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1644,7 +1064,6 @@ export const getTeamProjectList = async (
   };
 };
 
-// Check if team group exists
 export const checkIfTeamGroupExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1666,7 +1085,6 @@ export const checkIfTeamGroupExists = async (
   return Boolean(count);
 };
 
-// Check if team project exists
 export const checkIfTeamProjectExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1688,7 +1106,6 @@ export const checkIfTeamProjectExists = async (
   return Boolean(count);
 };
 
-// Get team group member list
 export const getTeamGroupMemberList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1714,7 +1131,6 @@ export const getTeamGroupMemberList = async (
   };
 };
 
-// Get all team members without existing member of the group
 export const getAllTeamMembersWithoutGroupMembers = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1731,7 +1147,6 @@ export const getAllTeamMembersWithoutGroupMembers = async (
   return data as TeamMemberWithUserDetails;
 };
 
-// Get team project member list
 export const getTeamProjectMemberList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1757,7 +1172,6 @@ export const getTeamProjectMemberList = async (
   };
 };
 
-// Get all team members without existing member of the project
 export const getAllTeamMembersWithoutProjectMembers = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1774,7 +1188,6 @@ export const getAllTeamMembersWithoutProjectMembers = async (
   return data as TeamMemberWithUserDetails;
 };
 
-// Get team member project list
 export const getTeamMemberProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1808,7 +1221,6 @@ export const getTeamMemberProjectList = async (
   };
 };
 
-// Get team member group list
 export const getTeamMemberGroupList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamMemberId: string; search?: string; page: number; limit: number }
@@ -1845,7 +1257,6 @@ export const getTeamMemberGroupList = async (
   };
 };
 
-// Get all team groups
 export const getAllTeamGroups = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string }
@@ -1863,7 +1274,6 @@ export const getAllTeamGroups = async (
   return data;
 };
 
-// Check if a team member is a member of a group
 export const checkIfTeamGroupMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamMemberId: string; groupId: string[] }
@@ -1881,28 +1291,6 @@ export const checkIfTeamGroupMember = async (
   return Boolean(count);
 };
 
-// Get all team projects
-export const getAllTeamMemberProjects = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; memberId: string }
-) => {
-  const { teamId, memberId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("team_schema")
-    .from("team_project_table")
-    .select(
-      "*, team_project_member: team_project_member_table!inner(team_member_id)"
-    )
-    .eq("team_project_team_id", teamId)
-    .eq("team_project_member.team_member_id", memberId)
-    .eq("team_project_is_disabled", false);
-  if (error) throw error;
-
-  return data;
-};
-
-// Get all team projects
 export const getAllTeamProjects = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string }
@@ -1920,7 +1308,6 @@ export const getAllTeamProjects = async (
   return data;
 };
 
-// Get all invitations sent by a team
 export const getTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1966,7 +1353,6 @@ export const getRequestFormslyId = async (
   return data[0] ? data[0].request_formsly_id : null;
 };
 
-// Fetch request signer based on Source Project
 export const getProjectSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1989,7 +1375,6 @@ export const getProjectSigner = async (
   return data;
 };
 
-// Fetch request signer with team member based on Source Project
 export const getProjectSignerWithTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2006,64 +1391,6 @@ export const getProjectSignerWithTeamMember = async (
   return data as unknown as FormType["form_signer"];
 };
 
-// Fetch multiple request signer with team member based on project site
-export const getMultipleProjectSignerWithTeamMember = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    projectName: string[];
-    formId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("get_multiple_project_signer_with_team_member", { input_data: params })
-    .select("*");
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch request signer based on formId and projectId
-export const getFormSigner = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    projectId: string;
-    formId: string;
-  }
-) => {
-  const { projectId, formId } = params;
-  const { data, error } = await supabaseClient
-    .schema("form_schema")
-    .from("signer_table")
-    .select("signer_id")
-    .eq("signer_form_id", formId)
-    .or(
-      `signer_team_project_id.eq.${projectId}, signer_team_project_id.is.null`
-    )
-    .eq("signer_is_disabled", false);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch all CSI Code based on division id
-export const getCSICodeOptionsForItems = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    divisionIdList: string[];
-  }
-) => {
-  const { divisionIdList } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("*")
-    .in("csi_code_division_id", divisionIdList);
-  if (error) throw error;
-
-  return data as CSICodeTableRow[];
-};
-
-// Fetch all CSI Code
 export const getCSICode = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2081,7 +1408,6 @@ export const getCSICode = async (
   return data[0] as CSICodeTableRow;
 };
 
-// Fetch all item division option
 export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -2094,7 +1420,6 @@ export const getItemDivisionOption = async (
   return data;
 };
 
-// Fetch all item unit of measurement option
 export const getItemUnitOfMeasurementOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2115,7 +1440,6 @@ export const getItemUnitOfMeasurementOption = async (
   return data;
 };
 
-// Get team approver list with filter
 export const getTeamApproverListWithFilter = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2141,7 +1465,6 @@ export const getTeamApproverListWithFilter = async (
   };
 };
 
-// Get team admin list with filter
 export const getTeamAdminListWithFilter = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2167,7 +1490,6 @@ export const getTeamAdminListWithFilter = async (
   };
 };
 
-// Get all team members with "MEMBER" role
 export const getTeamMembersWithMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2201,7 +1523,6 @@ export const getMemberUserData = async (
   }
 };
 
-// Get Team on load
 export const getTeamOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string; teamMemberLimit: number }
@@ -2214,7 +1535,6 @@ export const getTeamOnLoad = async (
   return data as unknown as TeamOnLoad;
 };
 
-// Get notification on load
 export const getNotificationOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2233,7 +1553,6 @@ export const getNotificationOnLoad = async (
   return data as unknown as NotificationOnLoad;
 };
 
-// Get notification on load
 export const getSSOTOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2248,7 +1567,6 @@ export const getSSOTOnLoad = async (
   return data as unknown as SSOTOnLoad;
 };
 
-// Get request list on load
 export const getRequestListOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2338,122 +1656,6 @@ export const getCommentAttachment = async (
   }
 };
 
-// Get service list
-export const getServiceList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
-) => {
-  const { teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema("service_schema")
-    .from("service_table")
-    .select("*, service_scope: service_scope_table(*)", {
-      count: "exact",
-    })
-    .eq("service_team_id", teamId)
-    .eq("service_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("service_name", `%${search}%`);
-  }
-
-  query.order("service_date_created", { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// check if service scope already exists
-export const checkServiceScope = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { serviceScope: string; scopeId: string }
-) => {
-  const { serviceScope, scopeId } = params;
-
-  const { count, error } = await supabaseClient
-    .schema("service_schema")
-    .from("service_scope_choice_table")
-    .select("*", { count: "exact", head: true })
-    .eq("service_scope_choice_name", serviceScope)
-    .eq("service_scope_choice_is_disabled", false)
-    .eq("service_scope_choice_service_scope_id", scopeId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get service scope field list
-export const getServiceScopeChoiceList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    scopeId: string;
-    limit: number;
-    page: number;
-    search?: string;
-  }
-) => {
-  const { scopeId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema("service_schema")
-    .from("service_scope_choice_table")
-    .select("*", {
-      count: "exact",
-    })
-    .eq("service_scope_choice_service_scope_id", scopeId)
-    .eq("service_scope_choice_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("service_scope_choice_name", `%${search}%`);
-  }
-
-  query.order("service_scope_choice_date_created", { ascending: false });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// check if service name already exists
-export const checkServiceName = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { serviceName: string; teamId: string }
-) => {
-  const { serviceName, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .schema("service_schema")
-    .from("service_table")
-    .select("*", { count: "exact", head: true })
-    .eq("service_name", serviceName)
-    .eq("service_is_disabled", false)
-    .eq("service_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Check if jira id is unique
 export const checkIfJiraIDIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2476,30 +1678,6 @@ export const checkIfJiraIDIsUnique = async (
   return Boolean(count);
 };
 
-// Check if jira link is unique
-export const checkIfJiraLinkIsUnique = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    value: string;
-  }
-) => {
-  const { value } = params;
-
-  const { count, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_table")
-    .select("*", {
-      count: "exact",
-    })
-    .eq("request_status", "APPROVED")
-    .eq("request_jira_link", value);
-
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Check if otp id is unique
 export const checkIfOtpIdIsUnique = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2522,40 +1700,6 @@ export const checkIfOtpIdIsUnique = async (
   return Boolean(count);
 };
 
-// get service
-export const getService = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; serviceName: string }
-) => {
-  const { teamId, serviceName } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("service_schema")
-    .from("service_table")
-    .select(
-      "*, service_scope: service_scope_table(*, service_scope_choice: service_scope_choice_table(*), service_field: service_scope_field_id(*))"
-    )
-    .eq("service_team_id", teamId)
-    .eq("service_name", serviceName)
-    .eq("service_is_disabled", false)
-    .eq("service_is_available", true)
-    .eq("service_scope.service_scope_is_disabled", false)
-    .eq("service_scope.service_scope_is_available", true)
-    .eq(
-      "service_scope.service_scope_choice.service_scope_choice_is_disabled",
-      false
-    )
-    .eq(
-      "service_scope.service_scope_choice.service_scope_choice_is_available",
-      true
-    )
-    .single();
-  if (error) throw error;
-
-  return data as unknown as ServiceWithScopeAndChoice;
-};
-
-// Get create ticket on load
 export const getCreateTicketOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2573,7 +1717,6 @@ export const getCreateTicketOnLoad = async (
   return data as CreateTicketPageOnLoad;
 };
 
-// Get ticket on load
 export const getTicketOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2592,7 +1735,6 @@ export const getTicketOnLoad = async (
   return data as TicketPageOnLoad;
 };
 
-// Get ticket list
 export const getTicketList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2665,7 +1807,6 @@ export const getTicketList = async (
   return { data: dataFormat.data, count: dataFormat.count };
 };
 
-// Get ticket list on load
 export const getTicketListOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2679,7 +1820,6 @@ export const getTicketListOnLoad = async (
   return data as unknown as TicketListOnLoad;
 };
 
-// Get approver request count
 export const getApproverRequestCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2697,7 +1837,6 @@ export const getApproverRequestCount = async (
   return Number(data);
 };
 
-// Get approver unresolved request count
 export const getApproverUnresolvedRequestCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2713,7 +1852,6 @@ export const getApproverUnresolvedRequestCount = async (
   return data as ApproverUnresolvedRequestCountType;
 };
 
-// Get edit request on load
 export const getEditRequestOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2730,7 +1868,6 @@ export const getEditRequestOnLoad = async (
   return data;
 };
 
-// Get all group of team member
 export const getAllGroupOfTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamMemberId: string }
@@ -2754,7 +1891,6 @@ export const getAllGroupOfTeamMember = async (
   return formattedData.map((group) => group.team_group.team_group_name);
 };
 
-// Check if team name already exists
 export const checkIfTeamNameExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamName: string }
@@ -2772,7 +1908,6 @@ export const checkIfTeamNameExists = async (
   return Boolean(count);
 };
 
-// Get equipment list
 export const getEquipmentList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; limit: number; page: number; search?: string }
@@ -2819,7 +1954,6 @@ export const getEquipmentList = async (
   };
 };
 
-// check if equipment name already exists
 export const checkEquipmentName = async (
   supabaseClient: SupabaseClient<Database>,
   params: { equipmentName: string; teamId: string }
@@ -2838,7 +1972,6 @@ export const checkEquipmentName = async (
   return Boolean(count);
 };
 
-// Fetch all equipment category option
 export const getEquipmentCategoryOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string }
@@ -2857,7 +1990,6 @@ export const getEquipmentCategoryOption = async (
   return data;
 };
 
-// Get equipment description list
 export const getEquipmentDescriptionList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { equipmentId: string; limit: number; page: number; search?: string }
@@ -2922,7 +2054,6 @@ export const getEquipmentDescriptionList = async (
   };
 };
 
-// Fetch all equipment description brand and model option
 export const getEquipmentBrandAndModelOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2956,7 +2087,6 @@ export const getEquipmentBrandAndModelOption = async (
   };
 };
 
-// Fetch all equipment name option
 export const getEquipmentNameOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2981,7 +2111,6 @@ export const getEquipmentNameOption = async (
   };
 };
 
-// check if propert number already exists
 export const checkPropertyNumber = async (
   supabaseClient: SupabaseClient<Database>,
   params: { propertyNumber: string; teamId: string }
@@ -3006,29 +2135,6 @@ export const checkPropertyNumber = async (
   return Boolean(count);
 };
 
-// check if serial number already exists
-export const checkSerialNumber = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { serialNumber: string; teamId: string }
-) => {
-  const { serialNumber, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .schema("equipment_schema")
-    .from("equipment_description_table")
-    .select(
-      "*, equipment_description_equipment: equipment_description_equipment_id(*)",
-      { count: "exact", head: true }
-    )
-    .eq("equipment_description_serial_number", serialNumber)
-    .eq("equipment_description_is_disabled", false)
-    .eq("equipment_description_equipment.equipment_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get equipment part list
 export const getEquipmentPartList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { equipmentId: string; limit: number; page: number; search?: string }
@@ -3049,7 +2155,6 @@ export const getEquipmentPartList = async (
   };
 };
 
-// Fetch all equipment uom option
 export const getEquipmentUOMAndCategoryOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3083,7 +2188,6 @@ export const getEquipmentUOMAndCategoryOption = async (
   };
 };
 
-// Check PED part if already exists
 export const checkPEDPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3098,41 +2202,6 @@ export const checkPEDPart = async (
   return data;
 };
 
-// Get equipment category list
-export const getEquipmentCategoryList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
-) => {
-  const { teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema("equipment_schema")
-    .from("equipment_category_table")
-    .select("*", { count: "exact" })
-    .eq("equipment_category_team_id", teamId)
-    .eq("equipment_category_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("equipment_category", `%${search}%`);
-  }
-
-  query.order("equipment_category", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// check if equipment lookup table value already exists
 export const checkEquipmentLookupTable = async (
   supabaseClient: SupabaseClient,
   params: { lookupTableName: string; value: string; teamId: string }
@@ -3149,7 +2218,6 @@ export const checkEquipmentLookupTable = async (
   return Boolean(count);
 };
 
-// check if email list are onboarded
 export const checkIfEmailsOnboarded = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3170,7 +2238,6 @@ export const checkIfEmailsOnboarded = async (
   }));
 };
 
-// get request team id
 export const getRequestTeamId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3185,25 +2252,6 @@ export const getRequestTeamId = async (
   return data.length ? (data as unknown as string) : null;
 };
 
-// Fetch all CSI Code
-export const getCSIDescriptionOption = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    divisionId: string;
-  }
-) => {
-  const { divisionId } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("*")
-    .eq("csi_code_division_id", divisionId)
-    .order("csi_code_level_three_description", { ascending: true });
-  if (error) throw error;
-  return data;
-};
-
-// Get lookup list
 export const getLookupList = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -3258,7 +2306,6 @@ export const getLookupList = async (
   };
 };
 
-// check if lookup table value already exists
 export const checkLookupTable = async (
   supabaseClient: SupabaseClient,
   params: { lookupTableName: string; value: string; teamId: string }
@@ -3275,25 +2322,6 @@ export const checkLookupTable = async (
   return Boolean(count);
 };
 
-// Fetch all CSI Code based on division description
-export const getCSICodeOptionsForServices = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    description: string;
-  }
-) => {
-  const { description } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("*")
-    .eq("csi_code_division_description", description);
-  if (error) throw error;
-
-  return data as CSICodeTableRow[];
-};
-
-// Get user issued item list
 export const getUserIssuedItemList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3310,25 +2338,6 @@ export const getUserIssuedItemList = async (
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
 };
 
-// Get team memo total count
-export const getTeamMemoCount = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { count, error } = await supabaseClient
-    .schema("memo_schema")
-    .from("memo_table")
-    .select("*", { count: "exact" })
-    .eq("memo_team_id", params.teamId);
-
-  if (error) throw error;
-
-  return Number(count);
-};
-
-// Get team memo signers
 export const getTeamMemoSignerList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3366,7 +2375,6 @@ export const getTeamMemoSignerList = async (
   return formattedData;
 };
 
-// Get memo
 export const getMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: { memo_id: string; current_user_id: string; team_id: string }
@@ -3380,7 +2388,6 @@ export const getMemo = async (
   return data as MemoType;
 };
 
-// Get memo list
 export const getMemoList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3446,7 +2453,6 @@ export const getMemoList = async (
   return data as { data: MemoListItemType[]; count: number };
 };
 
-// Get memo
 export const getReferenceMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: { memo_id: string; current_user_id: string }
@@ -3462,7 +2468,6 @@ export const getReferenceMemo = async (
   return data as unknown as ReferenceMemoType;
 };
 
-// get memo format
 export const getMemoFormat = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -3539,7 +2544,6 @@ export const getMemoFormat = async (
   return sortedDataWithAttachmentFile;
 };
 
-// Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3600,7 +2604,6 @@ export const getTypeList = async (
   };
 };
 
-// check if other expenses table value already exists
 export const checkOtherExpenesesTypeTable = async (
   supabaseClient: SupabaseClient<Database>,
   params: { value: string; categoryId: string }
@@ -3618,7 +2621,6 @@ export const checkOtherExpenesesTypeTable = async (
   return Boolean(count);
 };
 
-// Fetch other expenses category options
 export const getOtherExpensesCategoryOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3638,7 +2640,6 @@ export const getOtherExpensesCategoryOptions = async (
   return data;
 };
 
-// Get type list
 export const getTypeOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3658,7 +2659,6 @@ export const getTypeOptions = async (
   return data;
 };
 
-// Get user signature list
 export const getUserSignatureList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3676,7 +2676,6 @@ export const getUserSignatureList = async (
   return data;
 };
 
-// Get user valid id
 export const getUserValidID = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3691,7 +2690,6 @@ export const getUserValidID = async (
   return data;
 };
 
-// Fetch csi code description based on division id
 export const getCSIDescriptionOptionBasedOnDivisionId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3709,52 +2707,6 @@ export const getCSIDescriptionOptionBasedOnDivisionId = async (
   return data;
 };
 
-// Fetch CSI Code based on level three description
-export const getLevelThreeDescription = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    levelThreeDescription: string;
-  }
-) => {
-  const { levelThreeDescription } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("*")
-    .eq("csi_code_level_three_description", levelThreeDescription)
-    .single();
-  if (error) throw error;
-
-  return [data] as CSICodeTableRow[];
-};
-
-// Fetch section in edit request
-export const getSectionInEditRequest = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    index: number;
-    supplierOptions: OptionTableRow[];
-    requestId: string;
-    teamId: string;
-    itemOptions: OptionTableRow[];
-    preferredSupplierField: FieldTableRow;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("fetch_edit_request_section", { input_data: params })
-    .select("*");
-  if (error) throw error;
-
-  const formattedData = data as unknown as {
-    sectionData: RequestWithResponseType["request_form"]["form_section"];
-    itemDivisionIdList: string[][];
-    itemCategorySignerList: (ItemCategoryType["item_category"] | null)[];
-  };
-
-  return formattedData;
-};
-
-// Get query data
 export const getQueryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3770,7 +2722,6 @@ export const getQueryData = async (
   return queryFetchedData.queryData;
 };
 
-// Get query table
 export const getQueryList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -3782,7 +2733,6 @@ export const getQueryList = async (
   return data;
 };
 
-// Get signer sla
 export const getSignerSLA = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3807,7 +2757,6 @@ export const getSignerSLA = async (
   };
 };
 
-// Get form sla
 export const getFormSLA = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3828,7 +2777,6 @@ export const getFormSLA = async (
   return data;
 };
 
-// Get form sla table
 export const getTeamFormSLAList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3861,7 +2809,6 @@ export const getTeamFormSLAList = async (
   return { data, count };
 };
 
-// Fetch project id based on formId
 export const getFormProjectIDs = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3882,7 +2829,6 @@ export const getFormProjectIDs = async (
   return filteredData as string[];
 };
 
-// Fetch project by project id
 export const getProjectByID = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3916,7 +2862,6 @@ export const getSignerWithProfile = async (
   return data as SignerWithProfile[];
 };
 
-// Get ticket category list
 export const getTicketCategoryList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -3931,7 +2876,6 @@ export const getTicketCategoryList = async (
   return data;
 };
 
-// Get ticket form
 export const getTicketForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3947,7 +2891,6 @@ export const getTicketForm = async (
   return data as unknown as CreateTicketFormValues;
 };
 
-// Check CSI Code Description if it already exists
 export const checkCSICodeDescriptionExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3965,7 +2908,6 @@ export const checkCSICodeDescriptionExists = async (
   return Boolean(data);
 };
 
-// Check CSI Code if it already exists for item
 export const checkCSICodeItemExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3985,7 +2927,6 @@ export const checkCSICodeItemExists = async (
   return Boolean(data);
 };
 
-// Get team member with user
 export const getMemberUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4000,7 +2941,6 @@ export const getMemberUser = async (
   return data as unknown as TeamMemberWithUser;
 };
 
-// Get incident report
 export const getIncidentReport = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4032,7 +2972,6 @@ export const getIncidentReport = async (
   };
 };
 
-// Check Custom CSI Code if valid
 export const checkCustomCSICodeValidity = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4052,7 +2991,6 @@ export const checkCustomCSICodeValidity = async (
   };
 };
 
-// Fetch equipment name based on equipment category
 export const getEquipmentName = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4072,27 +3010,6 @@ export const getEquipmentName = async (
   return data;
 };
 
-// Fetch equipment property number based on equipment id
-export const getEquipmentPropertyNumber = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    equipmentId: string;
-  }
-) => {
-  const { equipmentId } = params;
-  const { data, error } = await supabaseClient
-    .schema("equipment_schema")
-    .from("equipment_description_view")
-    .select("*")
-    .eq("equipment_description_is_disabled", false)
-    .eq("equipment_description_is_available", true)
-    .eq("equipment_description_equipment_id", equipmentId);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch equipment description based on property number
 export const getEquipmentDescription = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4137,7 +3054,6 @@ export const getEquipmentDescription = async (
   } as unknown as ReturnDataType;
 };
 
-// Fetch item section choices based on given parameters
 export const getItemSectionChoices = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4183,7 +3099,6 @@ export const getItemSectionChoices = async (
   return optionList;
 };
 
-// Fetch item unit of measurement based on given parameters
 export const getItemUnitOfMeasurement = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4204,7 +3119,6 @@ export const getItemUnitOfMeasurement = async (
   return data;
 };
 
-// Fetch equipment section choices based on given parameters
 export const getEquipmentSectionChoices = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4304,7 +3218,6 @@ export const getEquipmentSectionChoices = async (
   }
 };
 
-// Check if ped part already exists
 export const pedPartCheck = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4324,7 +3237,6 @@ export const pedPartCheck = async (
   return data;
 };
 
-// Get region
 export const fetchRegion = async (
   supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>
 ) => {
@@ -4333,7 +3245,6 @@ export const fetchRegion = async (
   return data;
 };
 
-// Get province
 export const fetchProvince = async (
   supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
   params: { regionId: string }
@@ -4348,7 +3259,6 @@ export const fetchProvince = async (
   return data;
 };
 
-// Get city
 export const fetchCity = async (
   supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
   params: { provinceId: string }
@@ -4363,7 +3273,6 @@ export const fetchCity = async (
   return data;
 };
 
-// Get barangay
 export const fetchBarangay = async (
   supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
   params: { cityId: string }
@@ -4378,7 +3287,6 @@ export const fetchBarangay = async (
   return data;
 };
 
-// Fetch section in request page
 export const getSectionInRequestPage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4397,7 +3305,6 @@ export const getSectionInRequestPage = async (
   return data as RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
 };
 
-// Fetch request comment
 export const getRequestComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4411,7 +3318,6 @@ export const getRequestComment = async (
   return data;
 };
 
-// Fetch item options
 export const getItemOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4436,7 +3342,6 @@ export const getItemOptions = async (
   return data;
 };
 
-// Fetch supplier options
 export const getSupplierOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4459,30 +3364,6 @@ export const getSupplierOptions = async (
   return data;
 };
 
-// Fetch csi code options
-export const getCSICodeOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    index: number;
-    limit: number;
-    divisionIdList: string[];
-  }
-) => {
-  const { index, limit, divisionIdList } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("csi_code_id, csi_code_level_three_description")
-    .order("csi_code_level_three_description")
-    .in("csi_code_division_id", divisionIdList)
-    .limit(limit)
-    .range(index, index + limit - 1);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch ped item options
 export const getPedItemOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4508,7 +3389,6 @@ export const getPedItemOptions = async (
   return data;
 };
 
-// Fetch property number options
 export const getPropertyNumberOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4556,7 +3436,6 @@ export const getPropertyNumberOptions = async (
   }[];
 };
 
-// Get all projects
 export const getAllProjects = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4575,7 +3454,6 @@ export const getAllProjects = async (
   return data;
 };
 
-// Get all groups
 export const getAllGroups = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4594,7 +3472,6 @@ export const getAllGroups = async (
   return data;
 };
 
-// Fetch jira project list
 export const getJiraProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4814,7 +3691,6 @@ export const getJiraAutomationDataByProjectId = async (
   };
 };
 
-// Get user current signature
 export const getUserCurrentSignature = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4838,7 +3714,6 @@ export const getUserCurrentSignature = async (
     : "";
 };
 
-// Get non duplicatable section response
 export const getNonDuplictableSectionResponse = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4860,7 +3735,6 @@ export const getNonDuplictableSectionResponse = async (
   return data;
 };
 
-// Fetch item request conditional options
 export const getItemRequestConditionalOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4877,7 +3751,6 @@ export const getItemRequestConditionalOptions = async (
   return data;
 };
 
-// Fetch service category options
 export const getServiceCategoryOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4902,7 +3775,6 @@ export const getServiceCategoryOptions = async (
   return data;
 };
 
-// Fetch service unit of measurement options
 export const getGeneralUnitOfMeasurementOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4927,44 +3799,6 @@ export const getGeneralUnitOfMeasurementOptions = async (
   return data;
 };
 
-// Fetch service unit of measurement options
-export const getServiceCSIDivisionOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    index: number;
-    limit: number;
-  }
-) => {
-  const { index, limit } = params;
-  const { data, error } = await supabaseClient
-    .from("distinct_division_view")
-    .select("csi_code_division_id, csi_code_division_description")
-    .order("csi_code_division_description")
-    .limit(limit)
-    .range(index, index + limit - 1);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch service request conditional options
-export const getServiceRequestConditionalOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    sectionList: {
-      csiDivision: string;
-      fieldIdList: string[];
-    }[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("fetch_service_request_conditional_options", { input_data: params })
-    .select("*");
-  if (error) throw error;
-  return data;
-};
-
-// Fetch other expenses category options
 export const getOtherExpensesCategoryOptionsWithLimit = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -4989,48 +3823,6 @@ export const getOtherExpensesCategoryOptionsWithLimit = async (
   return data;
 };
 
-// Fetch other expenses csi description options
-export const getOtherExpensesCSIDescriptionOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    index: number;
-    limit: number;
-  }
-) => {
-  const { index, limit } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("csi_code_id, csi_code_level_three_description")
-    .eq("csi_code_division_id", "01")
-    .order("csi_code_level_three_description")
-    .limit(limit)
-    .range(index, index + limit - 1);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch other expenses request conditional options
-export const getOtherExpensesRequestConditionalOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    sectionList: {
-      category: string;
-      fieldIdList: string[];
-    }[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("fetch_other_expenses_request_conditional_options", {
-      input_data: params,
-    })
-    .select("*");
-  if (error) throw error;
-  return data;
-};
-
-// Fetch ped equipment category options
 export const getPEDEquipmentCategoryOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5055,7 +3847,6 @@ export const getPEDEquipmentCategoryOptions = async (
   return data;
 };
 
-// Fetch capacity unit of measurement options
 export const getCapacityUnitOfMeasurementOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5080,7 +3871,6 @@ export const getCapacityUnitOfMeasurementOptions = async (
   return data;
 };
 
-// Fetch ped equipment request conditional options
 export const getPEDEquipmentRequestConditionalOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5101,33 +3891,6 @@ export const getPEDEquipmentRequestConditionalOptions = async (
   return data;
 };
 
-// Fetch ped item general name options
-export const getPedItemGeneralNameOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    index: number;
-    limit: number;
-  }
-) => {
-  const { teamId, index, limit } = params;
-  const { data, error } = await supabaseClient
-    .schema("item_schema")
-    .from("item_table")
-    .select("item_id, item_general_name")
-    .eq("item_team_id", teamId)
-    .eq("item_is_disabled", false)
-    .eq("item_is_available", true)
-    .eq("item_is_ped_item", true)
-    .order("item_general_name")
-    .limit(limit)
-    .range(index, index + limit - 1);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch all item category option
 export const getItemCategoryOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5145,7 +3908,6 @@ export const getItemCategoryOption = async (
   }[];
 };
 
-// Fetch all item form approver
 export const getItemFormApprover = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5160,7 +3922,6 @@ export const getItemFormApprover = async (
   return data;
 };
 
-// check if item category already exists
 export const checkItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: { category: string }
@@ -5178,7 +3939,6 @@ export const checkItemCategory = async (
   return Boolean(count);
 };
 
-// Get item category list
 export const getItemCategoryList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5204,7 +3964,6 @@ export const getItemCategoryList = async (
   };
 };
 
-// Get form section
 export const getFormSection = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5277,7 +4036,6 @@ export const getFormSection = async (
   return sortedSection;
 };
 
-// Fetch it asset item options
 export const getITAssetItemOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5386,7 +4144,6 @@ export const getTicket = async (
   return data;
 };
 
-// Fetch formsly invoice history list
 export const fetchFormslyInvoiceHistoryList = async (
   supabaseClient: SupabaseClient<OneOfficeDatabase["transaction_schema"]>,
   params: {
@@ -5413,80 +4170,6 @@ export const fetchFormslyInvoiceHistoryList = async (
   return { data: data as TransactionTableRow[], count };
 };
 
-// Fetch formsly invoice history list
-export const getCsiTableSpecialFieldOption = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    fieldId: string;
-    search?: string;
-  }
-) => {
-  const { search, fieldId } = params;
-
-  let query = supabaseClient
-    .schema("lookup_schema")
-    .from("csi_code_table")
-    .select("csi_code_id, csi_code_section");
-
-  if (search) {
-    query = query.ilike("csi_code_section", `%${search}%`);
-  }
-
-  query.limit(SELECT_OPTION_LIMIT);
-  const { data, error } = await query;
-
-  if (error || !data) {
-    throw new Error("Failed to fetch csi code table");
-  }
-
-  const optionData = data.map((item, index) => ({
-    option_id: item.csi_code_id,
-    option_value: item.csi_code_section,
-    option_order: index,
-    option_field_id: fieldId,
-  }));
-
-  return optionData;
-};
-
-// Fetch team latest transaction
-export const fetchTeamLatestTransaction = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { teamId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("team_schema")
-    .from("team_transaction_table")
-    .select("*")
-    .eq("team_transaction_team_id", teamId)
-    .order("team_transaction_date_created", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch latest formsly price
-export const fetchFormslyLatestPrice = async (
-  supabaseClient: SupabaseClient<Database>
-) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("formsly_price_table")
-    .select("formsly_price")
-    .order("formsly_price_date_created", { ascending: false })
-    .limit(1)
-    .single();
-  if (error) throw error;
-  return data.formsly_price;
-};
-
-// Fetch team department options
 export const getTeamDepartmentOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5508,7 +4191,6 @@ export const getTeamDepartmentOptions = async (
   return data;
 };
 
-// Fetch equipment code options
 export const getEquipmentCodeOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5533,7 +4215,6 @@ export const getEquipmentCodeOptions = async (
   return data;
 };
 
-// Fetch equipment unit options
 export const getEquipmentUnitOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5555,7 +4236,6 @@ export const getEquipmentUnitOptions = async (
   return data;
 };
 
-// Fetch employee position options
 export const getEmployeePositionOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5577,30 +4257,6 @@ export const getEmployeePositionOptions = async (
   return data;
 };
 
-// Fetch employee options
-export const getEmployeeOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    index: number;
-    limit: number;
-    search: string;
-  }
-) => {
-  const { index, limit, search } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("scic_employee_table")
-    .select("scic_employee_id, scic_employee_hris_id_number")
-    .ilike("scic_employee_hris_id_number", `%${search}%`)
-    .order("scic_employee_hris_id_number")
-    .limit(limit)
-    .range(index, index + limit - 1);
-  if (error) throw error;
-
-  return data;
-};
-
-// Fetch employee name based on id
 export const getEmployeeName = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5619,7 +4275,6 @@ export const getEmployeeName = async (
   return data;
 };
 
-// Fetch section in request page with multiple duplicatable section
 export const getSectionInRequestPageWithMultipleDuplicatableSection = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5637,7 +4292,6 @@ export const getSectionInRequestPageWithMultipleDuplicatableSection = async (
   return data;
 };
 
-// Get all section
 export const getAllSection = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5656,7 +4310,6 @@ export const getAllSection = async (
   return data;
 };
 
-// Fetch employee name based on id
 export const checkIfAllPrimaryApprovedTheRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -5700,22 +4353,6 @@ export const getJiraProjectByTeamProjectName = async (
     jiraId: formattedData.jira_project_id.jira_project_jira_id,
     jiraLabel: formattedData.jira_project_id.jira_project_jira_label,
   };
-};
-
-export const getRequestStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string }
-) => {
-  const { data, error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_table")
-    .select("request_status")
-    .eq("request_id", params.requestId)
-    .maybeSingle();
-
-  if (error || !data) throw error;
-
-  return data.request_status;
 };
 
 export const getJobTitleList = async (
@@ -5835,7 +4472,6 @@ export const checkIfUserIsRequestOwner = async (
   return Number(count) > 0;
 };
 
-// Check if user email already exists
 export const checkUserEmail = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6296,23 +4932,6 @@ export const getUserIdInApplicationInformationV1 = async (
   return data as string | undefined;
 };
 
-export const checkUserIdNumber = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    idNumber: string;
-  }
-) => {
-  const { idNumber } = params;
-  const { count, error } = await supabaseClient
-    .schema("user_schema")
-    .from("user_valid_id_table")
-    .select("user_valid_id_number", { count: "exact", head: true })
-    .eq("user_valid_id_number", idNumber);
-
-  if (error) throw error;
-  return !Boolean(count);
-};
-
 export const checkUserSSSIDNumber = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6328,34 +4947,6 @@ export const checkUserSSSIDNumber = async (
 
   if (error) throw error;
   return !Boolean(count);
-};
-
-export const getPublicFormList = async (
-  supabaseClient: SupabaseClient<Database>
-) => {
-  const { data, error } = await supabaseClient
-    .schema("form_schema")
-    .from("form_table")
-    .select("*")
-    .eq("form_is_public_form", true);
-  if (error) throw error;
-
-  return data;
-};
-
-export const getPositionClassification = async (
-  supabaseClient: SupabaseClient<Database>,
-  position: string
-) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("position_classification")
-    .eq("position", position)
-    .limit(1);
-  if (error) throw error;
-
-  return data[0].position_classification;
 };
 
 export const getHRPhoneInterviewSummaryData = async (
@@ -6620,6 +5211,7 @@ export const checkIfGroupMember = async (
 
   return data;
 };
+
 export const checkIfOwner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6970,6 +5562,7 @@ export const getServicesRayaApi = async (
   }
   return data;
 };
+
 export const getLatestApiKey = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7194,23 +5787,6 @@ export const getQuestionnaireList = async (
   };
 };
 
-export const getQuestionnaireName = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    questionnaireId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .schema("form_schema")
-    .from("questionnaire_table")
-    .select("questionnaire_name")
-    .eq("questionnaire_id", params.questionnaireId);
-
-  if (error) throw error;
-
-  return data[0] as { questionnaire_name: string };
-};
-
 export const getPositionPerQuestionnaire = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7228,21 +5804,6 @@ export const getPositionPerQuestionnaire = async (
   const positions = data.map((item) => item.position_alias);
 
   return positions;
-};
-
-export const getOptionsTechnicalQuestion = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { fieldId: string }
-) => {
-  const { data, error } = await supabaseClient
-    .schema("form_schema")
-    .from("option_table")
-    .select("*")
-    .eq("option_field_id", params.fieldId)
-    .order("option_order", { ascending: true });
-
-  if (error) throw error;
-  return data as OptionTableRow[];
 };
 
 export const getTechnicalOptionsItem = async (
@@ -7313,21 +5874,6 @@ export const getHRApplicantAnalytics = async (
   if (error) throw error;
 
   return data as HRAnalyticsData;
-};
-
-export const getRequestAdOwner = async (
-  supabaseClient: SupabaseClient<Database>,
-  requestId: string
-) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("ad_owner_request_table")
-    .select("ad_owner: ad_owner_request_owner_id(ad_owner_name)")
-    .eq("ad_owner_request_request_id", requestId)
-    .maybeSingle();
-  if (error) throw error;
-
-  return data as unknown as { ad_owner: { ad_owner_name: string } };
 };
 
 export const getEmailResendTimer = async (
@@ -7467,25 +6013,6 @@ export const checkPhoneNumber = async (
 
   if (error) throw error;
   return !Boolean(count);
-};
-
-export const checkInterviewStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-  const { count, error } = await supabaseClient
-    .schema("hr_schema")
-    .from("technical_interview_table")
-    .select("*", { count: "exact", head: true })
-    .eq("technical_interview_status", "PENDING")
-    .eq("technical_interview_request_id", requestId)
-    .limit(1);
-  if (error) throw error;
-
-  return Boolean(count);
 };
 
 export const getEvaluationResultAutomaticResponse = async (
@@ -7871,4 +6398,271 @@ export const getPositionWithPracticalTestOptions = async (
   }
 
   return allData;
+};
+
+export const getSSOT = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    pageNumber: number;
+    rowLimit: number;
+    search: string;
+    requestingProject: string;
+    itemName: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_ssot", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as SSOTType[];
+};
+
+export const getRequestPageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("request_page_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  const formattedData = data as unknown as {
+    request: RequestWithResponseType;
+    duplicatableSectionIdList: string[];
+    sectionIdWithDuplicatableSectionIdList: {
+      request_response_duplicatable_section_id: string;
+      section_id: string;
+    }[];
+  };
+
+  return formattedData;
+};
+
+export const getTeamMemberWithFilter = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    search: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_team_member_with_filter",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    teamMembers: TeamMemberType[];
+    teamMembersCount: number;
+  };
+};
+
+export const getFormListPageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("form_list_page_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    formList: FormWithOwnerType[];
+    formListCount: number;
+    teamId: string;
+  };
+};
+
+export const getBuildFormpageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("build_form_page_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    formId: string;
+    groupList: TeamGroupTableRow[];
+  };
+};
+
+export const getFormpageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    isFormslyForm: boolean;
+    formName: string;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("form_page_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    teamGroupList: TeamGroupTableRow[];
+    teamProjectList?: TeamProjectTableRow[];
+    teamProjectListCount?: number;
+  };
+};
+
+export const getCreateRequestPageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    userId: string;
+    connectedRequestFormslyId: string | null;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_request_page_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    form: FormWithResponseType;
+    projectOptions?: OptionTableRow[];
+    sourceProjectList?: Record<string, string>;
+    requestProjectId: string;
+    requestingProject?: string;
+    categoryOptions?: OptionTableRow[];
+    connectedRequest?: ConnectedRequestFormProps;
+    departmentOptions?: OptionTableRow[];
+    allProjectOptions?: OptionTableRow[];
+    bankListOptions?: OptionTableRow[];
+    uomOptions?: OptionTableRow[];
+    equipmentCodeOptions?: OptionTableRow[];
+  };
+};
+
+export const getRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    request_id: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_request", {
+    request_id: params.request_id,
+  });
+  if (error) throw error;
+
+  return data as RequestWithResponseType;
+};
+
+export const analyzeItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemName: string;
+    teamId: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("analyze_item", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    data: ResultType[];
+    count: number;
+  };
+};
+
+export const getDashboardTopRequestor = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    startDate: string;
+    endDate: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_dashboard_top_requestor",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as DashboardRequestorAndSignerType[];
+};
+
+export const getDashboardTopSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    startDate: string;
+    endDate: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_dashboard_top_signer",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as DashboardRequestorAndSignerType[];
+};
+
+export const redirectToNewTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+    app: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("redirect_to_new_team", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    teamMember: TeamMemberTableRow;
+    formList: FormTableRow[];
+  };
+};
+
+export const getTeamInvoiceOnload = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    teamDateCreated: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("team_invoice_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as {
+    currentDate: string;
+    expirationDate: string;
+    price: number;
+  };
 };

@@ -1405,43 +1405,6 @@ plv8.subtransaction(function(){
 return ssot_data;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION create_user(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let user_data;
-  plv8.subtransaction(function(){
-    const {
-      user_id,
-      user_email,
-      user_first_name,
-      user_last_name,
-      user_username,
-      user_avatar,
-      user_phone_number,
-      user_job_title,
-      user_active_team_id,
-      user_employee_number
-    } = input_data;
-
-    if(user_active_team_id){
-      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
-    }else{
-      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
-    }
-    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
-
-    if(invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
-
-    if(user_employee_number){
-      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
-    }
- });
- return user_data;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION create_user_with_sss_id(
   input_data JSON
 )
@@ -1538,55 +1501,45 @@ AS $$
         project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
       }
 
-      if(formName ==='Quotation') {
-        endId = `Q`;
-      } else if(formName ==='Services') {
+      if (formName ==='Services') {
         endId = `S`;
-      } else if(formName ==='Other Expenses') {
+      } else if (formName ==='Other Expenses') {
         endId = `OE`;
-      } else if(formName ==='PED Equipment') {
+      } else if (formName ==='PED Equipment') {
         endId = `PE`;
-      } else if(formName ==='PED Part') {
+      } else if (formName ==='PED Part') {
         endId = `PP`;
-      } else if(formName ==='PED Item') {
+      } else if (formName ==='PED Item') {
         endId = `PC`;
-      } else if(formName ==='Sourced Item') {
-        endId = `SI`;
-      } else if(formName ==='Receiving Inspecting Report') {
-        endId = `RIR`;
-      } else if(formName ==='Release Order') {
-        endId = `RO`;
-      } else if(formName ==='Transfer Receipt') {
-        endId = `TR`;
-      } else if(formName === 'IT Asset') {
+      } else if (formName === 'IT Asset') {
         endId = `ITA`;
-      } else if(formName === 'Liquidation Reimbursement') {
+      } else if (formName === 'Liquidation Reimbursement') {
         endId = `LR`;
-      } else if(formName === 'Bill of Quantity') {
+      } else if (formName === 'Bill of Quantity') {
         endId = `BOQ`;
-      } else if(formName === 'Personnel Transfer Requisition') {
+      } else if (formName === 'Personnel Transfer Requisition') {
         endId = `PTRF`;
-      } else if(formName === 'Petty Cash Voucher') {
+      } else if (formName === 'Petty Cash Voucher') {
         endId = `PCV`;
-      } else if(formName === 'Equipment Service Report') {
+      } else if (formName === 'Equipment Service Report') {
         endId = `ESR`;
-      } else if(formName === 'Request For Payment Code') {
+      } else if (formName === 'Request For Payment Code') {
         endId = `RFPC`;
-      } else if(formName.includes('Request For Payment')) {
+      } else if (formName.includes('Request For Payment')) {
         endId = `RFP`;
-      } else if(formName.includes('Petty Cash Voucher Balance')) {
+      } else if (formName.includes('Petty Cash Voucher Balance')) {
         endId = `PCVB`;
-      } else if(formName === 'Application Information') {
+      } else if (formName === 'Application Information') {
         endId = `AI`;
-      } else if(formName === 'General Assessment') {
+      } else if (formName === 'General Assessment') {
         endId = `GA`;
-      } else if(formName === 'Technical Assessment') {
+      } else if (formName === 'Technical Assessment') {
         endId = `TA`;
-      } else if(formName === 'Evaluation Result') {
+      } else if (formName === 'Evaluation Result') {
         endId = `ER`;
-      } else if(formName === 'Background Investigation') {
+      } else if (formName === 'Background Investigation') {
         endId = `BI`;
-      } else if(formName === 'Practical Test') {
+      } else if (formName === 'Practical Test') {
         endId = `PT`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
@@ -2380,72 +2333,6 @@ AS $$
  return item_data;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION create_service(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let item_data;
-  plv8.subtransaction(function(){
-    const {
-      formId,
-      serviceData: {
-        service_name,
-        service_is_available,
-        service_team_id,
-      },
-      scope
-    } = input_data;
-
-
-    const service_result = plv8.execute(`INSERT INTO service_schema.service_table (service_name,service_is_available,service_team_id) VALUES ('${service_name}','${service_is_available}','${service_team_id}') RETURNING *;`)[0];
-
-    const {section_id} = plv8.execute(`SELECT section_id FROM form_schema.section_table WHERE section_form_id='${formId}' AND section_name='Service';`)[0];
-
-    const serviceScopeInput = [];
-    const fieldInput = [];
-
-    scope.forEach((scope) => {
-      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
-
-      fieldInput.push({
-        field_id: fieldId,
-        field_name: scope.name,
-        field_type: scope.type,
-        field_order: 8,
-        field_section_id: section_id,
-        field_is_required: false,
-      });
-      serviceScopeInput.push({
-        service_scope_name: scope.name,
-        service_scope_type: scope.type,
-        service_scope_is_with_other: scope.isWithOther,
-        service_scope_service_id: service_result.service_id,
-        service_scope_field_id: fieldId
-      });
-    });
-
-    const fieldValues = fieldInput
-      .map((field) =>
-        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
-      )
-      .join(",");
-    const serviceScopeValues = serviceScopeInput
-      .map((scope) =>
-        `('${scope.service_scope_name}','${scope.service_scope_type}','${scope.service_scope_is_with_other}','${scope.service_scope_service_id}','${scope.service_scope_field_id}')`
-      )
-      .join(",");
-
-    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
-    const service_scope = plv8.execute(`INSERT INTO service_schema.service_scope_table (service_scope_name,service_scope_type,service_scope_is_with_other,service_scope_service_id,service_scope_field_id) VALUES ${serviceScopeValues} RETURNING *;`);
-
-    item_data = {...service_result, service_scope: service_scope}
-
- });
- return item_data;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION create_team_invitation(
   input_data JSON
 )
@@ -2567,33 +2454,6 @@ AS $$
 
     if (!item_count.count) {
       return_data = "There must be at least one available item";
-    } else if (!signer_count) {
-      return_data = "You need to add a primary signer first";
-    } else {
-      return_data = "true"
-    }
- });
-
- return return_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_subcon_form_status(
-  team_id TEXT,
-  form_id TEXT
-)
-RETURNS Text
-SET search_path TO ''
-AS $$
-  let return_data;
-  plv8.subtransaction(function(){
-
-
-    const service_count = plv8.execute(`SELECT COUNT(*) FROM service_schema.service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
-
-    const signer_count = plv8.execute(`SELECT COUNT(*) FROM form_schema.signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
-
-    if (!service_count.count) {
-      return_data = "There must be at least one available service";
     } else if (!signer_count) {
       return_data = "You need to add a primary signer first";
     } else {
@@ -2819,155 +2679,6 @@ AS $$
 
  });
  return signer_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_item_quantity(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let item_data
-  plv8.subtransaction(function(){
-    const {
-      itemID,
-      itemFieldList,
-      quantityFieldList
-    } = input_data;
-
-    const request = plv8.execute(
-      `
-        SELECT request_response_table.*
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-          AND request_status = 'APPROVED'
-        INNER JOIN form_schema.form_table ON request_form_id = form_id
-          AND form_is_formsly_form = true
-          AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
-        WHERE
-          request_response = '${itemID}'
-      `
-    );
-
-    let requestResponse = []
-    if(request.length > 0) {
-      const requestIdList = request.map(
-          (response) => `'${response.request_response_request_id}'`
-      ).join(",");
-
-      requestResponse = plv8.execute(
-        `
-          SELECT
-            request_response_table.*,
-            field_name
-          FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          WHERE
-            (
-              field_name = 'Quantity'
-              OR field_name = 'Item'
-            )
-            AND request_response_request_id IN (${requestIdList})
-          ORDER BY request_response_duplicatable_section_id ASC
-        `
-      );
-    }
-
-    const requestResponseItem = [];
-    const requestResponseQuantity = [];
-
-    requestResponse.forEach((response) => {
-      if (response.field_name === "Item") {
-        requestResponseItem.push(response);
-      } else if (response.field_name === "Quantity") {
-        requestResponseQuantity.push(response);
-      }
-    });
-
-    requestResponseItem.push(...itemFieldList);
-    requestResponseQuantity.push(...quantityFieldList);
-
-    const itemList = [];
-    const quantityList = [];
-
-    const descriptionMatcher = (options, currentItem) => {
-      const regex = /\(([^()]+)\)/g;
-      let returnData = "";
-      for (const option of options) {
-        const currentItemResult = currentItem.match(regex);
-        const currentItemIndex = currentItem.indexOf("(");
-        const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
-        const currentItemDescriptionList =
-          currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
-
-        const optionIndex = option.indexOf("(");
-        const optionGeneralName = option.slice(0, optionIndex - 1);
-
-        if (
-          currentItemGeneralName === optionGeneralName &&
-          currentItemDescriptionList
-        ) {
-          let match = true;
-          for (const description of currentItemDescriptionList) {
-            if (!option.includes(description)) {
-              match = false;
-              break;
-            }
-          }
-          if (match) {
-            returnData = option;
-            break;
-          }
-        }
-      }
-      return returnData;
-    };
-
-
-    for (let i = 0; i < requestResponseItem.length; i++) {
-      const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
-      if (itemList.includes(currentItem)) {
-        const quantityIndex = itemList.indexOf(currentItem);
-        quantityList[quantityIndex] += Number(
-            requestResponseQuantity[i].request_response
-        );
-      } else {
-        itemList.push(currentItem);
-        quantityList.push(Number(requestResponseQuantity[i].request_response));
-      }
-    }
-
-    const returnData = [];
-    const regExp = /\(([^)]+)\)/;
-    for (let i = 0; i < itemList.length; i++) {
-      const matches = regExp.exec(itemList[i]);
-      if (!matches) continue;
-
-      const quantityMatch = matches[1].match(/(\d+)/);
-      if (!quantityMatch) continue;
-
-      const expectedQuantity = Number(quantityMatch[1]);
-      const unit = matches[1].replace(/\d+/g, "").trim();
-
-      if (quantityList[i] > expectedQuantity) {
-      const quantityMatch = itemList[i].match(/(\d+)/);
-      if (!quantityMatch) return;
-
-      returnData.push(
-        `${JSON.parse(
-        itemList[i].replace(
-          quantityMatch[1],
-          Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        )
-        )} exceeds quantity limit by ${(
-          quantityList[i] - expectedQuantity
-        ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-      );
-      }
-    }
-    item_data = returnData;
-  });
-  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_request_list(
@@ -4089,272 +3800,6 @@ AS $$
     request_data = {isFormslyTeam,projectList}
  });
  return request_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION canvass_page_on_load(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      requestId
-    } = input_data;
-
-    const descriptionMatcher = (options, currentItem) => {
-      const regex = /\(([^()]+)\)/g;
-      let returnData = "";
-      for (const option of options) {
-        const currentItemResult = currentItem.match(regex);
-        const currentItemIndex = currentItem.indexOf("(");
-        const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
-        const currentItemDescriptionList =
-          currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
-
-        const optionIndex = option.indexOf("(");
-        const optionGeneralName = option.slice(0, optionIndex - 1);
-
-        if (
-          currentItemGeneralName === optionGeneralName &&
-          currentItemDescriptionList
-        ) {
-          let match = true;
-          for (const description of currentItemDescriptionList) {
-            if (!option.includes(description)) {
-              match = false;
-              break;
-            }
-          }
-          if (match) {
-            returnData = option;
-            break;
-          }
-        }
-      }
-      return returnData;
-    };
-
-    const requestResponseData = plv8.execute(
-      `
-        SELECT
-          request_response_table.*,
-          field_name, field_order
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE
-          request_response_request_id='${requestId}'
-      `
-    );
-
-    const options = {};
-    const idForNullDuplicationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
-    requestResponseData.forEach((response) => {
-      if (response) {
-        const fieldName = response.field_name;
-        const duplicatableSectionId =
-          response.request_response_duplicatable_section_id ??
-          idForNullDuplicationId;
-
-        if (response.field_order > 4) {
-          if (!options[duplicatableSectionId]) {
-            options[duplicatableSectionId] = {
-              name: "",
-              description: "",
-              quantity: 0,
-              unit: "",
-            };
-          }
-
-          if (fieldName === "General Name") {
-            options[duplicatableSectionId].name = JSON.parse(
-              response.request_response
-            );
-          } else if (fieldName === "Base Unit of Measurement") {
-            options[duplicatableSectionId].unit = JSON.parse(
-              response.request_response
-            );
-          } else if (fieldName === "Quantity") {
-            options[duplicatableSectionId].quantity = Number(
-              response.request_response
-            );
-          } else if (
-            fieldName === "GL Account" ||
-            fieldName === "CSI Code" ||
-            fieldName === "CSI Code Description" ||
-            fieldName === "Division Description" ||
-            fieldName === "Level 2 Major Group Description" ||
-            fieldName === "Level 2 Minor Group Description"
-          ) {
-          } else {
-            options[duplicatableSectionId].description += `${
-              options[duplicatableSectionId].description ? ", " : ""
-            }${fieldName}: ${JSON.parse(response.request_response)}`;
-          }
-        }
-      }
-    });
-
-    const itemOptions = Object.keys(options).map(
-    (item) =>
-      `${options[item].name} (${options[item].quantity} ${options[item].unit}) (${options[item].description})`
-    );
-
-    const canvassRequest = plv8.execute(
-      `
-        SELECT
-          request_id,
-          request_formsly_id,
-          request_status,
-          form_name
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-          AND request_status='PENDING'
-        INNER JOIN form_schema.form_table ON form_id = request_form_id
-          AND form_name='Quotation'
-        WHERE
-          request_response='"${requestId}"'
-        ORDER BY request_formsly_id DESC
-      `
-    );
-
-    const additionalChargeFields = [
-      'Delivery Fee',
-      'Bank Charge',
-      'Mobilization Charge',
-      'Demobilization Charge',
-      'Freight Charge',
-      'Hauling Charge',
-      'Handling Charge',
-      'Packing Charge',
-    ];
-
-    const summaryData = {};
-    let summaryAdditionalDetails= [];
-
-    const quotationRequestList = canvassRequest.map(({ request_id, request_formsly_id }) => {
-      const quotationResponseList = plv8.execute(
-        `
-          SELECT
-            request_response_table.*,
-            field_name,
-            request_id,
-            request_formsly_id
-          FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND field_name IN ('Item', 'Price per Unit', 'Quantity', 'Lead Time', 'Payment Terms', ${additionalChargeFields.map(fee => `'${fee}'`)})
-          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-          WHERE
-            request_response_request_id = '${request_id}'
-        `
-      );
-      summaryData[request_formsly_id] = 0;
-      summaryAdditionalDetails.push({
-        quotation_id: request_id,
-        formsly_id: request_formsly_id,
-        lead_time: 0,
-        payment_terms: "",
-      });
-      return quotationResponseList;
-    });
-
-    const canvassData = {};
-    const lowestPricePerItem = {};
-    const requestAdditionalCharge = {};
-    let lowestAdditionalCharge = 999999999;
-
-    itemOptions.forEach((item) => {
-      canvassData[item] = [];
-      lowestPricePerItem[item] = 999999999;
-    });
-
-    quotationRequestList.forEach((request) => {
-      let currentItem = "";
-      let tempAdditionalCharge = 0;
-
-      request.forEach((response) => {
-        if (response.field_name === "Item") {
-          currentItem = descriptionMatcher(itemOptions, JSON.parse(response.request_response));
-          canvassData[currentItem].push({
-            quotationId: response.request_formsly_id,
-            price: 0,
-            quantity: 0,
-          });
-        } else if (
-          response.field_name === "Price per Unit"
-        ) {
-          const price = Number(response.request_response);
-          canvassData[currentItem][canvassData[currentItem].length - 1].price =
-            price;
-          if (price < lowestPricePerItem[currentItem]) {
-            lowestPricePerItem[currentItem] = price;
-          }
-          summaryData[response.request_formsly_id] +=
-            price;
-        } else if (
-          response.field_name === "Payment Terms"
-        ) {
-          summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
-            if (request.quotation_id === response.request_response_request_id)
-              return {
-                ...request,
-                payment_terms: JSON.parse(response.request_response),
-              };
-            else return request;
-          });
-        } else if (response.field_name === "Lead Time") {
-          summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
-            if (request.quotation_id === response.request_response_request_id)
-              return { ...request, lead_time: Number(response.request_response) };
-            else return request;
-          });
-        } else if (response.field_name === "Quantity") {
-          canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
-            Number(response.request_response);
-        } else if (
-          additionalChargeFields.includes(
-            response.field_name
-          )
-        ) {
-          const price = Number(response.request_response);
-          summaryData[response.request_formsly_id] +=
-            price;
-          tempAdditionalCharge += price;
-        }
-      });
-
-      requestAdditionalCharge[
-        request[0].request_formsly_id
-      ] = tempAdditionalCharge;
-      if (tempAdditionalCharge < lowestAdditionalCharge) {
-        lowestAdditionalCharge = tempAdditionalCharge;
-      }
-    });
-
-    const sortedQuotation = Object.entries(summaryData)
-      .sort(([, a], [, b]) => a - b)
-      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
-    const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-    const request_id = canvassRequest.find(
-      (request) => request.request_formsly_id === recommendedQuotationId
-    )?.request_id;
-
-    returnData = {
-      canvassData,
-      lowestPricePerItem,
-      summaryData,
-      summaryAdditionalDetails,
-      lowestQuotation: {
-        id: recommendedQuotationId,
-        request_id: request_id,
-        value: sortedQuotation[recommendedQuotationId],
-      },
-      requestAdditionalCharge,
-      lowestAdditionalCharge,
-    };
- });
- return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION form_list_page_on_load(
@@ -8933,272 +8378,6 @@ AS $$
  });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION fetch_edit_request_section(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = [];
-  plv8.subtransaction(function(){
-    const {
-      index,
-      supplierOptions,
-      requestId,
-      teamId,
-      itemOptions,
-      preferredSupplierField
-    } = input_data;
-
-    const unformattedRequest = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
-    const {
-      request_form: { form_section: originalSectionList },
-    } = unformattedRequest;
-
-    const sectionWithDuplicateList = [];
-    originalSectionList.forEach((section) => {
-      const hasDuplicates = section.section_field.some((field) =>
-        field.field_response.some(
-          (response) => response.request_response_duplicatable_section_id !== null
-        )
-      );
-      if (section.section_is_duplicatable && hasDuplicates) {
-        const fieldResponse = section.section_field.flatMap((field) => field.field_response);
-
-        const uniqueIdList = fieldResponse.reduce((unique, item) => {
-          const { request_response_duplicatable_section_id } = item;
-          const isDuplicate = unique.some((uniqueItem) =>
-            uniqueItem.includes(`${request_response_duplicatable_section_id}`)
-          );
-          if (!isDuplicate) {
-            unique.push(`${request_response_duplicatable_section_id}`);
-          }
-          return unique;
-        }, []);
-
-        const duplicateSectionList = uniqueIdList.map((id) => ({
-          ...section,
-          section_field: section.section_field.map((field) => ({
-            ...field,
-            field_response: [
-              field.field_response.filter(
-                (response) =>
-                  `${response.request_response_duplicatable_section_id}` === id
-              )[0] || null,
-            ],
-          })),
-        }));
-
-        duplicateSectionList.forEach((duplicateSection) =>
-          sectionWithDuplicateList.push(duplicateSection)
-        );
-      } else {
-        sectionWithDuplicateList.push(section);
-      }
-    });
-
-    const itemDivisionIdList = [];
-    const itemCategorySignerList = [null];
-    const sectionData = sectionWithDuplicateList
-      .slice(index, index + 10).map((section) => {
-        const isWithPreferredSupplier =
-          section.section_field[9].field_name === "Preferred Supplier";
-
-        const itemName = JSON.parse(
-          section.section_field[0].field_response[0].request_response
-        );
-
-        const item = plv8.execute(`
-          SELECT *
-          FROM item_schema.item_table
-          WHERE
-            item_team_id = '${teamId}'
-            AND item_general_name = '${itemName}'
-            AND item_is_disabled = false
-            AND item_is_available = true;
-        `)[0];
-
-        if(!item) return null;
-
-        const divisionList = plv8.execute(`SELECT * FROM item_schema.item_division_table WHERE item_division_item_id = '${item.item_id}'`);
-
-        itemDivisionIdList.push(divisionList.map(division => division.item_division_value));
-
-        const itemDescriptionList = plv8.execute(`
-          SELECT *
-          FROM item_schema.item_description_table
-          WHERE
-            item_description_item_id = '${item.item_id}'
-            AND item_description_is_disabled = false
-            AND item_description_is_available = true;
-        `);
-
-        const itemDescriptionWithField = itemDescriptionList
-          .map((description)=> {
-
-            const itemDescriptionFieldList = plv8.execute(`
-              SELECT *
-              FROM item_schema.item_description_field_table
-              LEFT JOIN item_schema.item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
-              WHERE
-                item_description_field_item_description_id = '${description.item_description_id}'
-                AND item_description_field_is_disabled = false
-                AND item_description_field_is_available = true;
-            `);
-
-            const field = plv8.execute(`
-              SELECT *
-              FROM form_schema.field_table
-              WHERE field_id = '${description.item_description_field_id}';
-            `)[0];
-
-            return {
-              ...description,
-              item_description_field: itemDescriptionFieldList,
-              item_field: field
-            }
-          })
-
-        const newFieldsWithOptions = itemDescriptionWithField.map(
-          (description) => {
-            const options = description.item_description_field.map(
-              (options, optionIndex) => {
-                return {
-                  option_field_id: description.item_field.field_id,
-                  option_id: options.item_description_field_id,
-                  option_order: optionIndex + 1,
-                  option_value: `${options.item_description_field_value}${
-                    options.item_description_field_uom
-                      ? ` ${options.item_description_field_uom}`
-                      : ""
-                  }`,
-                };
-              }
-            );
-
-            const descriptionList = section.section_field.slice(5);
-
-            const field = descriptionList.find(
-              (refDescription) =>
-                refDescription.field_id === description.item_field.field_id
-            );
-
-            return {
-              ...field,
-              field_option: options,
-            };
-          }
-        );
-
-        if(item.item_category_id.length !== 0){
-          const signerData = plv8.execute(
-            `
-              SELECT
-                signer_action,
-                signer_id,
-                signer_is_primary_signer,
-                signer_order,
-                team_member_id,
-                user_id,
-                user_first_name,
-                user_last_name,
-                user_avatar
-              FROM item_schema.item_category_table
-              INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
-              INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-              INNER JOIN user_schema. ON user_id = team_member_user_id
-              WHERE item_category_id = '${item.item_category_id}'
-            `
-          );
-          if (signerData.length === 0) {
-            itemCategorySignerList.push(null);
-          } else {
-            const signer = signerData[0];
-            itemCategorySignerList.push({
-              item_category_signer: {
-                signer_id: signer.signer_id,
-                signer_is_primary_signer: signer.signer_is_primary_signer,
-                signer_action: signer.signer_action,
-                signer_order: signer.signer_order,
-                signer_team_member: {
-                  team_member_id: signer.team_member_id,
-                  team_member_user: {
-                    user_id: signer.user_id,
-                    user_first_name: signer.user_first_name,
-                    user_last_name: signer.user_last_name,
-                    user_avatar: signer.user_avatar
-                  }
-                }
-              }
-            });
-          }
-        }
-
-        return {
-          ...section,
-          section_field: [
-            {
-              ...section.section_field[0],
-              field_option: itemOptions,
-            },
-            ...section.section_field.slice(1, 4),
-            {
-              ...section.section_field[4],
-              field_option: [{
-                option_field_id: unformattedRequest.request_form.form_section[0].section_field[0].field_id,
-                option_id: JSON.parse(section.section_field[4].field_response[0].request_response),
-                option_order: 1,
-                option_value: JSON.parse(section.section_field[4].field_response[0].request_response)
-              }],
-            },
-            ...section.section_field.slice(5, 9),
-            isWithPreferredSupplier
-              ? {
-                  ...section.section_field[9],
-                  field_option: [
-                    {
-                      option_field_id: preferredSupplierField.field_id,
-                      option_id: section.section_field[9].field_response[0] ? JSON.parse(
-                        section.section_field[9].field_response[0]
-                          .request_response
-                      ) : "",
-                      option_order: 1,
-                      option_value: section.section_field[9].field_response[0] ? JSON.parse(
-                        section.section_field[9].field_response[0]
-                          .request_response
-                      ) : "",
-                    },
-                  ],
-                }
-              : {
-                  ...preferredSupplierField,
-                  field_response: [
-                    {
-                      request_response_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
-                      request_response: null,
-                      request_response_duplicatable_section_id:
-                        section.section_field[8].field_response[0]
-                          .request_response_duplicatable_section_id,
-                      request_response_field_id:
-                        preferredSupplierField.field_id,
-                    },
-                  ],
-                  field_option: supplierOptions,
-                },
-            ...newFieldsWithOptions,
-          ],
-        };
-      }).filter(value => value);
-
-    returnData = {
-      sectionData,
-      itemDivisionIdList,
-      itemCategorySignerList
-    }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION get_query_data(
   input_data JSON
 )
@@ -9713,88 +8892,6 @@ AS $$
       `
     );
  });
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION create_user_valid_id(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      user_valid_id_user_id,
-      user_valid_id_type,
-      user_valid_id_number,
-      user_valid_id_first_name,
-      user_valid_id_middle_name,
-      user_valid_id_last_name,
-      user_valid_id_gender,
-      user_valid_id_nationality,
-      user_valid_id_status,
-      user_valid_id_front_image_url,
-      user_valid_id_back_image_url,
-      address_region,
-      address_province,
-      address_city,
-      address_barangay,
-      address_street,
-      address_zip_code,
-    } = input_data;
-
-    const addressData = plv8.execute(
-      `
-        INSERT INTO public.address_table
-          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
-        VALUES
-          ('${address_region}', '${address_province}', '${address_city}', '${address_barangay}', '${address_street}', '${address_zip_code}')
-        RETURNING *
-      `
-    )[0];
-
-    const userValidIdData = plv8.execute(
-      `
-        INSERT INTO user_schema.user_valid_id_table
-          (
-            user_valid_id_number,
-            user_valid_id_type,
-            user_valid_id_first_name,
-            user_valid_id_middle_name,
-            user_valid_id_last_name,
-            user_valid_id_gender,
-            user_valid_id_nationality,
-            user_valid_id_front_image_url,
-            user_valid_id_back_image_url,
-            user_valid_id_status,
-            user_valid_id_user_id,
-            user_valid_id_address_id
-          )
-        VALUES
-          (
-            '${user_valid_id_number}',
-            '${user_valid_id_type}',
-            '${user_valid_id_first_name}',
-            '${user_valid_id_middle_name}',
-            '${user_valid_id_last_name}',
-            '${user_valid_id_gender}',
-            '${user_valid_id_nationality}',
-            '${user_valid_id_front_image_url}',
-            '${user_valid_id_back_image_url}',
-            '${user_valid_id_status}',
-            '${user_valid_id_user_id}',
-            '${addressData.address_id}'
-          )
-        RETURNING *
-      `
-    )[0];
-
-    returnData = {
-      ...addressData,
-      ...userValidIdData
-    }
- });
- return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_ped_part(
@@ -10421,111 +9518,6 @@ AS $$
               }
             });
           }
-          return {
-            fieldId: field,
-            optionList: optionData
-          }
-        })
-      }
-    });
- });
- return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION fetch_service_request_conditional_options(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = [];
-  plv8.subtransaction(function(){
-    const {
-      sectionList
-    } = input_data;
-
-    returnData = sectionList.map(section => {
-      return {
-        csiDivision: section.csiDivision,
-        fieldList: section.fieldIdList.map(field => {
-          let optionData = [];
-
-          const csiCodeData = plv8.execute(
-            `
-              SELECT
-                csi_code_id,
-                csi_code_level_three_description
-              FROM lookup_schema.csi_code_table
-              WHERE
-                csi_code_division_description = '${section.csiDivision}'
-            `
-          );
-
-          optionData = csiCodeData.map((options, index) => {
-            return {
-              option_field_id: field,
-              option_id: options.csi_code_id,
-              option_order: index + 1,
-              option_value: options.csi_code_level_three_description
-            }
-
-          });
-
-          return {
-            fieldId: field,
-            optionList: optionData
-          }
-        })
-      }
-    });
- });
- return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION fetch_other_expenses_request_conditional_options(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = [];
-  plv8.subtransaction(function(){
-    const {
-      sectionList
-    } = input_data;
-
-    returnData = sectionList.map(section => {
-      return {
-        category: section.category,
-        fieldList: section.fieldIdList.map(field => {
-          let optionData = [];
-
-          const csiCodeData = plv8.execute(
-            `
-              SELECT
-                other_expenses_type_id,
-                other_expenses_type
-              FROM other_expenses_schema.other_expenses_category_table
-              INNER JOIN other_expenses_schema.other_expenses_type_table ON other_expenses_type_category_id = other_expenses_category_id
-                AND other_expenses_type_is_available = true
-                AND other_expenses_type_is_disabled = false
-              WHERE
-                other_expenses_category = '${section.category}'
-                AND other_expenses_category_is_disabled = false
-                AND other_expenses_category_is_available = true
-            `
-          );
-
-          optionData = csiCodeData.map((options, index) => {
-            return {
-              option_field_id: field,
-              option_id: options.other_expenses_type_id,
-              option_order: index + 1,
-              option_value: options.other_expenses_type
-            }
-
-          });
-
           return {
             fieldId: field,
             optionList: optionData
@@ -12061,72 +11053,6 @@ plv8.subtransaction(function() {
             }
         }
     }));
-});
-return returnData;
-$$ LANGUAGE plv8;
-
-
-CREATE OR REPLACE FUNCTION get_multiple_project_signer_with_team_member(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    projectName,
-    formId
-  } = input_data;
-
-  const projectNameCondition = projectName.map(project => `'${project}'`).join(", ")
-
-  const signerData = plv8.execute(
-    `
-      SELECT
-        signer_id,
-        signer_is_primary_signer,
-        signer_action,
-        signer_order,
-        signer_is_disabled,
-        team_project_name,
-        team_member_id,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_avatar
-      FROM form_schema.signer_table
-      INNER JOIN team_schema.team_project_table ON team_project_id = signer_team_project_id
-        AND team_project_name IN (${projectNameCondition})
-      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        signer_form_id = '${formId}'
-        AND signer_is_disabled = false
-    `
-  );
-
-  returnData = signerData.map(signer => {
-    return {
-      signer_id: signer.signer_id,
-      signer_is_primary_signer: signer.signer_is_primary_signer,
-      signer_action: signer.signer_action,
-      signer_order: signer.signer_order,
-      signer_is_disabled: signer.signer_is_disabled,
-      signer_team_project: {
-        team_project_name: signer.team_project_name
-      },
-      signer_team_member: {
-        team_member_id: signer.team_member_id,
-        team_member_user: {
-          user_id: signer.user_id,
-          user_first_name: signer.user_first_name,
-          user_last_name: signer.user_last_name,
-          user_avatar: signer.user_avatar,
-        }
-      }
-    }
-  })
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -14679,31 +13605,6 @@ AS $$
   return return_value
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      requestIdCondition
-    } = input_data;
-
-    returnData = plv8.execute(
-      `
-        SELECT request_response_request_id, request_response
-        FROM request_schema.request_response_table
-        WHERE
-          request_response_request_id IN (${requestIdCondition})
-          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
-      `
-    );
-  });
-  return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION fetch_user_request_indicator(
   input_data JSON
 )
@@ -16138,62 +15039,6 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_trade_test_schedule(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = {};
-  plv8.subtransaction(function(){
-    const {
-      teamMemberId,
-      schedule,
-      requestReferenceId,
-      userEmail,
-      applicationInformationFormslyId,
-      notificationMessage
-    } = input_data;
-
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-
-    plv8.execute(
-      `
-        UPDATE hr_schema.trade_test_table
-        SET
-          trade_test_status = 'PENDING',
-          trade_test_status_date_updated = '${currentDate}',
-          trade_test_team_member_id = '${teamMemberId}',
-          trade_test_schedule = '${schedule}'
-        WHERE
-          trade_test_request_id = '${requestReferenceId}'
-      `
-    );
-
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          'REQUEST',
-          '${notificationMessage}',
-          '/user/application-progress/${applicationInformationFormslyId}',
-          '${userId}'
-        )
-      `
-    );
-  });
-  return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION get_technical_interview_summary_table(
   input_data JSON
 )
@@ -16433,64 +15278,6 @@ AS $$
       const qualifiedStep = `technical_interview_${technicalInterviewNumber}`;
       plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "${qualifiedStep}", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
     }
-  });
-  return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION update_technical_interview_schedule(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = {};
-  plv8.subtransaction(function(){
-    const {
-      teamMemberId,
-      schedule,
-      requestReferenceId,
-      userEmail,
-      applicationInformationFormslyId,
-      notificationMessage,
-      technicalInterviewNumber
-    } = input_data;
-
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-
-    plv8.execute(
-      `
-        UPDATE hr_schema.technical_interview_table
-        SET
-          technical_interview_status = 'PENDING',
-          technical_interview_status_date_updated = '${currentDate}',
-          technical_interview_team_member_id = '${teamMemberId}',
-          technical_interview_schedule = '${schedule}'
-        WHERE
-          technical_interview_request_id = '${requestReferenceId}'
-          AND technical_interview_number = ${technicalInterviewNumber}
-      `
-    );
-
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          'REQUEST',
-          '${notificationMessage}',
-          '/user/application-progress/${applicationInformationFormslyId}',
-          '${userId}'
-        )
-      `
-    );
   });
   return returnData;
 $$ LANGUAGE plv8;
@@ -20021,14 +18808,16 @@ AS $$
       )
     }
 
-    plv8.execute(
-      `
-        DELETE FROM hr_schema.practical_test_position_table
-        WHERE practical_test_position_position_id IN (${positionList})
-      `
-    )
+    if (positionList.length) {
+      plv8.execute(
+        `
+          DELETE FROM hr_schema.practical_test_position_table
+          WHERE practical_test_position_position_id IN (${positionList})
+        `
+      )
+    }
     plv8.execute(practicalTestQuery);
-
+  
     if (practicalTestPositionInput.length) {
       plv8.execute(
         `

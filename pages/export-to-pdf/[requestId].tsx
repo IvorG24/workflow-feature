@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  getRequest,
   getUserCurrentSignature,
   getUserSignatureList,
 } from "@/backend/api/get";
@@ -17,10 +18,9 @@ import { useEffect, useState } from "react";
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
-    const { data, error } = await supabaseClient.rpc("get_request", {
-      request_id: `${context.query.requestId}`,
+    const data = await getRequest(supabaseClient, {
+      request_id: context.query.requestId as string,
     });
-    if (error) throw error;
     return {
       props: {
         request: data,

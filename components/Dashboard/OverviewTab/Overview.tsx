@@ -1,4 +1,6 @@
 import {
+  getDashboardTopRequestor,
+  getDashboardTopSigner,
   getRequestStatusCount,
   getRequestStatusMonthlyCount,
 } from "@/backend/api/get";
@@ -134,32 +136,24 @@ const Overview = ({
 
         if (!formMatch) return;
         // set requestor data
-        const { data: requestorList, error: requestorListError } =
-          await supabaseClient.rpc("fetch_dashboard_top_requestor", {
-            input_data: {
-              formId: selectedForm,
-              startDate: moment(startDateFilter).format(),
-              endDate: moment(endDateFilter).format(),
-              page: 1,
-              limit: DEFAULT_ON_SCROLL_LIMIT,
-            },
-          });
-        if (requestorListError) throw requestorListError;
+        const requestorList = await getDashboardTopRequestor(supabaseClient, {
+          formId: selectedForm,
+          startDate: moment(startDateFilter).format(),
+          endDate: moment(endDateFilter).format(),
+          page: 1,
+          limit: DEFAULT_ON_SCROLL_LIMIT,
+        });
         setRequestorList(requestorList);
         setIsFetchingRequestor(false);
 
         // set signer data
-        const { data: signerList, error: signerListError } =
-          await supabaseClient.rpc("fetch_dashboard_top_signer", {
-            input_data: {
-              formId: selectedForm,
-              startDate: moment(startDateFilter).format(),
-              endDate: moment(endDateFilter).format(),
-              page: 1,
-              limit: DEFAULT_ON_SCROLL_LIMIT,
-            },
-          });
-        if (signerListError) throw signerListError;
+        const signerList = await getDashboardTopSigner(supabaseClient, {
+          formId: selectedForm,
+          startDate: moment(startDateFilter).format(),
+          endDate: moment(endDateFilter).format(),
+          page: 1,
+          limit: DEFAULT_ON_SCROLL_LIMIT,
+        });
         setSignerList(signerList);
         setIsFetchingSigner(false);
       } catch (e) {
@@ -191,17 +185,15 @@ const Overview = ({
   const loadMoreRequestor = async (page: number) => {
     try {
       setIsFetchingRequestor(true);
-      const { data: requestorList, error: requestorListError } =
-        await supabaseClient.rpc("fetch_dashboard_top_requestor", {
-          input_data: {
-            formId: selectedForm,
-            startDate: moment(startDateFilter).format(),
-            endDate: moment(endDateFilter).format(),
-            page: page,
-            limit: DEFAULT_ON_SCROLL_LIMIT,
-          },
-        });
-      if (requestorListError) throw requestorListError;
+
+      const requestorList = await getDashboardTopRequestor(supabaseClient, {
+        formId: selectedForm as string,
+        startDate: moment(startDateFilter).format(),
+        endDate: moment(endDateFilter).format(),
+        page: page,
+        limit: DEFAULT_ON_SCROLL_LIMIT,
+      });
+
       setRequestorList((prev) => [...prev, ...requestorList]);
       if (requestorList.length < DEFAULT_ON_SCROLL_LIMIT) {
         setIsRequestorFetchable(false);
@@ -220,17 +212,14 @@ const Overview = ({
   const loadMoreSigner = async (page: number) => {
     try {
       setIsFetchingSigner(true);
-      const { data: signerList, error: signerListError } =
-        await supabaseClient.rpc("fetch_dashboard_top_signer", {
-          input_data: {
-            formId: selectedForm,
-            startDate: moment(startDateFilter).format(),
-            endDate: moment(endDateFilter).format(),
-            page: page,
-            limit: DEFAULT_ON_SCROLL_LIMIT,
-          },
-        });
-      if (signerListError) throw signerListError;
+
+      const signerList = await getDashboardTopSigner(supabaseClient, {
+        formId: selectedForm as string,
+        startDate: moment(startDateFilter).format(),
+        endDate: moment(endDateFilter).format(),
+        page: page,
+        limit: DEFAULT_ON_SCROLL_LIMIT,
+      });
       setSignerList((prev) => [...prev, ...signerList]);
       if (signerList.length < DEFAULT_ON_SCROLL_LIMIT) {
         setIsSignerFetchable(false);
