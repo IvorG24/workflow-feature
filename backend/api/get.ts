@@ -7841,3 +7841,34 @@ export const getApplicationInformationIndicator = async (
   if (error) throw error;
   return data as unknown as ApplicationListItemType[];
 };
+
+export const getPositionWithPracticalTestOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number }
+) => {
+  const { teamId, limit } = params;
+  let start = 0;
+  let allData: { position_id: string; position_alias: string }[] = [];
+
+  while (true) {
+    const end = start + limit - 1;
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("position_id, position_alias")
+      .eq("position_team_id", teamId)
+      .eq("position_is_with_trade_test", true)
+      .order("position_alias")
+      .range(start, end);
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    allData = allData.concat(data);
+    start += limit;
+  }
+
+  return allData;
+};
