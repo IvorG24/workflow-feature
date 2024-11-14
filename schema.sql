@@ -15635,7 +15635,8 @@ AS $$
             application_information_additional_details_last_name
           ) AS application_information_full_name,
           application_information_additional_details_contact_number AS application_information_contact_number,
-          application_information_additional_details_email AS application_information_email
+          application_information_additional_details_email AS application_information_email,
+          interview_meeting_url AS meeting_link
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -15664,6 +15665,7 @@ AS $$
         LEFT JOIN team_schema.team_member_table AS etm ON etm.team_member_id = trade_test_evaluator_team_member_id
         LEFT JOIN user_schema.user_table AS eu ON eu.user_id = etm.team_member_user_id
         LEFT JOIN public.request_view AS er ON er.request_id = trade_test_evaluation_request_id
+        LEFT JOIN hr_schema.interview_online_meeting_table ON interview_meeting_interview_id = trade_test_id
         ORDER BY ${sort.sortBy} ${sort.order}, trade_test_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -16334,7 +16336,8 @@ AS $$
             application_information_additional_details_last_name
           ) AS application_information_full_name,
           application_information_additional_details_contact_number AS application_information_contact_number,
-          application_information_additional_details_email AS application_information_email
+          application_information_additional_details_email AS application_information_email,
+          interview_meeting_url AS meeting_link
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -16364,6 +16367,7 @@ AS $$
         LEFT JOIN team_schema.team_member_table AS etm ON etm.team_member_id = technical_interview_evaluator_team_member_id
         LEFT JOIN user_schema.user_table AS eu ON eu.user_id = etm.team_member_user_id
         LEFT JOIN public.request_view AS er ON er.request_id = technical_interview_evaluation_request_id
+        LEFT JOIN hr_schema.interview_online_meeting_table ON interview_meeting_interview_id = technical_interview_id
         ORDER BY ${sort.sortBy} ${sort.order}, technical_interview_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
