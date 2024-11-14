@@ -3,6 +3,7 @@ import {
   resetPassword,
   uploadImage,
 } from "@/backend/api/post";
+import { updateUserUsernameOrSignature } from "@/backend/api/update";
 import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
 import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -134,22 +135,19 @@ const UserSettingsPage = ({ user }: Props) => {
         setUserAvatar(imageUrl);
       }
 
-      const { error } = await supabaseClient.rpc("update_user", {
-        input_data: {
-          userData: {
-            ...trimObjectProperties({
-              ...data,
-              user_phone_number: `${data.user_phone_number}`,
-            }),
-            user_avatar: imageUrl ? imageUrl : data.user_avatar,
-          },
-          previousUsername:
-            data.user_username !== user.user_username
-              ? data.user_username
-              : undefined,
-        },
+      await updateUserUsernameOrSignature(supabaseClient, {
+        userData: {
+          ...trimObjectProperties({
+            ...data,
+            user_phone_number: `${data.user_phone_number}`,
+          }),
+          user_avatar: imageUrl ? imageUrl : data.user_avatar,
+        } as PersonalInfoForm,
+        previousUsername:
+          data.user_username !== user.user_username
+            ? data.user_username
+            : undefined,
       });
-      if (error) throw error;
 
       setUserInitials(
         (data.user_first_name[0] + data.user_last_name[0]).toUpperCase()
@@ -243,16 +241,13 @@ const UserSettingsPage = ({ user }: Props) => {
         }
       );
 
-      const { error } = await supabaseClient.rpc("update_user", {
-        input_data: {
-          userData: {
-            user_id: user.user_id,
-            user_signature_attachment_id: signatureAttachment.attachment_id,
-          },
-          previousSignatureUrl: url,
+      await updateUserUsernameOrSignature(supabaseClient, {
+        userData: {
+          user_id: user.user_id,
+          user_signature_attachment_id: signatureAttachment.attachment_id,
         },
+        previousSignatureUrl: url,
       });
-      if (error) throw error;
 
       setSignatureUrl(url);
       notifications.show({

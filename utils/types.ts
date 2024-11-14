@@ -721,9 +721,7 @@ export type UserWithSignatureType = UserTableRow & {
 
 export type RequestWithResponseType = RequestTableRow & {
   isWithNextStep?: boolean;
-} & {
   request_formsly_id: string;
-} & {
   request_form: {
     form_id: string;
     form_name: string;
@@ -741,7 +739,6 @@ export type RequestWithResponseType = RequestTableRow & {
       })[];
     })[];
   };
-} & {
   request_team_member: {
     team_member_team_id: string;
     team_member_user: {
@@ -753,7 +750,6 @@ export type RequestWithResponseType = RequestTableRow & {
       user_job_title: string;
     };
   };
-} & {
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
     request_signer_status: string;
@@ -774,7 +770,6 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   })[];
-} & {
   request_comment: {
     comment_id: string;
     comment_date_created: string;
@@ -794,7 +789,6 @@ export type RequestWithResponseType = RequestTableRow & {
     };
     comment_attachment: CommentAttachmentWithPublicUrl;
   }[];
-} & {
   request_project: {
     team_project_name: string;
     team_project_id: string;
@@ -1145,16 +1139,6 @@ export type RequestResponseDataType = {
   sectionLabel: string;
   responseData: FieldWithResponseType;
 };
-export type FormslyFormType = {
-  Item: string[];
-  Quotation: string[];
-  "Receiving Inspecting Report": string[];
-};
-
-export type FormslyFormKeyType =
-  | "Item"
-  | "Quotation"
-  | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
   RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
@@ -1163,11 +1147,6 @@ export type RequestSignerListType =
       rejected: number;
     };
   };
-export type TeamGroupForFormType =
-  | "Item"
-  | "Quotation"
-  | "Receiving Inspecting Report"
-  | "Audit";
 
 type SSOTRequestOwnerType = {
   user_first_name: string;
@@ -1210,22 +1189,6 @@ export type DuplicateSectionType = SectionTableRow & {
     field_section_duplicatable_id?: string;
   })[];
 };
-
-export type CanvassType = Record<
-  string,
-  {
-    quotationId: string;
-    price: number;
-    quantity: number;
-  }[]
->;
-export type CanvassLowestPriceType = Record<string, number>;
-export type CanvassAdditionalDetailsType = {
-  quotation_id: string;
-  formsly_id: string;
-  lead_time: number;
-  payment_terms: string;
-}[];
 
 export type RequestProjectSignerStatusType = {
   signer_project_name: string;
@@ -1374,7 +1337,6 @@ export type RequestPageOnLoad = {
     form_is_for_every_member: boolean;
     form_is_member: boolean;
   }[];
-  canvassRequest?: string[];
   projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
