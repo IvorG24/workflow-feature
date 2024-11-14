@@ -1370,25 +1370,25 @@ plv8.subtransaction(function(){
   ssot_data = itemRequestList.map((item) => {
     const responseList = plv8.execute(
       `
-        SELECT 
+        SELECT
           request_response,
           request_response_duplicatable_section_id,
           field_name,
           field_type
         FROM request_schema.request_response_table
         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE 
+        WHERE
           request_response_request_id = '${item.request_id}'
       `
     );
     const itemTeamMember = plv8.execute(
       `
-        SELECT 
-          user_first_name, 
-          user_last_name 
-        FROM team_schema.team_member_table 
-        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id 
-        WHERE 
+        SELECT
+          user_first_name,
+          user_last_name
+        FROM team_schema.team_member_table
+        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id
+        WHERE
           team_member_id = '${item.request_team_member_id}'
       `
     )[0];
@@ -2975,342 +2975,6 @@ AS $$
       }
     }
     item_data = returnData;
-  });
-  return item_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_ro_item_quantity(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let item_data
-  plv8.subtransaction(function(){
-    const {
-      sourcedItemId,
-      itemFieldId,
-      quantityFieldId,
-      itemFieldList,
-      quantityFieldList
-    } = input_data;
-
-    const request = plv8.execute(
-      `
-        SELECT request_response_table.*
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-        INNER JOIN form_schema.form_table ON request_form_id = form_id
-        WHERE
-          request_table.request_status = 'APPROVED'
-          AND request_response = '${sourcedItemId}'
-          AND form_is_formsly_form = true
-          AND form_name = 'Release Order'
-      `
-    );
-
-    let requestResponse = []
-    if(request.length > 0) {
-      const requestIdList = request.map(
-        (response) => `'${response.request_response_request_id}'`
-      ).join(",");
-
-      requestResponse = plv8.execute(
-        `
-          SELECT * FROM request_schema.request_response_table
-          WHERE
-            (
-              request_response_field_id = '${itemFieldId}'
-              OR request_response_field_id = '${quantityFieldId}'
-            )
-            AND request_response_request_id IN (${requestIdList})
-          ORDER BY request_response_duplicatable_section_id ASC
-        `
-      );
-    }
-
-    const requestResponseItem = [];
-    const requestResponseQuantity = [];
-
-    requestResponse.forEach((response) => {
-      if (response.request_response_field_id === itemFieldId) {
-        requestResponseItem.push(response);
-      } else if (response.request_response_field_id === quantityFieldId) {
-        requestResponseQuantity.push(response);
-      }
-    });
-
-    requestResponseItem.push(...itemFieldList);
-    requestResponseQuantity.push(...quantityFieldList);
-
-    const itemList = [];
-    const quantityList = [];
-
-    for (let i = 0; i < requestResponseItem.length; i++) {
-      if (itemList.includes(requestResponseItem[i].request_response)) {
-        const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
-        quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
-      } else {
-        itemList.push(requestResponseItem[i].request_response);
-        quantityList.push(Number(requestResponseQuantity[i].request_response));
-      }
-    }
-
-    const returnData = [];
-    const regExp = /\(([^)]+)\)/;
-    for (let i = 0; i < itemList.length; i++) {
-      const matches = regExp.exec(itemList[i]);
-      if (!matches) continue;
-
-      const quantityMatch = matches[1].match(/(\d+)/);
-      if (!quantityMatch) continue;
-
-      const expectedQuantity = Number(quantityMatch[1]);
-      const unit = matches[1].replace(/\d+/g, "").trim();
-
-      if (quantityList[i] > expectedQuantity) {
-        const quantityMatch = itemList[i].match(/(\d+)/);
-        if (!quantityMatch) return;
-
-        returnData.push(
-          `${JSON.parse(
-          itemList[i].replace(
-            quantityMatch[1],
-            Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-          )
-          )} exceeds quantity limit by ${(
-            quantityList[i] - expectedQuantity
-          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-        );
-      }
-    }
-    item_data = returnData
-  });
-  return item_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_rir_item_quantity(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let item_data
-  plv8.subtransaction(function(){
-    const {
-      quotationId,
-      itemFieldId,
-      quantityFieldId,
-      itemFieldList,
-      quantityFieldList
-    } = input_data;
-
-    const request = plv8.execute(
-      `
-        SELECT request_response_table.*
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-        INNER JOIN form_schema.form_table ON request_form_id = form_id
-        WHERE
-          request_status = 'APPROVED'
-          AND request_response = '${quotationId}'
-          AND form_is_formsly_form = true
-          AND form_name = 'Receiving Inspecting Report'
-      `
-    );
-
-    let requestResponse = [];
-    if(request.length > 0) {
-      const requestIdList = request.map(
-        (response) => `'${response.request_response_request_id}'`
-      ).join(",");
-
-      requestResponse = plv8.execute(
-        `
-          SELECT * FROM request_schema.request_response_table
-          WHERE
-            (
-              request_response_field_id = '${itemFieldId}'
-              OR request_response_field_id = '${quantityFieldId}'
-            )
-            AND request_response_request_id IN (${requestIdList})
-          ORDER BY request_response_duplicatable_section_id ASC
-        `
-      );
-      const requestResponseItem = [];
-      const requestResponseQuantity = [];
-
-      requestResponse.forEach((response) => {
-        if (response.request_response_field_id === itemFieldId) {
-          requestResponseItem.push(response);
-        } else if (response.request_response_field_id === quantityFieldId) {
-          requestResponseQuantity.push(response);
-        }
-      });
-
-      requestResponseItem.push(...itemFieldList);
-      requestResponseQuantity.push(...quantityFieldList);
-
-      const itemList = [];
-      const quantityList = [];
-
-      for (let i = 0; i < requestResponseItem.length; i++) {
-        if (itemList.includes(requestResponseItem[i].request_response)) {
-          const quantityIndex = itemList.indexOf(
-            requestResponseItem[i].request_response
-          );
-          quantityList[quantityIndex] += Number(
-            requestResponseQuantity[i].request_response
-          );
-        } else {
-          itemList.push(requestResponseItem[i].request_response);
-          quantityList.push(Number(requestResponseQuantity[i].request_response));
-        }
-      }
-
-      const returnData = [];
-      const regExp = /\(([^)]+)\)/;
-      for (let i = 0; i < itemList.length; i++) {
-        const matches = regExp.exec(itemList[i]);
-        if (!matches) continue;
-
-        const quantityMatch = matches[1].match(/(\d+)/);
-        if (!quantityMatch) continue;
-
-        const expectedQuantity = Number(quantityMatch[1]);
-        const unit = matches[1].replace(/\d+/g, "").trim();
-
-        if (quantityList[i] > expectedQuantity) {
-        const quantityMatch = itemList[i].match(/(\d+)/);
-          if (!quantityMatch) return;
-          returnData.push(
-              `${JSON.parse(
-              itemList[i].replace(
-                quantityMatch[1],
-                Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-              )
-              )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-              ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-          );
-        }
-      }
-      item_data = returnData
-    }
-  });
-  return item_data;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let item_data
-  plv8.subtransaction(function(){
-    const {
-      releaseOrderItemId,
-      itemFieldId,
-      quantityFieldId,
-      itemFieldList,
-      quantityFieldList
-    } = input_data;
-
-    const request = plv8.execute(
-      `
-        SELECT request_response_table.*
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-        INNER JOIN form_schema.form_table ON request_form_id = form_id
-        WHERE
-          request_response_table.request_response = '${releaseOrderItemId}'
-          AND request_table.request_status = 'APPROVED'
-          AND form_table.form_is_formsly_form = true
-          AND form_table.form_name = 'Transfer Receipt'
-      `
-    );
-
-    let requestResponse = []
-    if(request.length > 0) {
-      const requestIdList = request.map(
-        (response) => `'${response.request_response_request_id}'`
-      ).join(",");
-      requestResponse = plv8.execute(
-        `
-          SELECT *
-          FROM request_schema.request_response_table
-          WHERE
-            (
-              request_response_field_id = '${itemFieldId}'
-              OR request_response_field_id = '${quantityFieldId}'
-            )
-          AND request_response_request_id IN (${requestIdList})
-          ORDER BY request_response_duplicatable_section_id ASC
-        `
-      );
-    }
-
-    const requestResponseItem = [];
-    const requestResponseQuantity = [];
-
-    requestResponse.forEach((response) => {
-      if (response.request_response_field_id === itemFieldId) {
-        requestResponseItem.push(response);
-      } else if (response.request_response_field_id === quantityFieldId) {
-        requestResponseQuantity.push(response);
-      }
-    });
-
-    requestResponseItem.push(...itemFieldList);
-    requestResponseQuantity.push(...quantityFieldList);
-
-    const itemList = [];
-    const quantityList = [];
-
-    for (let i = 0; i < requestResponseItem.length; i++) {
-      if (itemList.includes(requestResponseItem[i].request_response)) {
-        const quantityIndex = itemList.indexOf(
-          requestResponseItem[i].request_response
-        );
-        quantityList[quantityIndex] += Number(
-          requestResponseQuantity[i].request_response
-        );
-      } else {
-        itemList.push(requestResponseItem[i].request_response);
-        quantityList.push(Number(requestResponseQuantity[i].request_response));
-      }
-    }
-
-    const returnData = [];
-    const regExp = /\(([^)]+)\)/;
-    for (let i = 0; i < itemList.length; i++) {
-      const matches = regExp.exec(itemList[i]);
-      if (!matches) continue;
-
-      const quantityMatch = matches[1].match(/(\d+)/);
-      if (!quantityMatch) continue;
-
-      const expectedQuantity = Number(quantityMatch[1]);
-      const unit = matches[1].replace(/\d+/g, "").trim();
-
-      if (quantityList[i] > expectedQuantity) {
-        const quantityMatch = itemList[i].match(/(\d+)/);
-        if (!quantityMatch) return;
-
-        returnData.push(
-          `${JSON.parse(
-          itemList[i].replace(
-              quantityMatch[1],
-              Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-          )
-          )} exceeds quantity limit by ${(
-          quantityList[i] - expectedQuantity
-          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-        );
-      }
-    }
-    item_data = returnData
   });
   return item_data;
 $$ LANGUAGE plv8;
@@ -14988,23 +14652,15 @@ AS $$
           request_id,
           request_formsly_id,
           request_date_created,
-          request_status
-        FROM (
-          SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            request_status,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-            AND request_response = '"${email}"'
-            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-          WHERE
-            request_is_disabled = false
-        ) AS a
+          request_status,
+          request_response AS request_application_information_position
+        FROM public.request_view
+        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
+          AND application_information_additional_details_email = '${email}'
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
         WHERE
-          a.rowNumber = 1
+          request_is_disabled = false
           ${search}
         ORDER BY ${columnAccessor} ${sort}
         LIMIT ${limit}
@@ -15014,21 +14670,13 @@ AS $$
 
     let request_count = plv8.execute(
       `
-        SELECT COUNT(*) FROM (
-          SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-            AND request_response = '"${email}"'
-          WHERE
-            request_is_disabled = false
-        ) AS a
+        SELECT COUNT(*)
+        FROM public.request_view
+        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
+          AND application_information_additional_details_email = '${email}'
         WHERE
-          a.rowNumber = 1
+          request_is_disabled = false
+          ${search}
       `
     )[0];
 
@@ -15274,6 +14922,18 @@ AS $$
     if (userEmail !== emailValue) throw new Error('403')
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
+    const applicantData = plv8.execute(
+      `
+        SELECT *
+        FROM hr_schema.application_information_additional_details_table
+        WHERE
+          application_information_additional_details_request_id = '${requestUUID}'
+        LIMIT 1
+      `
+    )[0];
+
+    if (userEmail !== applicantData.application_information_additional_details_email) throw new Error('403')
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${applicantData.application_information_additional_details_position}' LIMIT 1`)[0];
 
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = undefined;
@@ -15292,24 +14952,14 @@ AS $$
       `
         SELECT *
         FROM public.request_view
+        INNER JOIN hr_schema.request_connection_table ON request_connection_application_information_request_id = request_id
         WHERE
           request_formsly_id = '${requestId}'
+        LIMIT 1
       `
     )[0];
 
-    generalAssessmentData = plv8.execute(
-      `
-        SELECT request_view.*
-        FROM public.request_view
-        INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          AND request_response_field_id IN (
-            'be0e130b-455b-47e0-a804-f90943f7bc07',
-            'c3225996-d3e8-4fb4-87d8-f5ced778adcf'
-          )
-          AND request_response = '"${requestId}"'
-      `
-    );
-    if (!generalAssessmentData.length) {
+    if (!applicationInformationData.request_connection_general_assessment_request_id) {
       returnData = {
         applicationInformationData,
         generalAssessmentData: undefined,
@@ -15323,46 +14973,18 @@ AS $$
       }
       return;
     }
-    generalAssessmentData = generalAssessmentData[0];
 
-    technicalAssessmentData = plv8.execute(
+    generalAssessmentData = plv8.execute(
       `
-        SELECT
-          request_date_created,
-          request_form_id,
-          request_formsly_id,
-          request_formsly_id_prefix,
-          request_formsly_id_serial,
-          request_id,
-          request_is_disabled,
-          request_jira_id,
-          request_jira_link,
-          request_otp_id,
-          request_project_id,
-          request_status,
-          request_status_date_updated,
-          request_team_member_id
-        FROM (
-          SELECT
-            request_view.*,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber
-          FROM public.request_view
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          WHERE
-            (
-              request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
-              AND request_response = '"${requestId}"'
-            )
-            OR
-            (
-              request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
-              AND request_response = '"${generalAssessmentData.request_formsly_id}"'
-            )
-        ) AS a
-        WHERE a.RowNumber = 2
+        SELECT request_view.*
+        FROM public.request_view
+        WHERE request_id = '${applicationInformationData.request_connection_general_assessment_request_id}'
+        LIMIT 1
       `
     );
-    if (!technicalAssessmentData.length) {
+    generalAssessmentData = generalAssessmentData[0];
+
+     if (!applicationInformationData.request_connection_technical_assessment_request_id) {
       returnData = {
         applicationInformationData,
         generalAssessmentData,
@@ -15374,7 +14996,17 @@ AS $$
         backgroundCheckData,
         jobOfferData
       }
+      return;
     }
+
+    technicalAssessmentData = plv8.execute(
+      `
+        SELECT request_view.*
+        FROM public.request_view
+        WHERE request_id = '${applicationInformationData.request_connection_technical_assessment_request_id}'
+        LIMIT 1
+      `
+    );
     technicalAssessmentData = technicalAssessmentData[0];
 
     hrPhoneInterviewData = plv8.execute(`SELECT * FROM hr_schema.hr_phone_interview_table WHERE hr_phone_interview_request_id = '${requestUUID}'`);
@@ -15530,15 +15162,28 @@ AS $$
       hr_phone_interview_status,
       hr_phone_interview_schedule,
       hr_phone_interview_date_created,
-      assigned_hr
+      assigned_hr,
+      applicant_name,
+      applicant_contact_number,
+      applicant_email
     } = input_data;
 
     const offset = (page - 1) * limit;
 
-    let positionCondition = '';
+    let additionalDetailsCondition = [];
     if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+      additionalDetailsCondition.push(`AND application_information_additional_details_position IN (${position.map(position => `'${position}'`).join(", ")})`);
     }
+    if (applicant_name) {
+      additionalDetailsCondition.push(`AND CONCAT_WS(' ', application_information_additional_details_first_name, application_information_additional_details_middle_name, application_information_additional_details_last_name) ILIKE '%${applicant_name}%'`);
+    }
+    if (applicant_contact_number) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_contact_number ILIKE '%${applicant_contact_number}%'`);
+    }
+    if (applicant_email) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_email ILIKE '%${applicant_email}%'`);
+    }
+
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
@@ -15606,10 +15251,9 @@ AS $$
       assignedHRCondition = `AND hr_phone_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
     }
 
-    const parentRequests = plv8.execute(
+    returnData = plv8.execute(
       `
         SELECT
-          request_response AS position,
           applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
           applicationInformationScore.request_score_value AS application_information_score,
@@ -15622,16 +15266,24 @@ AS $$
           hr_phone_interview_status,
           hr_phone_interview_schedule,
           hr_phone_interview_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
+          application_information_additional_details_position AS position,
+          CONCAT_WS(
+            ' ',
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name
+          ) AS application_information_full_name,
+          application_information_additional_details_contact_number AS application_information_contact_number,
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          ${positionCondition}
+        INNER JOIN hr_schema.application_information_additional_details_table ON application_information_additional_details_request_id = applicationInformation.request_id
+          ${additionalDetailsCondition.length ? additionalDetailsCondition.join(" ") : ""}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
           AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
@@ -15654,41 +15306,8 @@ AS $$
         OFFSET ${offset}
       `
     );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('e48e7297-c250-4595-ba61-2945bf559a25', '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce', '9322b870-a0a1-4788-93f0-2895be713f9c', 'b2972102-99b0-4014-8560-caee2fdaf44e', '56438f2d-da70-4fa4-ade6-855f2f29823b')
-        `
-      );
-
-      let firstName = middleName = lastName = contactNumber = email = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-        }
-      });
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email
-      }
-    });
-});
-return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION application_information_next_step(
@@ -15911,15 +15530,28 @@ AS $$
       trade_test_date_created,
       trade_test_status,
       trade_test_schedule,
-      assigned_hr
+      assigned_hr,
+      applicant_name,
+      applicant_contact_number,
+      applicant_email
     } = input_data;
 
     const offset = (page - 1) * limit;
 
-    let positionCondition = '';
+    let additionalDetailsCondition = [];
     if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+      additionalDetailsCondition.push(`AND application_information_additional_details_position IN (${position.map(position => `'${position}'`).join(", ")})`);
     }
+    if (applicant_name) {
+      additionalDetailsCondition.push(`AND CONCAT_WS(' ', application_information_additional_details_first_name, application_information_additional_details_middle_name, application_information_additional_details_last_name) ILIKE '%${applicant_name}%'`);
+    }
+     if (applicant_contact_number) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_contact_number ILIKE '%${applicant_contact_number}%'`);
+    }
+    if (applicant_email) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_email ILIKE '%${applicant_email}%'`);
+    }
+
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
@@ -15986,10 +15618,9 @@ AS $$
       assignedHRCondition = `AND trade_test_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
     }
 
-    const parentRequests = plv8.execute(
+    returnData = plv8.execute(
       `
         SELECT
-          request_response AS position,
           applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
           applicationInformationScore.request_score_value AS application_information_score,
@@ -16006,16 +15637,24 @@ AS $$
           trade_test_evaluator_team_member_id,
           CONCAT(hru.user_first_name, ' ', hru.user_last_name) AS assigned_hr,
           CONCAT(eu.user_first_name, ' ', eu.user_last_name) AS trade_test_assigned_evaluator,
-          er.request_formsly_id AS trade_test_evaluation_request_id
+          er.request_formsly_id AS trade_test_evaluation_request_id,
+          application_information_additional_details_position AS position,
+          CONCAT_WS(
+            ' ',
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name
+          ) AS application_information_full_name,
+          application_information_additional_details_contact_number AS application_information_contact_number,
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          ${positionCondition}
+        INNER JOIN hr_schema.application_information_additional_details_table ON application_information_additional_details_request_id = applicationInformation.request_id
+          ${additionalDetailsCondition.length ? additionalDetailsCondition.join(" ") : ""}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
           AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
@@ -16041,48 +15680,6 @@ AS $$
         OFFSET ${offset}
       `
     );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('e48e7297-c250-4595-ba61-2945bf559a25', '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce', '9322b870-a0a1-4788-93f0-2895be713f9c', 'b2972102-99b0-4014-8560-caee2fdaf44e', '56438f2d-da70-4fa4-ade6-855f2f29823b')
-        `
-      );
-
-      let firstName = middleName = lastName = contactNumber = email = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-        }
-      });
-
-      const meetingLink = plv8.execute(
-        `
-          SELECT * FROM hr_schema.interview_online_meeting_table
-          WHERE interview_meeting_interview_id = '${request.trade_test_id}'
-          LIMIT 1
-        `
-      );
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email,
-        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
-      }
-    });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -16632,15 +16229,28 @@ AS $$
       technical_interview_status,
       technical_interview_schedule,
       technicalInterviewNumber,
-      assigned_hr
+      assigned_hr,
+      applicant_name,
+      applicant_contact_number,
+      applicant_email
     } = input_data;
 
     const offset = (page - 1) * limit;
 
-    let positionCondition = '';
+    let additionalDetailsCondition = [];
     if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+      additionalDetailsCondition.push(`AND application_information_additional_details_position IN (${position.map(position => `'${position}'`).join(", ")})`);
     }
+    if (applicant_name) {
+      additionalDetailsCondition.push(`AND CONCAT_WS(' ', application_information_additional_details_first_name, application_information_additional_details_middle_name, application_information_additional_details_last_name) ILIKE '%${applicant_name}%'`);
+    }
+    if (applicant_contact_number) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_contact_number ILIKE '%${applicant_contact_number}%'`);
+    }
+    if (applicant_email) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_email ILIKE '%${applicant_email}%'`);
+    }
+
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
@@ -16707,10 +16317,9 @@ AS $$
       assignedHRCondition = `AND technical_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
     }
 
-    const parentRequests = plv8.execute(
+    returnData  = plv8.execute(
       `
         SELECT
-          request_response AS position,
           applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
           applicationInformationScore.request_score_value AS application_information_score,
@@ -16727,16 +16336,24 @@ AS $$
           technical_interview_evaluator_team_member_id,
           CONCAT(hru.user_first_name, ' ', hru.user_last_name) AS assigned_hr,
           CONCAT(eu.user_first_name, ' ', eu.user_last_name) AS technical_interview_assigned_evaluator,
-          er.request_formsly_id AS technical_interview_evaluation_request_id
+          er.request_formsly_id AS technical_interview_evaluation_request_id,
+          application_information_additional_details_position AS position,
+          CONCAT_WS(
+            ' ',
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name
+          ) AS application_information_full_name,
+          application_information_additional_details_contact_number AS application_information_contact_number,
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          ${positionCondition}
+        INNER JOIN hr_schema.application_information_additional_details_table ON application_information_additional_details_request_id = applicationInformation.request_id
+          ${additionalDetailsCondition.length ? additionalDetailsCondition.join(" ") : ""}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
           AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
@@ -16763,48 +16380,6 @@ AS $$
         OFFSET ${offset}
       `
     );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('e48e7297-c250-4595-ba61-2945bf559a25', '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce', '9322b870-a0a1-4788-93f0-2895be713f9c', 'b2972102-99b0-4014-8560-caee2fdaf44e', '56438f2d-da70-4fa4-ade6-855f2f29823b')
-        `
-      );
-
-      let firstName = middleName = lastName = contactNumber = email = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-        }
-      });
-
-      const meetingLink = plv8.execute(
-        `
-          SELECT * FROM hr_schema.interview_online_meeting_table
-          WHERE interview_meeting_interview_id = '${request.technical_interview_id}'
-          LIMIT 1
-        `
-      );
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email,
-        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
-      }
-    });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -16951,15 +16526,28 @@ AS $$
       technical_assessment_score,
       background_check_date_created,
       background_check_status,
-      assigned_hr
+      assigned_hr,
+      applicant_name,
+      applicant_contact_number,
+      applicant_email
     } = input_data;
 
     const offset = (page - 1) * limit;
 
-    let positionCondition = '';
+    let additionalDetailsCondition = [];
     if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+      additionalDetailsCondition.push(`AND application_information_additional_details_position IN (${position.map(position => `'${position}'`).join(", ")})`);
     }
+    if (applicant_name) {
+      additionalDetailsCondition.push(`AND CONCAT_WS(' ', application_information_additional_details_first_name, application_information_additional_details_middle_name, application_information_additional_details_last_name) ILIKE '%${applicant_name}%'`);
+    }
+    if (applicant_contact_number) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_contact_number ILIKE '%${applicant_contact_number}%'`);
+    }
+    if (applicant_email) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_email ILIKE '%${applicant_email}%'`);
+    }
+
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
@@ -17017,10 +16605,9 @@ AS $$
       assignedHRCondition = `AND background_check_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
     }
 
-    const parentRequests = plv8.execute(
+    returnData = plv8.execute(
       `
         SELECT
-          request_response AS position,
           applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
           applicationInformationScore.request_score_value AS application_information_score,
@@ -17033,16 +16620,24 @@ AS $$
           background_check_status,
           background_check_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
-          bi.request_formsly_id AS background_check_evaluation_request_id
+          bi.request_formsly_id AS background_check_evaluation_request_id,
+          application_information_additional_details_position AS position,
+          CONCAT_WS(
+            ' ',
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name
+          ) AS application_information_full_name,
+          application_information_additional_details_contact_number AS application_information_contact_number,
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          ${positionCondition}
+        INNER JOIN hr_schema.application_information_additional_details_table ON application_information_additional_details_request_id = applicationInformation.request_id
+          ${additionalDetailsCondition.length ? additionalDetailsCondition.join(" ") : ""}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
           AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
@@ -17065,48 +16660,6 @@ AS $$
         OFFSET ${offset}
       `
     );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN (
-              'e48e7297-c250-4595-ba61-2945bf559a25',
-              '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-              '9322b870-a0a1-4788-93f0-2895be713f9c',
-              'b2972102-99b0-4014-8560-caee2fdaf44e',
-              '56438f2d-da70-4fa4-ade6-855f2f29823b',
-              '72c5db8c-9aef-40fb-b741-2ae69fb517ed'
-            )
-        `
-      );
-
-      let firstName = middleName = lastName = contactNumber = email = nickname = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-          case "72c5db8c-9aef-40fb-b741-2ae69fb517ed": nickname = parsedResponse; break;
-        }
-      });
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email,
-        application_information_nickname: nickname
-      }
-    });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -17206,15 +16759,28 @@ AS $$
       technical_assessment_score,
       job_offer_date_created,
       job_offer_status,
-      assigned_hr
+      assigned_hr,
+      applicant_name,
+      applicant_contact_number,
+      applicant_email
     } = input_data;
 
     const offset = (page - 1) * limit;
 
-    let positionCondition = '';
+    let additionalDetailsCondition = [];
     if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+      additionalDetailsCondition.push(`AND application_information_additional_details_position IN (${position.map(position => `'${position}'`).join(", ")})`);
     }
+    if (applicant_name) {
+      additionalDetailsCondition.push(`AND CONCAT_WS(' ', application_information_additional_details_first_name, application_information_additional_details_middle_name, application_information_additional_details_last_name) ILIKE '%${applicant_name}%'`);
+    }
+    if (applicant_contact_number) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_contact_number ILIKE '%${applicant_contact_number}%'`);
+    }
+    if (applicant_email) {
+      additionalDetailsCondition.push(`AND application_information_additional_details_email ILIKE '%${applicant_email}%'`);
+    }
+
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
@@ -17272,10 +16838,9 @@ AS $$
       assignedHRCondition = `AND job_offer_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
     }
 
-    const parentRequests = plv8.execute(
+    returnData = plv8.execute(
       `
         SELECT
-          request_response AS position,
           applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
           applicationInformationScore.request_score_value AS application_information_score,
@@ -17289,16 +16854,24 @@ AS $$
           job_offer_attachment_id,
           job_offer_project_assignment,
           job_offer_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
+          application_information_additional_details_position AS position,
+          CONCAT_WS(
+            ' ',
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name
+          ) AS application_information_full_name,
+          application_information_additional_details_contact_number AS application_information_contact_number,
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          ${positionCondition}
+        INNER JOIN hr_schema.application_information_additional_details_table ON application_information_additional_details_request_id = applicationInformation.request_id
+          ${additionalDetailsCondition.length ? additionalDetailsCondition.join(" ") : ""}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
           AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
@@ -17326,54 +16899,6 @@ AS $$
         OFFSET ${offset}
       `
     );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('e48e7297-c250-4595-ba61-2945bf559a25', '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce', '9322b870-a0a1-4788-93f0-2895be713f9c', 'b2972102-99b0-4014-8560-caee2fdaf44e', '56438f2d-da70-4fa4-ade6-855f2f29823b')
-        `
-      );
-
-      let attachmentData = [];
-      if (request.job_offer_attachment_id) {
-        attachmentData = plv8.execute(
-          `
-            SELECT *
-            FROM public.attachment_table
-            WHERE
-              attachment_id = '${request.job_offer_attachment_id}'
-            LIMIT 1
-          `
-        );
-      }
-
-
-      let firstName = middleName = lastName = contactNumber = email = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-        }
-      });
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email,
-        job_offer_attachment: attachmentData.length ? attachmentData[0] : null
-      }
-    });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -17545,22 +17070,20 @@ AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
-      requestReferenceId,
       email
     } = input_data;
 
     const requestData = plv8.execute(
       `
-        SELECT request_response_request_id
-        FROM request_schema.request_response_table
+        SELECT application_information_additional_details_request_id
+        FROM hr_schema.application_information_additional_details_table
         WHERE
-          request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
-          AND request_response = '"${email}"'
+          application_information_additional_details_email = '${email}'
       `
     );
     if (!requestData.length) return;
 
-    returnData = requestData.map(request => `'${request.request_response_request_id}'`);
+    returnData = requestData.map(request => `'${request.application_information_additional_details_request_id}'`);
   });
   return returnData;
 $$ LANGUAGE plv8;
@@ -19319,23 +18842,42 @@ CREATE OR REPLACE FUNCTION check_assessment_create_request_page(
 RETURNS BOOLEAN
 SET search_path TO ''
 AS $$
-let returnData;
-plv8.subtransaction(function(){
-  const { fieldAndResponse } = input_data;
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      applicationInformationFormslyId,
+      generalAssessmentFormslyId
+    } = input_data;
 
-  const condition = fieldAndResponse.map(data => `(request_response_field_id = '${data.fieldId}' AND request_response = '"${data.response}"')`).join(" OR ")
-
-  const count = plv8.execute(
-    `
-      SELECT COUNT(*)
-      FROM request_schema.request_response_table
-      WHERE ${condition}
-    `
-  )[0].count
-
-  returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
-});
-return returnData;
+    if (applicationInformationFormslyId) {
+      returnData = plv8.execute(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM public.request_view
+            INNER JOIN hr_schema.request_connection_table ON request_connection_application_information_request_id = request_id
+            WHERE
+              request_formsly_id = '${applicationInformationFormslyId}'
+              AND request_connection_general_assessment_request_id IS NOT NULL
+          )
+        `
+      )[0].exists;
+    } else if (generalAssessmentFormslyId) {
+      returnData = plv8.execute(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM public.request_view
+            INNER JOIN hr_schema.request_connection_table ON request_connection_general_assessment_request_id = request_id
+            WHERE
+              request_formsly_id = '${generalAssessmentFormslyId}'
+              AND request_connection_technical_assessment_request_id IS NOT NULL
+          )
+        `
+      )[0].exists;
+    }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_team_group_member(

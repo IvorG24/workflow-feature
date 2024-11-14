@@ -6,7 +6,7 @@ import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup"
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
-  DEFAULT_NUMBER_SSOT_ROWS,
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
   FETCH_OPTION_LIMIT,
   formatDate,
   FORMSLY_FORM_ORDER,
@@ -5988,7 +5988,7 @@ export const getApplicationInformationSummaryData = async (
   const {
     sort,
     page = 1,
-    limit = DEFAULT_NUMBER_SSOT_ROWS,
+    limit = DEFAULT_NUMBER_HR_SSOT_ROWS,
     responseFilter,
     requestFilter,
   } = updatedParams;
@@ -6235,8 +6235,8 @@ export const getUserApplicationList = async (
 
   const searchCondition =
     search && validate(search)
-      ? `a.request_id = '${search}'`
-      : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      ? `request_id = '${search}'`
+      : `request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
   const { data: requestList, error: requestListError } =
     await supabaseClient.rpc("fetch_user_request_list", {
@@ -6263,39 +6263,7 @@ export const getUserApplicationList = async (
     };
   }
 
-  const requestIdCondition = dataFormat.data
-    .map((request) => `'${request.request_id}'`)
-    .join(", ");
-
-  const { data: requestListData, error: requestListDataError } =
-    await supabaseClient.rpc("fetch_user_request_list_data", {
-      input_data: {
-        requestIdCondition,
-      },
-    });
-  if (requestListDataError) throw requestListDataError;
-  const formattedRequestListData = requestListData as unknown as {
-    request_response_request_id: string;
-    request_response: string;
-  }[];
-
-  const returnData = dataFormat.data.map((request) => {
-    const matchedRequest = formattedRequestListData.find(
-      (thisRequest) =>
-        request.request_id === thisRequest.request_response_request_id
-    );
-
-    return {
-      ...request,
-      request_application_information_position:
-        matchedRequest?.request_response,
-    };
-  });
-
-  return {
-    data: returnData as ApplicationListItemType[],
-    count: dataFormat.count,
-  };
+  return dataFormat;
 };
 
 export const getUserIdInApplicationInformation = async (
@@ -7379,10 +7347,8 @@ export const getEmailResendTimer = async (
 export const checkAssessmentCreateRequestPage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    fieldAndResponse: {
-      fieldId: string;
-      response: string;
-    }[];
+    applicationInformationFormslyId?: string;
+    generalAssessmentFormslyId?: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

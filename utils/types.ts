@@ -2343,6 +2343,9 @@ export type HRSpreadsheetGeneralFilterFormValues = {
     end?: number;
   };
   assigned_hr?: string;
+  applicant_name?: string;
+  applicant_contact_number?: string;
+  applicant_email?: string;
 };
 
 export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
@@ -2419,7 +2422,6 @@ export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
   background_check_date_created: string;
   background_check_status: string;
   background_check_evaluation_request_id: string;
-  application_information_nickname: string;
 };
 
 export type BackgroundCheckFilterFormValues =
