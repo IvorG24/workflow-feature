@@ -1040,7 +1040,6 @@ CREATE TABLE hr_schema.technical_interview_table (
   technical_interview_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
   technical_interview_status_date_updated TIMESTAMPTZ,
   technical_interview_schedule TIMESTAMPTZ,
-  technical_interview_meeting_link VARCHAR(4000),
   technical_interview_number INT DEFAULT 1 NOT NULL,
   technical_interview_evaluation_link VARCHAR(4000),
 
@@ -1056,7 +1055,6 @@ CREATE TABLE hr_schema.trade_test_table (
   trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
   trade_test_status_date_updated TIMESTAMPTZ,
   trade_test_schedule TIMESTAMPTZ,
-  trade_test_meeting_link VARCHAR(4000),
   trade_test_evaluation_link VARCHAR(4000),
 
   trade_test_address_id UUID REFERENCES address_table(address_id),
