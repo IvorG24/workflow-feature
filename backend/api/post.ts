@@ -2636,6 +2636,16 @@ export const sendRequestToJoinTeam = async (
   }
 ) => {
   const { teamId, userId } = params;
+  const { count, error: checkIfUserIsMemberError } = await supabaseClient
+    .schema("team_schema")
+    .from("team_member_table")
+    .select("*", { count: "exact", head: true })
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId);
+  if (checkIfUserIsMemberError) throw checkIfUserIsMemberError;
+
+  if (Number(count)) throw Error("Member already exists");
+
   const { data, error } = await supabaseClient
     .schema("team_schema")
     .from("team_membership_request_table")

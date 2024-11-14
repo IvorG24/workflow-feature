@@ -19211,23 +19211,6 @@ AS $$
     } = input_data;
     
     userIdList.forEach((userId) => {
-
-      const teamMembershipRequestCount = plv8.execute(`
-        SELECT COUNT(*)
-        FROM team_schema.team_membership_request_table
-        WHERE
-          team_membership_request_from_user_id = $1
-          AND team_membership_request_to_team_id = $2
-      `, [userId, teamId])[0].count;
-
-      if (Number(teamMembershipRequestCount) === 0) return;
-
-      plv8.execute(`
-        INSERT INTO team_schema.team_member_table 
-        (team_member_user_id, team_member_team_id, team_member_role) 
-        VALUES ($1, $2, $3)
-      `, [userId, teamId, memberRole]);
-
       plv8.execute(`
         DELETE FROM team_schema.team_membership_request_table
         WHERE
@@ -19235,7 +19218,22 @@ AS $$
           AND team_membership_request_to_team_id = $2
       `, [userId, teamId]);
 
-    })
+      const isUserAlreadyAMember = plv8.execute(`SELECT EXISTS (
+        SELECT 1
+        FROM team_schema.team_member_table
+        WHERE
+          team_member_user_id = $1
+          AND team_member_team_id = $2
+      )`, [userId, teamId])[0].exists;
+
+      if (isUserAlreadyAMember) return;
+
+      plv8.execute(`
+        INSERT INTO team_schema.team_member_table 
+        (team_member_user_id, team_member_team_id, team_member_role) 
+        VALUES ($1, $2, $3)
+      `, [userId, teamId, memberRole]);
+    });
  });
 $$ LANGUAGE plv8;
 
@@ -19416,6 +19414,52 @@ AS $$
     const recruitment_data = plv8.execute(query, params);
 
     data = recruitment_data;
+ });
+ return data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_membership_request_page_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let data;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+
+    const availableTeams = plv8.execute(`
+        SELECT 
+            team_id,
+            team_name,
+            team_logo
+        FROM team_schema.team_table
+        WHERE
+            team_is_disabled = false
+    `);
+
+    const availableTeamsCount = plv8.execute(`
+        SELECT COUNT(*)
+        FROM team_schema.team_table
+        WHERE
+            team_is_disabled = false
+    `)[0].count;
+
+    const userTeamMembershipRequest = plv8.execute(`
+        SELECT *
+        FROM team_schema.team_membership_request_table
+        WHERE
+            team_membership_request_from_user_id = $1
+    `, [userId]);
+
+    data = {
+        teams: availableTeams,
+        teamsCount: Number(availableTeamsCount),
+        teamMembershipRequestList: userTeamMembershipRequest
+    }
+
  });
  return data;
 $$ LANGUAGE plv8;

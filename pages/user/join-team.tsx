@@ -1,19 +1,25 @@
-import { getExistingTeams } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamMembershipRequestPage from "@/components/TeamMembershipRequest/TeamMembershipRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { TeamTableRow } from "@/utils/types";
+import { TeamMembershipRequestTableRow, TeamTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient }) => {
-    try {
-      const teamsData = await getExistingTeams(supabaseClient, {
-        page: 1,
-      });
+type Props = {
+  teams: Pick<TeamTableRow, "team_id" | "team_name" | "team_logo">[];
+  teamsCount: number;
+  teamMembershipRequestList: TeamMembershipRequestTableRow[];
+};
 
+export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
+  async ({ supabaseClient, user }) => {
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        "get_team_membership_request_page_on_load",
+        { input_data: { userId: user.id } }
+      );
+      if (error) throw error;
       return {
-        props: { teams: teamsData.data, teamsCount: teamsData.count },
+        props: data as Props,
       };
     } catch (e) {
       return {
@@ -26,16 +32,11 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-type Props = {
-  teams: Pick<TeamTableRow, "team_id" | "team_name" | "team_logo">[];
-  teamsCount: number;
-};
-
-const Page = ({ teams, teamsCount }: Props) => {
+const Page = (props: Props) => {
   return (
     <>
       <Meta description="Join Team Page" url="/user/join-team" />
-      <TeamMembershipRequestPage teams={teams} teamsCount={teamsCount} />
+      <TeamMembershipRequestPage {...props} />
     </>
   );
 };
