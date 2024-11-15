@@ -4422,7 +4422,7 @@ export const getExistingConnectedRequest = async (
   return data
     ? (data.request as unknown as Pick<
         RequestTableRow,
-        "request_formsly_id_prefix" | "request_formsly_id_serial"
+        "request_formsly_id_prefix" | "request_formsly_id_serial" | "request_id"
       >)
     : null;
 };
