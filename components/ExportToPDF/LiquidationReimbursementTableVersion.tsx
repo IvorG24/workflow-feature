@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/utils/constant";
 import {
   Document,
   Image,
@@ -83,6 +84,7 @@ const styles = StyleSheet.create({
     fontSize: 8,
     borderLeft: "0.5px solid #dee2e6",
     borderRight: "0.5px solid #dee2e6",
+    justifyContent: "center",
   },
   tableHeader: {
     margin: 5,
@@ -97,6 +99,38 @@ const styles = StyleSheet.create({
   },
   fullCell: { width: "30%" },
   minCell: { width: "20%" },
+  badge: {
+    padding: "0px 4px",
+    borderRadius: "8px",
+    fontSize: "7px",
+    fontWeight: "bold",
+    border: "solid 1px green",
+    margin: 5,
+  },
+  approved: {
+    backgroundColor: "#EBFBEE",
+    color: "#40C094",
+  },
+  rejected: {
+    backgroundColor: "#FFF5F5",
+    color: "#FA5252",
+  },
+  pending: {
+    backgroundColor: "#E7F5FF",
+    color: "#228BE6",
+  },
+  flexCenter: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    padding: 3,
+    flexDirection: "row",
+  },
+  icon: {
+    width: "12px",
+    height: "12px",
+  },
 });
 
 type FieldType = {
@@ -127,6 +161,7 @@ const LiquidationReimbursementTableVersion = ({
   requestorDetails,
   requestIDs,
   requestItems,
+  approverDetails,
 }: Props) => {
   // Requestor Name, Project, Jira ticket, Amount, payee, Formlsy ID.
   const requestor = requestorDetails.find(
@@ -156,6 +191,9 @@ const LiquidationReimbursementTableVersion = ({
     const currentAmount = Number(item.value);
     return (sum += currentAmount);
   }, 0);
+  const requestStatus = requestorDetails.find(
+    (detail) => detail.label === "Request status:"
+  );
 
   const payeeTableColumns = [
     "Date",
@@ -163,6 +201,40 @@ const LiquidationReimbursementTableVersion = ({
     "Type of Request",
     "Invoice Amount",
   ];
+
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+        return (
+          <View style={[styles.badge, styles.approved]}>
+            <View style={styles.flexCenter}>
+              <Text>APPROVED</Text>
+              <Image src="/check.png" style={styles.icon} />
+            </View>
+          </View>
+        );
+      case "REJECTED":
+        return (
+          <View style={[styles.badge, styles.rejected]}>
+            <View style={styles.flexCenter}>
+              <Text>REJECTED</Text>
+              <Image src="/cross.png" style={styles.icon} />
+            </View>
+          </View>
+        );
+      case "PENDING":
+        return (
+          <View style={[styles.badge, styles.pending]}>
+            <View style={styles.flexCenter}>
+              <Text>PENDING</Text>
+              <Image src="/dot.png" style={styles.icon} />
+            </View>
+          </View>
+        );
+      default:
+        return <Text style={{ fontWeight: 600 }}></Text>;
+    }
+  };
 
   return (
     <Document>
@@ -207,6 +279,14 @@ const LiquidationReimbursementTableVersion = ({
               <View style={styles.row}>
                 <Text style={{ fontWeight: 600 }}>Jira ID:</Text>
                 <Text>{jiraId?.value || "No Jira ID"}</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <View style={styles.row}>
+                <Text style={{ fontWeight: 600 }}>Status:</Text>
+                <Text>{requestStatus?.value.toUpperCase()}</Text>
               </View>
             </View>
           </View>
@@ -271,6 +351,74 @@ const LiquidationReimbursementTableVersion = ({
             Total amount: {totalAmount.toLocaleString()}
           </Text>
         </View>
+        <Fragment>
+          <View>
+            <View style={styles.divider} />
+            <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+              Approvers
+            </Text>
+            <View style={styles.table}>
+              <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Signature</Text>
+                </View>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Full Name</Text>
+                </View>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Position</Text>
+                </View>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Approval Status</Text>
+                </View>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Date & Time Signed</Text>
+                </View>
+              </View>
+              {approverDetails.map((approver, index) => {
+                return (
+                  <View style={styles.tableRow} key={index} wrap={false}>
+                    <View style={[styles.tableCol, styles.minCell]}>
+                      {approver.signature && (
+                        <Text>
+                          <Image
+                            src={approver.signature}
+                            style={{
+                              height: "50px",
+                              width: "75px",
+                            }}
+                          />
+                        </Text>
+                      )}
+                    </View>
+                    <View style={[styles.tableCol, styles.minCell]}>
+                      <Text style={styles.tableCell}>{approver.name}</Text>
+                    </View>
+                    <View style={[styles.tableCol, styles.minCell]}>
+                      <Text style={styles.tableCell}>
+                        {approver.jobDescription}
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCol, styles.minCell]}>
+                      {formatStatus(approver.status)}
+                    </View>
+                    <View style={[styles.tableCol, styles.minCell]}>
+                      <View style={styles.tableCell}>
+                        {approver.date && (
+                          <Text>
+                            {`${formatDate(
+                              new Date(approver.date)
+                            )} ${formatTime(new Date(approver.date))}`}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </Fragment>
         <Footer />
       </Page>
     </Document>
