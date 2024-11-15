@@ -56,6 +56,7 @@ import {
   HRAnalyticsData,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
+  HRPhoneInterviewTableRow,
   HRProjectType,
   HRRecruitmentData,
   InitialFormType,
@@ -73,6 +74,7 @@ import {
   JobOfferFilterFormValues,
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
+  JobOfferTableRow,
   LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
@@ -89,6 +91,7 @@ import {
   RequestListItemType,
   RequestListOnLoad,
   RequestTableRow,
+  RequestViewRow,
   RequestWithResponseType,
   SCICEmployeeTableRow,
   SectionWithFieldType,
@@ -99,6 +102,7 @@ import {
   SSOTType,
   TeamGroupTableRow,
   TeamMemberOnLoad,
+  TeamMembershipRequestTableRow,
   TeamMemberTableRow,
   TeamMemberType,
   TeamMemberWithUser,
@@ -4422,7 +4426,7 @@ export const getExistingConnectedRequest = async (
   return data
     ? (data.request as unknown as Pick<
         RequestTableRow,
-        "request_formsly_id_prefix" | "request_formsly_id_serial"
+        "request_formsly_id_prefix" | "request_formsly_id_serial" | "request_id"
       >)
     : null;
 };
@@ -6665,4 +6669,97 @@ export const getTeamInvoiceOnload = async (
     expirationDate: string;
     price: number;
   };
+};
+
+export const getCreatePublicRequestPageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    applicationInformationId: string;
+    generalAssessmentId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_public_request_page_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  const formattedData = data as { form: FormWithResponseType };
+
+  return formattedData.form;
+};
+
+export const getTeamMembershipRequestPageOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_team_membership_request_page_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    teams: Pick<TeamTableRow, "team_id" | "team_name" | "team_logo">[];
+    teamsCount: number;
+    teamMembershipRequestList: TeamMembershipRequestTableRow[];
+  };
+};
+
+export const getUserApplicationProgressOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    userEmail: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_application_progress_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    applicationInformationData: RequestViewRow;
+    generalAssessmentData?: RequestViewRow;
+    technicalAssessmentData?: RequestViewRow;
+    hrPhoneInterviewData?: HRPhoneInterviewTableRow;
+    technicalInterview1Data?: TechnicalInterviewTableRow | null;
+    technicalInterview2Data?: TechnicalInterviewTableRow | null;
+    tradeTestData?: TradeTestTableRow | null;
+    backgroundCheckData?: BackgroundCheckTableRow | null;
+    jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
+  };
+};
+
+export const getCurrencyOptionList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("currency_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
+
+export const getSpecialFieldTemplate = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("special_field_template_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
 };

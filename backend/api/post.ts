@@ -114,17 +114,27 @@ export const uploadImage = async (
   };
 
   // compress image
-  const compressedImage: Blob = await new Promise((resolve) => {
-    new Compressor(image, {
-      quality: 0.6,
-      success(result) {
-        resolve(result);
-      },
-      error(error) {
-        throw error;
-      },
+  let compressedImage: Blob;
+
+  if (
+    ["image/jpeg", "image/png", "image/webp"].includes(
+      image.type.toLocaleLowerCase()
+    )
+  ) {
+    compressedImage = await new Promise((resolve, reject) => {
+      new Compressor(image, {
+        quality: 0.6,
+        success(result) {
+          resolve(result);
+        },
+        error(error) {
+          reject(error);
+        },
+      });
     });
-  });
+  } else {
+    compressedImage = image;
+  }
 
   const formattedFileName = `${formatDate(
     new Date(currentDate)
