@@ -211,14 +211,14 @@ const UserSettingsPage = ({ user }: Props) => {
       // compress image
       let compressedImage: File | null = null;
       if (signature.size > 500000) {
-        compressedImage = await new Promise((resolve) => {
+        compressedImage = await new Promise((resolve, reject) => {
           new Compressor(signature, {
             quality: 0.3,
             success(result) {
               resolve(result as File);
             },
             error(error) {
-              throw error;
+              reject(error);
             },
           });
         });
