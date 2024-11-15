@@ -1,4 +1,5 @@
 import {
+  Accordion,
   Badge,
   Box,
   Group,
@@ -6,7 +7,6 @@ import {
   NavLinkProps,
   Stack,
   Text,
-  Accordion,
 } from "@mantine/core";
 import { useRouter } from "next/router";
 import { ReactNode } from "react";
@@ -75,6 +75,9 @@ const NavLinkSection = ({
                       : link.label === "Manage Team"
                       ? router.pathname.includes("settings") &&
                         !router.pathname.includes("jira")
+                      : link.label === "Application List"
+                      ? router.pathname.includes("request") &&
+                        !router.pathname.includes("application")
                       : router.pathname.includes(
                           link.label.split(" ")[0].toLowerCase()
                         )

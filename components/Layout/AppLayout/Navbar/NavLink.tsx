@@ -14,16 +14,16 @@ import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormTableRow, TeamMemberTableRow } from "@/utils/types";
 import {
+  Accordion,
   Box,
   Button,
   Menu,
+  NavLink,
   Portal,
+  ScrollArea,
   Space,
   Stack,
   Text,
-  NavLink,
-  Accordion,
-  ScrollArea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -307,89 +307,95 @@ const ReviewAppNavLink = () => {
                     <ScrollArea.Autosize mah={300}>
                       {/* HR Forms Section */}
                       {hrRequestForm.length > 0 && (
-                        <Accordion.Item value="hr">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Human Resources
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {hrRequestForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Button
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Button>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="hr">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Human Resources
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {hrRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Button
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Button>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
 
                       {/* Finance Forms Section */}
                       {financeRequestForm.length > 0 && (
-                        <Accordion.Item value="finance">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Finance
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {financeRequestForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Menu.Item
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Menu.Item>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="finance">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Finance
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {financeRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
 
                       {/* Operation Forms Section */}
                       {operationRequestForm.length > 0 && (
-                        <Accordion.Item value="operations">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Operations
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {operationRequestForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Menu.Item
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Menu.Item>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="operations">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Operations
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {operationRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
                     </ScrollArea.Autosize>
                   </Menu.Dropdown>
@@ -490,89 +496,95 @@ const ReviewAppNavLink = () => {
                     <ScrollArea.Autosize mah={300}>
                       {/* HR Forms Section */}
                       {hrManageForm.length > 0 && (
-                        <Accordion.Item value="hr">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Human Resources
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {hrManageForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Menu.Item
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Menu.Item>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="hr">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Human Resources
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {hrManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
 
                       {/* Finance Forms Section */}
                       {financeManageForm.length > 0 && (
-                        <Accordion.Item value="finance">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Finance
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {financeManageForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Menu.Item
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Menu.Item>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="finance">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Finance
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {financeManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
 
                       {/* Operation Forms Section */}
                       {operationManageForm.length > 0 && (
-                        <Accordion.Item value="operations">
-                          <Accordion.Control>
-                            <Text size="sm" weight={400} color="black">
-                              Operations
-                            </Text>
-                          </Accordion.Control>
-                          <Accordion.Panel>
-                            {operationManageForm
-                              .sort((a, b) =>
-                                a.form_name.localeCompare(b.form_name)
-                              )
-                              .map((form) => (
-                                <Menu.Item
-                                  key={form.form_id}
-                                  onClick={async () =>
-                                    await router.push(
-                                      `/${activeTeamNameToUrl}/forms/${form.form_id}`
-                                    )
-                                  }
-                                >
-                                  {form.form_name}
-                                </Menu.Item>
-                              ))}
-                          </Accordion.Panel>
-                        </Accordion.Item>
+                        <Accordion variant="contained">
+                          <Accordion.Item value="operations">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Operations
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {operationManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
                       )}
                     </ScrollArea.Autosize>
                   </Menu.Dropdown>
