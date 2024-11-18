@@ -1138,7 +1138,7 @@ CREATE TABLE hr_schema.hr_project_table (
 
 CREATE TABLE hr_schema.hr_preferred_position_table (
   hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  
+
   hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
   hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id)
 );
@@ -19707,15 +19707,14 @@ AS $$
     `);
     };
 
-   positionData[memberId].forEach((position) => {
+   positionData.forEach((position) => {
       plv8.execute(`
         INSERT INTO hr_schema.hr_preferred_position_table (
           hr_preferred_position_group_member_id,
-          hr_preferred_position
+          hr_preferred_position_position_id
         ) VALUES ('${memberId}', '${position}')
       `);
     });
-
   })
 $$ LANGUAGE plv8;
 
@@ -19726,10 +19725,9 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   let returnData = {
-    positionAlias: [],
+    positionData: [],
     positionId: []
   };
-
   plv8.subtransaction(function() {
     const { memberId } = input_data;
 
@@ -19742,7 +19740,7 @@ AS $$
     `, [memberId]);
 
     hrPreferredPositionData.forEach(row => {
-      returnData.positionAlias.push({
+      returnData.positionData.push({
         position_id:row.position_id,
         position_alias:row.position_alias
         });
