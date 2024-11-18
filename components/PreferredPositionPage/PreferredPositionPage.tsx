@@ -104,7 +104,10 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
 
         setPositionOptions(positionOptions);
       } catch (e) {
-        console.log(e);
+        notifications.show({
+          message: "Something went wrong",
+          color: "red",
+        });
       }
     };
 

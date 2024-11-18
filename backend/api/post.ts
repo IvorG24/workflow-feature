@@ -2727,8 +2727,6 @@ export const insertUpdateHrPreferredPosition = async (
     memberId: string;
   }
 ) => {
-  console.log(params);
-
   const { data, error } = await supabaseClient.rpc(
     "insert_update_hr_preferred_position",
     {
