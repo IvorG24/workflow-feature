@@ -6763,3 +6763,23 @@ export const getSpecialFieldTemplate = async (
 
   return data;
 };
+
+export const getCurrentRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { requestId } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("request_schema")
+    .from("request_table")
+    .select("request_status")
+    .eq("request_id", requestId)
+    .single();
+  if (error) throw error;
+  if (!data.request_status) throw new Error("Invalid request ID");
+
+  return data.request_status;
+};

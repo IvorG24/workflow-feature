@@ -1,4 +1,7 @@
-import { checkIfAllPrimaryApprovedTheRequest } from "@/backend/api/get";
+import {
+  checkIfAllPrimaryApprovedTheRequest,
+  getCurrentRequestStatus,
+} from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { JiraTicketData } from "@/utils/types";
@@ -28,6 +31,7 @@ type Props = {
   isUserRequester?: boolean;
   onCreateJiraTicket?: () => Promise<JiraTicketData>;
   requestSignerId?: string;
+  status: string;
 };
 
 const RequestActionSection = ({
@@ -44,6 +48,7 @@ const RequestActionSection = ({
   isUserRequester,
   onCreateJiraTicket,
   requestSignerId,
+  status,
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
@@ -55,6 +60,7 @@ const RequestActionSection = ({
   ) => {
     try {
       setIsLoading(true);
+
       // check if all primary approver approves the request
       if (!requestSignerId) return;
 
@@ -92,40 +98,24 @@ const RequestActionSection = ({
     }
   };
 
-  const handleAction = (action: string, color: string) => {
-    if (isItemForm && action === "approve" && isUserPrimarySigner) {
-      modals.open({
-        modalId: "approveRf",
-        title: <Text>Please confirm your action.</Text>,
-        children: (
-          <>
-            <Text size={14}>
-              Are you sure you want to {action} this request?
-            </Text>
-            {onCreateJiraTicket ? (
-              <Flex mt="md" align="center" justify="flex-end" gap="sm">
-                <Button
-                  variant="default"
-                  color="dimmed"
-                  onClick={() => {
-                    modals.close("approveRf");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  color="green"
-                  onClick={async () => {
-                    modals.close("approveRf");
-                    handleApproveItemRequest(onCreateJiraTicket);
-                  }}
-                >
-                  Approve
-                </Button>
-              </Flex>
-            ) : (
-              <>
+  const handleAction = async (action: string, color: string) => {
+    try {
+      const isStatusUpdated = await checkRequestStatus();
+      if (!isStatusUpdated) {
+        router.reload();
+        return;
+      }
+
+      if (isItemForm && action === "approve" && isUserPrimarySigner) {
+        modals.open({
+          modalId: "approveRf",
+          title: <Text>Please confirm your action.</Text>,
+          children: (
+            <>
+              <Text size={14}>
+                Are you sure you want to {action} this request?
+              </Text>
+              {onCreateJiraTicket ? (
                 <Flex mt="md" align="center" justify="flex-end" gap="sm">
                   <Button
                     variant="default"
@@ -141,115 +131,81 @@ const RequestActionSection = ({
                     color="green"
                     onClick={async () => {
                       modals.close("approveRf");
-                      handleUpdateRequest("APPROVED");
+                      handleApproveItemRequest(onCreateJiraTicket);
                     }}
                   >
                     Approve
                   </Button>
                 </Flex>
-              </>
+              ) : (
+                <>
+                  <Flex mt="md" align="center" justify="flex-end" gap="sm">
+                    <Button
+                      variant="default"
+                      color="dimmed"
+                      onClick={() => {
+                        modals.close("approveRf");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      color="green"
+                      onClick={async () => {
+                        modals.close("approveRf");
+                        handleUpdateRequest("APPROVED");
+                      }}
+                    >
+                      Approve
+                    </Button>
+                  </Flex>
+                </>
+              )}
+            </>
+          ),
+          centered: true,
+        });
+      } else {
+        openConfirmModal({
+          title: <Text>Please confirm your action.</Text>,
+          children: (
+            <Text size={14}>
+              Are you sure you want to {action} this request?
+            </Text>
+          ),
+          labels: { confirm: "Confirm", cancel: "Cancel" },
+          centered: true,
+          confirmProps: { color },
 
-              // <form
-              //   onSubmit={handleSubmit(async (data) => {
-              //     const checkJiraIdIfValid = await isValidJiraId(data.jiraId);
-              //     if (checkJiraIdIfValid) {
-              //       handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
-              //       modals.close("approveRf");
-              //     } else {
-              //       notifications.show({
-              //         message: "Jira ID is invalid or does not exist.",
-              //         color: "red",
-              //       });
-              //       return "Jira ID is invalid.";
-              //     }
-              //   })}
-              // >
-              //   <Stack mt="xl" spacing="xs">
-              //     <TextInput
-              //       icon={<IconId size={16} />}
-              //       placeholder="Jira ID"
-              //       data-autofocus
-              //       {...register("jiraId", {
-              //         validate: {
-              //           required: (value) => {
-              //             if (!value) {
-              //               notifications.show({
-              //                 message: "Jira ID is required.",
-              //                 color: "red",
-              //               });
-              //               return "Jira ID is required.";
-              //             } else {
-              //               return true;
-              //             }
-              //           },
-              //           checkIfUnique: async (value) => {
-              //             if (
-              //               await checkIfJiraIDIsUnique(supabaseClient, {
-              //                 value: value.toUpperCase(),
-              //               })
-              //             ) {
-              //               notifications.show({
-              //                 message:
-              //                   "Jira ID is already used by another request.",
-              //                 color: "red",
-              //               });
-              //               return "Jira ID is already used by another request.";
-              //             } else {
-              //               return true;
-              //             }
-              //           },
-              //         },
-              //       })}
-              //       error={errors.jiraId?.message}
-              //     />
-              //   </Stack>
-
-              //   <Flex mt="md" align="center" justify="flex-end" gap="sm">
-              //     <Button
-              //       variant="default"
-              //       color="dimmed"
-              //       onClick={() => {
-              //         resetValue();
-              //         modals.close("approveRf");
-              //       }}
-              //     >
-              //       Cancel
-              //     </Button>
-              //     <Button type="submit" color="green">
-              //       Approve
-              //     </Button>
-              //   </Flex>
-              // </form>
-            )}
-          </>
-        ),
-        centered: true,
-      });
-    } else {
-      openConfirmModal({
-        title: <Text>Please confirm your action.</Text>,
-        children: (
-          <Text size={14}>Are you sure you want to {action} this request?</Text>
-        ),
-        labels: { confirm: "Confirm", cancel: "Cancel" },
-        centered: true,
-        confirmProps: { color },
-
-        onConfirm: () => {
-          switch (action) {
-            case "approve":
-              handleUpdateRequest("APPROVED");
-              break;
-            case "reject":
-              handleUpdateRequest("REJECTED");
-              break;
-            case "cancel":
-              handleCancelRequest();
-              break;
-          }
-        },
+          onConfirm: () => {
+            switch (action) {
+              case "approve":
+                handleUpdateRequest("APPROVED");
+                break;
+              case "reject":
+                handleUpdateRequest("REJECTED");
+                break;
+              case "cancel":
+                handleCancelRequest();
+                break;
+            }
+          },
+        });
+      }
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
+  };
+
+  const checkRequestStatus = async () => {
+    const currentStatus = await getCurrentRequestStatus(supabaseClient, {
+      requestId,
+    });
+    return status === currentStatus;
   };
 
   return (

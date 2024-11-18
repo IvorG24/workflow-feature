@@ -312,6 +312,7 @@ const RequestForPaymentv1RequestPage = ({ request }: Props) => {
             requestId={request.request_id}
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
+            status={request.request_status}
           />
         )}
 

@@ -530,6 +530,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             requestId={request.request_id}
             onCreateJiraTicket={onCreateJiraTicket}
             requestSignerId={isUserSigner?.request_signer_id}
+            status={request.request_status}
           />
         )}
 
