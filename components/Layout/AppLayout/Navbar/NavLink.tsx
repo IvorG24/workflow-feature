@@ -25,6 +25,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { useMediaQuery } from '@mantine/hooks';
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -95,6 +96,7 @@ const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
   const [openedFormAccordion, setOpenedFormAccordion] = useState<string[]>([]);
@@ -227,10 +229,10 @@ const ReviewAppNavLink = () => {
             </Accordion.Control>
             <Accordion.Panel>
               <Menu
-                trigger="hover"
+                trigger={isMobile ? 'click' : 'hover'}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position="right"
+                position={isMobile ? 'bottom-end' : 'right'}
               >
                 <Stack
                   spacing={0}
@@ -425,11 +427,11 @@ const ReviewAppNavLink = () => {
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Menu
-                trigger="hover"
+            <Menu
+                trigger={isMobile ? 'click' : 'hover'}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position="right"
+                position={isMobile ? 'bottom-end' : 'right'}
               >
                 <Stack
                   spacing={0}
@@ -609,11 +611,11 @@ const ReviewAppNavLink = () => {
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Menu
-                trigger="hover"
+            <Menu
+                trigger={isMobile ? 'click' : 'hover'}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position="right"
+                position={isMobile ? 'bottom-end' : 'right'}
               >
                 <Stack
                   spacing={0}
