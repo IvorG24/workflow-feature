@@ -144,10 +144,11 @@ const ReviewAppNavLink = () => {
   ];
 
   const financeFormNames = [
-    "Liquidation",
+    "Liquidation Reimbursement",
     "Petty Cash Voucher",
     "Petty Cash Voucher Balance",
     "Request for Payment Code",
+    "Bill of Quantity",
   ];
 
   const hrManageForm = forms.filter((form) =>
