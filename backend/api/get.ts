@@ -628,10 +628,10 @@ export const getItemList = async (
 
 export const getAllItems = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; search?: string }
+  params: { teamId: string }
 ) => {
-  const { teamId, search } = params;
-  let query = supabaseClient
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
     .schema("item_schema")
     .from("item_table")
     .select("item_general_name")
@@ -639,12 +639,6 @@ export const getAllItems = async (
     .eq("item_is_disabled", false)
     .eq("item_is_available", true)
     .order("item_general_name", { ascending: true });
-
-  if (search) {
-    query = query.ilike("item_general_name", `${search}%`);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
 
   return data;
@@ -1220,8 +1214,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };
@@ -6582,14 +6576,38 @@ export const analyzeItem = async (
     limit: number;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc("analyze_item", {
-    input_data: params,
-  });
-  if (error) throw error;
+  const { limit, page, itemName } = params;
 
-  return data as {
-    data: ResultType[];
-    count: number;
+  const itemList: ResultType[] = [];
+  for (let i = 0; i < limit / 5; i++) {
+    const { data, error } = await supabaseClient.rpc("analyze_item", {
+      input_data: {
+        ...params,
+        limit: 5,
+        page: page + i,
+      },
+    });
+    if (error) throw error;
+    itemList.push(...(data as ResultType[]));
+  }
+
+  const {
+    data,
+    count,
+    error: countError,
+  } = await supabaseClient
+    .schema("request_schema")
+    .from("request_response_table")
+    .select("*, request_table!inner(*)", { count: "exact" })
+    .eq("request_table.request_is_disabled", false)
+    .eq("request_response_field_id", "b2c899e8-4ac7-4019-819e-d6ebcae71f41")
+    .eq("request_response", `"${itemName}"`);
+
+  if (countError) throw countError;
+  console.log(data, count, countError);
+  return {
+    data: itemList,
+    count,
   };
 };
 
