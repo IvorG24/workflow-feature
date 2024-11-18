@@ -2653,3 +2653,13 @@ export type DashboardRequestorAndSignerType = {
   team_member_id: string;
   request: { label: string; value: number }[];
 };
+
+export type PreferredPositionType = {
+  group_member_id: string;
+  group_member_name: string;
+  has_preferred_position: boolean;
+};
+
+export type PreferredPositionFormType = {
+  selectedPositions: { [key: string]: string[] };
+};

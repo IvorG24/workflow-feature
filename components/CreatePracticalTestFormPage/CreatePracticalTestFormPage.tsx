@@ -1,6 +1,6 @@
 import {
   checkPracticalTestLabel,
-  getPositionWithPracticalTestOptions,
+  getPositionTypeOptions,
 } from "@/backend/api/get";
 import { createPracticalTestForm } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -77,22 +77,11 @@ const CreatePracticalTestFormPage = ({ practicalTestData }: Props) => {
       try {
         if (!activeTeam.team_id) return;
         setIsLoading(true);
-        const positionOptions = await getPositionWithPracticalTestOptions(
-          supabaseClient,
-          {
-            teamId: activeTeam.team_id,
-            limit: FETCH_OPTION_LIMIT,
-          }
-        );
-
-        setPositionOptions(
-          positionOptions.map((position) => {
-            return {
-              label: position.position_alias,
-              value: position.position_id,
-            };
-          })
-        );
+        const positionOptions = await getPositionTypeOptions(supabaseClient, {
+          teamId: activeTeam.team_id,
+          limit: FETCH_OPTION_LIMIT,
+        });
+        setPositionOptions(positionOptions);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

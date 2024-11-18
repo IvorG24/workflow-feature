@@ -399,7 +399,7 @@ CREATE TABLE form_schema.requester_primary_signer_table (
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
-  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))), 
+  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))),
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
@@ -1136,6 +1136,13 @@ CREATE TABLE hr_schema.hr_project_table (
   hr_project_address_id UUID REFERENCES public.address_table(address_id) NOT NULL
 );
 
+CREATE TABLE hr_schema.hr_preferred_position_table (
+  hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+
+  hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
+  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id)
+);
+
 CREATE TABLE lookup_schema.degree_table (
   degree_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   degree_type VARCHAR(4000) NOT NULL,
@@ -1266,7 +1273,7 @@ CREATE TABLE hr_schema.application_information_additional_details_table (
   application_information_additional_details_last_name VARCHAR(4000) NOT NULL,
   application_information_additional_details_contact_number VARCHAR(4000) NOT NULL,
   application_information_additional_details_email VARCHAR(4000) NOT NULL,
-  
+
   application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
 );
 
@@ -1361,25 +1368,25 @@ plv8.subtransaction(function(){
   ssot_data = itemRequestList.map((item) => {
     const responseList = plv8.execute(
       `
-        SELECT 
+        SELECT
           request_response,
           request_response_duplicatable_section_id,
           field_name,
           field_type
         FROM request_schema.request_response_table
         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE 
+        WHERE
           request_response_request_id = '${item.request_id}'
       `
     );
     const itemTeamMember = plv8.execute(
       `
-        SELECT 
-          user_first_name, 
-          user_last_name 
-        FROM team_schema.team_member_table 
-        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id 
-        WHERE 
+        SELECT
+          user_first_name,
+          user_last_name
+        FROM team_schema.team_member_table
+        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id
+        WHERE
           team_member_id = '${item.request_team_member_id}'
       `
     )[0];
@@ -1501,71 +1508,82 @@ AS $$
         project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
       }
 
-      if (formName ==='Services') {
+      if(formName ==='Quotation') {
+        endId = `Q`;
+      } else if(formName ==='Services') {
         endId = `S`;
-      } else if (formName ==='Other Expenses') {
+      } else if(formName ==='Other Expenses') {
         endId = `OE`;
-      } else if (formName ==='PED Equipment') {
+      } else if(formName ==='PED Equipment') {
         endId = `PE`;
-      } else if (formName ==='PED Part') {
+      } else if(formName ==='PED Part') {
         endId = `PP`;
-      } else if (formName ==='PED Item') {
+      } else if(formName ==='PED Item') {
         endId = `PC`;
-      } else if (formName === 'IT Asset') {
+      } else if(formName ==='Sourced Item') {
+        endId = `SI`;
+      } else if(formName ==='Receiving Inspecting Report') {
+        endId = `RIR`;
+      } else if(formName ==='Release Order') {
+        endId = `RO`;
+      } else if(formName ==='Transfer Receipt') {
+        endId = `TR`;
+      } else if(formName === 'IT Asset') {
         endId = `ITA`;
-      } else if (formName === 'Liquidation Reimbursement') {
+      } else if(formName === 'Liquidation Reimbursement') {
         endId = `LR`;
-      } else if (formName === 'Bill of Quantity') {
+      } else if(formName === 'Bill of Quantity') {
         endId = `BOQ`;
-      } else if (formName === 'Personnel Transfer Requisition') {
+      } else if(formName === 'Personnel Transfer Requisition') {
         endId = `PTRF`;
-      } else if (formName === 'Petty Cash Voucher') {
+      } else if(formName === 'Petty Cash Voucher') {
         endId = `PCV`;
-      } else if (formName === 'Equipment Service Report') {
+      } else if(formName === 'Equipment Service Report') {
         endId = `ESR`;
-      } else if (formName === 'Request For Payment Code') {
+      } else if(formName === 'Request For Payment Code') {
         endId = `RFPC`;
-      } else if (formName.includes('Request For Payment')) {
+      } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
-      } else if (formName.includes('Petty Cash Voucher Balance')) {
+      } else if(formName.includes('Petty Cash Voucher Balance')) {
         endId = `PCVB`;
-      } else if (formName === 'Application Information') {
+      } else if(formName === 'Application Information') {
         endId = `AI`;
-      } else if (formName === 'General Assessment') {
+      } else if(formName === 'General Assessment') {
         endId = `GA`;
-      } else if (formName === 'Technical Assessment') {
+      } else if(formName === 'Technical Assessment') {
         endId = `TA`;
-      } else if (formName === 'Evaluation Result') {
+      } else if(formName === 'Evaluation Result') {
         endId = `ER`;
-      } else if (formName === 'Background Investigation') {
+      } else if(formName === 'Background Investigation') {
         endId = `BI`;
-      } else if (formName === 'Practical Test') {
+      } else if(formName === 'Practical Test') {
         endId = `PT`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
 
     if (!projectId && !endId) {
-      request_data = plv8.execute(
-        `
-          INSERT INTO request_schema.request_table
-          (
-            request_id,
-            request_form_id
-            ${teamMemberId ? `,request_team_member_id` : ""}
-            ${status ? `,request_status` : ""}
-            ${status ? `,request_status_date_updated` : ""}
-          )
-          VALUES
-          (
-            '${requestId}',
-            '${formId}'
-            ${teamMemberId ? `,'${teamMemberId}'` : ""}
-            ${status ? `,'${status}'` : ""}
-            ${status ? `,NOW()` : ""}
-          )
-          RETURNING *
-        `)[0];
+        request_data = plv8.execute(
+            `
+            INSERT INTO request_schema.request_table
+            (
+                request_id,
+                request_form_id
+                ${teamMemberId ? `,request_team_member_id` : ""}
+                ${status ? `,request_status` : ""}
+                ${status ? `,request_status_date_updated` : ""}
+            )
+            VALUES
+            (
+                '${requestId}',
+                '${formId}'
+                ${teamMemberId ? `,'${teamMemberId}'` : ""}
+                ${status ? `,'${status}'` : ""}
+                ${status ? `,NOW()` : ""}
+            )
+            RETURNING *
+            `
+        )[0];
     } else {
       request_data = plv8.execute(
         `
@@ -1598,6 +1616,13 @@ AS $$
 
     if (!status) {
       if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
+
+
+        const position = plv8.execute(`SELECT REPLACE(request_response, '"', '') AS response
+            FROM request_schema.request_response_table
+            WHERE request_response_request_id = '${requestId}'
+            AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].response;
+
         const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth();
@@ -1606,9 +1631,9 @@ AS $$
 
         const weekRanges = [
           getRange(1, 7),
-          getRange(8, 14),
-          getRange(15, 21),
-          getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
+          getRange(7, 14),
+          getRange(14, 21),
+          getRange(21, new Date(currentYear, currentMonth + 1, 0).getDate())
         ];
 
         let weekStart, weekEnd;
@@ -1625,46 +1650,113 @@ AS $$
           weekEnd = weekRanges[0][1];
         }
 
-        const teamMemberIdList = plv8.execute(
-          `
-            SELECT team_member_id
-            FROM team_schema.team_group_member_table
-            WHERE
-              team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-          `
-        ).map(teamMember => `'${teamMember.team_member_id}'`);
+        const teamMemberData = plv8.execute(
+        `
+            SELECT
+            tg.team_member_id,
+            pt.position_alias,
+            CASE
+                WHEN pt.position_alias = $1 THEN true
+                ELSE false
+            END AS is_preferred
+            FROM team_schema.team_group_member_table tg
+            LEFT JOIN hr_schema.hr_preferred_position_table p
+            ON p.hr_preferred_position_group_member_id = tg.team_group_member_id
+            LEFT JOIN lookup_schema.position_table pt
+            ON pt.position_id = p.hr_preferred_position_position_id
+            WHERE tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+        `,
+        [position]
+        );
 
-        const signerIdList = plv8.execute(
-          `
-            SELECT signer_id
+        if (!teamMemberData.length) {
+        throw new Error("No team members found.");
+        }
+
+        const signerIds = plv8.execute(
+        `
+            SELECT
+            signer_id,
+            signer_team_member_id
             FROM form_schema.signer_table
             WHERE
-              signer_team_member_id IN (${teamMemberIdList})
-              AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-          `
-        ).map(signer => `'${signer.signer_id}'`);
+            signer_team_member_id IN (${teamMemberData.map(member => `'${member.team_member_id}'`).join(", ")})
+            AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+        `
+        );
 
-        const selectedSigner = plv8.execute(
-          `
+        if (!signerIds.length) {
+        throw new Error("No signers found.");
+        }
+        const combinedSignerData = signerIds.map(signer => {
+          const teamMember = teamMemberData.find(
+            member => member.team_member_id === signer.signer_team_member_id
+          );
+          return {
+            signer_id: signer.signer_id,
+            is_preferred: teamMember.is_preferred
+          };
+        });
+
+        const preferredSignerIds = combinedSignerData
+            .filter(signer => signer.is_preferred)
+            .map(signer => `'${signer.signer_id}'`);
+
+        const isPreferredCondition = preferredSignerIds.length > 0
+        ? `signer_id IN (${preferredSignerIds.join(", ")})`
+        : `false`;
+
+        const selectSignerDynamically = (signers) => {
+          if (!signers || signers.length === 0) return null;
+            const signerLoadData = plv8.execute(`
+              WITH preferred_signers AS (
+              SELECT
+                signer_id,
+                COUNT(request_signer_id) AS total_count,
+                COUNT(CASE WHEN request_date_created::Date BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}' THEN request_signer_id END) AS weekly_count,
+                CASE WHEN ${isPreferredCondition} THEN true ELSE false
+                END AS is_preferred
+              FROM form_schema.signer_table
+              LEFT JOIN request_schema.request_signer_table
+              ON request_signer_signer_id = signer_id
+              LEFT JOIN request_schema.request_table
+              ON request_id = request_signer_request_id
+              WHERE signer_id IN (${signers.map(s => `'${s.signer_id}'`).join(", ")})
+              GROUP BY signer_id),
+              preferred_balance AS (
+              SELECT
+              MIN(weekly_count) AS min_weekly_count,
+              MAX(weekly_count) AS max_weekly_count
+              FROM preferred_signers),
+              priority_signers AS (
+                SELECT *,
+                  CASE
+                  WHEN min_weekly_count = max_weekly_count THEN weekly_count
+                  ELSE is_preferred::INT * 1000 + weekly_count
+                    END AS sorting_priority
+                FROM preferred_signers
+                CROSS JOIN preferred_balance)
             SELECT
               signer_id,
-              COUNT(request_signer_id) AS total_count,
-              COUNT(
-                CASE
-                  WHEN request_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-                    THEN request_signer_id
-                END
-              ) AS weekly_count
-            FROM form_schema.signer_table
-            LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
-            LEFT JOIN request_schema.request_table ON request_id = request_signer_request_id
-            WHERE
-              signer_id IN (${signerIdList})
-            GROUP BY signer_id
-            ORDER BY weekly_count, total_count
-            LIMIT 1
-          `
-        )[0].signer_id;
+              weekly_count,
+              total_count,
+              is_preferred
+            FROM priority_signers
+            ORDER BY
+              weekly_count ASC,
+              is_preferred DESC,
+              total_count ASC
+              LIMIT 1;
+            `);
+
+          return signerLoadData.length > 0 ? signerLoadData[0].signer_id : null;
+        };
+
+        const selectedSigner = selectSignerDynamically(combinedSignerData);
+
+        if (!selectedSigner) {
+        throw new Error("No available signers found.");
+        }
 
         plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ('${selectedSigner}', '${requestId}')`);
 
@@ -1740,7 +1832,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.trade_test_table
-          SET trade_test_evaluation_request_id = '${requestId}' 
+          SET trade_test_evaluation_request_id = '${requestId}'
           WHERE
             trade_test_id = '${tradeTestParams.tradeTestId}'
         `
@@ -1776,6 +1868,7 @@ AS $$
  });
  return request_data;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION edit_request(
   input_data JSON
@@ -2087,18 +2180,18 @@ AS $$
 
     const itemDivisionDescription = plv8.execute(
       `
-        INSERT INTO item_schema.item_level_three_description_table 
+        INSERT INTO item_schema.item_level_three_description_table
         (
-          item_level_three_description_item_id, 
+          item_level_three_description_item_id,
           item_level_three_description,
           item_level_three_description_csi_code_section
-        ) 
-        VALUES 
+        )
+        VALUES
         (
-          '${item_result.item_id}', 
+          '${item_result.item_id}',
           '${item_level_three_description}',
           '${csiCodeSection}'
-        ) 
+        )
         RETURNING *
       `
     )[0].item_level_three_description;
@@ -2307,15 +2400,15 @@ AS $$
 
     const itemLevelThreeDescription = plv8.execute(
       `
-        INSERT INTO item_schema.item_level_three_description_table 
+        INSERT INTO item_schema.item_level_three_description_table
         (
-          item_level_three_description_item_id, 
+          item_level_three_description_item_id,
           item_level_three_description,
           item_level_three_description_csi_code_section
-        ) 
-        VALUES 
+        )
+        VALUES
         (
-          '${item_id}', 
+          '${item_id}',
           '${item_level_three_description}',
           '${csiCodeSection}'
         )
@@ -3663,7 +3756,7 @@ AS $$
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user
         FROM team_schema.team_member_table tmt
-        INNER JOIN user_schema.user_table usert 
+        INNER JOIN user_schema.user_table usert
           ON tmt.team_member_user_id = usert.user_id
           AND usert.user_is_disabled=false
           ${search && `AND (
@@ -5887,7 +5980,7 @@ AS $$
             const requestResponseData = plv8.execute(`
               SELECT *
               FROM request_schema.request_response_table
-              WHERE 
+              WHERE
                 request_response_field_id = '${field.field_id}'
                 AND request_response_request_id = '${technicalAssessmentId}'
             `);
@@ -5930,7 +6023,7 @@ AS $$
               `
                 SELECT *
                 FROM request_schema.request_response_table
-                WHERE 
+                WHERE
                   request_response_field_id = '${field.field_id}'
                   AND request_response_request_id = '${requestData.request_id}'
               `
@@ -5973,7 +6066,7 @@ AS $$
             `
               SELECT *
               FROM request_schema.request_response_table
-              WHERE 
+              WHERE
                 request_response_field_id = '${field.field_id}'
                 AND request_response_request_id = '${requestData.request_id}'
             `
@@ -6483,8 +6576,8 @@ AS $$
 
     const ticket = plv8.execute(
       `
-        SELECT 
-          tt.*, 
+        SELECT
+          tt.*,
           tct.ticket_category
         FROM ticket_schema.ticket_table tt
         INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
@@ -7387,10 +7480,10 @@ AS $$
           COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
           COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
         FROM request_schema.request_signer_table
-        INNER JOIN form_schema.signer_table 
+        INNER JOIN form_schema.signer_table
           ON signer_id = request_signer_signer_id
           AND signer_is_disabled = false
-        INNER JOIN request_schema.request_table 
+        INNER JOIN request_schema.request_table
           ON request_id = request_signer_request_id
           AND request_is_disabled = false
           AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
@@ -13810,17 +13903,21 @@ AS $$
       = null;
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
+    const emailValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'`)[0].request_response.replaceAll('"', "");
+    if (userEmail !== emailValue) throw new Error('403')
+    const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
     const applicantData = plv8.execute(
       `
-        SELECT * 
+        SELECT *
         FROM hr_schema.application_information_additional_details_table
-        WHERE 
+        WHERE
           application_information_additional_details_request_id = '${requestUUID}'
         LIMIT 1
       `
     )[0];
 
-    if (userEmail !== applicantData.application_information_additional_details_email) throw new Error('403') 
+    if (userEmail !== applicantData.application_information_additional_details_email) throw new Error('403')
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${applicantData.application_information_additional_details_position}' LIMIT 1`)[0];
 
     if (positionData.position_is_with_technical_interview_1) {
@@ -14159,7 +14256,7 @@ AS $$
           CONCAT_WS(
             ' ',
             application_information_additional_details_first_name,
-            application_information_additional_details_middle_name, 
+            application_information_additional_details_middle_name,
             application_information_additional_details_last_name
           ) AS application_information_full_name,
           application_information_additional_details_contact_number AS application_information_contact_number,
@@ -14250,10 +14347,10 @@ AS $$
         return;
       };
 
-      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_week;
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check", "position":"${position}" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
-      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "job_offer" }')`)[0].get_hr_with_lowest_load_within_a_week;
+    const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check", "position":"${position}" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id, job_offer_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     }
   });
@@ -14266,32 +14363,38 @@ RETURNS TEXT
 SET search_path TO ''
 AS $$
   let returnData = "";
-  plv8.subtransaction(function(){
-    const {
-      table
-    } = input_data;
+  plv8.subtransaction(function () {
+    const { table, position, dateCreated } = input_data;
 
-    const hrTeamMemberIdList = plv8.execute(
-      `
-        SELECT team_member_id
-        FROM team_schema.team_group_member_table
-        WHERE
-          team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      `
-    ).map(teamMember => `('${teamMember.team_member_id}' :: UUID)`).join(", ");
+    const hrTeamMembers = plv8.execute(`
+        SELECT
+          tg.team_member_id,
+          pt.position_alias,
+          CASE
+            WHEN pt.position_alias = '${position}' THEN true
+            ELSE false
+          END AS is_preferred
+        FROM team_schema.team_group_member_table tg
+        LEFT JOIN hr_schema.hr_preferred_position_table p
+          ON p.hr_preferred_position_group_member_id = tg.team_group_member_id
+        LEFT JOIN lookup_schema.position_table pt
+          ON pt.position_id = p.hr_preferred_position_position_id
+        WHERE tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+    `);
 
-    if (!hrTeamMemberIdList.length) return;
-
+    if (!hrTeamMembers.length) {
+      throw new Error("No HR team members found.");
+    }
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
 
-    const getRange = (start, end) => [new Date(currentYear, currentMonth, start), new Date(currentYear, currentMonth, end)];
+    const getWeekRange = (start, end) => [new Date(currentYear, currentMonth, start), new Date(currentYear, currentMonth, end)];
     const weekRanges = [
-      getRange(1, 7),
-      getRange(8, 14),
-      getRange(15, 21),
-      getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
+      getWeekRange(1, 7),
+      getWeekRange(8, 14),
+      getWeekRange(15, 21),
+      getWeekRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
     ];
 
     let weekStart, weekEnd;
@@ -14308,33 +14411,76 @@ AS $$
       weekEnd = weekRanges[0][1];
     }
 
-    const teamMemberData = plv8.execute(
-      `
-        WITH team_member_id_list (team_member_id) AS (
-          VALUES ${hrTeamMemberIdList}
+    const hrTeamMemberIds = hrTeamMembers.map(member => `'${member.team_member_id}'`).join(", ");
+    const preferredMemberIds = hrTeamMembers
+      .filter(member => member.is_preferred)
+      .map(member => `'${member.team_member_id}'`)
+      .join(", ");
+
+    const isPreferredCondition = preferredMemberIds.length > 0
+    ? `team_member_id IN (${preferredMemberIds})`
+    : `false`;
+
+
+
+    const loadData = plv8.execute(`
+        WITH team_member_ids AS (
+            SELECT UNNEST(ARRAY[${hrTeamMemberIds}]::UUID[]) AS team_member_id
+        ),
+        team_load AS (
+            SELECT
+                t.team_member_id,
+                COUNT(bc.${table}_team_member_id) AS total_count,
+                COUNT(CASE WHEN bc.${table}_date_created::Date BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}' THEN 1
+                END
+                ) AS weekly_count
+            FROM team_member_ids t
+            LEFT JOIN hr_schema.${table}_table bc
+            ON t.team_member_id = bc.${table}_team_member_id
+            GROUP BY t.team_member_id
+        ),
+        preferred_load AS (
+          SELECT *,
+            CASE WHEN ${isPreferredCondition} THEN true ELSE false
+            END AS is_preferred
+          FROM team_load
+        ),
+        preferred_balance AS (
+          SELECT
+            MIN(weekly_count) AS min_weekly_count,
+            MAX(weekly_count) AS max_weekly_count
+          FROM preferred_load
+        ),
+       priority_signers AS (
+            SELECT pl.*,
+                CASE WHEN pb.min_weekly_count = pb.max_weekly_count THEN weekly_count ELSE is_preferred::INT * 1000 + weekly_count
+                END AS sorting_priority
+            FROM preferred_load pl
+            CROSS JOIN preferred_balance pb
         )
         SELECT
-          team_member_id_list.team_member_id,
-          COALESCE(COUNT(${table}_team_member_id), 0) AS total_count,
-          COALESCE(COUNT(
-            CASE
-              WHEN ${table}_date_created::DATE BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}'
-                THEN team_member_id_list.team_member_id
-            END
-          )) AS weekly_count
-        FROM team_member_id_list
-        LEFT JOIN hr_schema.${table}_table ON ${table}_team_member_id = team_member_id_list.team_member_id
-        GROUP BY team_member_id_list.team_member_id
-        ORDER BY weekly_count, total_count
+            team_member_id,
+            weekly_count,
+            total_count,
+            is_preferred
+        FROM priority_signers
+        ORDER BY
+            weekly_count ASC,
+            is_preferred DESC,
+            total_count ASC
         LIMIT 1
-      `
-    );
+    `);
 
-    if (!teamMemberData.length) return;
-    returnData = teamMemberData[0].team_member_id
+    if (loadData.length > 0) {
+      returnData = loadData[0].team_member_id;
+    } else {
+      returnData = "No HR member with available load.";
+    }
   });
+
   return returnData;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION update_hr_phone_interview_status(
   input_data JSON
@@ -14728,27 +14874,41 @@ RETURNS JSON
 SET search_path TO ''
 AS $$
   let message;
-  let hrScheduledInterviews = [];
-
   plv8.subtransaction(function() {
     const {
-      interview_schedule
+      interview_schedule,
+      requestId,
+      meetingType
     } = input_data;
+
+    const position = plv8.execute(`
+      SELECT a.application_information_additional_details_position
+      FROM hr_schema.application_information_additional_details_table a
+      JOIN hr_schema.${meetingType}_table t
+      ON t.${meetingType}_request_id = a.application_information_additional_details_request_id
+      WHERE t.${meetingType}_id = '${requestId}'
+    `)[0].application_information_additional_details_position;
 
     const hrTeamMembers = plv8.execute(
       `
-        SELECT tmt.team_member_id
-        FROM team_schema.team_group_table tgt
-        JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
-        JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
-        WHERE tgt.team_group_name = 'HUMAN RESOURCES'
-        AND tmt.team_member_is_disabled = false
-      `
+        SELECT
+          tg.team_member_id,
+          pt.position_alias,
+          CASE
+            WHEN pt.position_alias = $1 THEN true
+            ELSE false
+          END AS is_preferred
+        FROM team_schema.team_group_member_table tg
+        LEFT JOIN hr_schema.hr_preferred_position_table p
+          ON p.hr_preferred_position_group_member_id = tg.team_group_member_id
+        LEFT JOIN lookup_schema.position_table pt
+          ON pt.position_id = p.hr_preferred_position_position_id
+        WHERE tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      `,
+      [position]
     );
 
-    const hrMemberIds = hrTeamMembers.map(member => member.team_member_id);
-
-    if (hrMemberIds.length === 0) {
+    if (!hrTeamMembers.length) {
       message = {
         status: 'error',
         message: 'No available HR members.'
@@ -14756,42 +14916,46 @@ AS $$
       return;
     }
 
+    const hrMemberIds = hrTeamMembers.map(member => member.team_member_id);
+
     const overlappingSchedules = plv8.execute(
       `
         SELECT
-        iom.interview_meeting_schedule,
-        COALESCE(
-          hpi.hr_phone_interview_team_member_id,
-          ti.technical_interview_team_member_id,
-          t.trade_test_team_member_id
-        ) AS team_member_id
+          iom.interview_meeting_schedule,
+          COALESCE(
+            hpi.hr_phone_interview_team_member_id,
+            ti.technical_interview_team_member_id,
+            t.trade_test_team_member_id
+          ) AS team_member_id
         FROM hr_schema.interview_online_meeting_table iom
         LEFT JOIN hr_schema.hr_phone_interview_table hpi
-        ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
+          ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
         LEFT JOIN hr_schema.trade_test_table t
-        ON iom.interview_meeting_interview_id = t.trade_test_id
+          ON iom.interview_meeting_interview_id = t.trade_test_id
         LEFT JOIN hr_schema.technical_interview_table ti
-        ON iom.interview_meeting_interview_id = ti.technical_interview_id
+          ON iom.interview_meeting_interview_id = ti.technical_interview_id
         WHERE iom.interview_meeting_schedule::timestamp = $1::timestamp
-        AND iom.interview_meeting_is_disabled = false
-        AND COALESCE(
-          hpi.hr_phone_interview_team_member_id,
-          ti.technical_interview_team_member_id,
-          t.trade_test_team_member_id
-        ) = ANY($2)
-        AND (
-          hpi.hr_phone_interview_status = 'PENDING'
-          OR ti.technical_interview_status = 'PENDING'
-          OR t.trade_test_status = 'PENDING'
-        )
+          AND iom.interview_meeting_is_disabled = false
+          AND COALESCE(
+            hpi.hr_phone_interview_team_member_id,
+            ti.technical_interview_team_member_id,
+            t.trade_test_team_member_id
+          ) = ANY($2)
+          AND (
+            hpi.hr_phone_interview_status = 'PENDING'
+            OR ti.technical_interview_status = 'PENDING'
+            OR t.trade_test_status = 'PENDING'
+          )
       `,
       [interview_schedule, hrMemberIds]
     );
 
     const membersWithOverlap = overlappingSchedules.map(schedule => schedule.team_member_id);
-    const availableHrMembers = hrMemberIds.filter(id => !membersWithOverlap.includes(id));
+    const availableMembers = hrTeamMembers.filter(
+      member => !membersWithOverlap.includes(member.team_member_id)
+    );
 
-    if (availableHrMembers.length === 0) {
+    if (!availableMembers.length) {
       message = {
         status: 'error',
         message: 'No available HR members due to overlapping schedules.'
@@ -14802,101 +14966,85 @@ AS $$
     const interviewDate = new Date(interview_schedule);
     const currentYear = interviewDate.getFullYear();
     const currentMonth = interviewDate.getMonth();
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const week1End = new Date(currentYear, currentMonth, 7);
-    const week2Start = new Date(currentYear, currentMonth, 8);
-    const week2End = new Date(currentYear, currentMonth, 14);
-    const week3Start = new Date(currentYear, currentMonth, 15);
-    const week3End = new Date(currentYear, currentMonth, 21);
-    const week4Start = new Date(currentYear, currentMonth, 22);
-    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+    const getRange = (start, end) => [new Date(currentYear, currentMonth, start), new Date(currentYear, currentMonth, end)];
+
+    const weekRanges = [
+      getRange(1, 7),
+      getRange(7, 14),
+      getRange(14, 21),
+      getRange(21, new Date(currentYear, currentMonth + 1, 0).getDate())
+    ];
 
     let weekStart, weekEnd;
-    if (interviewDate <= week1End) {
-      weekStart = firstDayOfMonth;
-      weekEnd = week1End;
-    } else if (interviewDate >= week2Start && interviewDate <= week2End) {
-      weekStart = week2Start;
-      weekEnd = week2End;
-    } else if (interviewDate >= week3Start && interviewDate <= week3End) {
-      weekStart = week3Start;
-      weekEnd = week3End;
-    } else if (interviewDate >= week4Start && interviewDate <= lastDayOfMonth) {
-      weekStart = week4Start;
-      weekEnd = lastDayOfMonth;
-    }
-
-    availableHrMembers.forEach((teamMemberId) => {
-      const result = plv8.execute(
-        `
-          WITH interviews_data AS (
-          SELECT
-            CAST(COUNT(iom_total.interview_meeting_interview_id) AS INTEGER) AS total_count,
-            CAST(COUNT(CASE
-            WHEN iom_total.interview_meeting_schedule::DATE BETWEEN $1 AND $2
-            THEN 1 ELSE NULL
-            END) AS INTEGER) AS weekly_count
-          FROM hr_schema.interview_online_meeting_table iom_total
-          LEFT JOIN hr_schema.hr_phone_interview_table hpi
-            ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
-          LEFT JOIN hr_schema.technical_interview_table ti
-            ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
-          LEFT JOIN hr_schema.trade_test_table t
-            ON iom_total.interview_meeting_interview_id = t.trade_test_id
-          WHERE iom_total.interview_meeting_is_disabled = false
-            AND (
-            hpi.hr_phone_interview_team_member_id = $3 OR
-            ti.technical_interview_team_member_id = $3 OR
-            t.trade_test_team_member_id = $3
-            )
-          )
-          SELECT
-          $3 AS team_member_id,
-          weekly_count,
-          total_count
-          FROM interviews_data;
-        `,
-        [weekStart, weekEnd, teamMemberId]
-      );
-      hrScheduledInterviews.push(result[0]);
-    });
-
-    const hrLoadMap = new Map();
-
-    hrScheduledInterviews.forEach(interview => {
-      hrLoadMap.set(interview.team_member_id, {
-        totalLoad: interview.total_count,
-        weeklyLoad: interview.weekly_count
-      });
-    });
-
-    let lowestLoadMember = null;
-    let lowestWeeklyLoad = Infinity;
-    let lowestTotalLoad = Infinity;
-    let tiedMembers = [];
-
-    hrLoadMap.forEach((load, memberId) => {
-      const { totalLoad, weeklyLoad } = load;
-
-      if (weeklyLoad < lowestWeeklyLoad) {
-        lowestWeeklyLoad = weeklyLoad;
-        lowestTotalLoad = totalLoad;
-        lowestLoadMember = memberId;
-        tiedMembers = [memberId];
-      } else if (weeklyLoad === lowestWeeklyLoad) {
-        tiedMembers.push(memberId);
+    for (let [start, end] of weekRanges) {
+      if (interviewDate >= start && interviewDate <= end) {
+        weekStart = start;
+        weekEnd = end;
+        break;
       }
-    });
-
-    if (tiedMembers.length > 1) {
-      lowestLoadMember = tiedMembers.reduce((lowest, memberId) => {
-        const { totalLoad } = hrLoadMap.get(memberId);
-        const { totalLoad: currentLowestTotal } = hrLoadMap.get(lowest);
-        return totalLoad < currentLowestTotal ? memberId : lowest;
-      }, tiedMembers[0]);
     }
 
-    if (!lowestLoadMember) {
+    if (!weekStart) {
+      weekStart = new Date(currentYear, currentMonth, 1);
+      weekEnd = weekRanges[0][1];
+    }
+
+    const calculateLoads = (members) => {
+      return members.map(member => {
+        const result = plv8.execute(
+          `
+            WITH interviews_data AS (
+              SELECT
+                COUNT(iom_total.interview_meeting_interview_id) AS total_count,
+                COUNT(
+                  CASE
+                    WHEN iom_total.interview_meeting_schedule::DATE BETWEEN $1 AND $2
+                    THEN 1 ELSE NULL
+                  END
+                ) AS weekly_count
+              FROM hr_schema.interview_online_meeting_table iom_total
+              LEFT JOIN hr_schema.hr_phone_interview_table hpi
+                ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
+              LEFT JOIN hr_schema.technical_interview_table ti
+                ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
+              LEFT JOIN hr_schema.trade_test_table t
+                ON iom_total.interview_meeting_interview_id = t.trade_test_id
+              WHERE iom_total.interview_meeting_is_disabled = false
+                AND (
+                  hpi.hr_phone_interview_team_member_id = $3 OR
+                  ti.technical_interview_team_member_id = $3 OR
+                  t.trade_test_team_member_id = $3
+                )
+            )
+            SELECT
+              $3 AS team_member_id,
+              weekly_count,
+              total_count
+            FROM interviews_data;
+          `,
+          [weekStart, weekEnd, member.team_member_id]
+        );
+        return {
+          ...result[0],
+          weekly_count: Number(result[0].weekly_count),
+          total_count: Number(result[0].total_count),
+          is_preferred: member.is_preferred
+        };
+      });
+    };
+
+    const memberLoads = calculateLoads(availableMembers);
+
+    memberLoads.sort((a, b) => {
+      if (a.weekly_count !== b.weekly_count) return a.weekly_count - b.weekly_count;
+      if (a.is_preferred !== b.is_preferred) return b.is_preferred - a.is_preferred;
+      return a.total_count - b.total_count;
+    });
+
+    const selectedMember = memberLoads[0];
+
+    if (!selectedMember) {
       message = {
         status: 'error',
         message: 'No available HR member for the selected time.'
@@ -14911,20 +15059,22 @@ AS $$
           FROM team_schema.team_member_table
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
-            team_member_id = '${lowestLoadMember}'
+            team_member_id = $1
           LIMIT 1
-        `
+        `,
+        [selectedMember.team_member_id]
       )[0];
 
       message = {
         status: 'success',
         message: 'HR phone interview scheduled successfully.',
-        assigned_hr_team_member_id: lowestLoadMember,
+        assigned_hr_team_member_id: selectedMember.team_member_id,
         assigned_hr_full_name: `${assignedHrData.user_first_name} ${assignedHrData.user_last_name}`,
         assigned_hr_email: assignedHrData.user_email
       };
     }
   });
+
   return message;
 $$ LANGUAGE plv8;
 
@@ -17622,7 +17772,7 @@ SET search_path TO ''
 AS $$
   let returnData;
   plv8.subtransaction(function(){
-    const { 
+    const {
       applicationInformationFormslyId,
       generalAssessmentFormslyId
     } = input_data;
@@ -17634,7 +17784,7 @@ AS $$
             SELECT 1
             FROM public.request_view
             INNER JOIN hr_schema.request_connection_table ON request_connection_application_information_request_id = request_id
-            WHERE 
+            WHERE
               request_formsly_id = '${applicationInformationFormslyId}'
               AND request_connection_general_assessment_request_id IS NOT NULL
           )
@@ -17647,7 +17797,7 @@ AS $$
             SELECT 1
             FROM public.request_view
             INNER JOIN hr_schema.request_connection_table ON request_connection_general_assessment_request_id = request_id
-            WHERE 
+            WHERE
               request_formsly_id = '${generalAssessmentFormslyId}'
               AND request_connection_technical_assessment_request_id IS NOT NULL
           )
@@ -18538,7 +18688,7 @@ plv8.subtransaction(function() {
     const start = (page - 1) * limit;
 
     const requesterSignerCount = plv8.execute(`
-      SELECT COUNT(*) 
+      SELECT COUNT(*)
       FROM form_schema.requester_primary_signer_table
       INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
       WHERE
@@ -18703,7 +18853,7 @@ AS $$
         ON tm2.team_member_id = practical_test_updated_by
       LEFT JOIN user_schema.user_table u2
         ON u2.user_id = tm2.team_member_user_id
-      WHERE 
+      WHERE
         practical_test_team_id = $1
         ${creator}
         ${search}
@@ -18716,7 +18866,7 @@ AS $$
     const offset = (page - 1) * limit;
 
     const practicalTestData = plv8.execute(`
-      SELECT 
+      SELECT
         practical_test_table.*,
         u.user_id AS created_user_id,
         u.user_first_name AS created_user_first_name,
@@ -18817,7 +18967,7 @@ AS $$
       )
     }
     plv8.execute(practicalTestQuery);
-  
+
     if (practicalTestPositionInput.length) {
       plv8.execute(
         `
@@ -18825,7 +18975,7 @@ AS $$
           (
             practical_test_position_practical_test_id,
             practical_test_position_position_id
-          ) 
+          )
           VALUES ${practicalTestPositionInput}
         `
       );
@@ -18833,7 +18983,7 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO form_schema.field_table 
+        INSERT INTO form_schema.field_table
         (
           field_id,
           field_name,
@@ -18841,7 +18991,7 @@ AS $$
           field_type,
           field_order,
           field_section_id
-        ) 
+        )
         VALUES ${fieldInput}
       `
     );
@@ -18855,7 +19005,7 @@ AS $$
           practical_test_question_order,
           practical_test_question_field_id,
           practical_test_question_practical_test_id
-        ) 
+        )
         VALUES ${practicalTestQuestionInput}
       `
     );
@@ -18891,7 +19041,7 @@ AS $$
         SELECT
           position_id
         FROM hr_schema.practical_test_position_table
-        INNER JOIN lookup_schema.position_table ON position_id = practical_test_position_position_id 
+        INNER JOIN lookup_schema.position_table ON position_id = practical_test_position_position_id
         WHERE
           practical_test_position_practical_test_id = '${practicalTestId}'
       `
@@ -18902,7 +19052,7 @@ AS $$
         SELECT
           practical_test_question,
           practical_test_question_weight
-        FROM hr_schema.practical_test_question_table 
+        FROM hr_schema.practical_test_question_table
         WHERE
           practical_test_question_practical_test_id = '${practicalTestId}'
           AND practical_test_question_is_disabled = false
@@ -19049,10 +19199,10 @@ AS $$
 
     const practicalTestQuestionList = plv8.execute(
       `
-        SELECT 
+        SELECT
           field_table.*,
           practical_test_question_weight AS field_weight
-        FROM hr_schema.practical_test_question_table 
+        FROM hr_schema.practical_test_question_table
         INNER JOIN form_schema.field_table ON field_id = practical_test_question_field_id
         WHERE
           practical_test_question_practical_test_id = '${practicalTestData[0].practical_test_id}'
@@ -19165,7 +19315,7 @@ AS $$
       FROM
         team_schema.team_membership_request_table
       INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
-      WHERE 
+      WHERE
         team_membership_request_to_team_id = $1
     `;
 
@@ -19182,7 +19332,7 @@ AS $$
       FROM
         team_schema.team_membership_request_table
       INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
-      WHERE 
+      WHERE
         team_membership_request_to_team_id = $1
         ${search ? `AND (CONCAT(user_first_name, ' ', user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')` : ''}
     `, [teamId])[0].count;
@@ -19192,7 +19342,7 @@ AS $$
       data: teamMembershipRequestList,
       count: Number(teamMembershipRequestCount)
     }
-    
+
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -19209,7 +19359,7 @@ AS $$
       teamId,
       memberRole
     } = input_data;
-    
+
     userIdList.forEach((userId) => {
       plv8.execute(`
         DELETE FROM team_schema.team_membership_request_table
@@ -19229,8 +19379,8 @@ AS $$
       if (isUserAlreadyAMember) return;
 
       plv8.execute(`
-        INSERT INTO team_schema.team_member_table 
-        (team_member_user_id, team_member_team_id, team_member_role) 
+        INSERT INTO team_schema.team_member_table
+        (team_member_user_id, team_member_team_id, team_member_role)
         VALUES ($1, $2, $3)
       `, [userId, teamId, memberRole]);
     });
@@ -19337,7 +19487,7 @@ AS $$
     } = input_data;
 
     let query = `
-        SELECT 
+        SELECT
             request_formsly_id AS "Applicant Ref ID",
             REPLACE(CONCAT(first.request_response, ' ', middle.request_response, ' ', last.request_response), '"', '') AS "Name of Applicant",
             REPLACE(position.request_response, '"', '') AS "Position",
@@ -19362,7 +19512,7 @@ AS $$
             job_offer_date_created "Job Offer Date",
             CONCAT(jou.user_first_name, ' ', jou.user_last_name) AS "Job Offer Assigned HR",
             request_date_created AS "Date Created"
-        FROM public.request_view 
+        FROM public.request_view
         INNER JOIN request_schema.request_response_table AS first ON first.request_response_request_id = request_id
             AND first.request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
         LEFT JOIN request_schema.request_response_table AS middle ON middle.request_response_request_id = request_id
@@ -19399,7 +19549,7 @@ AS $$
         AND jo.rn = 1
         LEFT JOIN team_schema.team_member_table AS jotm ON jotm.team_member_id = job_offer_team_member_id
         LEFT JOIN user_schema.user_table AS jou ON jou.user_id = jotm.team_member_user_id
-        WHERE 
+        WHERE
             request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
     `;
 
@@ -19410,7 +19560,7 @@ AS $$
     };
 
     query += ` ORDER BY request_date_created DESC LIMIT ${limit} OFFSET ${offset}`;
-    
+
     const recruitment_data = plv8.execute(query, params);
 
     data = recruitment_data;
@@ -19431,7 +19581,7 @@ AS $$
     } = input_data;
 
     const availableTeams = plv8.execute(`
-        SELECT 
+        SELECT
             team_id,
             team_name,
             team_logo
@@ -19463,6 +19613,143 @@ AS $$
  });
  return data;
 $$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_preferred_position_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    groupMemberData: [],
+    totalCount: 0
+  };
+  plv8.subtransaction(() => {
+    const {
+      teamId,
+      limit = 10,
+      page = 1,
+      search = ''
+    } = input_data;
+
+    const searchCondition = search
+      ? `AND (u.user_first_name || ' ' || u.user_last_name ILIKE '%${search}%')`
+      : '';
+
+    const offset = (page - 1) * limit;
+
+    const groupMemberData = plv8.execute(`
+        SELECT
+            tg.team_group_member_id,
+            u.user_first_name,
+            u.user_last_name
+        FROM team_schema.team_group_member_table tg
+        JOIN team_schema.team_member_table tm
+            ON tg.team_member_id = tm.team_member_id
+            AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+            AND tm.team_member_team_id = '${teamId}'
+        JOIN user_schema.user_table u
+            ON tm.team_member_user_id = u.user_id
+        WHERE 1=1
+        ${searchCondition}
+        ORDER BY u.user_first_name ASC
+        LIMIT ${limit} OFFSET ${offset};
+    `);
+
+    const groupMemberCount = plv8.execute(`
+      SELECT
+        COUNT(*)
+      FROM team_schema.team_group_member_table tg
+      JOIN team_schema.team_member_table tm
+        ON tg.team_member_id = tm.team_member_id
+        AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+        AND tm.team_member_team_id = '${teamId}'
+      JOIN user_schema.user_table u
+        ON tm.team_member_user_id = u.user_id
+      WHERE 1=1
+      ${searchCondition}
+
+    `)[0].count;
+
+
+    returnData.groupMemberData = groupMemberData.map(member => ({
+      group_member_id: member.team_group_member_id,
+      group_member_name: `${member.user_first_name} ${member.user_last_name}`
+    }));
+    returnData.totalCount = Number(groupMemberCount);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION insert_update_hr_preferred_position(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+        positionData,
+        memberId
+    } = input_data;
+
+    const hrPreferredPositionData = plv8.execute(`
+        SELECT *
+        FROM hr_schema.hr_preferred_position_table
+        WHERE hr_preferred_position_group_member_id = '${memberId}'
+    `);
+
+    if(hrPreferredPositionData.length > 0 ){
+      const hrPreferredPositionData = plv8.execute(`
+        DELETE FROM hr_schema.hr_preferred_position_table
+        WHERE hr_preferred_position_group_member_id = '${memberId}'
+    `);
+    };
+
+   positionData.forEach((position) => {
+      plv8.execute(`
+        INSERT INTO hr_schema.hr_preferred_position_table (
+          hr_preferred_position_group_member_id,
+          hr_preferred_position_position_id
+        ) VALUES ('${memberId}', '${position}')
+      `);
+    });
+  })
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_preferred_position_per_member_id(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  let returnData = {
+    positionData: [],
+    positionId: []
+  };
+  plv8.subtransaction(function() {
+    const { memberId } = input_data;
+
+    const hrPreferredPositionData = plv8.execute(`
+      SELECT p.position_alias, p.position_id
+      FROM hr_schema.hr_preferred_position_table pr
+      JOIN lookup_schema.position_table p
+      ON p.position_id = pr.hr_preferred_position_position_id
+      WHERE pr.hr_preferred_position_group_member_id = $1
+    `, [memberId]);
+
+    hrPreferredPositionData.forEach(row => {
+      returnData.positionData.push({
+        position_id:row.position_id,
+        position_alias:row.position_alias
+        });
+      returnData.positionId.push(row.position_id);
+    });
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 
 ----- END: FUNCTIONS
 
@@ -23505,6 +23792,33 @@ USING (true);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON hr_schema.practical_test_position_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (true);
+
+--- hr_schema.hr_preferred_position_table
+ALTER TABLE hr_schema.hr_preferred_position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.hr_preferred_position_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.hr_preferred_position_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.hr_preferred_position_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.hr_preferred_position_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.hr_preferred_position_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.hr_preferred_position_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON hr_schema.hr_preferred_position_table;
+CREATE POLICY "Allow DELETE for authenticated users" ON hr_schema.hr_preferred_position_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (true);

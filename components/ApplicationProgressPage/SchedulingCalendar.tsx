@@ -280,6 +280,8 @@ const SchedulingCalendar = ({
         assigned_hr_email,
       } = await phoneInterviewValidation(supabaseClient, {
         interview_schedule: tempDate.toISOString(),
+        requestId: targetId,
+        meetingType,
       });
 
       if (status === "success") {
