@@ -8,6 +8,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   DEFAULT_TEAM_MEMBER_LIST_LIMIT,
   FETCH_OPTION_LIMIT,
+  ROW_PER_PAGE,
 } from "@/utils/constant";
 import {
   OptionType,
@@ -15,21 +16,24 @@ import {
   PreferredPositionType,
 } from "@/utils/types";
 import {
-  Accordion,
+  Button,
+  Center,
   Container,
+  createStyles,
   Flex,
-  LoadingOverlay,
-  Pagination,
+  Group,
+  MultiSelect,
   Paper,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { DataTable, DataTableColumn } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import PreferredPositionForm from "./PreferredPositionForm";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import PrefferedPositionFilter from "./PrefferedPositionFilter";
 
 type FormValues = {
@@ -41,21 +45,45 @@ type Props = {
   groupMembers: PreferredPositionType[];
   totalCount: number;
 };
+
+const useStyles = createStyles((theme) => ({
+  clickableColumn: {
+    "&:hover": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[7]
+          : theme.colors.gray[5],
+    },
+    cursor: "pointer",
+  },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
+}));
+
 const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
-
+  const { classes } = useStyles();
   const [positionOptions, setPositionOptions] = useState<OptionType[]>([]);
-  const [positionList, setPositionList] = useState<{ [key: string]: string[] }>(
-    {}
-  );
+  const [positionList, setPositionList] = useState<
+    {
+      position_id: string;
+      position_alias: string;
+    }[]
+  >([]);
   const [activePage, setActivePage] = useState(1);
   const [memberCount, setMemberCount] = useState(totalCount);
   const [memberList, setMemberList] =
     useState<PreferredPositionType[]>(groupMembers);
-  const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set());
+  const [selectedMember, setSelectedMember] =
+    useState<PreferredPositionType | null>(null); // Track selected member
   const [isLoading, setIsLoading] = useState(false);
-  const totalPages = Math.ceil(memberCount / 10);
+
   const methods = useForm<FormValues>({
     defaultValues: {
       selectedPositions: {},
@@ -63,8 +91,7 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
     },
   });
 
-  const { watch, setValue, getValues } = methods;
-  const selectedPositions = watch("selectedPositions");
+  const { setValue, getValues, handleSubmit } = methods;
 
   useEffect(() => {
     const fetchPositions = async () => {
@@ -124,64 +151,17 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
     } catch (e) {}
   };
 
-  const handleAddPosition = (memberId: string, value: string) => {
-    const currentPositions = selectedPositions[memberId] || [];
-
-    if (currentPositions.includes(value)) return;
-
-    const label = positionOptions.find(
-      (option) => option.value === value
-    )?.label;
-
-    if (!label) return;
-
-    setPositionList((prev) => ({
-      ...prev,
-      [memberId]: [...(prev[memberId] || []), label],
-    }));
-
-    if (!currentPositions.includes(value)) {
-      setValue(`selectedPositions.${memberId}`, [...currentPositions, value]);
-    }
-  };
-
-  const handleDeletePosition = (memberId: string, position: string) => {
-    const valueToRemove = positionOptions.find(
-      (option) => option.label === position
-    )?.value;
-
-    if (!valueToRemove) return;
-
-    setValue(
-      `selectedPositions.${memberId}`,
-      selectedPositions[memberId]?.filter((value) => value !== valueToRemove) ||
-        []
-    );
-    const labelToRemove = positionOptions.find(
-      (option) => option.label === position
-    )?.label;
-
-    if (labelToRemove) {
-      setPositionList((prev) => {
-        const updatedList = (prev[memberId] || []).filter(
-          (label) => label !== position
-        );
-
-        return { ...prev, [memberId]: updatedList };
-      });
-    }
-  };
-
   const handleSubmitPosition = async (
     data: PreferredPositionFormType,
-    memberId: string
+    memberId?: string
   ) => {
     try {
       setIsLoading(true);
-      const memberPositions = data.selectedPositions[memberId] || [];
+
+      const memberPositions = data.selectedPositions[memberId ?? ""] || [];
 
       await insertUpdateHrPreferredPosition(supabaseClient, {
-        memberId: memberId,
+        memberId: memberId ?? "",
         positionData: memberPositions,
       });
 
@@ -189,6 +169,8 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
         message: "Position updated successfully",
         color: "green",
       });
+      handleFetchHrPreferredPosition(memberId ?? "");
+      modals.close(`addPosition-${memberId}`);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -200,36 +182,26 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
   };
 
   const handleFetchHrPreferredPosition = async (memberId: string) => {
-    if (!openAccordions.has(memberId)) {
-      setOpenAccordions((prev) => new Set([...prev, memberId]));
+    try {
+      setIsLoading(true);
+      const { positionData, positionId } = await fetchPreferredHrPosition(
+        supabaseClient,
+        { memberId }
+      );
 
-      try {
-        setIsLoading(true);
-        const { positionAlias, positionId } = await fetchPreferredHrPosition(
-          supabaseClient,
-          { memberId }
-        );
+      setPositionList(positionData);
 
-        setPositionList((prev) => ({
-          ...prev,
-          [memberId]: positionAlias,
-        }));
-
-        setValue(`selectedPositions.${memberId}`, positionId);
-      } catch (e) {
-        notifications.show({
-          message: "Failed to fetch HR preferred positions.",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setOpenAccordions((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(memberId);
-        return newSet;
+      setValue(`selectedPositions.${memberId}`, positionId);
+      const member =
+        memberList.find((m) => m.group_member_id === memberId) || null;
+      setSelectedMember(member);
+    } catch (e) {
+      notifications.show({
+        message: "Failed to fetch HR preferred positions.",
+        color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -237,9 +209,81 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
     handlePagination(activePage);
   }, [activePage]);
 
+  const columnData: DataTableColumn<PreferredPositionType>[] = [
+    {
+      accessor: "Group Member Name",
+      title: "HR Member Name",
+      width: "80%",
+      render: ({ group_member_name, group_member_id }) => (
+        <Text
+          className={classes.clickableColumn}
+          onClick={() => {
+            handleFetchHrPreferredPosition(group_member_id);
+          }}
+        >
+          {group_member_name}
+        </Text>
+      ),
+    },
+  ];
+
+  const memberColumn: DataTableColumn<{
+    position_id: string;
+    position_alias: string;
+  }>[] = [
+    {
+      accessor: "position_id",
+      title: "Preferred Positions",
+      render: ({ position_alias }) => <Text>{position_alias}</Text>,
+    },
+  ];
+
+  const handleAction = (memberId?: string) => {
+    modals.open({
+      modalId: `addPosition-${memberId}`,
+      w: "xl",
+      title: <Text>Add/Update Positions</Text>,
+      children: (
+        <form
+          onSubmit={handleSubmit((data) =>
+            handleSubmitPosition(data, memberId)
+          )}
+        >
+          <Controller
+            name={`selectedPositions.${memberId}`}
+            control={methods.control}
+            render={({ field }) => (
+              <MultiSelect
+                {...field}
+                placeholder="Select positions"
+                label="Preferred Positions"
+                withinPortal
+                data={positionOptions}
+                value={field.value}
+                onChange={field.onChange}
+                searchable
+                clearable
+              />
+            )}
+          />
+          <Flex mt="md" align="center" justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              color="dimmed"
+              onClick={() => modals.close(`addPosition-${memberId}`)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </Flex>
+        </form>
+      ),
+      centered: true,
+    });
+  };
+
   return (
     <Container maw={3840} h="100%">
-      <LoadingOverlay visible={isLoading} />
       <Stack>
         <Flex justify="space-between" rowGap="xs" wrap="wrap">
           <Title order={2} color="dimmed">
@@ -254,37 +298,72 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
                 handleFilterForms={handleFilter}
               />
             </FormProvider>
-            <Accordion multiple variant="separated">
-              {memberList.map((member, index) => (
-                <Accordion.Item value={member.group_member_id} key={index}>
-                  <Accordion.Control
-                    onClick={() =>
-                      handleFetchHrPreferredPosition(member.group_member_id)
-                    }
-                  >
-                    <Text fw={500}>{member.group_member_name}</Text>
-                  </Accordion.Control>
-                  <Accordion.Panel>
-                    <FormProvider {...methods}>
-                      <PreferredPositionForm
-                        member={member}
-                        positionOptions={positionOptions}
-                        positionList={positionList}
-                        handleAddPosition={handleAddPosition}
-                        handleDeletePosition={handleDeletePosition}
-                        handleSubmitPosition={handleSubmitPosition}
-                      />
-                    </FormProvider>
-                  </Accordion.Panel>
-                </Accordion.Item>
-              ))}
-            </Accordion>
-            <Pagination
-              size="sm"
-              position="center"
-              total={totalPages}
-              onChange={setActivePage}
+            <DataTable
+              idAccessor="group_member_id"
+              mt="xs"
+              withBorder
+              fw="bolder"
+              c="dimmed"
+              minHeight={390}
+              fetching={isLoading}
+              records={memberList}
+              columns={columnData}
+              totalRecords={memberCount}
+              recordsPerPage={ROW_PER_PAGE}
+              page={activePage}
+              onPageChange={(page: number) => {
+                setActivePage(page);
+                handlePagination(page);
+              }}
             />
+          </Stack>
+        </Paper>
+        <Paper p="md" withBorder>
+          <Stack>
+            <Group position="apart">
+              <Title order={3} color="dimmed">
+                Preferred Position{" "}
+                {selectedMember
+                  ? `( ${selectedMember.group_member_name} )`
+                  : ""}
+              </Title>
+              {selectedMember && (
+                <Button
+                  onClick={() => handleAction(selectedMember?.group_member_id)}
+                >
+                  {positionList.length > 0 ? "Update Position" : "Add Position"}
+                </Button>
+              )}
+            </Group>
+
+            {selectedMember ? (
+              positionList.length > 0 ? (
+                <DataTable
+                  idAccessor="position_id"
+                  mt="xs"
+                  withBorder
+                  fw="bolder"
+                  c="dimmed"
+                  minHeight={390}
+                  records={positionList}
+                  columns={memberColumn}
+                  totalRecords={positionList.length}
+                  recordsPerPage={positionList.length}
+                  page={1}
+                  onPageChange={(page: number) => {
+                    setActivePage(page);
+                  }}
+                />
+              ) : (
+                <Paper p="md" withBorder>
+                  <Center>No Position Available</Center>
+                </Paper>
+              )
+            ) : (
+              <Paper p="md" withBorder>
+                <Center>No selected member yet</Center>
+              </Paper>
+            )}
           </Stack>
         </Paper>
       </Stack>

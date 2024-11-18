@@ -6799,7 +6799,10 @@ export const fetchPreferredHrPosition = async (
   if (error) throw error;
 
   return data as unknown as {
-    positionAlias: string[];
+    positionData: {
+      position_id: string;
+      position_alias: string;
+    }[];
     positionId: string[];
   };
 };

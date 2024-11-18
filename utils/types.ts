@@ -2657,8 +2657,9 @@ export type DashboardRequestorAndSignerType = {
 export type PreferredPositionType = {
   group_member_id: string;
   group_member_name: string;
+  has_preferred_position: boolean;
 };
 
 export type PreferredPositionFormType = {
-    selectedPositions: { [key: string]: string[] };
-  };
+  selectedPositions: { [key: string]: string[] };
+};

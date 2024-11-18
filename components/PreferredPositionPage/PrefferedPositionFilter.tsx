@@ -21,7 +21,7 @@ const PrefferedPositionFilter = ({ handleFilterForms, isLoading }: Props) => {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            
+
             handleFilterForms();
           }
         }}

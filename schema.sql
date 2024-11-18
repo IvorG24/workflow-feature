@@ -19500,21 +19500,21 @@ AS $$
     const offset = (page - 1) * limit;
 
     const groupMemberData = plv8.execute(`
-      SELECT
-        tg.team_group_member_id,
-        u.user_first_name,
-        u.user_last_name
-      FROM team_schema.team_group_member_table tg
-      JOIN team_schema.team_member_table tm
-        ON tg.team_member_id = tm.team_member_id
-        AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-        AND tm.team_member_team_id = '${teamId}'
-      JOIN user_schema.user_table u
-        ON tm.team_member_user_id = u.user_id
-      WHERE 1=1
-      ${searchCondition}
-      ORDER BY u.user_first_name ASC
-      LIMIT ${limit} OFFSET ${offset};
+        SELECT
+            tg.team_group_member_id,
+            u.user_first_name,
+            u.user_last_name
+        FROM team_schema.team_group_member_table tg
+        JOIN team_schema.team_member_table tm
+            ON tg.team_member_id = tm.team_member_id
+            AND tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+            AND tm.team_member_team_id = '${teamId}'
+        JOIN user_schema.user_table u
+            ON tm.team_member_user_id = u.user_id
+        WHERE 1=1
+        ${searchCondition}
+        ORDER BY u.user_first_name ASC
+        LIMIT ${limit} OFFSET ${offset};
     `);
 
     const groupMemberCount = plv8.execute(`
@@ -19586,25 +19586,31 @@ CREATE OR REPLACE FUNCTION get_hr_preferred_position_per_member_id(
 RETURNS VOID
 SET search_path TO ''
 AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-        memberId
-    } = input_data;
+  let returnData = {
+    positionAlias: [],
+    positionId: []
+  };
+
+  plv8.subtransaction(function() {
+    const { memberId } = input_data;
 
     const hrPreferredPositionData = plv8.execute(`
-        SELECT p.position_alias
-        FROM hr_schema.hr_preferred_position_table pr
-        JOIN lookup_schema.position_table p
-        ON p.position_id = pr.hr_preferred_position_position_id
-        WHERE hr_preferred_position_group_member_id = '${memberId}'
-    `);
+      SELECT p.position_alias, p.position_id
+      FROM hr_schema.hr_preferred_position_table pr
+      JOIN lookup_schema.position_table p
+      ON p.position_id = pr.hr_preferred_position_position_id
+      WHERE pr.hr_preferred_position_group_member_id = $1
+    `, [memberId]);
 
-     const positions = hrPreferredPositionData.map(row => row.position_name);
-
-    returnData.selectedPositions[memberId] = positions;
-  })
-  return returnData
+    hrPreferredPositionData.forEach(row => {
+      returnData.positionAlias.push({
+        position_id:row.position_id,
+        position_alias:row.position_alias
+        });
+      returnData.positionId.push(row.position_id);
+    });
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 
