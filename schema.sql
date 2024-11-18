@@ -1138,9 +1138,9 @@ CREATE TABLE hr_schema.hr_project_table (
 
 CREATE TABLE hr_schema.hr_preferred_position_table (
   hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  
   hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
-  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id),
-  UNIQUE (hr_preferred_position_position_id)
+  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id)
 );
 
 CREATE TABLE lookup_schema.degree_table (

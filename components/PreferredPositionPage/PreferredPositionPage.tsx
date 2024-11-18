@@ -244,8 +244,13 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
   const handleAction = (memberId?: string) => {
     modals.open({
       modalId: `addPosition-${memberId}`,
-      w: "xl",
-      title: <Text>Add/Update Positions</Text>,
+      size: "xl",
+      title: (
+        <Text>
+          {selectedMember && positionList.length > 0 ? "Update" : "Add"}{" "}
+          Positions
+        </Text>
+      ),
       children: (
         <form
           onSubmit={handleSubmit((data) =>
