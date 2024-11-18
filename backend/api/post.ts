@@ -253,7 +253,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -2587,10 +2587,10 @@ export const createPracticalTestForm = async (
       )
       VALUES
       (
-        '${practicalTestId}', 
-        '${practical_test_label.trim()}', 
-        ${practical_test_passing_score}, 
-        '${teamMemberId}', 
+        '${practicalTestId}',
+        '${practical_test_label.trim()}',
+        ${practical_test_passing_score},
+        '${teamMemberId}',
         '${teamId}'
       )
     `;
@@ -2712,6 +2712,23 @@ export const joinTeamProjectByTicketRequest = async (
 ) => {
   const { data, error } = await supabaseClient.rpc(
     "join_team_project_by_ticket_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};
+
+export const insertUpdateHrPreferredPosition = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    positionData: string[];
+    memberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "insert_update_hr_preferred_position",
     {
       input_data: params,
     }

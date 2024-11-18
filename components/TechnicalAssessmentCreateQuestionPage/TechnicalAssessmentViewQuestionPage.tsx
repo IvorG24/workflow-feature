@@ -18,7 +18,7 @@ import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  OptionTableRow,
+  OptionType,
   QuestionFields,
   QuestionnaireData,
   TechnicalQuestionFormValues,
@@ -75,7 +75,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const { colors } = useMantineTheme();
   const supabaseClient = useSupabaseClient();
-  const [positionOptions, setPositionOptions] = useState<OptionTableRow[]>([]);
+  const [positionOptions, setPositionOptions] = useState<OptionType[]>([]);
   const questionnaireData: QuestionFields[] = initialData.fields;
   const [currentPosition, setCurrentPosition] = useState<string[]>([]);
   const questionnaireDetails = {
@@ -413,10 +413,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
                       required
                       withAsterisk
                       placeholder="Select positions"
-                      data={positionOptions.map((option) => ({
-                        value: option.option_value,
-                        label: option.option_value,
-                      }))}
+                      data={positionOptions}
                       value={field.value}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
