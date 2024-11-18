@@ -24,6 +24,10 @@ type NavLinkSectionProps = {
   links: NavLinkType[];
 } & NavLinkProps;
 
+const isPathActive = (path:string, segment: string): boolean => {
+  return path.includes(segment) && path.endsWith(segment);
+};
+
 const NavLinkSection = ({
   label,
   links,
@@ -70,17 +74,36 @@ const NavLinkSection = ({
                   px="xl"
                   active={
                     link.label === "Manage Automation"
-                      ? router.pathname.includes("jira") &&
-                        router.pathname.includes("settings")
+                      ? router.pathname.includes("jira") && router.pathname.includes("settings")
                       : link.label === "Manage Team"
-                      ? router.pathname.includes("settings") &&
-                        !router.pathname.includes("jira")
+                      ? router.pathname.includes("settings") && !router.pathname.includes("jira")
                       : link.label === "Application List"
-                      ? router.pathname.includes("request") &&
-                        !router.pathname.includes("application")
-                      : router.pathname.includes(
-                          link.label.split(" ")[0].toLowerCase()
-                        )
+                      ? router.pathname.endsWith("/requests")
+                      : link.label === "Request List"
+                      ? isPathActive(router.pathname, "/requests")
+                      : link.label === "Application Information"
+                      ? isPathActive(router.pathname, "/requests/application-information-spreadsheet-view")
+                      : link.label === "HR Interview"
+                      ? isPathActive(router.pathname, "/requests/hr-phone-interview-spreadsheet-view")
+                      : link.label === "Department Interview"
+                      ? isPathActive(router.pathname, "/requests/technical-interview-1-spreadsheet-view")
+                      : link.label === "Requestor Interview"
+                      ? isPathActive(router.pathname, "/requests/technical-interview-2-spreadsheet-view")
+                      : link.label === "Practical Test"
+                      ? isPathActive(router.pathname, "/requests/trade-test-spreadsheet-view")
+                      : link.label === "Questionnaire List"
+                      ? isPathActive(router.pathname, "/technical-question")
+                      : link.label === "Practical Test Form"
+                      ? isPathActive(router.pathname, "/practical-test-form")
+                      : link.label === "Create Ticket"
+                      ? isPathActive(router.pathname, "/tickets/create")
+                      : link.label === "Ticket List"
+                      ? isPathActive(router.pathname, "/tickets")
+                      : link.label === "Create Memo"
+                      ? isPathActive(router.pathname, "/memo/create")
+                      : link.label === "Memo List"
+                      ? isPathActive(router.pathname, "/memo")
+                      : router.pathname.includes(link.label.split(" ")[0].toLowerCase())
                   }
                   onClick={async () => await router.push(link.href)}
                   rightSection={rightSection ? rightSection : <></>}
