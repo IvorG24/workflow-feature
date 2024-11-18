@@ -11,12 +11,15 @@ import {
   JiraUserRoleTableRow,
 } from "@/utils/types";
 import {
+  Anchor,
+  Breadcrumbs,
   Center,
   Container,
   LoadingOverlay,
   Paper,
   SegmentedControl,
   Stack,
+  Space,
   Text,
   Title,
 } from "@mantine/core";
@@ -157,6 +160,25 @@ const JiraSettingsPage = ({
     }
   }, [jiraFormslyProjectList, selectedFormslyProjectId]);
 
+  type BreadcrumbItem = {
+    title: string;
+    action?: () => void;
+  };
+
+  const jiraSettingsItems: BreadcrumbItem[] = [
+    {
+      title: "Team Projects",
+      action: () => {
+        setSelectedFormslyProjectName("");
+        setSelectedFormslyProjectId(null);
+      },
+    },
+  ];
+
+  if (selectedFormslyProjectId) {
+    jiraSettingsItems.push({ title: selectedFormslyProjectName });
+  }
+
   return (
     <Container>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -178,30 +200,42 @@ const JiraSettingsPage = ({
           onChange={setSegmentedControlValue}
         />
       </Center>
+
       {segmentedControlValue === "jira-settings" && (
         <Stack>
-          <JiraFormslyProjectList
-            jiraFormslyProjectList={jiraFormslyProjectList}
-            jiraFormslyProjectCount={jiraFormslyProjectCount}
-            jiraProjectList={jiraProjectData.data}
-            jiraOrganizationList={jiraOrganizationData.data}
-            setIsManagingUserAccountList={setIsManagingUserAccountList}
-            setSelectedFormslyProject={setSelectedFormslyProjectId}
-            selectedFormslyProject={selectedFormslyProjectId}
-            setJiraFormslyProjectList={setJiraFormslyProjectList}
-            setJiraFormslyProjectCount={setJiraFormslyProjectCount}
-          />
-          {isManagingUserAccountList && (
-            <JiraUserAccountList
-              jiraUserAcountList={jiraUserAccountData.data}
-              setIsManagingUserAccountList={setIsManagingUserAccountList}
-              setSelectedFormslyProject={setSelectedFormslyProjectId}
-              selectedFormslyProject={selectedFormslyProjectId}
-              selectedFormslyProjectName={selectedFormslyProjectName}
-              jiraUserRoleList={jiraUserRoleList}
-            />
-          )}
-
+          <Paper p="xl" shadow="xs">
+            <Breadcrumbs>
+              {jiraSettingsItems.map((item, index) => (
+                <Anchor key={index} onClick={item.action}>
+                  {item.title}
+                </Anchor>
+              ))}
+            </Breadcrumbs>
+            <Space h="sm" />
+            {!selectedFormslyProjectId && (
+              <JiraFormslyProjectList
+                jiraFormslyProjectList={jiraFormslyProjectList}
+                jiraFormslyProjectCount={jiraFormslyProjectCount}
+                jiraProjectList={jiraProjectData.data}
+                jiraOrganizationList={jiraOrganizationData.data}
+                setIsManagingUserAccountList={setIsManagingUserAccountList}
+                setSelectedFormslyProject={setSelectedFormslyProjectId}
+                selectedFormslyProject={selectedFormslyProjectId}
+                setJiraFormslyProjectList={setJiraFormslyProjectList}
+                setJiraFormslyProjectCount={setJiraFormslyProjectCount}
+              />
+            )}
+            {isManagingUserAccountList && selectedFormslyProjectName && (
+              <JiraUserAccountList
+                jiraUserAcountList={jiraUserAccountData.data}
+                setIsManagingUserAccountList={setIsManagingUserAccountList}
+                setSelectedFormslyProject={setSelectedFormslyProjectId}
+                selectedFormslyProject={selectedFormslyProjectId}
+                selectedFormslyProjectName={selectedFormslyProjectName}
+                jiraUserRoleList={jiraUserRoleList}
+              />
+            )}
+          </Paper>
           <JiraFormslyItemCategoryList
             jiraItemCategoryData={jiraItemCategoryData}
             jiraUserAcountList={jiraUserAccountData.data}
