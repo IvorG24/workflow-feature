@@ -5,138 +5,136 @@ import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEd
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import {
-    APP_SOURCE_ID,
-    DEFAULT_NUMBER_HR_SSOT_ROWS,
-    FETCH_OPTION_LIMIT,
-    formatDate,
-    IT_ASSET_FIELD_ID_LIST,
-    ITEM_FIELD_ID_LIST,
-    PED_ITEM_FIELD_ID_LIST,
-    ROW_PER_PAGE,
-    TECHNICAL_ASSESSMENT_FIELD_LIST,
+  APP_SOURCE_ID,
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+  ROW_PER_PAGE,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
-    addAmpersandBetweenWords,
-    escapeQuotes,
-    escapeQuotesForObject,
-    parseJSONIfValid,
+  addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
+  parseJSONIfValid,
 } from "@/utils/string";
 import {
-    AddressTableRow,
-    ApplicationInformationFilterFormValues,
-    ApplicationInformationSpreadsheetData,
-    ApplicationListItemType,
-    ApproverUnresolvedRequestCountType,
-    AppType,
-    AttachmentBucketType,
-    AttachmentTableRow,
-    BackgroundCheckFilterFormValues,
-    BackgroundCheckSpreadsheetData,
-    BackgroundCheckTableRow,
-    ConnectedRequestFormProps,
-    CreatePracticalTestFormType,
-    CreateTicketFormValues,
-    CreateTicketPageOnLoad,
-    CSICodeTableRow,
-    DashboardRequestorAndSignerType,
-    Dataset,
-    EquipmentDescriptionTableRow,
-    EquipmentPartTableInsert,
-    EquipmentPartType,
-    EquipmentTableRow,
-    FetchRequestListParams,
-    FetchUserRequestListParams,
-    FieldTableRow,
-    FormTableRow,
-    FormType,
-    FormWithOwnerType,
-    FormWithResponseType,
-    HRAnalyticsData,
-    HRPhoneInterviewFilterFormValues,
-    HRPhoneInterviewSpreadsheetData,
-    HRPhoneInterviewTableRow,
-    HRProjectType,
-    HRRecruitmentData,
-    InitialFormType,
-    InterviewOnlineMeetingTableRow,
-    ItemCategoryWithSigner,
-    ItemDescriptionFieldWithUoM,
-    ItemDescriptionTableRow,
-    ItemWithDescriptionAndField,
-    ItemWithDescriptionType,
-    JiraFormslyItemCategoryWithUserDataType,
-    JiraFormslyProjectType,
-    JiraItemCategoryDataType,
-    JiraOrganizationTableRow,
-    JiraProjectDataType,
-    JobOfferFilterFormValues,
-    JobOfferHistoryType,
-    JobOfferSpreadsheetData,
-    JobOfferTableRow,
-    LRFSpreadsheetData,
-    MemoListItemType,
-    MemoType,
-    NotificationOnLoad,
-    NotificationTableRow,
-    OptionTableRow,
-    OptionType,
-    OtherExpensesTypeTableRow,
-    PendingInviteType,
-    PracticalTestTableRow,
-    PracticalTestType,
-    PreferredPositionType,
-    QuestionnaireData,
-    ReferenceMemoType,
-    RequesterPrimarySignerType,
-    RequestListItemType,
-    RequestListOnLoad,
-    RequestTableRow,
-    RequestViewRow,
-    RequestWithResponseType,
-    SCICEmployeeTableRow,
-    SectionWithFieldType,
-    SignatureHistoryTableRow,
-    SignerRequestSLA,
-    SignerWithProfile,
-    SSOTOnLoad,
-    SSOTType,
-    TeamGroupTableRow,
-    TeamMemberOnLoad,
-    TeamMembershipRequestTableRow,
-    TeamMemberTableRow,
-    TeamMemberType,
-    TeamMemberWithUser,
-    TeamMemberWithUserDetails,
-    TeamOnLoad,
-    TeamProjectTableRow,
-    TeamTableRow,
-    TeamTeamMembershipRequest,
-    TechnicalAssessmentTableRow,
-    TechnicalInterviewFilterFormValues,
-    TechnicalInterviewSpreadsheetData,
-    TechnicalInterviewTableRow,
-    TicketListOnLoad,
-    TicketListType,
-    TicketPageOnLoad,
-    TicketStatusType,
-    TradeTestFilterFormValues,
-    TradeTestSpreadsheetData,
-    TradeTestTableRow,
-    TransactionTableRow,
-    UnformattedRequestListItemRequestSigner,
-    UserIssuedItem,
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
+  ApplicationListItemType,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AttachmentBucketType,
+  AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
+  BackgroundCheckTableRow,
+  ConnectedRequestFormProps,
+  CreatePracticalTestFormType,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  DashboardRequestorAndSignerType,
+  Dataset,
+  EquipmentDescriptionTableRow,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
+  FetchRequestListParams,
+  FetchUserRequestListParams,
+  FieldTableRow,
+  FormTableRow,
+  FormType,
+  FormWithOwnerType,
+  FormWithResponseType,
+  HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRPhoneInterviewTableRow,
+  HRProjectType,
+  HRRecruitmentData,
+  InitialFormType,
+  InterviewOnlineMeetingTableRow,
+  ItemCategoryWithSigner,
+  ItemDescriptionFieldWithUoM,
+  ItemDescriptionTableRow,
+  ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
+  JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
+  JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  JobOfferTableRow,
+  LRFSpreadsheetData,
+  MemoListItemType,
+  MemoType,
+  NotificationOnLoad,
+  NotificationTableRow,
+  OptionTableRow,
+  OtherExpensesTypeTableRow,
+  PendingInviteType,
+  PracticalTestTableRow,
+  PracticalTestType,
+  QuestionnaireData,
+  ReferenceMemoType,
+  RequesterPrimarySignerType,
+  RequestListItemType,
+  RequestListOnLoad,
+  RequestTableRow,
+  RequestViewRow,
+  RequestWithResponseType,
+  SCICEmployeeTableRow,
+  SectionWithFieldType,
+  SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
+  SSOTOnLoad,
+  SSOTType,
+  TeamGroupTableRow,
+  TeamMemberOnLoad,
+  TeamMembershipRequestTableRow,
+  TeamMemberTableRow,
+  TeamMemberType,
+  TeamMemberWithUser,
+  TeamMemberWithUserDetails,
+  TeamOnLoad,
+  TeamProjectTableRow,
+  TeamTableRow,
+  TeamTeamMembershipRequest,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
+  TechnicalInterviewTableRow,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
+  TradeTestTableRow,
+  TransactionTableRow,
+  UnformattedRequestListItemRequestSigner,
+  UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -1220,8 +1218,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };
@@ -5632,8 +5630,6 @@ export const phoneInterviewValidation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     interview_schedule?: string;
-    requestId:string;
-    meetingType:string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -5836,7 +5832,7 @@ export const getPositionTypeOptions = async (
 ) => {
   const { teamId, limit } = params;
   let start = 0;
-  let allData: OptionType[] = [];
+  let allData: OptionTableRow[] = [];
 
   while (true) {
     const end = start + limit - 1;
@@ -5854,9 +5850,11 @@ export const getPositionTypeOptions = async (
       break;
     }
 
-    const returnData = data.map((item) => ({
-      label: `${item.position_alias}`,
-      value: `${item.position_id}`,
+    const returnData = data.map((item, index) => ({
+      option_value: item.position_alias,
+      option_id: item.position_id,
+      option_field_id: uuidv4(),
+      option_order: start + index,
     }));
 
     allData = allData.concat(returnData);
@@ -6764,47 +6762,4 @@ export const getSpecialFieldTemplate = async (
   if (error) throw error;
 
   return data;
-};
-
-export const getPreferredPositionOnLoad = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    limit?: number;
-    page?: number;
-    search?: string;
-  }
-) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_hr_preferred_position_on_load",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-
-  return data as { groupMemberData: PreferredPositionType[]; totalCount: 0 };
-};
-
-export const fetchPreferredHrPosition = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    memberId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_hr_preferred_position_per_member_id",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-
-  return data as unknown as {
-    positionData: {
-      position_id: string;
-      position_alias: string;
-    }[];
-    positionId: string[];
-  };
 };
