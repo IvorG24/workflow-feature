@@ -514,6 +514,7 @@ const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
             requestSignerId={isUserSigner?.request_signer_id}
+            status={request.request_status}
           />
         )}
 

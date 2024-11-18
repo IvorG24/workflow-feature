@@ -910,6 +910,7 @@ const LiquidationReimbursementRequestPage = ({
               isBOQNotRequired ? onCreateJiraTicket : undefined
             }
             requestSignerId={isUserSigner?.request_signer_id}
+            status={request.request_status}
           />
         )}
 

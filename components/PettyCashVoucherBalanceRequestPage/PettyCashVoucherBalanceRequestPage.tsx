@@ -595,6 +595,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
             onCreateJiraTicket={onCreateJiraTicket}
+            status={request.request_status}
           />
         )}
 
