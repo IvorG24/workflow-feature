@@ -21,7 +21,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle } from "@tabler/icons-react";
 
 import { analyzeItem, getAllItems } from "@/backend/api/get";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ItemRow from "./ItemRow";
 
@@ -45,8 +45,6 @@ type Props = {
 const ItemAnalyticsPage = ({ items }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [resultList, setResultList] = useState<ResultType[] | undefined>(
     undefined
@@ -87,6 +85,7 @@ const ItemAnalyticsPage = ({ items }: Props) => {
       setResultList(data);
       setResultCount(count ?? 0);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -123,31 +122,36 @@ const ItemAnalyticsPage = ({ items }: Props) => {
     }
   };
 
-  const itemSearch = async (value: string) => {
-    if (!activeTeam.team_id) return;
-    try {
-      setIsSearching(true);
-      const itemList = await getAllItems(supabaseClient, {
-        teamId: activeTeam.team_id,
-        search: value,
-      });
-      setItemList(
-        itemList.map((item) => {
-          return {
-            label: item.item_general_name,
-            value: item.item_general_name,
-          };
-        })
-      );
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
+  useEffect(() => {
+    const itemSearch = async () => {
+      if (!activeTeam.team_id) return;
+      try {
+        setIsSearching(true);
+        const itemList = await getAllItems(supabaseClient, {
+          teamId: activeTeam.team_id,
+        });
+        setItemList(
+          itemList.map((item) => {
+            return {
+              label: item.item_general_name,
+              value: item.item_general_name,
+            };
+          })
+        );
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    if (activeTeam.team_id) {
+      itemSearch();
     }
-  };
+  }, [activeTeam.team_id]);
 
   return (
     <Container p={0}>
@@ -174,15 +178,6 @@ const ItemAnalyticsPage = ({ items }: Props) => {
                   value={value}
                   error={errors.item?.message}
                   rightSection={isSearching && <Loader size={16} />}
-                  onSearchChange={(value) => {
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-
-                    timeoutRef.current = setTimeout(() => {
-                      itemSearch(value);
-                    }, 500);
-                  }}
                 />
               )}
             />

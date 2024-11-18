@@ -7035,21 +7035,6 @@ plv8.subtransaction(function(){
     "Purpose"
   ]
 
-  const generalNameFieldId = plv8.execute(
-    `
-      SELECT field_id
-      FROM form_schema.field_table
-        INNER JOIN form_schema.section_table ON section_id = field_section_id
-        INNER JOIN form_schema.form_table ON form_id = section_form_id
-          AND form_name = 'Item'
-          AND form_is_formsly_form = true
-        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-          AND team_member_team_id = '${teamId}'
-      WHERE
-        field_name = 'General Name'
-    `
-  )[0].field_id;
-
   const itemGeneralNameList = plv8.execute(
     `
       SELECT
@@ -7061,7 +7046,7 @@ plv8.subtransaction(function(){
       INNER JOIN public.request_view ON request_id = request_response_request_id
         AND request_is_disabled = false
       WHERE
-        request_response_field_id = '${generalNameFieldId}'
+        request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
         AND request_response = '"${itemName}"'
       ORDER BY request_date_created DESC
       LIMIT '${limit}'
@@ -7069,19 +7054,7 @@ plv8.subtransaction(function(){
     `
   );
 
-  const itemGeneralNameCount = plv8.execute(
-    `
-      SELECT COUNT(*)
-      FROM request_schema.request_response_table
-      INNER JOIN public.request_view ON request_id = request_response_request_id
-        AND request_is_disabled = false
-      WHERE
-        request_response_field_id = '${generalNameFieldId}'
-        AND request_response = '"${itemName}"'
-    `
-  )[0].count;
-
-  const itemList = itemGeneralNameList.map((item) => {
+  returnData = itemGeneralNameList.map((item) => {
     const itemDescription = [];
     let csiCodeDescription = "";
     let quantity = 0;
@@ -7129,10 +7102,6 @@ plv8.subtransaction(function(){
       request_status: item.request_status
     }
   });
-  returnData = {
-    data: itemList,
-    count: Number(itemGeneralNameCount)
-  }
 });
 return returnData;
 $$ LANGUAGE plv8;
