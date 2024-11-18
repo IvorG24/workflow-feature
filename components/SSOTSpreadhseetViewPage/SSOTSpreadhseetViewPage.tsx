@@ -1,3 +1,4 @@
+import { getSSOT } from "@/backend/api/get";
 import { useSSOTTableFilter } from "@/hooks/useSSOTTableFilter";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -159,18 +160,14 @@ const SSOTSpreadsheetViewPage = ({
       setScrollBarType("never");
       setOffset(1);
 
-      const { data, error } = await supabaseClient.rpc("get_ssot", {
-        input_data: {
-          pageNumber: 1,
-          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search: search.trim(),
-          requestingProject: requestingProject ?? "",
-          itemName: itemName ?? "",
-        },
+      const formattedData = await getSSOT(supabaseClient, {
+        pageNumber: 1,
+        rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+        search: search.trim(),
+        requestingProject: requestingProject ?? "",
+        itemName: itemName ?? "",
       });
-      if (error) throw error;
 
-      const formattedData = data as SSOTType[];
       if (formattedData.length === DEFAULT_NUMBER_SSOT_ROWS) {
         setIsFetchable(true);
       } else {
@@ -205,17 +202,14 @@ const SSOTSpreadsheetViewPage = ({
       itemNameList.length !== 0 && itemFilterCount++;
       trimmedSearch.length !== 0 && itemFilterCount++;
 
-      const { data, error } = await supabaseClient.rpc("get_ssot", {
-        input_data: {
-          pageNumber: offset,
-          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search: search.trim(),
-          requestingProject: requestingProject ?? "",
-          itemName: itemName ?? "",
-        },
+      const data = await getSSOT(supabaseClient, {
+        pageNumber: offset,
+        rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+        search: search.trim(),
+        requestingProject: requestingProject ?? "",
+        itemName: itemName ?? "",
       });
 
-      if (error) throw error;
       if (data) {
         const formattedData = data as SSOTType[];
         if (formattedData.length < DEFAULT_NUMBER_SSOT_ROWS) {

@@ -1,6 +1,6 @@
 import {
   checkPracticalTestLabel,
-  getPositionTypeOptions,
+  getPositionWithPracticalTestOptions,
 } from "@/backend/api/get";
 import { createPracticalTestForm } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
