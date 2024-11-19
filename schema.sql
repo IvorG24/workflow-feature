@@ -12866,13 +12866,10 @@ AS $$
       SELECT
         COUNT(*)
       FROM request_schema.request_table
-      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
-        AND tmt.team_member_team_id = '${teamId}'
-      INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id AND tmt.team_member_team_id = '${teamId}'
       WHERE
         request_status = 'APPROVED'
-        AND request_is_disabled = FALSE
-        AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
+        AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
         ${projectFilterCondition}
         ${startDateCondition}
         ${endDateCondition}
@@ -12887,15 +12884,11 @@ AS $$
         request_status_date_updated,
         request_jira_id,
         request_project_id,
-        ft.form_id,
-        ft.form_name
+        request_form_id AS form_id
       FROM request_schema.request_table
-      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
-        AND tmt.team_member_team_id = '${teamId}'
-      INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id AND tmt.team_member_team_id = '${teamId}'
       WHERE
         request_status = 'APPROVED'
-        AND request_is_disabled = FALSE
         AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
         ${projectFilterCondition}
         ${startDateCondition}
@@ -12905,136 +12898,186 @@ AS $$
       OFFSET '${offset}'
     `);
 
-    const requestListWithResponses = [];
+    const parentRequestIds = parentRequests.map(req => req.request_id);
+    const parentResponses = plv8.execute(`
+        SELECT
+            rr.request_response,
+            rr.request_response_field_id,
+            rr.request_response_request_id,
+            rr.request_response_duplicatable_section_id,
+            ft.field_name
+        FROM
+            request_schema.request_response_table AS rr
+        INNER JOIN
+            form_schema.field_table AS ft
+            ON ft.field_id = rr.request_response_field_id
+        WHERE
+            rr.request_response_request_id = ANY($1)
+            AND ft.field_name IN (
+                'Supplier Name/Payee',
+                'Type of Request',
+                'Invoice Amount',
+                'VAT',
+                'Cost',
+                'Equipment Code',
+                'Cost Code',
+                'Bill of Quantity Code',
+                'Department'
+            )
+    `, [parentRequestIds]);
 
-    parentRequests.forEach((parentRequest) => {
-        const responseList = plv8.execute(`
-            SELECT
-                request_response,
-                request_response_field_id,
-                request_response_request_id,
-                request_response_duplicatable_section_id,
-                ft.field_name
-            FROM
-                request_schema.request_response_table
-            INNER JOIN
-                form_schema.field_table AS ft
-                ON ft.field_id = request_response_field_id
-            WHERE
-                request_response_request_id = '${parentRequest.request_id}'
-                AND ft.field_name IN (
-                    'Supplier Name/Payee',
-                    'Type of Request',
-                    'Invoice Amount',
-                    'VAT',
-                    'Cost',
-                    'Equipment Code',
-                    'Cost Code',
-                    'Bill of Quantity Code',
-                    'Department'
-                )
-        `);
-
-        const requestDepartment = JSON.parse(responseList.find((response) => response.field_name === 'Department')?.request_response);
-        const requestDepartmentCode = plv8.execute(`SELECT team_department_code FROM team_schema.team_department_table WHERE team_department_name = '${requestDepartment}'`)[0].team_department_code;
-
-        let jiraProjectCode = "";
-        const jiraProject = plv8.execute(`SELECT jpt.jira_project_jira_label FROM jira_schema.jira_formsly_project_table AS jfp INNER JOIN jira_schema.jira_project_table AS jpt ON jpt.jira_project_id = jfp.jira_project_id WHERE jfp.formsly_project_id = '${parentRequest.request_project_id}'`);
-
-        if (jiraProject[0]?.jira_project_jira_label) {
-          jiraProjectCode = jiraProject[0].jira_project_jira_label
+    const parentResponseMap = parentResponses.reduce((map, response) => {
+        if (!map[response.request_response_request_id]) {
+            map[response.request_response_request_id] = [];
         }
+        map[response.request_response_request_id].push(response);
+        return map;
+    }, {});
 
-        const parentRequestWithResponses = {
-            ...parentRequest,
-            request_response_list: responseList,
-            request_department_code: requestDepartmentCode,
-            jira_project_jira_label: jiraProjectCode
-        };
+    const departmentCache = {};
+    Object.entries(parentResponseMap).forEach(([requestId, responses]) => {
+        const department = JSON.parse(
+            responses.find(res => res.field_name === "Department")?.request_response || null
+        );
 
-        const childRequests = plv8.execute(`
-            SELECT
-                request_id,
-                request_formsly_id_prefix,
-                request_formsly_id_serial,
-                request_date_created,
-                request_status_date_updated,
-                request_jira_id,
-                ft.form_id,
-                ft.form_name
-            FROM request_schema.request_table
-            INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
-              AND tmt.team_member_team_id = '${teamId}'
-            INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
-            INNER JOIN request_schema.request_response_table AS rrt
-                ON rrt.request_response_request_id = request_id
-                AND REPLACE(rrt.request_response, '"', '') = '${parentRequest.request_id}'
-            WHERE
-                request_status = 'APPROVED'
-                AND request_is_disabled = FALSE
-                AND request_form_id = 'e10abdce-e012-45b6-bec4-e0133f1a8467'
-        `);
-
-        if (childRequests.length > 0) {
-            const childRequestsWithResponses = childRequests.map((childRequest) => {
-                const childResponseList = plv8.execute(`
-                    SELECT
-                        request_response,
-                        request_response_field_id,
-                        request_response_request_id,
-                        request_response_duplicatable_section_id,
-                        ft.field_name
-                    FROM
-                        request_schema.request_response_table
-                    INNER JOIN
-                        form_schema.field_table AS ft
-                        ON ft.field_id = request_response_field_id
-                    WHERE
-                        request_response_request_id = '${childRequest.request_id}'
-                        AND ft.field_name IN (
-                            'Supplier Name/Payee',
-                            'Type of Request',
-                            'Invoice Amount',
-                            'VAT',
-                            'Cost',
-                            'Equipment Code',
-                            'Cost Code',
-                            'Bill of Quantity Code'
-                        )
-                `);
-
-                return {
-                    ...childRequest,
-                    request_response_list: childResponseList
-                };
-            });
-
-            requestListWithResponses.push(parentRequestWithResponses, ...childRequestsWithResponses);
-        } else {
-            requestListWithResponses.push(parentRequestWithResponses);
+        if (department && !departmentCache[department]) {
+            const deptCodeQuery = `
+                SELECT team_department_code 
+                FROM team_schema.team_department_table 
+                WHERE team_department_name = $1
+            `;
+            departmentCache[department] = plv8.execute(deptCodeQuery, [department])[0]?.team_department_code;
         }
     });
 
-    const reducedRequestListWithResponses = requestListWithResponses.sort((a, b) => b.form_name.localeCompare(a.form_name)).reduce((acc, current) => {
-        if (current.form_name === 'Bill of Quantity') {
-            const parentRequest = plv8.execute(`
-                SELECT request_response
-                FROM request_schema.request_response_table
-                WHERE request_response_request_id = '${current.request_id}'
-                AND request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8'
+    const jiraProjectMap = {};
+    parentRequests.forEach(parent => {
+        if (!jiraProjectMap[parent.request_project_id]) {
+            const jiraProjectQuery = `
+                SELECT 
+                    jpt.jira_project_jira_label 
+                FROM jira_schema.jira_formsly_project_table AS jfp 
+                INNER JOIN jira_schema.jira_project_table AS jpt 
+                ON jpt.jira_project_id = jfp.jira_project_id 
+                WHERE jfp.formsly_project_id = $1
                 LIMIT 1
-            `)[0];
+            `;
+            const jiraResult = plv8.execute(jiraProjectQuery, [parent.request_project_id]);
+            jiraProjectMap[parent.request_project_id] = jiraResult[0]?.jira_project_jira_label || "";
+        }
+    });
 
-            if (parentRequest) {
-                const parentRequestId = parentRequest.request_response.split('"').join('')
-                const parentRequestMatchIndex = acc.findIndex((request) => request.request_id === parentRequestId);
+    const childRequests = plv8.execute(`
+        SELECT
+            rt.request_id,
+            rt.request_formsly_id_prefix,
+            rt.request_formsly_id_serial,
+            rt.request_date_created,
+            rt.request_status_date_updated,
+            rt.request_jira_id,
+            rt.request_form_id AS form_id,
+            rrt.request_response_request_id AS parent_request_id
+        FROM request_schema.request_table AS rt
+        INNER JOIN request_schema.request_response_table AS rrt 
+            ON rrt.request_response_request_id = rt.request_id
+        WHERE
+            rt.request_status = 'APPROVED'
+            AND rt.request_is_disabled = FALSE
+            AND rt.request_form_id = 'e10abdce-e012-45b6-bec4-e0133f1a8467'
+            AND rrt.request_response_request_id = ANY($1)
+    `, [parentRequestIds]);
+
+    const childRequestIds = childRequests.map(req => req.request_id);
+    const childResponses = plv8.execute(`
+        SELECT
+            rr.request_response,
+            rr.request_response_field_id,
+            rr.request_response_request_id,
+            ft.field_name
+        FROM
+            request_schema.request_response_table AS rr
+        INNER JOIN
+            form_schema.field_table AS ft
+            ON ft.field_id = rr.request_response_field_id
+        WHERE
+            rr.request_response_request_id = ANY($1)
+            AND ft.field_name IN (
+                'Supplier Name/Payee',
+                'Type of Request',
+                'Invoice Amount',
+                'VAT',
+                'Cost',
+                'Equipment Code',
+                'Cost Code',
+                'Bill of Quantity Code'
+            )
+    `, [childRequestIds]);
+
+    const childResponseMap = childResponses.reduce((map, response) => {
+        if (!map[response.request_response_request_id]) {
+            map[response.request_response_request_id] = [];
+        }
+        map[response.request_response_request_id].push(response);
+        return map;
+    }, {});
+
+    const requestListWithResponses = parentRequests.flatMap(parent => {
+        const parentResponseList = parentResponseMap[parent.request_id] || [];
+        const requestDepartment = JSON.parse(
+            parentResponseList.find(res => res.field_name === "Department")?.request_response || null
+        );
+
+        const parentRequestWithResponses = {
+            ...parent,
+            request_response_list: parentResponseList,
+            request_department_code: departmentCache[requestDepartment] || null,
+            jira_project_jira_label: jiraProjectMap[parent.request_project_id] || ""
+        };
+
+        const childrenForParent = childRequests
+            .filter(child => child.parent_request_id === parent.request_id)
+            .map(child => ({
+                ...child,
+                request_response_list: childResponseMap[child.request_id] || []
+            }));
+
+        return childrenForParent.length > 0
+            ? [parentRequestWithResponses, ...childrenForParent]
+            : [parentRequestWithResponses];
+    });
+
+    const boqRequestIds = requestListWithResponses
+    .filter(request => request.form_id === 'e10abdce-e012-45b6-bec4-e0133f1a8467')
+    .map(request => `'${request.request_id}'`)
+    .join(',');
+
+    const boqParentResponses = boqRequestIds
+    ? plv8.execute(`
+        SELECT request_response, request_response_request_id
+        FROM request_schema.request_response_table
+        WHERE request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8'
+        AND request_response_request_id IN (${boqRequestIds})
+    `)
+    : [];
+
+    const reducedRequestListWithResponses = requestListWithResponses
+    .reduce((acc, current) => {
+        if (current.form_id === 'e10abdce-e012-45b6-bec4-e0133f1a8467') {
+            const parentResponse = boqParentResponses.find(
+                res => res.request_response_request_id === current.request_id
+            );
+            if (parentResponse) {
+                const parentRequestId = parentResponse.request_response.replaceAll('"', '');
+                const parentRequestMatchIndex = acc.findIndex(
+                    request => request.request_id === parentRequestId
+                );
 
                 if (parentRequestMatchIndex !== -1) {
                     acc[parentRequestMatchIndex] = {
                         ...acc[parentRequestMatchIndex],
                         request_boq_data: {
                             request_id: current.request_id,
-                            request_formsly_id: current.request_formsly_id_prefix + '-' + current.request_formsly_id_serial
+                            request_formsly_id: `${current.request_formsly_id_prefix}-${current.request_formsly_id_serial}`
                         },
                         request_response_list: current.request_response_list
                     };
@@ -13043,7 +13086,6 @@ AS $$
         } else {
             acc.push(current);
         }
-
         return acc;
     }, []);
 
