@@ -1315,99 +1315,81 @@ plv8.subtransaction(function(){
         SELECT team_project_code
         FROM team_schema.team_project_table
         WHERE
-          team_project_name = '${requestingProject}'
+          team_project_name = $1
           AND team_project_is_disabled = false
         LIMIT 1
-      `
+      `,
+      [requestingProject]
     );
     if(projectCode.length) {
       requestingProjectCondition = `AND request_formsly_id ILIKE '${projectCode[0].team_project_code}%'`
     }
   }
-
-  const itemRequestList = plv8.execute(
-    `
-      SELECT
-        request_id,
-        request_formsly_id,
-        request_jira_id,
-        request_otp_id,
-        request_date_created,
-        request_team_member_id
+  const itemNameCondition = itemName.length ? `
+    INNER JOIN (
+      SELECT DISTINCT(request_response_request_id)
+      FROM request_schema.request_response_table
+      WHERE
+        request_response = '"' || $1 || '"'
+        AND request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
+    ) requestResponse ON request_id = requestResponse.request_response_request_id
+  ` : "";
+  const searchCondition = search.length ? `
+    AND (request_formsly_id ILIKE '%' || $2 || '%')
+  ` : "";
+  const query = `
+    WITH request_data AS (
+      SELECT *
       FROM public.request_view
-      ${
-        itemName.length ? `
-        INNER JOIN (
-          SELECT DISTINCT(request_response_request_id)
-          FROM request_schema.request_response_table
-          WHERE
-            request_response = '"${itemName}"'
-            AND request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
-        ) requestResponse ON request_id = requestResponse.request_response_request_id
-        ` : ""
-      }
+      ${itemNameCondition}
       WHERE
         request_status = 'APPROVED'
         AND request_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
-        ${
-          search.length
-            ? `AND (request_formsly_id ILIKE '%${search}%')`
-            : ""
-        }
-        ${
-          requestingProjectCondition.length
-            ? requestingProjectCondition
-            : ""
-        }
+        ${searchCondition}
+        ${requestingProjectCondition}
       ORDER BY request_status_date_updated DESC
-      OFFSET ${rowStart}
-      ROWS FETCH FIRST ${rowLimit} ROWS ONLY
-    `
-  );
-
-  ssot_data = itemRequestList.map((item) => {
-    const responseList = plv8.execute(
-      `
-        SELECT
-          request_response,
-          request_response_duplicatable_section_id,
-          field_name,
-          field_type
+      OFFSET $3 ROWS FETCH FIRST $4 ROWS ONLY
+    )
+    SELECT jsonb_build_object(
+      'item_request_id', request_id,
+      'item_request_formsly_id', request_formsly_id,
+      'item_request_jira_id', request_jira_id,
+      'item_request_otp_id', request_otp_id,
+      'item_request_date_created', request_date_created,
+      'item_request_response', (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'request_response', request_response,
+            'request_response_field_name', field_name,
+            'request_response_field_type', field_type,
+            'request_response_duplicatable_section_id', request_response_duplicatable_section_id
+          )
+        )
         FROM request_schema.request_response_table
         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE
-          request_response_request_id = '${item.request_id}'
-      `
-    );
-    const itemTeamMember = plv8.execute(
-      `
-        SELECT
-          user_first_name,
-          user_last_name
+        WHERE 
+          request_response_request_id = request_id
+      ),
+      'item_request_owner', (
+        SELECT jsonb_build_object(
+          'user_first_name', user_first_name,
+          'user_last_name', user_last_name
+        )
         FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id
-        WHERE
-          team_member_id = '${item.request_team_member_id}'
-      `
-    )[0];
+        WHERE 
+          team_member_id = request_team_member_id
+      )
+    ) 
+    FROM request_data
+  `;
 
-    return {
-      item_request_id: item.request_id,
-      item_request_formsly_id: item.request_formsly_id,
-      item_request_jira_id: item.request_jira_id,
-      item_request_otp_id: item.request_otp_id,
-      item_request_date_created: item.request_date_created,
-      item_request_response: responseList.map(response => {
-        return {
-          request_response: response.request_response,
-          request_response_field_name: response.field_name,
-          request_response_field_type: response.field_type,
-          request_response_duplicatable_section_id: response.request_response_duplicatable_section_id
-        }
-      }),
-      item_request_owner: itemTeamMember
-    }
-  })
+  ssot_data = plv8.execute(query, [
+    itemName || null,
+    search || null,
+    rowStart,
+    rowLimit
+  ]).map(data => data.jsonb_build_object);
 });
 return ssot_data;
 $$ LANGUAGE plv8;
