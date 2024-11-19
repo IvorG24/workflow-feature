@@ -710,7 +710,7 @@ const RequestFormFields = ({
                   )
                     return true;
 
-                  const pattern = /^HRSM-\d+$/;
+                  const pattern = /^(HRSM|LOGSM)-\d+$/;
                   const entries = (value as string).split(/[\s,]+/);
 
                   for (const entry of entries) {
