@@ -166,7 +166,7 @@ const ProjectMembers = ({
       <Divider mb="xl" mt="sm" />
 
       <Box mt="xl">
-        <Paper p="xl" shadow="xs">
+        <Paper>
           {!isAddingMember ? (
             <MemberList
               projectMemberList={projectMemberList}
