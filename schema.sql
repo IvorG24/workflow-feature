@@ -1417,17 +1417,109 @@ AS $$
       sss_back_image_url,
     } = input_data;
 
-    if (user_active_team_id) {
-      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
-    } else {
-      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
-    }
-    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+    user_data = plv8.execute(
+      `
+        INSERT INTO user_schema.user_table 
+        (
+          user_id,
+          user_email,
+          user_first_name,
+          user_last_name,
+          user_username,
+          user_avatar,
+          user_phone_number,
+          user_job_title,
+          user_active_team_id
+        ) 
+        VALUES 
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8,
+          $9
+        ) 
+        RETURNING *
+      `, [
+        user_id,
+        user_email,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar,
+        user_phone_number,
+        user_job_title,
+        user_active_team_id || null
+      ]
+    )[0];
 
-    if (invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+    const invitation = plv8.execute(
+      `
+        SELECT 
+          invitation_table.*,
+          team_name 
+        FROM user_schema.invitation_table 
+        INNER JOIN team_schema.team_member_table 
+          ON invitation_from_team_member_id = team_member_id 
+        INNER JOIN team_schema.team_table 
+          ON team_member_team_id = team_id 
+        WHERE invitation_to_email = $1
+      `, [
+        user_email
+      ]
+    )[0];
+
+    if (invitation) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table 
+          (
+            notification_app,
+            notification_content,
+            notification_redirect_url,
+            notification_type,
+            notification_user_id
+          ) 
+          VALUES 
+          (
+            $1,
+            'You have been invited to join ' || $2,
+            '/user/invitation/' || $3,
+            $4,
+            $5
+          )
+        `, [
+          'GENERAL',
+          invitation.team_name,
+          invitation.invitation_id,
+          'INVITE',
+          user_id
+        ]
+      );
+    }
 
     if (user_employee_number) {
-      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+      plv8.execute(
+        `
+          INSERT INTO user_schema.user_employee_number_table 
+          (
+            user_employee_number, 
+            user_employee_number_user_id
+          ) 
+          VALUES 
+          (
+            $1,
+            $2
+          )
+        `, [
+          user_employee_number,
+          user_id
+        ]
+      );
     }
 
     plv8.execute(
@@ -1441,13 +1533,18 @@ AS $$
         )
         VALUES
         (
-          '${sss_number}',
-          '${sss_front_image_url}',
-          '${sss_back_image_url}',
-          '${user_id}'
+          $1,
+          $2,
+          $3,
+          $4
         )
         RETURNING *
-      `
+      `, [
+        sss_number,
+        sss_front_image_url,
+        sss_back_image_url,
+        user_id
+      ]
     );
  });
 $$ LANGUAGE plv8;
