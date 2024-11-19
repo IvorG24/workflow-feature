@@ -6591,20 +6591,15 @@ export const analyzeItem = async (
     itemList.push(...(data as ResultType[]));
   }
 
-  const {
-    data,
-    count,
-    error: countError,
-  } = await supabaseClient
+  const { count, error: countError } = await supabaseClient
     .schema("request_schema")
     .from("request_response_table")
     .select("*, request_table!inner(*)", { count: "exact" })
     .eq("request_table.request_is_disabled", false)
     .eq("request_response_field_id", "b2c899e8-4ac7-4019-819e-d6ebcae71f41")
     .eq("request_response", `"${itemName}"`);
-
   if (countError) throw countError;
-  console.log(data, count, countError);
+
   return {
     data: itemList,
     count,
