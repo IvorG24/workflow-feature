@@ -222,7 +222,7 @@ const ItemFormPage = ({
     itemFormItems.push({
       title: selectedProject.projectName,
       action: () => {
-        setSelectedProject(null);
+        setSelectedProject(selectedProject);
       },
     });
   }
