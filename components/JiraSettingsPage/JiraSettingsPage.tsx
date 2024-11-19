@@ -11,21 +11,19 @@ import {
   JiraUserRoleTableRow,
 } from "@/utils/types";
 import {
-  Anchor,
-  Breadcrumbs,
   Center,
   Container,
   LoadingOverlay,
   Paper,
   SegmentedControl,
   Stack,
-  Space,
   Text,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
+import BreadcrumbWrapper from "../BreadCrumbs/BreadCrumbWrapper";
 import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
 import JiraOrganizationLookupTable from "./JiraOrganizationLookupTable/JiraOrganizationLookupTable";
@@ -160,12 +158,7 @@ const JiraSettingsPage = ({
     }
   }, [jiraFormslyProjectList, selectedFormslyProjectId]);
 
-  type BreadcrumbItem = {
-    title: string;
-    action?: () => void;
-  };
-
-  const jiraSettingsItems: BreadcrumbItem[] = [
+  const jiraSettingsItems = [
     {
       title: "Team Projects",
       action: () => {
@@ -176,7 +169,12 @@ const JiraSettingsPage = ({
   ];
 
   if (selectedFormslyProjectId) {
-    jiraSettingsItems.push({ title: selectedFormslyProjectName });
+    jiraSettingsItems.push({
+      title: selectedFormslyProjectName,
+      action: () => {
+        setIsManagingUserAccountList(true);
+      },
+    });
   }
 
   return (
@@ -203,15 +201,7 @@ const JiraSettingsPage = ({
 
       {segmentedControlValue === "jira-settings" && (
         <Stack>
-          <Paper p="xl" shadow="xs">
-            <Breadcrumbs>
-              {jiraSettingsItems.map((item, index) => (
-                <Anchor key={index} onClick={item.action}>
-                  {item.title}
-                </Anchor>
-              ))}
-            </Breadcrumbs>
-            <Space h="sm" />
+          <BreadcrumbWrapper breadcrumbItems={jiraSettingsItems}>
             {!selectedFormslyProjectId && (
               <JiraFormslyProjectList
                 jiraFormslyProjectList={jiraFormslyProjectList}
@@ -235,7 +225,7 @@ const JiraSettingsPage = ({
                 jiraUserRoleList={jiraUserRoleList}
               />
             )}
-          </Paper>
+          </BreadcrumbWrapper>
           <JiraFormslyItemCategoryList
             jiraItemCategoryData={jiraItemCategoryData}
             jiraUserAcountList={jiraUserAccountData.data}
