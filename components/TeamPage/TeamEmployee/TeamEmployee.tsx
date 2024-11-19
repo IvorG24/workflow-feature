@@ -1,7 +1,7 @@
 import { getSCICEmployeeList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { SCICEmployeeTableRow } from "@/utils/types";
-import { Box, Center, Paper, Space, Text } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
@@ -90,7 +90,6 @@ const TeamEmployee = ({ isOwnerOrAdmin }: Props) => {
             handleFetch={handleFetch}
           />
         ) : null}
-      <Space h="xl" />
         {selectedEmployee ? (
           <EditEmployee
             activePage={activePage}
