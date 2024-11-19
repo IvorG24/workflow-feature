@@ -253,7 +253,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert,
+    } & TeamMemberTableInsert
   ];
 };
 
@@ -758,6 +758,7 @@ export const createRequest = async (
     })
     .select()
     .single();
+
   if (error) throw error;
 
   return data as RequestTableRow;

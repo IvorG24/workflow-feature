@@ -1296,102 +1296,102 @@ CREATE OR REPLACE FUNCTION get_ssot(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-let ssot_data;
-plv8.subtransaction(function(){
-  const {
-    pageNumber,
-    rowLimit,
-    search,
-    requestingProject,
-    itemName
-  } = input_data;
+  let ssot_data;
+  plv8.subtransaction(function(){
+    const {
+      pageNumber,
+      rowLimit,
+      search,
+      requestingProject,
+      itemName
+    } = input_data;
 
-  const rowStart = (pageNumber - 1) * rowLimit;
+    const rowStart = (pageNumber - 1) * rowLimit;
 
-  let requestingProjectCondition = "";
-  if (requestingProject.length) {
-    const projectCode = plv8.execute(
-      `
-        SELECT team_project_code
-        FROM team_schema.team_project_table
-        WHERE
-          team_project_name = $1
-          AND team_project_is_disabled = false
-        LIMIT 1
-      `,
-      [requestingProject]
-    );
-    if(projectCode.length) {
-      requestingProjectCondition = `AND request_formsly_id ILIKE '${projectCode[0].team_project_code}%'`
+    let requestingProjectCondition = "";
+    if (requestingProject.length) {
+      const projectCode = plv8.execute(
+        `
+          SELECT team_project_code
+          FROM team_schema.team_project_table
+          WHERE
+            team_project_name = $1
+            AND team_project_is_disabled = false
+          LIMIT 1
+        `,
+        [requestingProject]
+      );
+      if(projectCode.length) {
+        requestingProjectCondition = `AND request_formsly_id ILIKE '${projectCode[0].team_project_code}%'`
+      }
     }
-  }
-  const itemNameCondition = itemName.length ? `
-    INNER JOIN (
-      SELECT DISTINCT(request_response_request_id)
-      FROM request_schema.request_response_table
-      WHERE
-        request_response = '"' || $1 || '"'
-        AND request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
-    ) requestResponse ON request_id = requestResponse.request_response_request_id
-  ` : "";
-  const searchCondition = search.length ? `
-    AND (request_formsly_id ILIKE '%' || $2 || '%')
-  ` : "";
-  const query = `
-    WITH request_data AS (
-      SELECT *
-      FROM public.request_view
-      ${itemNameCondition}
-      WHERE
-        request_status = 'APPROVED'
-        AND request_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
-        ${searchCondition}
-        ${requestingProjectCondition}
-      ORDER BY request_status_date_updated DESC
-      OFFSET $3 ROWS FETCH FIRST $4 ROWS ONLY
-    )
-    SELECT jsonb_build_object(
-      'item_request_id', request_id,
-      'item_request_formsly_id', request_formsly_id,
-      'item_request_jira_id', request_jira_id,
-      'item_request_otp_id', request_otp_id,
-      'item_request_date_created', request_date_created,
-      'item_request_response', (
-        SELECT jsonb_agg(
-          jsonb_build_object(
-            'request_response', request_response,
-            'request_response_field_name', field_name,
-            'request_response_field_type', field_type,
-            'request_response_duplicatable_section_id', request_response_duplicatable_section_id
-          )
-        )
+    const itemNameCondition = itemName.length ? `
+      INNER JOIN (
+        SELECT DISTINCT(request_response_request_id)
         FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE 
-          request_response_request_id = request_id
-      ),
-      'item_request_owner', (
-        SELECT jsonb_build_object(
-          'user_first_name', user_first_name,
-          'user_last_name', user_last_name
-        )
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id
-        WHERE 
-          team_member_id = request_team_member_id
+        WHERE
+          request_response = '"' || $1 || '"'
+          AND request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
+      ) requestResponse ON request_id = requestResponse.request_response_request_id
+    ` : "";
+    const searchCondition = search.length ? `
+      AND (request_formsly_id ILIKE '%' || $2 || '%')
+    ` : "";
+    const query = `
+      WITH request_data AS (
+        SELECT *
+        FROM public.request_view
+        ${itemNameCondition}
+        WHERE
+          request_status = 'APPROVED'
+          AND request_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          ${searchCondition}
+          ${requestingProjectCondition}
+        ORDER BY request_status_date_updated DESC
+        OFFSET $3 ROWS FETCH FIRST $4 ROWS ONLY
       )
-    ) 
-    FROM request_data
-  `;
+      SELECT jsonb_build_object(
+        'item_request_id', request_id,
+        'item_request_formsly_id', request_formsly_id,
+        'item_request_jira_id', request_jira_id,
+        'item_request_otp_id', request_otp_id,
+        'item_request_date_created', request_date_created,
+        'item_request_response', (
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'request_response', request_response,
+              'request_response_field_name', field_name,
+              'request_response_field_type', field_type,
+              'request_response_duplicatable_section_id', request_response_duplicatable_section_id
+            )
+          )
+          FROM request_schema.request_response_table
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          WHERE 
+            request_response_request_id = request_id
+        ),
+        'item_request_owner', (
+          SELECT jsonb_build_object(
+            'user_first_name', user_first_name,
+            'user_last_name', user_last_name
+          )
+          FROM team_schema.team_member_table
+          INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id
+          WHERE 
+            team_member_id = request_team_member_id
+        )
+      ) 
+      FROM request_data
+    `;
 
-  ssot_data = plv8.execute(query, [
-    itemName || null,
-    search || null,
-    rowStart,
-    rowLimit
-  ]).map(data => data.jsonb_build_object);
-});
-return ssot_data;
+    ssot_data = plv8.execute(query, [
+      itemName || null,
+      search || null,
+      rowStart,
+      rowLimit
+    ]).map(data => data.jsonb_build_object);
+  });
+  return ssot_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_user_with_sss_id(
@@ -1546,7 +1546,7 @@ AS $$
         user_id
       ]
     );
- });
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request(
@@ -1584,7 +1584,15 @@ AS $$
     if(isFormslyForm) {
       let project;
       if(projectId){
-        project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
+        project = plv8.execute(
+          `
+            SELECT * 
+            FROM team_schema.team_project_table 
+            WHERE team_project_id = $1
+          `, [
+            projectId
+          ]
+        )[0];
       }
 
       if(formName ==='Quotation') {
@@ -1643,25 +1651,31 @@ AS $$
 
     if (!projectId && !endId) {
         request_data = plv8.execute(
-            `
+          `
             INSERT INTO request_schema.request_table
             (
-                request_id,
-                request_form_id
-                ${teamMemberId ? `,request_team_member_id` : ""}
-                ${status ? `,request_status` : ""}
-                ${status ? `,request_status_date_updated` : ""}
+              request_id,
+              request_form_id,
+              request_team_member_id,
+              request_status,
+              request_status_date_updated
             )
             VALUES
             (
-                '${requestId}',
-                '${formId}'
-                ${teamMemberId ? `,'${teamMemberId}'` : ""}
-                ${status ? `,'${status}'` : ""}
-                ${status ? `,NOW()` : ""}
+              $1,
+              $2,
+              $3,
+              $4,
+              $5
             )
             RETURNING *
-            `
+          `, [
+            requestId,
+            formId,
+            teamMemberId || null,
+            status || 'PENDING',
+            status ? 'NOW()' : null 
+          ]
         )[0];
     } else {
       request_data = plv8.execute(
@@ -1670,37 +1684,62 @@ AS $$
           (
             request_id,
             request_form_id,
-            request_formsly_id_prefix
-            ${teamMemberId ? `,request_team_member_id` : ""}
-            ${projectId ? `,request_project_id` : ""}
-            ${status ? `,request_status` : ""}
-            ${status ? `,request_status_date_updated` : ""}
+            request_formsly_id_prefix,
+            request_team_member_id,
+            request_project_id,
+            request_status,
+            request_status_date_updated
           )
           VALUES
           (
-            '${requestId}',
-            '${formId}',
-            '${formslyIdPrefix}'
-            ${teamMemberId ? `,'${teamMemberId}'` : ""}
-            ${projectId ? `,'${projectId}'` : ""}
-            ${status ? `,'${status}'` : ""}
-            ${status ? `,NOW()` : ""}
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7
           )
           RETURNING *
-        `
+        `, [
+          requestId,
+          formId,
+          formslyIdPrefix,
+          teamMemberId || null,
+          projectId || null,
+          status || 'PENDING',
+          status ? 'NOW()' : null 
+        ]
       )[0];
     }
 
-    plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues}`);
+    plv8.execute(
+      `
+        INSERT INTO request_schema.request_response_table 
+        (
+          request_response,
+          request_response_duplicatable_section_id,
+          request_response_field_id,
+          request_response_request_id,
+          request_response_prefix
+        ) 
+        VALUES ${responseValues}
+      `
+    );
 
     if (!status) {
       if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
-
-
-        const position = plv8.execute(`SELECT REPLACE(request_response, '"', '') AS response
+        const position = plv8.execute(
+          `
+            SELECT REPLACE(request_response, '"', '') AS response
             FROM request_schema.request_response_table
-            WHERE request_response_request_id = '${requestId}'
-            AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].response;
+            WHERE 
+              request_response_request_id = $1
+              AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+          `, [
+            requestId
+          ]
+        )[0].response;
 
         const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
         const currentYear = currentDate.getFullYear();
@@ -1730,42 +1769,47 @@ AS $$
         }
 
         const teamMemberData = plv8.execute(
-        `
+          `
             SELECT
             tg.team_member_id,
             pt.position_alias,
             CASE
-                WHEN pt.position_alias = $1 THEN true
-                ELSE false
+              WHEN pt.position_alias = $1 
+                THEN true
+              ELSE false
             END AS is_preferred
             FROM team_schema.team_group_member_table tg
             LEFT JOIN hr_schema.hr_preferred_position_table p
-            ON p.hr_preferred_position_group_member_id = tg.team_group_member_id
+              ON p.hr_preferred_position_group_member_id = tg.team_group_member_id
             LEFT JOIN lookup_schema.position_table pt
-            ON pt.position_id = p.hr_preferred_position_position_id
+              ON pt.position_id = p.hr_preferred_position_position_id
             WHERE tg.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-        `,
-        [position]
+          `, [
+            position
+          ]
         );
 
         if (!teamMemberData.length) {
-        throw new Error("No team members found.");
+          throw new Error("No team members found.");
         }
 
+        const teamMemberIdList = teamMemberData.map(member => member.team_member_id);
         const signerIds = plv8.execute(
-        `
+          `
             SELECT
-            signer_id,
-            signer_team_member_id
+              signer_id,
+              signer_team_member_id
             FROM form_schema.signer_table
             WHERE
-            signer_team_member_id IN (${teamMemberData.map(member => `'${member.team_member_id}'`).join(", ")})
-            AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-        `
+              signer_team_member_id = ANY($1)
+              AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+          `, [
+            teamMemberIdList
+          ]
         );
 
         if (!signerIds.length) {
-        throw new Error("No signers found.");
+          throw new Error("No signers found.");
         }
         const combinedSignerData = signerIds.map(signer => {
           const teamMember = teamMemberData.find(
@@ -1778,89 +1822,196 @@ AS $$
         });
 
         const preferredSignerIds = combinedSignerData
-            .filter(signer => signer.is_preferred)
-            .map(signer => `'${signer.signer_id}'`);
+          .filter(signer => signer.is_preferred)
+          .map(signer => signer.signer_id);
 
         const isPreferredCondition = preferredSignerIds.length > 0
-        ? `signer_id IN (${preferredSignerIds.join(", ")})`
-        : `false`;
+          ? `signer_id IN (${preferredSignerIds})`
+          : `false`;
 
         const selectSignerDynamically = (signers) => {
           if (!signers || signers.length === 0) return null;
-            const signerLoadData = plv8.execute(`
+
+          const signerIdList = signers.map(s => s.signer_id);
+          const signerLoadData = plv8.execute(
+            `
               WITH preferred_signers AS (
-              SELECT
-                signer_id,
-                COUNT(request_signer_id) AS total_count,
-                COUNT(CASE WHEN request_date_created::Date BETWEEN '${weekStart.toISOString()}' AND '${weekEnd.toISOString()}' THEN request_signer_id END) AS weekly_count,
-                CASE WHEN ${isPreferredCondition} THEN true ELSE false
-                END AS is_preferred
-              FROM form_schema.signer_table
-              LEFT JOIN request_schema.request_signer_table
-              ON request_signer_signer_id = signer_id
-              LEFT JOIN request_schema.request_table
-              ON request_id = request_signer_request_id
-              WHERE signer_id IN (${signers.map(s => `'${s.signer_id}'`).join(", ")})
-              GROUP BY signer_id),
+                SELECT
+                  signer_id,
+                  COUNT(request_signer_id) AS total_count,
+                  COUNT(
+                    CASE WHEN request_date_created::Date BETWEEN $1 AND $2
+                      THEN request_signer_id END
+                  ) AS weekly_count,
+                  CASE WHEN $3
+                    THEN true ELSE false
+                  END AS is_preferred
+                FROM form_schema.signer_table
+                  LEFT JOIN request_schema.request_signer_table
+                    ON request_signer_signer_id = signer_id
+                  LEFT JOIN request_schema.request_table
+                    ON request_id = request_signer_request_id
+                WHERE 
+                  signer_id = ANY($4)
+                GROUP BY signer_id
+              ),
               preferred_balance AS (
-              SELECT
-              MIN(weekly_count) AS min_weekly_count,
-              MAX(weekly_count) AS max_weekly_count
-              FROM preferred_signers),
+                SELECT
+                  MIN(weekly_count) AS min_weekly_count,
+                  MAX(weekly_count) AS max_weekly_count
+                FROM preferred_signers
+              ),
               priority_signers AS (
                 SELECT *,
-                  CASE
-                  WHEN min_weekly_count = max_weekly_count THEN weekly_count
+                  CASE WHEN min_weekly_count = max_weekly_count 
+                    THEN weekly_count
                   ELSE is_preferred::INT * 1000 + weekly_count
-                    END AS sorting_priority
+                  END AS sorting_priority
                 FROM preferred_signers
-                CROSS JOIN preferred_balance)
-            SELECT
-              signer_id,
-              weekly_count,
-              total_count,
-              is_preferred
-            FROM priority_signers
-            ORDER BY
-              weekly_count ASC,
-              is_preferred DESC,
-              total_count ASC
-              LIMIT 1;
-            `);
-
+                CROSS JOIN preferred_balance
+              )
+              SELECT
+                signer_id,
+                weekly_count,
+                total_count,
+                is_preferred
+              FROM priority_signers
+              ORDER BY
+                weekly_count ASC,
+                is_preferred DESC,
+                total_count ASC
+                LIMIT 1
+            `, [
+              weekStart.toISOString(),
+              weekEnd.toISOString(),
+              isPreferredCondition,
+              signerIdList
+            ]
+          );
           return signerLoadData.length > 0 ? signerLoadData[0].signer_id : null;
         };
-
         const selectedSigner = selectSignerDynamically(combinedSignerData);
 
         if (!selectedSigner) {
-        throw new Error("No available signers found.");
+          throw new Error("No available signers found.");
         }
 
-        plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ('${selectedSigner}', '${requestId}')`);
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_signer_table 
+            (
+              request_signer_signer_id,
+              request_signer_request_id
+            ) 
+            VALUES 
+            (
+              $1, 
+              $2
+            )
+          `, [
+            selectedSigner,
+            requestId
+          ]
+        );
 
         if (recruiter) {
-          plv8.execute(`INSERT INTO hr_schema.recruitment_table (recruitment_request_id, recruitment_team_member_id) VALUES ('${requestId}', '${recruiter}')`);
+          plv8.execute(
+            `
+              INSERT INTO hr_schema.recruitment_table 
+              (
+                recruitment_request_id, 
+                recruitment_team_member_id
+              ) 
+              VALUES 
+              (
+                $1,
+                $2
+              )
+            `, [
+              requestId,
+              recruiter
+            ]
+          );
         }
       } else {
-        plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_signer_table 
+            (
+              request_signer_signer_id,
+              request_signer_request_id
+            ) 
+            VALUES ${signerValues}
+          `
+        );
       }
     } else {
       if (status === 'APPROVED' && formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
-        const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id;
-        plv8.execute(`INSERT INTO hr_schema.hr_phone_interview_table (hr_phone_interview_request_id) VALUES ('${requestUUID}')`)
+        const requestUUID = plv8.execute(
+          `
+            SELECT request_id 
+            FROM public.request_view 
+            WHERE request_formsly_id = $1
+          `, [
+            rootFormslyRequestId
+          ]
+        )[0].request_id;
+        plv8.execute(
+          `
+            INSERT INTO hr_schema.hr_phone_interview_table 
+            (
+              hr_phone_interview_request_id
+            ) 
+            VALUES 
+            (
+              $1
+            )
+          `, [
+            requestUUID
+          ]
+        );
       }
     }
 
     if (requestScore !== undefined) {
-      plv8.execute(`INSERT INTO request_schema.request_score_table (request_score_value,request_score_request_id) VALUES (${requestScore}, '${requestId}')`);
+      plv8.execute(
+        
+          `INSERT INTO request_schema.request_score_table 
+          (
+            request_score_value,
+            request_score_request_id
+          ) 
+          VALUES 
+          (
+            $1,
+            $2
+          )
+        `, [
+          requestScore,
+          requestId
+        ]
+      );
     }
 
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
+    const activeTeamResult = plv8.execute(
+      `
+        SELECT * 
+        FROM team_schema.team_table 
+        WHERE team_id = $1
+      `, [
+        teamId
+      ]
+    );
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam && requestSignerNotificationInput.length) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key`);
+      const teamNameUrlKeyResult = plv8.execute(
+        `
+          SELECT public.format_team_name_to_url_key($1) AS url_key
+        `, [
+          activeTeam.team_name
+        ]
+      );
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1871,53 +2022,141 @@ AS $$
         )
         .join(",");
 
-        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues}`);
+        plv8.execute(
+          `
+            INSERT INTO public.notification_table 
+            (
+              notification_app,
+              notification_content,
+              notification_redirect_url,
+              notification_team_id,
+              notification_type,
+              notification_user_id
+            ) 
+            VALUES ${notificationValues}
+          `
+        );
       }
     }
 
     if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
-      plv8.execute(`INSERT INTO hr_schema.request_connection_table (request_connection_application_information_request_id) VALUES ('${requestId}')`)
+      plv8.execute(
+        `
+          INSERT INTO hr_schema.request_connection_table 
+          (request_connection_application_information_request_id) 
+          VALUES 
+          ($1)
+        `, [
+          requestId
+        ]
+      );
     } else if (formId === '2f9100a9-f322-405f-acda-68bbf94236b0') {
-      const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
-      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_general_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+      const requestUUID = plv8.execute(
+        `
+          SELECT request_id 
+          FROM public.request_view 
+          WHERE request_formsly_id = $1
+        `, [
+          rootFormslyRequestId
+        ]
+      )[0].request_id
+      plv8.execute(
+        `
+          UPDATE hr_schema.request_connection_table 
+          SET 
+            request_connection_general_assessment_request_id = $1
+          WHERE 
+            request_connection_application_information_request_id = $2
+        `, [
+          requestId,
+          requestUUID
+        ]
+      );
     } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
-      const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
-      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_technical_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+      const requestUUID = plv8.execute(
+        `
+          SELECT request_id 
+          FROM public.request_view 
+          WHERE 
+            request_formsly_id = $1
+        `, [
+          rootFormslyRequestId
+        ]
+      )[0].request_id
+      plv8.execute(
+        `
+          UPDATE hr_schema.request_connection_table 
+          SET 
+            request_connection_technical_assessment_request_id = $1
+          WHERE 
+            request_connection_application_information_request_id = $2
+        `, [
+          requestId,
+          requestUUID
+        ]
+      );
     }
 
     if (interviewParams) {
       plv8.execute(
         `
           UPDATE hr_schema.technical_interview_table
-          SET technical_interview_evaluation_request_id = '${requestId}'
+          SET 
+            technical_interview_evaluation_request_id = $1
           WHERE
-            technical_interview_id = '${interviewParams.technicalInterviewId}'
-        `
+            technical_interview_id = $2
+        `, [
+          requestId,
+          interviewParams.technicalInterviewId
+        ]
       );
-      const query = 'SELECT public.update_technical_interview_status($1::json)';
-      plv8.execute(query, [JSON.stringify(interviewParams)]);
+      plv8.execute(
+        `
+          SELECT public.update_technical_interview_status($1::json)
+        `, [
+          interviewParams
+        ]
+      );
     } else if (backgroundCheckParams) {
       plv8.execute(
         `
           UPDATE hr_schema.background_check_table
-          SET background_check_evaluation_request_id = '${requestId}'
+          SET 
+            background_check_evaluation_request_id = $1
           WHERE
-            background_check_id = '${backgroundCheckParams.backgroundCheckId}'
-        `
+            background_check_id = $2
+        `, [
+          requestId,
+          backgroundCheckParams.backgroundCheckId
+        ]
       );
-      const query = 'SELECT public.update_background_check_status($1::json)';
-      plv8.execute(query, [JSON.stringify(backgroundCheckParams)]);
+      plv8.execute(
+        `
+          SELECT public.update_background_check_status($1::json)
+        `, [
+          backgroundCheckParams
+        ]
+      );
     } else if (tradeTestParams) {
       plv8.execute(
         `
           UPDATE hr_schema.trade_test_table
-          SET trade_test_evaluation_request_id = '${requestId}'
+          SET 
+            trade_test_evaluation_request_id = $1
           WHERE
-            trade_test_id = '${tradeTestParams.tradeTestId}'
-        `
+            trade_test_id = $2
+        `, [
+          requestId,
+          tradeTestParams.tradeTestId
+        ]
       );
-      const query = 'SELECT public.update_trade_test_status($1::json)';
-      plv8.execute(query, [JSON.stringify(tradeTestParams)]);
+      plv8.execute(
+        `
+          SELECT public.update_trade_test_status($1::json)
+        `, [
+          tradeTestParams
+        ]
+      );
     } else if (applicationInformationParams) {
       plv8.execute(
         `
@@ -1933,21 +2172,28 @@ AS $$
           )
           VALUES
           (
-            '${applicationInformationParams.position}',
-            '${applicationInformationParams.firstName}',
-            ${applicationInformationParams.middleName ? `'${applicationInformationParams.middleName}'` : "NULL"},
-            '${applicationInformationParams.lastName}',
-            '${applicationInformationParams.contactNumber}',
-            '${applicationInformationParams.email}',
-            '${requestId}'
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7
           )
-        `
+        `, [
+          applicationInformationParams.position,
+          applicationInformationParams.firstName,
+          applicationInformationParams.middleName || null,
+          applicationInformationParams.lastName,
+          applicationInformationParams.contactNumber,
+          applicationInformationParams.email,
+          requestId
+        ]
       );
     }
- });
- return request_data;
+  });
+  return request_data;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION edit_request(
   input_data JSON
