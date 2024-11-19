@@ -1,10 +1,11 @@
 import { getTeamProjectList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TeamProjectWithAddressType } from "@/utils/types";
-import { Box, Center, Paper, Space, Text } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
+import BreadcrumbWrapper from "@/components/BreadCrumbs/BreadCrumbWrapper";
 import CreateProject from "./CreateProject";
 import ProjectList from "./ProjectList";
 import ProjectMembers from "./ProjectMembers";
@@ -53,10 +54,24 @@ const TeamProject = ({
     }
   };
 
+  const teamProjectItems = [
+    {
+      title: "Team Projects",
+      action: () => setSelectedProject(null),
+    }
+  ]
+
+  if (selectedProject) {
+    teamProjectItems.push({
+      title: selectedProject.team_project_name,
+      action: () => setSelectedProject(selectedProject),
+    });
+  }
+
   return (
     <Box mt="xl">
-      <Paper p="xl" shadow="xs">
-        {!isCreatingProject ? (
+      <BreadcrumbWrapper breadcrumbItems={teamProjectItems}>
+      {!isCreatingProject  && !selectedProject ? (
           <ProjectList
             projectList={projectList}
             setProjectList={setProjectList}
@@ -78,14 +93,6 @@ const TeamProject = ({
             handleFetch={handleFetch}
           />
         ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedProject ? (
-          <Center>
-            <Text color="dimmed">No project selected</Text>
-          </Center>
-        ) : null}
         {selectedProject ? (
           <ProjectMembers
             teamId={teamId}
@@ -96,7 +103,7 @@ const TeamProject = ({
             isOwnerOrAdmin={isOwnerOrAdmin}
           />
         ) : null}
-      </Paper>
+      </BreadcrumbWrapper>
     </Box>
   );
 };

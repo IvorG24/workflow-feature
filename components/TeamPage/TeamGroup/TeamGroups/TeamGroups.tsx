@@ -1,10 +1,11 @@
 import { getTeamGroupList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { TeamGroupTableRow } from "@/utils/types";
-import { Box, Center, Paper, Space, Text } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useState } from "react";
+import BreadcrumbWrapper from "@/components/BreadCrumbs/BreadCrumbWrapper";
 import CreateGroup from "./CreateGroup";
 import GroupList from "./GroupList";
 import GroupMembers from "./GroupMembers";
@@ -54,10 +55,24 @@ const TeamGroups = ({
     }
   };
 
+  const teamGroupsItems = [
+    {
+      title: "Team Groups",
+      action: () => setSelectedGroup(null),
+    }
+  ]
+
+  if (selectedGroup) {
+    teamGroupsItems.push({
+      title: selectedGroup.team_group_name,
+      action: () => setSelectedGroup(selectedGroup),
+    });
+  }
+
   return (
     <Box mt="xl">
-      <Paper p="xl" shadow="xs">
-        {!isCreatingGroup ? (
+      <BreadcrumbWrapper breadcrumbItems={teamGroupsItems}>
+      {!isCreatingGroup && !selectedGroup ? (
           <GroupList
             groupList={groupList}
             setGroupList={setGroupList}
@@ -79,14 +94,6 @@ const TeamGroups = ({
             handleFetch={handleFetch}
           />
         ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedGroup ? (
-          <Center>
-            <Text color="dimmed">No group selected</Text>
-          </Center>
-        ) : null}
         {selectedGroup ? (
           <GroupMembers
             teamId={teamId}
@@ -97,7 +104,7 @@ const TeamGroups = ({
             isOwnerOrAdmin={isOwnerOrAdmin}
           />
         ) : null}
-      </Paper>
+      </BreadcrumbWrapper>
     </Box>
   );
 };

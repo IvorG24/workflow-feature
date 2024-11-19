@@ -1,10 +1,11 @@
 import { getSCICEmployeeList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { SCICEmployeeTableRow } from "@/utils/types";
-import { Box, Center, Paper, Space, Text } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
+import BreadcrumbWrapper from "@/components/BreadCrumbs/BreadCrumbWrapper";
 import CreateNewEmployee from "./CreateNewEmployee";
 import EditEmployee from "./EditEmployee";
 import EmployeeList from "./EmployeeList";
@@ -46,13 +47,27 @@ const TeamEmployee = ({ isOwnerOrAdmin }: Props) => {
     }
   };
 
+  const teamEmployeeItems = [
+    {
+      title: "SCIC Employee",
+      action: () => setSelectedEmployee(null),
+    }
+  ]
+
+  if (selectedEmployee) {
+    teamEmployeeItems.push({
+      title: selectedEmployee.scic_employee_first_name + " " + selectedEmployee.scic_employee_last_name,
+      action: () => setSelectedEmployee(selectedEmployee),
+    });
+  }
+
   useEffect(() => {
     handleFetch(1);
   }, []);
   return (
     <Box mt="xl">
-      <Paper p="xl" shadow="xs">
-        {!isCreatingEmployee ? (
+      <BreadcrumbWrapper breadcrumbItems={teamEmployeeItems} >
+      {!isCreatingEmployee && !selectedEmployee ? (
           <EmployeeList
             activePage={activePage}
             setActivePage={setActivePage}
@@ -75,14 +90,6 @@ const TeamEmployee = ({ isOwnerOrAdmin }: Props) => {
             handleFetch={handleFetch}
           />
         ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedEmployee ? (
-          <Center>
-            <Text color="dimmed">No employee selected</Text>
-          </Center>
-        ) : null}
         {selectedEmployee ? (
           <EditEmployee
             activePage={activePage}
@@ -91,7 +98,7 @@ const TeamEmployee = ({ isOwnerOrAdmin }: Props) => {
             handleFetch={handleFetch}
           />
         ) : null}
-      </Paper>
+      </BreadcrumbWrapper>
     </Box>
   );
 };
