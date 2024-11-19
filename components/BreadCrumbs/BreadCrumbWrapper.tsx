@@ -7,16 +7,19 @@ type BreadcrumbWrapperProps = {
     title: string;
     action?: () => void;
   }[];
-  children: ReactNode; 
+  children: ReactNode;
 };
 
-const BreadcrumbWrapper = ({ breadcrumbItems, children }: BreadcrumbWrapperProps) => {
+const BreadcrumbWrapper = ({
+  breadcrumbItems,
+  children,
+}: BreadcrumbWrapperProps) => {
   return (
-      <Paper p="xl" shadow="xs">
-        <BreadcrumbItems items={breadcrumbItems} />
-        <Space h="sm" />
-        {children}
-      </Paper>
+    <Paper p="xl" shadow="xs">
+      <BreadcrumbItems items={breadcrumbItems} />
+      <Space h="sm" />
+      {children}
+    </Paper>
   );
 };
 
