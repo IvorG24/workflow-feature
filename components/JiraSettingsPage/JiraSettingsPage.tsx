@@ -23,6 +23,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
+import BreadcrumbWrapper from "../BreadCrumbs/BreadCrumbWrapper";
 import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
 import JiraOrganizationLookupTable from "./JiraOrganizationLookupTable/JiraOrganizationLookupTable";
@@ -157,6 +158,25 @@ const JiraSettingsPage = ({
     }
   }, [jiraFormslyProjectList, selectedFormslyProjectId]);
 
+  const jiraSettingsItems = [
+    {
+      title: "Team Projects",
+      action: () => {
+        setSelectedFormslyProjectName("");
+        setSelectedFormslyProjectId(null);
+      },
+    },
+  ];
+
+  if (selectedFormslyProjectId) {
+    jiraSettingsItems.push({
+      title: selectedFormslyProjectName,
+      action: () => {
+        setIsManagingUserAccountList(true);
+      },
+    });
+  }
+
   return (
     <Container>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -178,30 +198,34 @@ const JiraSettingsPage = ({
           onChange={setSegmentedControlValue}
         />
       </Center>
+
       {segmentedControlValue === "jira-settings" && (
         <Stack>
-          <JiraFormslyProjectList
-            jiraFormslyProjectList={jiraFormslyProjectList}
-            jiraFormslyProjectCount={jiraFormslyProjectCount}
-            jiraProjectList={jiraProjectData.data}
-            jiraOrganizationList={jiraOrganizationData.data}
-            setIsManagingUserAccountList={setIsManagingUserAccountList}
-            setSelectedFormslyProject={setSelectedFormslyProjectId}
-            selectedFormslyProject={selectedFormslyProjectId}
-            setJiraFormslyProjectList={setJiraFormslyProjectList}
-            setJiraFormslyProjectCount={setJiraFormslyProjectCount}
-          />
-          {isManagingUserAccountList && (
-            <JiraUserAccountList
-              jiraUserAcountList={jiraUserAccountData.data}
-              setIsManagingUserAccountList={setIsManagingUserAccountList}
-              setSelectedFormslyProject={setSelectedFormslyProjectId}
-              selectedFormslyProject={selectedFormslyProjectId}
-              selectedFormslyProjectName={selectedFormslyProjectName}
-              jiraUserRoleList={jiraUserRoleList}
-            />
-          )}
-
+          <BreadcrumbWrapper breadcrumbItems={jiraSettingsItems}>
+            {!selectedFormslyProjectId && (
+              <JiraFormslyProjectList
+                jiraFormslyProjectList={jiraFormslyProjectList}
+                jiraFormslyProjectCount={jiraFormslyProjectCount}
+                jiraProjectList={jiraProjectData.data}
+                jiraOrganizationList={jiraOrganizationData.data}
+                setIsManagingUserAccountList={setIsManagingUserAccountList}
+                setSelectedFormslyProject={setSelectedFormslyProjectId}
+                selectedFormslyProject={selectedFormslyProjectId}
+                setJiraFormslyProjectList={setJiraFormslyProjectList}
+                setJiraFormslyProjectCount={setJiraFormslyProjectCount}
+              />
+            )}
+            {isManagingUserAccountList && selectedFormslyProjectName && (
+              <JiraUserAccountList
+                jiraUserAcountList={jiraUserAccountData.data}
+                setIsManagingUserAccountList={setIsManagingUserAccountList}
+                setSelectedFormslyProject={setSelectedFormslyProjectId}
+                selectedFormslyProject={selectedFormslyProjectId}
+                selectedFormslyProjectName={selectedFormslyProjectName}
+                jiraUserRoleList={jiraUserRoleList}
+              />
+            )}
+          </BreadcrumbWrapper>
           <JiraFormslyItemCategoryList
             jiraItemCategoryData={jiraItemCategoryData}
             jiraUserAcountList={jiraUserAccountData.data}

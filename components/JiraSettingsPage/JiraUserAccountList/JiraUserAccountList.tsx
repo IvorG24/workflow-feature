@@ -270,7 +270,7 @@ const JiraUserAccountList = ({
   return (
     <Box pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      <Paper p="xl" shadow="xs" pos="relative">
+      <Paper pos="relative">
         <Flex justify="space-between" align="center">
           <Title order={3}>{`${selectedFormslyProjectName} Jira Users`}</Title>
           <ActionIcon

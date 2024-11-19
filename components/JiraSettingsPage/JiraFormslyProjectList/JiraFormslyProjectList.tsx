@@ -363,7 +363,7 @@ const JiraFormslyProjectList = ({
 
   return (
     <Box>
-      <Paper p="xl" shadow="xs" pos="relative">
+      <Paper pos="relative">
         <Group>
           <Title order={3}>Team Projects</Title>
           <form
