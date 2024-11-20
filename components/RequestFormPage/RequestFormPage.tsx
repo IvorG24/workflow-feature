@@ -13,6 +13,7 @@ import {
   Button,
   Center,
   Container,
+  Divider,
   Flex,
   Group,
   LoadingOverlay,
@@ -43,6 +44,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import { useStyles } from "@/utils/styling";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
+import BreadcrumbWrapper from "../BreadCrumbs/BreadCrumbWrapper";
 import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
@@ -125,6 +127,20 @@ const RequestFormPage = ({
   const [departmentOptionList, setDepartmentOptionList] = useState<
     { value: string; label: string }[]
   >([]);
+
+  const requestFormPageItems = [
+    {
+      title: "Signer Per Project",
+      action: () => setSelectedProject(null),
+    },
+  ];
+
+  if (selectedProject) {
+    requestFormPageItems.push({
+      title: selectedProject.projectName,
+      action: () => setSelectedProject(selectedProject),
+    });
+  }
 
   useEffect(() => {
     const checkIfMember = async () => {
@@ -421,101 +437,98 @@ const RequestFormPage = ({
 
         {isFormslyForm && form.form_name !== "Audit" && (
           <>
-            <Paper p="xl" shadow="xs">
-              <Title order={3}>Signer Per Project</Title>
-              <Space h="xl" />
-
-              <Group>
-                <Title m={0} p={0} order={3}>
-                  List of Projects
-                </Title>
-                <TextInput
-                  miw={250}
-                  placeholder="Project"
-                  rightSection={
-                    <ActionIcon
-                      disabled={isFetchingProject}
-                      onClick={() => handleFetchProject(1, projectSearch)}
-                    >
-                      <IconSearch size={16} />
-                    </ActionIcon>
-                  }
-                  value={projectSearch}
-                  onChange={async (e) => {
-                    setProjectSearch(e.target.value);
-                  }}
-                  onKeyUp={(e) => {
-                    if (e.key === "Enter") {
-                      handleFetchProject(1, projectSearch);
-                    }
-                  }}
-                  maxLength={4000}
-                />
-              </Group>
-
-              <DataTable
-                idAccessor="team_project_id"
-                mt="xs"
-                withBorder
-                fw="bolder"
-                c="dimmed"
-                minHeight={390}
-                fetching={isFetchingProject}
-                records={projectList}
-                columns={[
-                  {
-                    accessor: "team_project_name",
-                    title: "Project",
-                    render: ({ team_project_name, team_project_id }) => (
-                      <Text
-                        className={
-                          isFetchingProjectSigner
-                            ? classes.disabledColumn
-                            : classes.clickableColumn
+            <BreadcrumbWrapper breadcrumbItems={requestFormPageItems}>
+              {!selectedProject && (
+                <>
+                  <Title order={3}>Signer Per Project</Title>
+                  <Divider mb="xl" mt="sm" />
+                  <Group>
+                    <Title m={0} p={0} order={3}>
+                      List of Projects
+                    </Title>
+                    <TextInput
+                      miw={250}
+                      placeholder="Project"
+                      rightSection={
+                        <ActionIcon
+                          disabled={isFetchingProject}
+                          onClick={() => handleFetchProject(1, projectSearch)}
+                        >
+                          <IconSearch size={16} />
+                        </ActionIcon>
+                      }
+                      value={projectSearch}
+                      onChange={async (e) => {
+                        setProjectSearch(e.target.value);
+                      }}
+                      onKeyUp={(e) => {
+                        if (e.key === "Enter") {
+                          handleFetchProject(1, projectSearch);
                         }
-                        onClick={() =>
-                          handleFetchProjectSigner(
-                            team_project_id,
-                            team_project_name
-                          )
-                        }
-                      >
-                        {team_project_name}
-                      </Text>
-                    ),
-                  },
-                ]}
-                totalRecords={projectCount}
-                recordsPerPage={ROW_PER_PAGE}
-                page={projectPage}
-                onPageChange={(page: number) => {
-                  setProjectPage(page);
-                  handleFetchProject(page, projectSearch);
-                }}
-              />
-            </Paper>
-            <Paper p="xl" shadow="xs" pos="relative">
-              <LoadingOverlay
-                visible={isFetchingProjectSigner}
-                overlayBlur={2}
-              />
-              {!selectedProject ? (
-                <Center>
-                  <Text color="dimmed">No project selected</Text>
-                </Center>
-              ) : null}
-              {selectedProject ? (
-                <Box>
-                  <SignerPerProject
-                    teamMemberList={teamMemberList}
-                    formId={form.form_id}
-                    formSigner={selectedProjectSigner}
-                    selectedProject={selectedProject}
-                    setSelectedProject={setSelectedProject}
+                      }}
+                      maxLength={4000}
+                    />
+                  </Group>
+                  <DataTable
+                    idAccessor="team_project_id"
+                    mt="xs"
+                    withBorder
+                    fw="bolder"
+                    c="dimmed"
+                    minHeight={390}
+                    fetching={isFetchingProject}
+                    records={projectList}
+                    columns={[
+                      {
+                        accessor: "team_project_name",
+                        title: "Project",
+                        render: ({ team_project_name, team_project_id }) => (
+                          <Text
+                            className={
+                              isFetchingProjectSigner
+                                ? classes.disabledColumn
+                                : classes.clickableColumn
+                            }
+                            onClick={() =>
+                              handleFetchProjectSigner(
+                                team_project_id,
+                                team_project_name
+                              )
+                            }
+                          >
+                            {team_project_name}
+                          </Text>
+                        ),
+                      },
+                    ]}
+                    totalRecords={projectCount}
+                    recordsPerPage={ROW_PER_PAGE}
+                    page={projectPage}
+                    onPageChange={(page: number) => {
+                      setProjectPage(page);
+                      handleFetchProject(page, projectSearch);
+                    }}
                   />
-                </Box>
-              ) : null}
-            </Paper>
+                </>
+              )}
+              <Paper pos="relative">
+                <LoadingOverlay
+                  visible={isFetchingProjectSigner}
+                  overlayBlur={2}
+                />
+                {selectedProject ? (
+                  <Box>
+                    <SignerPerProject
+                      teamMemberList={teamMemberList}
+                      formId={form.form_id}
+                      formSigner={selectedProjectSigner}
+                      selectedProject={selectedProject}
+                      setSelectedProject={setSelectedProject}
+                    />
+                  </Box>
+                ) : null}
+              </Paper>
+            </BreadcrumbWrapper>
             {selectedProject && (
               <FormDepartmentSignerSection
                 formId={form.form_id}
