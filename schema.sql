@@ -2207,40 +2207,110 @@ AS $$
       requestId,
       responseValues,
       signerValues,
-      requestSignerNotificationInput
+      notificationValues
     } = input_data;
 
-    request_data = plv8.execute(`SELECT * FROM public.request_view WHERE request_id='${requestId}';`)[0];
+    request_data = plv8.execute(
+      `
+        SELECT * 
+        FROM public.request_view 
+        WHERE request_id = $1
+      `, [
+        requestId
+      ]
+    )[0];
 
-    plv8.execute(`DELETE FROM request_schema.request_response_table WHERE request_response_request_id='${requestId}';`);
+    plv8.execute(
+      `
+        DELETE 
+        FROM request_schema.request_response_table 
+        WHERE request_response_request_id = $1
+      `, [
+        requestId
+      ]
+    );
 
-    plv8.execute(`DELETE FROM request_schema.request_signer_table WHERE request_signer_request_id='${requestId}';`);
+    plv8.execute(
+      `
+        DELETE 
+        FROM request_schema.request_signer_table 
+        WHERE request_signer_request_id = $1
+      `, [
+        requestId
+      ]
+    );
 
-    plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id, request_response_prefix) VALUES ${responseValues};`);
+    plv8.execute(
+      `
+        INSERT INTO request_schema.request_response_table 
+        (
+          request_response,
+          request_response_duplicatable_section_id,
+          request_response_field_id,request_response_request_id,
+          request_response_prefix
+        ) 
+        VALUES ${responseValues}
+      `
+    );
 
-    plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
+    plv8.execute(
+      `
+        INSERT INTO request_schema.request_signer_table 
+        (
+          request_signer_signer_id,
+          request_signer_request_id
+        ) 
+        VALUES ${signerValues}
+      `
+    );
 
-    const team_member_data = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_id='${request_data.request_team_member_id}';`)[0];
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
-    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+    const team_member_data = plv8.execute(
+      `
+        SELECT * 
+        FROM team_schema.team_member_table 
+        WHERE team_member_id = $1
+      `, [
+        request_data.request_team_member_id
+      ]
+    )[0];
+    const activeTeamResult = plv8.execute(
+      `
+        SELECT * FROM team_schema.team_table 
+        WHERE team_id = $1
+      `, [
+        team_member_data.team_member_team_id
+      ]
+    );
+    const activeTeam = activeTeamResult.length ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(
+        `
+          SELECT public.format_team_name_to_url_key($1) AS url_key
+        `, [
+          activeTeam.team_name
+        ]
+      );
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
-        const notificationValues = requestSignerNotificationInput
-        .map(
-          (notification) =>
-            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${request_data.request_formsly_id ?? requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-        )
-        .join(",");
-
-        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+        plv8.execute(
+          `
+            INSERT INTO public.notification_table 
+            (
+              notification_app,
+              notification_content,
+              notification_redirect_url,
+              notification_team_id,
+              notification_type,
+              notification_user_id
+            ) VALUES ${notificationValues}
+          `
+        );
       }
     }
- });
- return request_data;
+  });
+  return request_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION approve_or_reject_request(
@@ -2404,9 +2474,8 @@ AS $$
         request_status = "REJECTED"
       }
     }
-
- });
- return request_status
+  });
+  return request_status
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
@@ -21730,6 +21799,13 @@ CREATE POLICY "Enable read access for all users" ON history_schema.signature_his
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON history_schema.signature_history_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON history_schema.signature_history_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
 
 --- unit_of_measurement_schema.general_unit_of_measurement_table
 ALTER TABLE unit_of_measurement_schema.general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
