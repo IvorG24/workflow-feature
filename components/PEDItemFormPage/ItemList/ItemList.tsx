@@ -416,7 +416,7 @@ const ItemList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of PED Item
+            List of PED Items
           </Title>
         </Group>
 
