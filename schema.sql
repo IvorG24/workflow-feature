@@ -3108,20 +3108,33 @@ AS $$
       teamName
     } = input_data;
 
+    plv8.execute(
+      `
+        DELETE FROM user_schema.invitation_table
+        WHERE
+          invitation_to_email = ANY($1)
+          AND invitation_status = $2
+      `, [
+        emailList,
+        'PENDING'
+      ]
+    );
+
+    const userData = plv8.execute(
+      `
+        SELECT * 
+        FROM user_schema.user_table 
+        WHERE 
+          user_email = ANY($1)
+      `, [
+        emailList
+      ]
+    );
+
     const invitationInput = [];
     const notificationInput = [];
-
     emailList.forEach((email) => {
       const invitationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
-
-       plv8.execute(
-        `
-          DELETE FROM user_schema.invitation_table
-          WHERE
-            invitation_to_email = '${email}'
-            AND invitation_status = 'PENDING'
-        `
-      );
 
       invitationInput.push({
         invitation_id: invitationId,
@@ -3129,48 +3142,74 @@ AS $$
         invitation_from_team_member_id: teamMemberId,
       });
 
-      const userData = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_email = '${email}' LIMIT 1`);
-
-      if (userData.length) {
-        plv8.execute(
-          `
-            DELETE FROM public.notification_table
-            WHERE
-              notification_app = 'GENERAL'
-              AND notification_content = 'You have been invited to join ${teamName}'
-              AND notification_type = 'INVITE'
-              AND notification_user_id = '${userData[0].user_id}'
-          `
-        );
-
-        notificationInput.push({
+      const matchedUser = userData.find(user => user.user_email === email);
+      if (matchedUser) {
+          notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
           notification_redirect_url: `/invitation/${invitationId}`,
           notification_type: "INVITE",
-          notification_user_id: userData[0].user_id,
+          notification_user_id: matchedUser.user_id,
         });
       }
     });
+
+    if (userData.length) {
+      const userIdList = userData.map(user => user.user_id);
+      plv8.execute(
+        `
+          DELETE FROM public.notification_table
+          WHERE
+            notification_app = 'GENERAL'
+            AND notification_content = 'You have been invited to join ' || $1
+            AND notification_type = 'INVITE'
+            AND notification_user_id = ANY($2)
+        `, [
+          teamName,
+          userIdList
+        ]
+      );
+    }
 
     if (invitationInput.length > 0){
       const invitationValues = invitationInput
         .map((invitation) =>
           `('${invitation.invitation_id}','${invitation.invitation_to_email}','${invitation.invitation_from_team_member_id}')`
-        )
-        .join(",");
+        ).join(",");
 
-      invitation_data = plv8.execute(`INSERT INTO user_schema.invitation_table (invitation_id,invitation_to_email,invitation_from_team_member_id) VALUES ${invitationValues} RETURNING *;`);
+      invitation_data = plv8.execute(
+        `
+          INSERT INTO user_schema.invitation_table 
+          (
+            invitation_id,
+            invitation_to_email,
+            invitation_from_team_member_id
+          ) 
+          VALUES ${invitationValues}
+          RETURNING *
+        `
+      );
     }
 
     if (notificationInput.length > 0){
       const notificationValues = notificationInput
         .map((notification) =>
           `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_type}','${notification.notification_user_id}')`
-        )
-        .join(",");
+        ).join(",");
 
-      plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table 
+          (
+            notification_app,
+            notification_content,
+            notification_redirect_url,
+            notification_type,
+            notification_user_id
+          ) 
+          VALUES ${notificationValues}
+        `
+      );
     }
   });
   return invitation_data;
@@ -21144,7 +21183,7 @@ DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_memb
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
+USING (true);
 
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
