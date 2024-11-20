@@ -2833,20 +2833,42 @@ AS $$
     const item_result = plv8.execute(
       `
         UPDATE item_schema.item_table SET
-          item_general_name = '${item_general_name}',
-          item_is_available = '${item_is_available}',
-          item_unit = '${item_unit}',
-          item_gl_account = '${item_gl_account}',
-          item_team_id = '${item_team_id}',
-          item_is_ped_item = '${Boolean(item_is_ped_item)}',
-          item_category_id = ${item_category_id ? `'${item_category_id}'` : null},
-          item_is_it_asset_item = '${Boolean(item_is_it_asset_item)}'
-        WHERE item_id = '${item_id}'
+          item_general_name = $1,
+          item_is_available = $2,
+          item_unit = $3,
+          item_gl_account = $4,
+          item_team_id = $5,
+          item_is_ped_item = $6,
+          item_category_id = $7,
+          item_is_it_asset_item = $8
+        WHERE item_id = $9
         RETURNING *
-      `
+      `, [
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_gl_account,
+        item_team_id,
+        Boolean(item_is_ped_item),
+        item_category_id || null,
+        Boolean(item_is_it_asset_item),
+        item_id
+      ]
     )[0];
 
-    const { section_id } = plv8.execute(`SELECT section_id FROM form_schema.section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+    const { section_id } = plv8.execute(
+      `
+        SELECT 
+          section_id 
+        FROM form_schema.section_table 
+        WHERE 
+          section_form_id = $1
+          AND section_name = $2
+      `, [
+        formId,
+        'Item'
+      ]
+    )[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
 
@@ -2872,83 +2894,172 @@ AS $$
       });
     });
 
-    const itemDescriptionValues = itemDescriptionInput
-      .map((item) =>
-        `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
-      )
-      .join(",");
-
-    const fieldValues = fieldInput
-      .map((field) =>
-        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
-      )
-      .join(",");
-
     // update
-    const updatedItemDescription = [];
-    toUpdate.forEach(description => {
-      const updatedDescription = plv8.execute(
+    let updatedItemDescription = [];
+    if (toUpdate.length) {
+      const itemDescriptionIds = [];
+      const itemDescriptionWithUoms = [];
+      const itemDescriptionLabels = [];
+      const itemDescriptionOrders = [];
+      const itemFieldIds = [];
+      const itemFieldOrders = [];
+      toUpdate.forEach(description => {
+        itemDescriptionIds.push(`'${description.item_description_id}'`);
+        itemDescriptionWithUoms.push(description.item_description_is_with_uom);
+        itemDescriptionLabels.push(`'${description.item_description_label}'`);
+        itemDescriptionOrders.push(description.item_description_order);
+        itemFieldIds.push(`'${description.item_description_field_id}'`);
+        itemFieldOrders.push(description.item_description_order + 15);
+      });
+
+      updatedItemDescription = plv8.execute(
         `
-          UPDATE item_schema.item_description_table SET
-            item_description_is_with_uom = '${description.item_description_is_with_uom}',
-            item_description_label = '${description.item_description_label}',
-            item_description_order = ${description.item_description_order}
-          WHERE item_description_id = '${description.item_description_id}'
+          WITH updates AS (
+            SELECT 
+              UNNEST(ARRAY[${itemDescriptionIds}]) AS item_description_id,
+              UNNEST(ARRAY[${itemDescriptionWithUoms}]) AS item_description_is_with_uom,
+              UNNEST(ARRAY[${itemDescriptionLabels}]) AS item_description_label,
+              UNNEST(ARRAY[${itemDescriptionOrders}]) AS item_description_order
+          )
+          UPDATE item_schema.item_description_table
+          SET
+            item_description_is_with_uom = updates.item_description_is_with_uom::BOOLEAN,
+            item_description_label = updates.item_description_label,
+            item_description_order = updates.item_description_order::INTEGER
+          FROM updates
+          WHERE item_description_table.item_description_id = updates.item_description_id::UUID
           RETURNING *
         `
-      )[0];
+      );
+
       plv8.execute(
         `
-          UPDATE form_schema.field_table SET
-            field_name = '${description.item_description_label}',
-            field_order = ${description.item_description_order + 15}
-          WHERE field_id = '${description.item_description_field_id}'
+          WITH updates AS (
+            SELECT 
+              UNNEST(ARRAY[${itemFieldIds}]) AS field_id,
+              UNNEST(ARRAY[${itemDescriptionLabels}]) AS field_name,
+              UNNEST(ARRAY[${itemFieldOrders}]) AS field_order
+          )
+          UPDATE form_schema.field_table
+          SET
+            field_name = updates.field_name,
+            field_order = updates.field_order::INTEGER
+          FROM updates
+          WHERE field_table.field_id = updates.field_id::UUID
         `
       );
-      updatedItemDescription.push(updatedDescription);
-    });
-
-    // delete
-    toRemove.forEach(description => {
-      plv8.execute(
-        `
-          UPDATE item_schema.item_description_table SET
-            item_description_is_disabled = true
-          WHERE item_description_id = '${description.descriptionId}'
-        `
-      );
-    });
-    plv8.execute(
-      `
-        DELETE FROM item_schema.item_level_three_description_table
-        WHERE item_level_three_description_item_id = '${item_id}'
-      `
-    );
-
-    // add
-    let addedDescription = [];
-    if(fieldValues.length && itemDescriptionValues.length){
-      plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
-
-      addedDescription = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
     }
 
-    plv8.execute(`DELETE FROM item_schema.item_division_table WHERE item_division_item_id='${item_id}'`);
+    // delete
+    if (toRemove.length) {
+      const itemDescriptionIds = [];
+      toRemove.forEach(description => {
+        itemDescriptionIds.push(description.descriptionId)
+      });
+      plv8.execute(
+        `
+          UPDATE item_schema.item_description_table 
+          SET
+            item_description_is_disabled = true
+          WHERE 
+            item_description_id = ANY($1)
+        `, [
+          itemDescriptionIds
+        ]
+      );
+
+      plv8.execute(
+        `
+          DELETE FROM item_schema.item_level_three_description_table
+          WHERE item_level_three_description_item_id = $1
+        `, [
+          item_id
+        ]
+      );
+    }
+
+    
+    // add
+    let addedDescription = [];
+    if (fieldInput.length && itemDescriptionInput.length) {
+      const fieldValues = fieldInput
+        .map((field) =>
+          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+        )
+        .join(",");
+      plv8.execute(
+        `
+          INSERT INTO form_schema.field_table 
+          (
+            field_id,
+            field_name,
+            field_type,
+            field_order,
+            field_section_id,
+            field_is_required
+          )
+          VALUES ${fieldValues}
+        `
+      );
+      const itemDescriptionValues = itemDescriptionInput
+        .map((item) =>
+          `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+        )
+        .join(",");
+      addedDescription = plv8.execute(
+        `
+          INSERT INTO item_schema.item_description_table 
+          (
+            item_description_id,
+            item_description_label,
+            item_description_item_id,
+            item_description_is_available,
+            item_description_field_id,
+            item_description_is_with_uom,
+            item_description_order
+          )
+          VALUES ${itemDescriptionValues} 
+          RETURNING *
+        `
+      );
+    }
+
+    plv8.execute(
+      `
+        DELETE FROM item_schema.item_division_table 
+        WHERE item_division_item_id = $1
+      `, [
+        item_id
+      ]
+    );
     const itemDivisionInput = item_division_id_list.map(division => {
-      return `(${division}, '${item_result.item_id}')`;
+      return `('${division}', '${item_result.item_id}')`;
     }).join(",");
 
-    const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+    const item_division_list_result = plv8.execute(
+      `
+        INSERT INTO item_schema.item_division_table 
+        (
+          item_division_value,
+          item_division_item_id
+        ) 
+        VALUES ${itemDivisionInput} 
+        RETURNING *
+      `
+    );
 
     const csiCodeSection = plv8.execute(
       `
         SELECT csi_code_section
         FROM lookup_schema.csi_code_table
         WHERE
-          csi_code_division_id IN (${item_division_id_list.join(", ")})
-          AND csi_code_level_three_description = '${item_level_three_description}'
+          csi_code_division_id = ANY($1)
+          AND csi_code_level_three_description = $2
         LIMIT 1
-      `
+      `, [
+        item_division_id_list,
+        item_level_three_description
+      ]
     )[0].csi_code_section;
 
     const itemLevelThreeDescription = plv8.execute(
@@ -2961,12 +3072,16 @@ AS $$
         )
         VALUES
         (
-          '${item_id}',
-          '${item_level_three_description}',
-          '${csiCodeSection}'
+          $1,
+          $2,
+          $3
         )
         RETURNING *
-      `
+      `, [
+        item_id,
+        item_level_three_description,
+        csiCodeSection
+      ]
     )[0].item_level_three_description;
 
     item_data = {
