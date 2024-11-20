@@ -15136,7 +15136,6 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-
 CREATE OR REPLACE FUNCTION update_hr_phone_interview_status(
   input_data JSON
 )
