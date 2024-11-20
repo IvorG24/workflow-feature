@@ -155,7 +155,7 @@ const CreateItem = ({ formId, setIsCreatingItem }: Props) => {
           item_unit: data.unit,
           item_gl_account: data.glAccount,
           item_team_id: activeTeam.team_id,
-          item_division_id_list: data.division.map((id) => `'${id}'`),
+          item_division_id_list: data.division,
           item_level_three_description: data.divisionDescription,
           item_is_ped_item: data.isPedItem,
           item_is_it_asset_item: data.isITAsset,
