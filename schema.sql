@@ -1719,17 +1719,7 @@ AS $$
 
     if (!status) {
       if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
-        const position = plv8.execute(
-          `
-            SELECT REPLACE(request_response, '"', '') AS response
-            FROM request_schema.request_response_table
-            WHERE
-              request_response_request_id = $1
-              AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
-          `, [
-            requestId
-          ]
-        )[0].response;
+        const position = applicationInformationParams.position;
 
         const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
         const currentYear = currentDate.getFullYear();
@@ -15015,7 +15005,7 @@ AS $$
       const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check", "position":"${position}" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
-    const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check", "position":"${position}" }')`)[0].get_hr_with_lowest_load_within_a_week;
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "job_offer", "position":"${position}" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id, job_offer_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     }
   });
@@ -15029,7 +15019,7 @@ SET search_path TO ''
 AS $$
   let returnData = "";
   plv8.subtransaction(function () {
-    const { table, position, dateCreated } = input_data;
+    const { table, position } = input_data;
 
     const hrTeamMembers = plv8.execute(`
         SELECT
