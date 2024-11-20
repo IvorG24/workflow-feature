@@ -157,14 +157,19 @@ const PEDPartFormPage = ({
   const pedPartEquipmentItems = [
     {
       title: "List of Equipments",
-      action: () => setSelectedEquipment(null),
+      action: () => {
+        setSelectedEquipment(null);
+        setEditEquipment(null);
+      },
     },
   ];
 
-  if (selectedEquipment) {
+  if (selectedEquipment || editEquipment) {
     pedPartEquipmentItems.push({
-      title: `${selectedEquipment.equipment_name} Description`,
-      action: () => setSelectedEquipment(selectedEquipment),
+      title: `${selectedEquipment?.equipment_name ?? editEquipment?.equipment_name} Description`,
+      action: () => {
+        setSelectedEquipment(selectedEquipment || editEquipment);
+      },
     });
   }
 
@@ -447,7 +452,7 @@ const PEDPartFormPage = ({
                 setIsCreatingEquipment={setIsCreatingEquipment}
               />
             ) : null}
-            {editEquipment ? (
+            {editEquipment && !selectedEquipment ? (
               <UpdateEquipment
                 setEquipmentList={setEquipmentList}
                 setEditEquipment={setEditEquipment}

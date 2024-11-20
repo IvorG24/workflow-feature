@@ -38,15 +38,16 @@ const ItemFormDetails = ({
       title: "List of PED Items",
       action: () => {
         setSelectedItem(null);
+        setEditItem(null);
       },
     },
   ];
 
-  if (selectedItem) {
+  if (selectedItem || editItem ) {
     ItemFormDetailsItems.push({
-      title: selectedItem.item_general_name,
+      title: selectedItem?.item_general_name ?? editItem?.item_general_name ?? "",
       action: () => {
-        setSelectedItem(selectedItem);
+        setSelectedItem(selectedItem || editItem);
       },
     });
   }
