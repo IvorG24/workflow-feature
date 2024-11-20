@@ -2544,17 +2544,76 @@ AS $$
       optionsValues
     } = input_data;
 
-    plv8.execute(`INSERT INTO form_schema.form_table (form_id,form_name,form_description,form_app,form_is_formsly_form,form_is_hidden,form_team_member_id,form_is_disabled) VALUES ${formValues};`);
-
-    plv8.execute(`INSERT INTO form_schema.section_table (section_form_id,section_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues};`);
-
-    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldWithIdValues};`);
-
-    plv8.execute(`INSERT INTO form_schema.field_table (field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldsWithoutIdValues};`);
-
-    plv8.execute(`INSERT INTO form_schema.option_table (option_field_id,option_order,option_value) VALUES ${optionsValues};`);
-
- });
+    plv8.execute(
+      `
+        INSERT INTO form_schema.form_table 
+        (
+          form_id,
+          form_name,
+          form_description,
+          form_app,
+          form_is_formsly_form,
+          form_is_hidden,
+          form_team_member_id,
+          form_is_disabled
+        )
+        VALUES ${formValues}
+      `
+    );
+    plv8.execute(
+      `
+        INSERT INTO form_schema.section_table 
+        (
+          section_form_id,
+          section_id,
+          section_is_duplicatable,
+          section_name,
+          section_order
+        ) 
+        VALUES ${sectionValues}
+      `
+    );
+    plv8.execute(
+      `
+        INSERT INTO form_schema.field_table 
+        (
+          field_id,
+          field_is_read_only,
+          field_is_required,
+          field_name,
+          field_order,
+          field_section_id,
+          field_type
+        ) 
+        VALUES ${fieldWithIdValues}
+      `
+    );
+    plv8.execute(
+      `
+        INSERT INTO form_schema.field_table 
+        (
+          field_is_read_only,
+          field_is_required,
+          field_name,
+          field_order,
+          field_section_id,
+          field_type
+        ) 
+        VALUES ${fieldsWithoutIdValues}
+      `
+    );
+    plv8.execute(
+      `
+        INSERT INTO form_schema.option_table 
+        (
+          option_field_id,
+          option_order,
+          option_value
+        ) 
+        VALUES ${optionsValues}
+      `
+    );
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_item(
@@ -2596,31 +2655,40 @@ AS $$
         )
         VALUES
         (
-          '${item_general_name}',
-          '${item_is_available}',
-          '${item_unit}',
-          '${item_gl_account}',
-          '${item_team_id}',
-          '${Boolean(item_is_ped_item)}',
-          ${item_category_id ? `'${item_category_id}'` : null},
-          '${Boolean(item_is_it_asset_item)}'
-        ) RETURNING *
-      `
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8
+        ) 
+        RETURNING *
+      `, [
+        item_general_name,
+        item_is_available,
+        item_unit,
+        item_gl_account,
+        item_team_id,
+        Boolean(item_is_ped_item),
+        item_category_id || null,
+        Boolean(item_is_it_asset_item)
+      ]
     )[0];
-
-    const itemDivisionInput = item_division_id_list.map(division => {
-      return `(${division}, '${item_result.item_id}')`;
-    }).join(",");
-
+  
     const csiCodeSection = plv8.execute(
       `
         SELECT csi_code_section
         FROM lookup_schema.csi_code_table
         WHERE
-          csi_code_division_id IN (${item_division_id_list.join(", ")})
-          AND csi_code_level_three_description = '${item_level_three_description}'
+          csi_code_division_id = ANY($1)
+          AND csi_code_level_three_description = $2
         LIMIT 1
-      `
+      `, [
+        item_division_id_list,
+        item_level_three_description
+      ]
     )[0].csi_code_section;
 
     const itemDivisionDescription = plv8.execute(
@@ -2633,15 +2701,30 @@ AS $$
         )
         VALUES
         (
-          '${item_result.item_id}',
-          '${item_level_three_description}',
-          '${csiCodeSection}'
+          $1,
+          $2,
+          $3
         )
         RETURNING *
-      `
+      `, [
+        item_result.item_id,
+        item_level_three_description,
+        csiCodeSection
+      ]
     )[0].item_level_three_description;
 
-    const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+    const itemDivisionInput = item_division_id_list.map(division => `('${division}', '${item_result.item_id}')`).join(",");
+    const item_division_list_result = plv8.execute(
+      `
+        INSERT INTO item_schema.item_division_table 
+        (
+          item_division_value, 
+          item_division_item_id
+        ) 
+        VALUES ${itemDivisionInput} 
+        RETURNING *
+      `
+    );
 
     const itemDescriptionInput = [];
     const fieldInput = [];
@@ -2668,20 +2751,45 @@ AS $$
       });
     });
 
+    
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      ).join(",");
+    plv8.execute(
+      `
+        INSERT INTO form_schema.field_table 
+        (
+          field_id,field_name,
+          field_type,field_order,
+          field_section_id,
+          field_is_required
+        ) 
+        VALUES ${fieldValues}
+      `
+    );
+
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
         `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
       )
       .join(",");
-
-    const fieldValues = fieldInput
-      .map((field) =>
-        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
-      ).join(",");
-
-    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
-
-    const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+    const item_description = plv8.execute(
+      `
+        INSERT INTO item_schema.item_description_table 
+        (
+          item_description_id, 
+          item_description_label,
+          item_description_item_id,
+          item_description_is_available,
+          item_description_field_id, 
+          item_description_is_with_uom, 
+          item_description_order
+        ) 
+        VALUES ${itemDescriptionValues} 
+        RETURNING *
+      `
+    );
 
     item_data = {
       ...item_result,
@@ -2689,8 +2797,8 @@ AS $$
       item_description: item_description,
       item_level_three_description: itemDivisionDescription
     }
- });
- return item_data;
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_item(
