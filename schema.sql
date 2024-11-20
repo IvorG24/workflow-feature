@@ -3090,8 +3090,8 @@ AS $$
       item_description: [...updatedItemDescription, ...addedDescription],
       item_level_three_description: itemLevelThreeDescription
     }
- });
- return item_data;
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_team_invitation(
