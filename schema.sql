@@ -2344,11 +2344,14 @@ AS $$
       `
         UPDATE request_schema.request_signer_table
         SET
-          request_signer_status = '${requestAction}',
+          request_signer_status = $1,
           request_signer_status_date_updated = NOW()
         WHERE
-          request_signer_id='${requestSignerId}'
-      `
+          request_signer_id = $2
+      `, [
+        requestAction,
+        requestSignerId
+      ]
     );
 
     plv8.execute(
@@ -2362,24 +2365,43 @@ AS $$
         )
         VALUES
         (
-          '${requestId}',
-          '${memberId}',
-          'ACTION_${requestAction}',
-          '${signerFullName} ${requestAction.toLowerCase()}  this request'
+          $1,
+          $2,
+          $3,
+          $4
         )
-      `
+      `, [
+        requestId,
+        memberId,
+        `ACTION_${requestAction}`,
+        `${signerFullName} ${requestAction.toLowerCase()} this request`
+      ]
     );
 
     let activeTeam = "";
-    if(teamId){
-      const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
+    if (teamId) {
+      const activeTeamResult = plv8.execute(
+        `
+          SELECT * 
+          FROM team_schema.team_table 
+          WHERE team_id = $1
+        `, [
+          teamId
+        ]
+      );
       if(activeTeamResult.length){
         activeTeam = activeTeamResult[0];
       }
     }
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key`);
+      const teamNameUrlKeyResult = plv8.execute(
+        `
+          SELECT public.format_team_name_to_url_key($1) AS url_key
+        `, [
+          activeTeam.team_name
+        ]
+      );
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -2395,14 +2417,21 @@ AS $$
               notification_team_id
             ) VALUES
             (
-              'REQUEST',
-              '${present[requestAction]}',
-              '${signerFullName} ${requestAction.toLowerCase()} your ${formName} request',
-              '/${teamNameUrlKey}/requests/${requestFormslyId ?? requestId}',
-              '${requestOwnerId}',
-              '${teamId}'
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6
             )
-          `
+          `, [
+            'REQUEST',
+            present[requestAction],
+            `${signerFullName} ${requestAction.toLowerCase()} your ${formName} request`,
+            `/${teamNameUrlKey}/requests/${requestFormslyId ?? requestId}`,
+            requestOwnerId,
+            teamId
+          ]
         );
       }
     }
@@ -2419,43 +2448,59 @@ AS $$
             notification_user_id
           ) VALUES
           (
-            'REQUEST',
-            '${present[requestAction]}',
-            '${signerFullName} ${requestAction.toLowerCase()} your ${formName} request',
-            '/user/requests/${requestFormslyId ?? requestId}',
-            '${userId}'
+            $1,
+            $2,
+            $3,
+            $4,
+            $5
           )
-        `
+        `, [
+          'REQUEST',
+          present[requestAction],
+          `${signerFullName} ${requestAction.toLowerCase()} your ${formName} request`,
+          `/user/requests/${requestFormslyId ?? requestId}`,
+          userId
+        ]
       );
     }
 
     if (isPrimarySigner) {
       if (requestAction === "APPROVED") {
-        const isAllPrimaryApprovedTheRequest = Boolean(
-          plv8.execute(
-            `
-              SELECT COUNT(*)
+        const isAllPrimaryApprovedTheRequest =  plv8.execute(
+          `
+            SELECT EXISTS (
+              SELECT 1
               FROM request_schema.request_signer_table
               INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
                 AND signer_is_primary_signer = true
               WHERE
-                request_signer_request_id = '${requestId}'
-                AND request_signer_id != '${requestSignerId}'
-                AND request_signer_status != 'APPROVED'
-            `
-          )[0].count
-        );
+                request_signer_request_id = $1
+                AND request_signer_id != $2
+                AND request_signer_status != $3
+            )
+          `, [
+            requestId,
+            requestSignerId,
+            'APPROVED'
+          ]
+        )[0].exists
         if (!isAllPrimaryApprovedTheRequest) {
           plv8.execute(
             `
               UPDATE request_schema.request_table
               SET
-                request_status = '${requestAction}',
-                request_status_date_updated = NOW()
-                ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""}
+                request_status = $1,
+                request_status_date_updated = NOW(),
+                request_jira_id = $2,
+                request_jira_link = $3
               WHERE
-                request_id='${requestId}'
-            `
+                request_id = $4
+            `, [
+              requestAction,
+              jiraId || null,
+              jiraLink || null,
+              requestId
+            ]
           );
           request_status = "APPROVED"
         }
@@ -2464,18 +2509,24 @@ AS $$
           `
             UPDATE request_schema.request_table
             SET
-              request_status = '${requestAction}',
-              request_status_date_updated = NOW()
-              ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""}
+              request_status = $1,
+              request_status_date_updated = NOW(),
+              request_jira_id = $2,
+              request_jira_link = $3
             WHERE
-              request_id='${requestId}'
-          `
+              request_id = $4
+          `, [
+            requestAction,
+            jiraId || null,
+            jiraLink || null,
+            requestId
+          ]
         );
         request_status = "REJECTED"
       }
     }
   });
-  return request_status
+  return request_status;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
