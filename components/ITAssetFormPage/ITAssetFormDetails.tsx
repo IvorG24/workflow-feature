@@ -90,7 +90,7 @@ const ITAssetFormDetails = ({
         {isCreatingItem ? (
           <CreateItem formId={formId} setIsCreatingItem={setIsCreatingItem} />
         ) : null}
-        {editItem ? (
+        {editItem && !selectedItem ? (
           <UpdateItem
             formId={formId}
             setItemList={setItemList}
