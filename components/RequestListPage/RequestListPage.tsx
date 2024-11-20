@@ -2,7 +2,10 @@ import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -43,6 +46,7 @@ const RequestListPage = ({ projectList }: Props) => {
   const formList = useFormList();
   const teamMember = useUserTeamMember();
   const teamMemberList = useTeamMemberList();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(true);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -68,6 +72,7 @@ const RequestListPage = ({ projectList }: Props) => {
     mode: "onChange",
   });
 
+  const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
   const filteredFormList = formList
     .filter(({ form_is_public_form }) => !form_is_public_form)
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
@@ -202,17 +207,19 @@ const RequestListPage = ({ projectList }: Props) => {
             >
               SSOT
             </Menu.Item>
-            {/* <Menu.Item
-              onClick={async () =>
-                await router.push(
-                  `/${formatTeamNameToUrlKey(
-                    activeTeam.team_name
-                  )}/requests/lrf-spreadsheet-view`
-                )
-              }
-            >
-              Liquidation
-            </Menu.Item> */}
+            {isUserAccountant && (
+              <Menu.Item
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/lrf-spreadsheet-view`
+                  )
+                }
+              >
+                Liquidation
+              </Menu.Item>
+            )}
           </Menu.Dropdown>
         </Menu>
       </Flex>

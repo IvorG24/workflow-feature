@@ -794,7 +794,8 @@ const SchedulingCalendar = ({
       title: "Please confirm your action",
       children: (
         <Text size="sm">
-          Are you sure you want to cancel your {meetingType} interview?
+          Are you sure you want to cancel your schedule? This action cannot be
+          undone.
         </Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
