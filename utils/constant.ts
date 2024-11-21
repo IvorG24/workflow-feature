@@ -676,6 +676,18 @@ export const TECHNICAL_ASSESSMENT_FIELD_LIST = [
   "a30ea8a0-ccd4-4e9c-8492-2487aad74cca",
 ];
 
+export const PRACTICAL_TEST_FIELD_LIST = [
+  "1f2344f9-a491-451c-85d5-43e4c2a24203",
+  "301597ab-6d83-42d5-b0a6-45d80eb6d3b8",
+  "57facce9-cfe9-4e24-8c6d-318b7bf86d4e",
+  "c4dc4d86-1b97-4626-a2e4-ddde0f8aef29",
+  "c92617dc-01b5-456a-a6af-a24406349e2a",
+  "f531109d-7804-4ce8-b158-cc24ba12be06",
+  "9d6f8b4d-e530-4bbc-8554-0512146eacaa",
+  "070cf161-c3b9-4f01-b844-841e522f4800",
+  "488dc9a5-a6a8-4e41-8e61-d12ec0690c8b",
+];
+
 export const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },
   { value: "14", label: "Last 14 days" },
