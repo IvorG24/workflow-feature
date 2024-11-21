@@ -3521,7 +3521,37 @@ AS $$
       },
     } = input_data;
 
-    form_data = plv8.execute(`INSERT INTO form_schema.form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
+    form_data = plv8.execute(
+      `
+        INSERT INTO form_schema.form_table 
+        (
+          form_app,
+          form_description,
+          form_name,form_team_member_id,
+          form_id,form_is_signature_required,
+          form_is_for_every_member
+        ) 
+        VALUES 
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7
+        ) 
+        RETURNING *
+      `, [
+        formType,
+        formDescription,
+        formName,
+        teamMemberId,
+        formId,
+        isSignatureRequired,
+        isForEveryone
+      ]
+    )[0];
 
     const sectionInput = [];
     const fieldInput = [];
@@ -3547,7 +3577,7 @@ AS $$
     const fieldValues = fieldInput
       .map(
         (field) =>
-          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}', ${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
+          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}',${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
       )
       .join(",");
 
@@ -3573,21 +3603,74 @@ AS $$
       )
       .join(",");
 
-    const section_query = `INSERT INTO form_schema.section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
+    const section_query = `
+      INSERT INTO form_schema.section_table 
+      (
+        section_id,
+        section_form_id,
+        section_is_duplicatable,
+        section_name,
+        section_order
+      ) 
+      VALUES ${sectionValues}
+    `;
 
-    const field_query = `INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
+    const field_query = `
+      INSERT INTO form_schema.field_table 
+      (
+        field_id,
+        field_name,
+        field_type,
+        field_is_positive_metric,
+        field_is_required,
+        field_order,
+        field_section_id,
+        field_special_field_template_id
+      ) 
+      VALUES ${fieldValues}
+    `;
 
-    const option_query = `INSERT INTO form_schema.option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
+    const option_query = `
+      INSERT INTO form_schema.option_table 
+      (
+        option_id,option_value,
+        option_order,
+        option_field_id
+      ) 
+      VALUES ${optionValues}
+    `;
 
-    const signer_query = `INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
+    const signer_query = `
+      INSERT INTO form_schema.signer_table 
+      (
+        signer_id,
+        signer_form_id,
+        signer_team_member_id,
+        signer_action,
+        signer_is_primary_signer,signer_order
+      ) 
+      VALUES ${signerValues}
+    `;
 
-    const form_group_query = `INSERT INTO form_schema.form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
+    const form_group_query = `
+      INSERT INTO form_schema.form_team_group_table 
+      (
+        form_id,
+        team_group_id
+      ) 
+      VALUES ${groupValues}
+    `;
 
-    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query}; ${groupList.length>0?form_group_query:''};`
-
+    const all_query = `
+      ${section_query}; 
+      ${field_query}; 
+      ${optionInput.length>0?option_query : ''}; 
+      ${signer_query}; 
+      ${groupList.length > 0 ? form_group_query : ''};
+    `
     plv8.execute(all_query);
- });
- return form_data;
+  });
+  return form_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_all_notification(
@@ -20630,7 +20713,6 @@ AS $$
   });
   return returnData;
 $$ LANGUAGE plv8;
-
 
 ----- END: FUNCTIONS
 
