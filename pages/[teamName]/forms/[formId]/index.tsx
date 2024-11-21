@@ -7,7 +7,6 @@ import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpen
 import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
 import PEDItemFormPage from "@/components/PEDItemFormPage/PEDItemFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
-import PracticalAssessmentFormPage from "@/components/PracticcalAssessmentFormPage/PracticalAssessmentFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import TechnicalAssessmentFormPage from "@/components/TechnicalAssessmentFormPage/TechnicalAssessmentFormPage";
@@ -148,16 +147,6 @@ const Page = ({
       case "Technical Assessment":
         return (
           <TechnicalAssessmentFormPage
-            form={form}
-            teamMemberList={teamMemberList}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
-      case "Practical Test":
-        return (
-          <PracticalAssessmentFormPage
             form={form}
             teamMemberList={teamMemberList}
             teamGroupList={teamGroupList}
