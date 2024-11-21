@@ -3849,30 +3849,62 @@ AS $$
     let request_count = 0;
 
     const base_request_list_query = `
-      SELECT
-        request_id,
-        request_formsly_id,
-        request_date_created,
-        request_status,
-        request_team_member_id,
-        request_jira_id,
-        request_jira_link,
-        request_otp_id,
-        request_form_id,
-        form_name
-      FROM public.request_view
-      INNER JOIN form_schema.form_table ON request_form_id = form_id
-        AND form_is_disabled = false
-        AND form_is_public_form = false
-      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        AND team_member_team_id = $1
-      WHERE
-        request_is_disabled = false
+      WITH request_data AS (
+        SELECT
+          request_id,
+          request_formsly_id,
+          request_date_created,
+          request_status,
+          request_team_member_id,
+          request_jira_id,
+          request_jira_link,
+          request_otp_id,
+          request_form_id,
+          form_name
+        FROM public.request_view
+        INNER JOIN form_schema.form_table ON request_form_id = form_id
+          AND form_is_disabled = false
+          AND form_is_public_form = false
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+          AND team_member_team_id = $1
+        WHERE
+          request_is_disabled = false
     `;
 
+    const request_signer_query = `
+      )
+      SELECT jsonb_build_object(
+        'request_id', request_id,
+        'request_formsly_id', request_formsly_id,
+        'request_date_created', request_date_created,
+        'request_status', request_status,
+        'request_team_member_id', request_team_member_id,
+        'request_jira_id', request_jira_id,
+        'request_jira_link', request_jira_link,
+        'request_otp_id', request_otp_id,
+        'request_form_id', request_form_id,
+        'form_name', form_name,
+        'request_signer', (
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'request_signer_id', request_signer_id,
+              'request_signer_status', request_signer_status,
+              'signer_is_primary_signer', signer_is_primary_signer,
+              'signer_team_member_id', signer_team_member_id
+            )
+          )
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table 
+            ON request_signer_signer_id = signer_id
+          WHERE request_signer_request_id = request_id
+        )
+      )
+      FROM request_data
+    `
+
     const base_sort_query = `
-        ORDER BY ${columnAccessor} ${sort}
-        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      ORDER BY ${columnAccessor} ${sort}
+      OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
     `;
 
     const base_request_count_query = `
@@ -3901,43 +3933,21 @@ AS $$
         AND request_view.request_status != 'CANCELED'
       `;
 
-      request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
+      request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query + request_signer_query, [teamId, teamMemberId]);
 
       request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
     } else {
       const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
 
-      request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+      request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query + request_signer_query, [teamId]);
 
       request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
-    const request_data = request_list.map(request => {
-      const request_signer = plv8.execute(
-        `
-          SELECT
-            request_signer_id,
-            request_signer_status,
-            signer_is_primary_signer,
-            signer_team_member_id
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
-          WHERE request_signer_request_id = $1
-        `,
-        [request.request_id]
-      )
-
-      return {
-        ...request,
-        request_signer,
-      };
-    });
-
     return_value = {
-      data: request_data,
+      data: request_list.map(data => data.jsonb_build_object),
       count: Number(request_count.count)
     };
-
   });
   return return_value;
 $$ LANGUAGE plv8;

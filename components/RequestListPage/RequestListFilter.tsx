@@ -170,6 +170,7 @@ const RequestListFilter = ({
             onChange={(e) => {
               setValue("isApproversView", e.target.checked);
               handleFilterChange("isApproversView", e.target.checked);
+              handleFilterForms();
             }}
             onLabel="ON"
             offLabel="OFF"
