@@ -3766,7 +3766,20 @@ AS $$
      selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE form_schema.signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"} AND signer_team_department_id IS NULL`);
+    plv8.execute(
+      `
+        UPDATE form_schema.signer_table 
+        SET 
+          signer_is_disabled = $1 
+        WHERE 
+          signer_form_id = $2
+          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"} 
+          AND signer_team_department_id IS NULL
+      `, [
+        true,
+        formId
+      ]
+    );
 
     const signerValues = signers
       .map(
@@ -3775,10 +3788,35 @@ AS $$
       )
       .join(",");
 
-    signer_data = plv8.execute(`INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
-
- });
- return signer_data;
+    signer_data = plv8.execute(
+      `
+        INSERT INTO form_schema.signer_table 
+        (
+          signer_id,
+          signer_form_id,
+          signer_team_member_id,
+          signer_action,
+          signer_is_primary_signer,
+          signer_order,
+          signer_is_disabled,
+          signer_team_project_id
+        ) 
+        VALUES ${signerValues} 
+        ON CONFLICT 
+        ON CONSTRAINT signer_table_pkey 
+        DO UPDATE 
+        SET 
+          signer_team_member_id = excluded.signer_team_member_id,
+          signer_action = excluded.signer_action,
+          signer_is_primary_signer = excluded.signer_is_primary_signer,
+          signer_order = excluded.signer_order,
+          signer_is_disabled = excluded.signer_is_disabled,
+          signer_team_project_id = excluded.signer_team_project_id 
+        RETURNING *
+      `
+    );
+  });
+  return signer_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_request_list(
