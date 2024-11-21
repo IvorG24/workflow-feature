@@ -1581,9 +1581,9 @@ AS $$
     let formslyIdPrefix = '';
     let endId = '';
 
-    if(isFormslyForm) {
+    if (isFormslyForm) {
       let project;
-      if(projectId){
+      if (projectId) {
         project = plv8.execute(
           `
             SELECT *
@@ -1640,33 +1640,36 @@ AS $$
     }
 
     if (!projectId && !endId) {
-        request_data = plv8.execute(
-          `
-            INSERT INTO request_schema.request_table
-            (
-              request_id,
-              request_form_id,
-              request_team_member_id,
-              request_status,
-              request_status_date_updated
-            )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              $4,
-              $5
-            )
-            RETURNING *
-          `, [
-            requestId,
-            formId,
-            teamMemberId || null,
-            status || 'PENDING',
-            status ? 'NOW()' : null
-          ]
-        )[0];
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table
+          (
+            request_id,
+            request_form_id,
+            request_team_member_id,
+            request_status,
+            request_status_date_updated,
+            request_formsly_id_serial
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6
+          )
+          RETURNING *
+        `, [
+          requestId,
+          formId,
+          teamMemberId || null,
+          status || 'PENDING',
+          status ? 'NOW()' : null,
+          null
+        ]
+      )[0];
     } else {
       request_data = plv8.execute(
         `
@@ -1955,8 +1958,8 @@ AS $$
 
     if (requestScore !== undefined) {
       plv8.execute(
-
-          `INSERT INTO request_schema.request_score_table
+        `
+          INSERT INTO request_schema.request_score_table
           (
             request_score_value,
             request_score_request_id
