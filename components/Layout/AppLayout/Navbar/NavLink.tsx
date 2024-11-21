@@ -9,6 +9,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -25,7 +26,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { useMediaQuery } from '@mantine/hooks';
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -97,7 +98,7 @@ const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
   const [openedFormAccordion, setOpenedFormAccordion] = useState<string[]>([]);
@@ -126,6 +127,16 @@ const ReviewAppNavLink = () => {
   );
   const teamMemberGroup = useUserTeamMemberGroupList();
   const teamMemberGroups = useUserTeamMemberGroupList();
+  const { preferences, updatePreference, initializePreferences } =
+    useSidebarStore((state) => ({
+      preferences: state.preferences,
+      updatePreference: state.setUpdatedPreference,
+      initializePreferences: state.initializePreferences,
+    }));
+
+  useEffect(() => {
+    initializePreferences();
+  }, [initializePreferences]);
 
   const createRequestFormList = forms.filter(
     (form) =>
@@ -219,8 +230,17 @@ const ReviewAppNavLink = () => {
         <Accordion
           variant="separated"
           multiple
-          value={openedRequestAccordion}
-          onChange={(value) => setOpenedRequestAccordion(value)}
+          value={
+            openedRequestAccordion && openedRequestAccordion.length > 0
+              ? openedRequestAccordion
+              : preferences.create
+              ? ["create"]
+              : []
+          }
+          onChange={(value) => {
+            setOpenedRequestAccordion(value);
+            updatePreference("create", value.includes("create"));
+          }}
         >
           <Accordion.Item value="create">
             <Accordion.Control>
@@ -230,10 +250,10 @@ const ReviewAppNavLink = () => {
             </Accordion.Control>
             <Accordion.Panel>
               <Menu
-                trigger={isMobile ? 'click' : 'hover'}
+                trigger={isMobile ? "click" : "hover"}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position={isMobile ? 'bottom-end' : 'right'}
+                position={isMobile ? "bottom-end" : "right"}
               >
                 <Stack
                   spacing={0}
@@ -418,8 +438,17 @@ const ReviewAppNavLink = () => {
         <Accordion
           variant="separated"
           multiple
-          value={openedFormAccordion}
-          onChange={(value) => setOpenedFormAccordion(value)}
+          value={
+            openedFormAccordion && openedFormAccordion.length > 0
+              ? openedFormAccordion
+              : preferences.form
+              ? ["form"]
+              : []
+          }
+          onChange={(value) => {
+            updatePreference("form", value.includes("form"));
+            setOpenedFormAccordion(value);
+          }}
         >
           <Accordion.Item value="form">
             <Accordion.Control>
@@ -428,11 +457,11 @@ const ReviewAppNavLink = () => {
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-            <Menu
-                trigger={isMobile ? 'click' : 'hover'}
+              <Menu
+                trigger={isMobile ? "click" : "hover"}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position={isMobile ? 'bottom-end' : 'right'}
+                position={isMobile ? "bottom-end" : "right"}
               >
                 <Stack
                   spacing={0}
@@ -604,7 +633,11 @@ const ReviewAppNavLink = () => {
   const renderMetricsMenu = () => {
     return (
       <Box h="fit-content" mt="md">
-        <Accordion variant="separated">
+        <Accordion
+          variant="separated"
+          value={preferences.metrics ? "metrics" : null}
+          onChange={(value) => updatePreference("metrics", value === "metrics")}
+        >
           <Accordion.Item value="metrics">
             <Accordion.Control>
               <Text size="sm" weight={400}>
@@ -612,11 +645,11 @@ const ReviewAppNavLink = () => {
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-            <Menu
-                trigger={isMobile ? 'click' : 'hover'}
+              <Menu
+                trigger={isMobile ? "click" : "hover"}
                 shadow="1px 1px 3px rgba(0, 0, 0, .25)"
                 withArrow
-                position={isMobile ? 'bottom-end' : 'right'}
+                position={isMobile ? "bottom-end" : "right"}
               >
                 <Stack
                   spacing={0}
@@ -1015,6 +1048,11 @@ const ReviewAppNavLink = () => {
         (teamMemberGroup.includes("HUMAN RESOURCES") ||
           teamMemberGroup.includes("HUMAN RESOURCES VIEWER")) && (
           <NavLinkSection
+            accordionItemValue="hr"
+            accordionValue={preferences.humanResources ? "hr" : null}
+            accordionOnChange={(value) => {
+              updatePreference("humanResources", value === "hr");
+            }}
             label={"Human Resources"}
             links={hrSection}
             {...defaultNavLinkProps}
@@ -1029,6 +1067,11 @@ const ReviewAppNavLink = () => {
           renderCreateRequestMenu()
         ) : (
           <NavLinkSection
+            accordionItemValue="create"
+            accordionValue={preferences.create ? "create" : null}
+            accordionOnChange={(value) => {
+              updatePreference("create", value === "create");
+            }}
             label="Create"
             links={createSection}
             {...defaultNavLinkProps}
@@ -1038,12 +1081,22 @@ const ReviewAppNavLink = () => {
 
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
+          accordionItemValue="list"
+          accordionValue={preferences.list ? "list" : null}
+          accordionOnChange={(value) => {
+            updatePreference("list", value === "list");
+          }}
           label={"List"}
           links={listSection}
           {...defaultNavLinkProps}
         />
       ) : (
         <NavLinkSection
+          accordionItemValue="list"
+          accordionValue={preferences.list ? "list" : null}
+          accordionOnChange={(value) => {
+            updatePreference("list", value === "list");
+          }}
           label={"List"}
           links={listSection.slice(0, 2)}
           {...defaultNavLinkProps}
@@ -1075,6 +1128,11 @@ const ReviewAppNavLink = () => {
 
       {!isEmpty(activeTeam) && hasTeam && (
         <NavLinkSection
+          accordionItemValue="team"
+          accordionValue={preferences.team ? "team" : null}
+          accordionOnChange={(value) => {
+            updatePreference("team", value === "team");
+          }}
           label={"Team"}
           links={teamSectionWithManageTeam}
           {...defaultNavLinkProps}
@@ -1083,6 +1141,11 @@ const ReviewAppNavLink = () => {
 
       {!hasTeam && (
         <NavLinkSection
+          accordionItemValue="team"
+          accordionValue={preferences.team ? "team" : null}
+          accordionOnChange={(value) => {
+            updatePreference("team", value === "team");
+          }}
           label="Team"
           links={joinTeamSection}
           {...defaultNavLinkProps}
@@ -1093,6 +1156,11 @@ const ReviewAppNavLink = () => {
         userTeamMemberData?.team_member_role === "OWNER") && (
         <>
           <NavLinkSection
+            accordionItemValue="jira"
+            accordionValue={preferences.jira ? "jira" : null}
+            accordionOnChange={(value) => {
+              updatePreference("jira", value === "jira");
+            }}
             label={"Jira"}
             links={jiraSection}
             {...defaultNavLinkProps}

@@ -360,9 +360,6 @@ const PEDItemFormPage = ({
     }
   };
 
-
-  console.log("in ped item form page", itemList);
-
   return (
     <Container>
       <Flex justify="space-between">
