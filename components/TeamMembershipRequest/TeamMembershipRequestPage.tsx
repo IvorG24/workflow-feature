@@ -247,6 +247,7 @@ const TeamMembershipRequestPage = ({
             placeholder="Search team name..."
             rightSection={
               <ActionIcon
+                disabled={isLoading}
                 onClick={() => {
                   if (searchInput) {
                     handleFetchTeams({ page: 1 });
@@ -274,6 +275,7 @@ const TeamMembershipRequestPage = ({
           <Button
             variant="light"
             leftIcon={<IconReload size={16} />}
+            disabled={isLoading}
             onClick={() => handleFetchTeams({ page: 1 })}
           >
             Refresh
