@@ -3455,9 +3455,44 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-    plv8.execute(`UPDATE request_schema.request_table SET request_status='CANCELED', request_status_date_updated = NOW() WHERE request_id='${request_id}'`);
-    plv8.execute(`INSERT INTO request_schema.comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
- });
+    plv8.execute(
+      `
+        UPDATE request_schema.request_table 
+        SET 
+          request_status = $1,
+          request_status_date_updated = $2
+        WHERE 
+          request_id = $3
+      `, [
+        'CANCELED',
+        'NOW()',
+        request_id
+      ]
+    );
+    plv8.execute(
+      `
+        INSERT INTO request_schema.comment_table 
+        (
+          comment_request_id,
+          comment_team_member_id,
+          comment_type,
+          comment_content
+        ) 
+        VALUES 
+        (
+          $1,
+          $2,
+          $3,
+          $4
+        )
+      `, [
+        request_id,
+        member_id,
+        comment_type,
+        comment_content
+      ]
+    );
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request_form(
