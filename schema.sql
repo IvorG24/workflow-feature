@@ -3692,15 +3692,64 @@ AS $$
     const start = (page - 1) * limit;
 
     let team_query = ''
-    if(teamId) team_query = `OR notification_team_id='${teamId}'`
+    if (teamId) {
+      team_query = `OR notification_team_id = '${teamId}'`;
+    }
 
-    const notification_list = plv8.execute(`SELECT  * FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}';`);
+    const notification_list = plv8.execute(
+      `
+        SELECT  * FROM public.notification_table 
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = $2
+            OR notification_app = $3
+          ) 
+          AND (
+            notification_team_id IS NULL 
+            ${team_query}
+          ) 
+        ORDER BY notification_date_created DESC 
+        LIMIT $4
+        OFFSET $5
+      `, [
+        userId,
+        'GENERAL',
+        app,
+        limit,
+        start
+      ]
+     );
 
-    const unread_notification_count = plv8.execute(`SELECT COUNT(*) FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app='GENERAL' OR notification_app='${app}') AND (notification_team_id IS NULL ${team_query}) AND notification_is_read=false;`)[0].count;
+    const unread_notification_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM public.notification_table 
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = $2
+            OR notification_app = $3
+          ) 
+          AND (
+            notification_team_id IS NULL 
+            ${team_query}
+          ) 
+          AND notification_is_read = $4
+      `, [
+        userId,
+        'GENERAL',
+        app,
+        false
+      ]
+    )[0].count;
 
-    notification_data = {data: notification_list,  count: parseInt(unread_notification_count)}
- });
- return notification_data;
+    notification_data = {
+      data: notification_list,
+      count: Number(unread_notification_count)
+    }
+  });
+  return notification_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_form_signer(
