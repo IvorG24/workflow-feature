@@ -3203,18 +3203,40 @@ SET search_path TO ''
 AS $$
   let active_team_id;
   plv8.subtransaction(function(){
-    const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
+    const user_data = plv8.execute(
+      `
+        SELECT * 
+        FROM user_schema.user_table 
+        WHERE user_id = $1 
+        LIMIT 1
+      `, [
+        user_id
+      ]
+    )[0];
 
-    if(!user_data.user_active_team_id){
-      const team_member = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
-      if(team_member){
-        active_team_id = team_member.team_member_team_id
+    if (!user_data.user_active_team_id) {
+      const team_member = plv8.execute(
+        `
+          SELECT * 
+          FROM team_schema.team_member_table 
+          WHERE 
+            team_member_user_id = $1
+            AND team_member_is_disabled = $2
+          LIMIT 1
+        `, [
+          user_id,
+          false
+        ]
+      );
+
+      if (team_member.length) {
+        active_team_id = team_member[0].team_member_team_id
       }
-    }else{
+    } else {
       active_team_id = user_data.user_active_team_id
     }
- });
- return active_team_id;
+  });
+  return active_team_id;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_item_form_status(
