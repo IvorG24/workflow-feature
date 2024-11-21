@@ -3335,30 +3335,114 @@ AS $$
   let user_team_list
   plv8.subtransaction(function(){
 
-    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
-    const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_schema.user_table WHERE user_id='${user_id}'`)[0];
+    const isUserPreviousMember = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM team_schema.team_member_table 
+          WHERE 
+            team_member_team_id = $1
+            AND team_member_user_id = $2
+            AND team_member_is_disabled = $3
+        )
+      `, [
+        team_id,
+        user_id,
+        true
+      ]
+    )[0].exists;
+    
+    const userData = plv8.execute(
+      `
+        SELECT 
+          user_id, 
+          user_active_team_id 
+        FROM user_schema.user_table 
+        WHERE 
+          user_id = $1
+      `, [
+        user_id
+      ]
+    )[0];
 
-    if (isUserPreviousMember[0].count > 0) {
-      plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
+    if (isUserPreviousMember) {
+      plv8.execute(
+        `
+          UPDATE team_schema.team_member_table 
+          SET 
+            team_member_is_disabled = $1 
+          WHERE 
+            team_member_team_id = $2
+            AND team_member_user_id = $3
+        `, [
+          false,
+          team_id,
+          user_id
+        ]
+      );
     } else {
-      plv8.execute(`INSERT INTO team_schema.team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+      plv8.execute(
+        `
+          INSERT INTO team_schema.team_member_table 
+          (
+            team_member_team_id,
+            team_member_user_id
+          ) VALUES 
+          (
+            $1,
+            $2
+          )
+        `, [
+          team_id,
+          user_id
+        ]
+      );
     }
 
     if (!userData.user_active_team_id) {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table 
+          SET 
+            user_active_team_id = $1
+          WHERE user_id = $2
+        `, [
+          team_id,
+          user_id
+        ]
+      );
     }
 
-    plv8.execute(`UPDATE user_schema.invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
+    plv8.execute(
+      `
+        UPDATE user_schema.invitation_table 
+        SET 
+          invitation_status = $1
+        WHERE 
+          invitation_id = $2
+      `, [
+        'ACCEPTED',
+        invitation_id
+      ]
+    );
 
-    user_team_list = plv8.execute(`SELECT tt.*
-      FROM team_schema.team_member_table as tm
-      JOIN team_schema.team_table as tt ON tt.team_id = tm.team_member_team_id
-      WHERE team_member_is_disabled=FALSE
-      AND team_member_user_id='${user_id}'
-      ORDER BY tt.team_date_created DESC`)
-
- });
- return user_team_list;
+    user_team_list = plv8.execute(
+      `
+        SELECT team_table.*
+        FROM team_schema.team_member_table
+        INNER JOIN team_schema.team_table 
+          ON team_id = team_member_team_id
+        WHERE 
+          team_member_is_disabled = $1
+          AND team_member_user_id = $2
+        ORDER BY team_date_created DESC
+      `, [
+        false,
+        user_id
+      ]
+    );
+  });
+  return user_team_list;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION cancel_request(
