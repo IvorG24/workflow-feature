@@ -3297,10 +3297,31 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
- });
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table 
+        SET 
+          team_member_role = $1
+        WHERE 
+          team_member_id = $2
+      `, [
+        'OWNER',
+        member_id
+      ]
+    );
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table 
+        SET
+          team_member_role = $1
+        WHERE 
+          team_member_id = $2
+      `, [
+        'APPROVER',
+        owner_id
+      ]
+    );
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION accept_team_invitation(
