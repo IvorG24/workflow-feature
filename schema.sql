@@ -3243,16 +3243,40 @@ CREATE OR REPLACE FUNCTION check_item_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text
+RETURNS TEXT
 SET search_path TO ''
 AS $$
   let return_data;
   plv8.subtransaction(function(){
+    const item_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM item_schema.item_table 
+        WHERE 
+          item_team_id = $1
+          AND item_is_available = $2
+          AND item_is_disabled = $3
+      `, [
+        team_id,
+        true,
+        false
+      ]
+    )[0];
 
-
-    const item_count = plv8.execute(`SELECT COUNT(*) FROM item_schema.item_table WHERE item_team_id='${team_id}' AND item_is_available='true' AND item_is_disabled='false'`)[0];
-
-    const signer_count = plv8.execute(`SELECT COUNT(*) FROM form_schema.signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+    const signer_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM form_schema.signer_table 
+        WHERE 
+          signer_form_id = $1
+          AND signer_is_disabled = $2
+          AND signer_is_primary_signer = $3
+      `, [
+        form_id,
+        false,
+        true
+      ]
+    )[0];
 
     if (!item_count.count) {
       return_data = "There must be at least one available item";
@@ -3261,9 +3285,8 @@ AS $$
     } else {
       return_data = "true"
     }
- });
-
- return return_data;
+  });
+  return return_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION transfer_ownership(
