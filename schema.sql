@@ -1581,9 +1581,9 @@ AS $$
     let formslyIdPrefix = '';
     let endId = '';
 
-    if(isFormslyForm) {
+    if (isFormslyForm) {
       let project;
-      if(projectId){
+      if (projectId) {
         project = plv8.execute(
           `
             SELECT *
@@ -1640,33 +1640,36 @@ AS $$
     }
 
     if (!projectId && !endId) {
-        request_data = plv8.execute(
-          `
-            INSERT INTO request_schema.request_table
-            (
-              request_id,
-              request_form_id,
-              request_team_member_id,
-              request_status,
-              request_status_date_updated
-            )
-            VALUES
-            (
-              $1,
-              $2,
-              $3,
-              $4,
-              $5
-            )
-            RETURNING *
-          `, [
-            requestId,
-            formId,
-            teamMemberId || null,
-            status || 'PENDING',
-            status ? 'NOW()' : null
-          ]
-        )[0];
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table
+          (
+            request_id,
+            request_form_id,
+            request_team_member_id,
+            request_status,
+            request_status_date_updated,
+            request_formsly_id_serial
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6
+          )
+          RETURNING *
+        `, [
+          requestId,
+          formId,
+          teamMemberId || null,
+          status || 'PENDING',
+          status ? 'NOW()' : null,
+          null
+        ]
+      )[0];
     } else {
       request_data = plv8.execute(
         `
@@ -1955,8 +1958,8 @@ AS $$
 
     if (requestScore !== undefined) {
       plv8.execute(
-
-          `INSERT INTO request_schema.request_score_table
+        `
+          INSERT INTO request_schema.request_score_table
           (
             request_score_value,
             request_score_request_id
@@ -3088,20 +3091,33 @@ AS $$
       teamName
     } = input_data;
 
+    plv8.execute(
+      `
+        DELETE FROM user_schema.invitation_table
+        WHERE
+          invitation_to_email = ANY($1)
+          AND invitation_status = $2
+      `, [
+        emailList,
+        'PENDING'
+      ]
+    );
+
+    const userData = plv8.execute(
+      `
+        SELECT * 
+        FROM user_schema.user_table 
+        WHERE 
+          user_email = ANY($1)
+      `, [
+        emailList
+      ]
+    );
+
     const invitationInput = [];
     const notificationInput = [];
-
     emailList.forEach((email) => {
       const invitationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
-
-       plv8.execute(
-        `
-          DELETE FROM user_schema.invitation_table
-          WHERE
-            invitation_to_email = '${email}'
-            AND invitation_status = 'PENDING'
-        `
-      );
 
       invitationInput.push({
         invitation_id: invitationId,
@@ -3109,48 +3125,74 @@ AS $$
         invitation_from_team_member_id: teamMemberId,
       });
 
-      const userData = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_email = '${email}' LIMIT 1`);
-
-      if (userData.length) {
-        plv8.execute(
-          `
-            DELETE FROM public.notification_table
-            WHERE
-              notification_app = 'GENERAL'
-              AND notification_content = 'You have been invited to join ${teamName}'
-              AND notification_type = 'INVITE'
-              AND notification_user_id = '${userData[0].user_id}'
-          `
-        );
-
-        notificationInput.push({
+      const matchedUser = userData.find(user => user.user_email === email);
+      if (matchedUser) {
+          notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
           notification_redirect_url: `/invitation/${invitationId}`,
           notification_type: "INVITE",
-          notification_user_id: userData[0].user_id,
+          notification_user_id: matchedUser.user_id,
         });
       }
     });
+
+    if (userData.length) {
+      const userIdList = userData.map(user => user.user_id);
+      plv8.execute(
+        `
+          DELETE FROM public.notification_table
+          WHERE
+            notification_app = 'GENERAL'
+            AND notification_content = 'You have been invited to join ' || $1
+            AND notification_type = 'INVITE'
+            AND notification_user_id = ANY($2)
+        `, [
+          teamName,
+          userIdList
+        ]
+      );
+    }
 
     if (invitationInput.length > 0){
       const invitationValues = invitationInput
         .map((invitation) =>
           `('${invitation.invitation_id}','${invitation.invitation_to_email}','${invitation.invitation_from_team_member_id}')`
-        )
-        .join(",");
+        ).join(",");
 
-      invitation_data = plv8.execute(`INSERT INTO user_schema.invitation_table (invitation_id,invitation_to_email,invitation_from_team_member_id) VALUES ${invitationValues} RETURNING *;`);
+      invitation_data = plv8.execute(
+        `
+          INSERT INTO user_schema.invitation_table 
+          (
+            invitation_id,
+            invitation_to_email,
+            invitation_from_team_member_id
+          ) 
+          VALUES ${invitationValues}
+          RETURNING *
+        `
+      );
     }
 
     if (notificationInput.length > 0){
       const notificationValues = notificationInput
         .map((notification) =>
           `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_type}','${notification.notification_user_id}')`
-        )
-        .join(",");
+        ).join(",");
 
-      plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table 
+          (
+            notification_app,
+            notification_content,
+            notification_redirect_url,
+            notification_type,
+            notification_user_id
+          ) 
+          VALUES ${notificationValues}
+        `
+      );
     }
   });
   return invitation_data;
@@ -3164,34 +3206,80 @@ SET search_path TO ''
 AS $$
   let active_team_id;
   plv8.subtransaction(function(){
-    const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
+    const user_data = plv8.execute(
+      `
+        SELECT * 
+        FROM user_schema.user_table 
+        WHERE user_id = $1 
+        LIMIT 1
+      `, [
+        user_id
+      ]
+    )[0];
 
-    if(!user_data.user_active_team_id){
-      const team_member = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
-      if(team_member){
-        active_team_id = team_member.team_member_team_id
+    if (!user_data.user_active_team_id) {
+      const team_member = plv8.execute(
+        `
+          SELECT * 
+          FROM team_schema.team_member_table 
+          WHERE 
+            team_member_user_id = $1
+            AND team_member_is_disabled = $2
+          LIMIT 1
+        `, [
+          user_id,
+          false
+        ]
+      );
+
+      if (team_member.length) {
+        active_team_id = team_member[0].team_member_team_id
       }
-    }else{
+    } else {
       active_team_id = user_data.user_active_team_id
     }
- });
- return active_team_id;
+  });
+  return active_team_id;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_item_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text
+RETURNS TEXT
 SET search_path TO ''
 AS $$
   let return_data;
   plv8.subtransaction(function(){
+    const item_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM item_schema.item_table 
+        WHERE 
+          item_team_id = $1
+          AND item_is_available = $2
+          AND item_is_disabled = $3
+      `, [
+        team_id,
+        true,
+        false
+      ]
+    )[0];
 
-
-    const item_count = plv8.execute(`SELECT COUNT(*) FROM item_schema.item_table WHERE item_team_id='${team_id}' AND item_is_available='true' AND item_is_disabled='false'`)[0];
-
-    const signer_count = plv8.execute(`SELECT COUNT(*) FROM form_schema.signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+    const signer_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM form_schema.signer_table 
+        WHERE 
+          signer_form_id = $1
+          AND signer_is_disabled = $2
+          AND signer_is_primary_signer = $3
+      `, [
+        form_id,
+        false,
+        true
+      ]
+    )[0];
 
     if (!item_count.count) {
       return_data = "There must be at least one available item";
@@ -3200,9 +3288,8 @@ AS $$
     } else {
       return_data = "true"
     }
- });
-
- return return_data;
+  });
+  return return_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION transfer_ownership(
@@ -3213,10 +3300,31 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
- });
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table 
+        SET 
+          team_member_role = $1
+        WHERE 
+          team_member_id = $2
+      `, [
+        'OWNER',
+        member_id
+      ]
+    );
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table 
+        SET
+          team_member_role = $1
+        WHERE 
+          team_member_id = $2
+      `, [
+        'APPROVER',
+        owner_id
+      ]
+    );
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION accept_team_invitation(
@@ -3230,30 +3338,114 @@ AS $$
   let user_team_list
   plv8.subtransaction(function(){
 
-    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
-    const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_schema.user_table WHERE user_id='${user_id}'`)[0];
+    const isUserPreviousMember = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM team_schema.team_member_table 
+          WHERE 
+            team_member_team_id = $1
+            AND team_member_user_id = $2
+            AND team_member_is_disabled = $3
+        )
+      `, [
+        team_id,
+        user_id,
+        true
+      ]
+    )[0].exists;
+    
+    const userData = plv8.execute(
+      `
+        SELECT 
+          user_id, 
+          user_active_team_id 
+        FROM user_schema.user_table 
+        WHERE 
+          user_id = $1
+      `, [
+        user_id
+      ]
+    )[0];
 
-    if (isUserPreviousMember[0].count > 0) {
-      plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
+    if (isUserPreviousMember) {
+      plv8.execute(
+        `
+          UPDATE team_schema.team_member_table 
+          SET 
+            team_member_is_disabled = $1 
+          WHERE 
+            team_member_team_id = $2
+            AND team_member_user_id = $3
+        `, [
+          false,
+          team_id,
+          user_id
+        ]
+      );
     } else {
-      plv8.execute(`INSERT INTO team_schema.team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+      plv8.execute(
+        `
+          INSERT INTO team_schema.team_member_table 
+          (
+            team_member_team_id,
+            team_member_user_id
+          ) VALUES 
+          (
+            $1,
+            $2
+          )
+        `, [
+          team_id,
+          user_id
+        ]
+      );
     }
 
     if (!userData.user_active_team_id) {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table 
+          SET 
+            user_active_team_id = $1
+          WHERE user_id = $2
+        `, [
+          team_id,
+          user_id
+        ]
+      );
     }
 
-    plv8.execute(`UPDATE user_schema.invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
+    plv8.execute(
+      `
+        UPDATE user_schema.invitation_table 
+        SET 
+          invitation_status = $1
+        WHERE 
+          invitation_id = $2
+      `, [
+        'ACCEPTED',
+        invitation_id
+      ]
+    );
 
-    user_team_list = plv8.execute(`SELECT tt.*
-      FROM team_schema.team_member_table as tm
-      JOIN team_schema.team_table as tt ON tt.team_id = tm.team_member_team_id
-      WHERE team_member_is_disabled=FALSE
-      AND team_member_user_id='${user_id}'
-      ORDER BY tt.team_date_created DESC`)
-
- });
- return user_team_list;
+    user_team_list = plv8.execute(
+      `
+        SELECT team_table.*
+        FROM team_schema.team_member_table
+        INNER JOIN team_schema.team_table 
+          ON team_id = team_member_team_id
+        WHERE 
+          team_member_is_disabled = $1
+          AND team_member_user_id = $2
+        ORDER BY team_date_created DESC
+      `, [
+        false,
+        user_id
+      ]
+    );
+  });
+  return user_team_list;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION cancel_request(
@@ -3266,9 +3458,44 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-    plv8.execute(`UPDATE request_schema.request_table SET request_status='CANCELED', request_status_date_updated = NOW() WHERE request_id='${request_id}'`);
-    plv8.execute(`INSERT INTO request_schema.comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
- });
+    plv8.execute(
+      `
+        UPDATE request_schema.request_table 
+        SET 
+          request_status = $1,
+          request_status_date_updated = $2
+        WHERE 
+          request_id = $3
+      `, [
+        'CANCELED',
+        'NOW()',
+        request_id
+      ]
+    );
+    plv8.execute(
+      `
+        INSERT INTO request_schema.comment_table 
+        (
+          comment_request_id,
+          comment_team_member_id,
+          comment_type,
+          comment_content
+        ) 
+        VALUES 
+        (
+          $1,
+          $2,
+          $3,
+          $4
+        )
+      `, [
+        request_id,
+        member_id,
+        comment_type,
+        comment_content
+      ]
+    );
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request_form(
@@ -3294,7 +3521,37 @@ AS $$
       },
     } = input_data;
 
-    form_data = plv8.execute(`INSERT INTO form_schema.form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
+    form_data = plv8.execute(
+      `
+        INSERT INTO form_schema.form_table 
+        (
+          form_app,
+          form_description,
+          form_name,form_team_member_id,
+          form_id,form_is_signature_required,
+          form_is_for_every_member
+        ) 
+        VALUES 
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7
+        ) 
+        RETURNING *
+      `, [
+        formType,
+        formDescription,
+        formName,
+        teamMemberId,
+        formId,
+        isSignatureRequired,
+        isForEveryone
+      ]
+    )[0];
 
     const sectionInput = [];
     const fieldInput = [];
@@ -3320,7 +3577,7 @@ AS $$
     const fieldValues = fieldInput
       .map(
         (field) =>
-          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}', ${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
+          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}',${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
       )
       .join(",");
 
@@ -3346,21 +3603,74 @@ AS $$
       )
       .join(",");
 
-    const section_query = `INSERT INTO form_schema.section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
+    const section_query = `
+      INSERT INTO form_schema.section_table 
+      (
+        section_id,
+        section_form_id,
+        section_is_duplicatable,
+        section_name,
+        section_order
+      ) 
+      VALUES ${sectionValues}
+    `;
 
-    const field_query = `INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
+    const field_query = `
+      INSERT INTO form_schema.field_table 
+      (
+        field_id,
+        field_name,
+        field_type,
+        field_is_positive_metric,
+        field_is_required,
+        field_order,
+        field_section_id,
+        field_special_field_template_id
+      ) 
+      VALUES ${fieldValues}
+    `;
 
-    const option_query = `INSERT INTO form_schema.option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
+    const option_query = `
+      INSERT INTO form_schema.option_table 
+      (
+        option_id,option_value,
+        option_order,
+        option_field_id
+      ) 
+      VALUES ${optionValues}
+    `;
 
-    const signer_query = `INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
+    const signer_query = `
+      INSERT INTO form_schema.signer_table 
+      (
+        signer_id,
+        signer_form_id,
+        signer_team_member_id,
+        signer_action,
+        signer_is_primary_signer,signer_order
+      ) 
+      VALUES ${signerValues}
+    `;
 
-    const form_group_query = `INSERT INTO form_schema.form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
+    const form_group_query = `
+      INSERT INTO form_schema.form_team_group_table 
+      (
+        form_id,
+        team_group_id
+      ) 
+      VALUES ${groupValues}
+    `;
 
-    const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query}; ${groupList.length>0?form_group_query:''};`
-
+    const all_query = `
+      ${section_query}; 
+      ${field_query}; 
+      ${optionInput.length>0?option_query : ''}; 
+      ${signer_query}; 
+      ${groupList.length > 0 ? form_group_query : ''};
+    `
     plv8.execute(all_query);
- });
- return form_data;
+  });
+  return form_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_all_notification(
@@ -3382,15 +3692,64 @@ AS $$
     const start = (page - 1) * limit;
 
     let team_query = ''
-    if(teamId) team_query = `OR notification_team_id='${teamId}'`
+    if (teamId) {
+      team_query = `OR notification_team_id = '${teamId}'`;
+    }
 
-    const notification_list = plv8.execute(`SELECT  * FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}';`);
+    const notification_list = plv8.execute(
+      `
+        SELECT  * FROM public.notification_table 
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = $2
+            OR notification_app = $3
+          ) 
+          AND (
+            notification_team_id IS NULL 
+            ${team_query}
+          ) 
+        ORDER BY notification_date_created DESC 
+        LIMIT $4
+        OFFSET $5
+      `, [
+        userId,
+        'GENERAL',
+        app,
+        limit,
+        start
+      ]
+     );
 
-    const unread_notification_count = plv8.execute(`SELECT COUNT(*) FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app='GENERAL' OR notification_app='${app}') AND (notification_team_id IS NULL ${team_query}) AND notification_is_read=false;`)[0].count;
+    const unread_notification_count = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM public.notification_table 
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = $2
+            OR notification_app = $3
+          ) 
+          AND (
+            notification_team_id IS NULL 
+            ${team_query}
+          ) 
+          AND notification_is_read = $4
+      `, [
+        userId,
+        'GENERAL',
+        app,
+        false
+      ]
+    )[0].count;
 
-    notification_data = {data: notification_list,  count: parseInt(unread_notification_count)}
- });
- return notification_data;
+    notification_data = {
+      data: notification_list,
+      count: Number(unread_notification_count)
+    }
+  });
+  return notification_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_form_signer(
@@ -3407,7 +3766,20 @@ AS $$
      selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE form_schema.signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"} AND signer_team_department_id IS NULL`);
+    plv8.execute(
+      `
+        UPDATE form_schema.signer_table 
+        SET 
+          signer_is_disabled = $1 
+        WHERE 
+          signer_form_id = $2
+          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"} 
+          AND signer_team_department_id IS NULL
+      `, [
+        true,
+        formId
+      ]
+    );
 
     const signerValues = signers
       .map(
@@ -3416,10 +3788,35 @@ AS $$
       )
       .join(",");
 
-    signer_data = plv8.execute(`INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
-
- });
- return signer_data;
+    signer_data = plv8.execute(
+      `
+        INSERT INTO form_schema.signer_table 
+        (
+          signer_id,
+          signer_form_id,
+          signer_team_member_id,
+          signer_action,
+          signer_is_primary_signer,
+          signer_order,
+          signer_is_disabled,
+          signer_team_project_id
+        ) 
+        VALUES ${signerValues} 
+        ON CONFLICT 
+        ON CONSTRAINT signer_table_pkey 
+        DO UPDATE 
+        SET 
+          signer_team_member_id = excluded.signer_team_member_id,
+          signer_action = excluded.signer_action,
+          signer_is_primary_signer = excluded.signer_is_primary_signer,
+          signer_order = excluded.signer_order,
+          signer_is_disabled = excluded.signer_is_disabled,
+          signer_team_project_id = excluded.signer_team_project_id 
+        RETURNING *
+      `
+    );
+  });
+  return signer_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_request_list(
@@ -3452,30 +3849,62 @@ AS $$
     let request_count = 0;
 
     const base_request_list_query = `
-      SELECT
-        request_id,
-        request_formsly_id,
-        request_date_created,
-        request_status,
-        request_team_member_id,
-        request_jira_id,
-        request_jira_link,
-        request_otp_id,
-        request_form_id,
-        form_name
-      FROM public.request_view
-      INNER JOIN form_schema.form_table ON request_form_id = form_id
-        AND form_is_disabled = false
-        AND form_is_public_form = false
-      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        AND team_member_team_id = $1
-      WHERE
-        request_is_disabled = false
+      WITH request_data AS (
+        SELECT
+          request_id,
+          request_formsly_id,
+          request_date_created,
+          request_status,
+          request_team_member_id,
+          request_jira_id,
+          request_jira_link,
+          request_otp_id,
+          request_form_id,
+          form_name
+        FROM public.request_view
+        INNER JOIN form_schema.form_table ON request_form_id = form_id
+          AND form_is_disabled = false
+          AND form_is_public_form = false
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+          AND team_member_team_id = $1
+        WHERE
+          request_is_disabled = false
     `;
 
+    const request_signer_query = `
+      )
+      SELECT jsonb_build_object(
+        'request_id', request_id,
+        'request_formsly_id', request_formsly_id,
+        'request_date_created', request_date_created,
+        'request_status', request_status,
+        'request_team_member_id', request_team_member_id,
+        'request_jira_id', request_jira_id,
+        'request_jira_link', request_jira_link,
+        'request_otp_id', request_otp_id,
+        'request_form_id', request_form_id,
+        'form_name', form_name,
+        'request_signer', (
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'request_signer_id', request_signer_id,
+              'request_signer_status', request_signer_status,
+              'signer_is_primary_signer', signer_is_primary_signer,
+              'signer_team_member_id', signer_team_member_id
+            )
+          )
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table 
+            ON request_signer_signer_id = signer_id
+          WHERE request_signer_request_id = request_id
+        )
+      )
+      FROM request_data
+    `
+
     const base_sort_query = `
-        ORDER BY ${columnAccessor} ${sort}
-        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      ORDER BY ${columnAccessor} ${sort}
+      OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
     `;
 
     const base_request_count_query = `
@@ -3504,43 +3933,21 @@ AS $$
         AND request_view.request_status != 'CANCELED'
       `;
 
-      request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
+      request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query + request_signer_query, [teamId, teamMemberId]);
 
       request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
     } else {
       const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
 
-      request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+      request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query + request_signer_query, [teamId]);
 
       request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
-    const request_data = request_list.map(request => {
-      const request_signer = plv8.execute(
-        `
-          SELECT
-            request_signer_id,
-            request_signer_status,
-            signer_is_primary_signer,
-            signer_team_member_id
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
-          WHERE request_signer_request_id = $1
-        `,
-        [request.request_id]
-      )
-
-      return {
-        ...request,
-        request_signer,
-      };
-    });
-
     return_value = {
-      data: request_data,
+      data: request_list.map(data => data.jsonb_build_object),
       count: Number(request_count.count)
     };
-
   });
   return return_value;
 $$ LANGUAGE plv8;
@@ -3567,31 +3974,80 @@ AS $$
       zipCode
     } = input_data;
 
-    const projectInitialCount = plv8.execute(`
-      SELECT COUNT(*) FROM team_schema.team_project_table
-      WHERE team_project_team_id = $1
-      AND team_project_code ILIKE '%' || $2 || '%';
-    `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
+    const projectInitialCount = plv8.execute(
+      `
+        SELECT COUNT(*) FROM team_schema.team_project_table
+        WHERE 
+          team_project_team_id = $1
+          AND team_project_code ILIKE '%' || $2 || '%'
+      `, [
+        teamProjectTeamId, 
+        teamProjectInitials
+      ]
+    )[0].count + 1n;
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
     const addressData = plv8.execute(
       `
         INSERT INTO public.address_table
-          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        (
+          address_region,
+          address_province,
+          address_city,
+          address_barangay,
+          address_street,
+          address_zip_code
+        )
         VALUES
-          ('${region}', '${province}', '${city}', '${barangay}', '${street}', '${zipCode}') RETURNING *
-      `
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+        ) 
+        RETURNING *
+      `, [
+        region,
+        province,
+        city,
+        barangay,
+        street,
+        zipCode
+      ]
     )[0];
 
     teamData = plv8.execute(
       `
         INSERT INTO team_schema.team_project_table
-          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id)
+        (
+          team_project_name,
+          team_project_code,
+          team_project_team_id,
+          team_project_site_map_attachment_id,
+          team_project_boq_attachment_id,
+          team_project_address_id
+        )
         VALUES
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', ${siteMapId ? `'${siteMapId}'` : null},  ${boqId ? `'${boqId}'` : null}, '${addressData.address_id}')
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6
+        )
         RETURNING *
-      `
+      `, [
+        teamProjectName,
+        teamProjectCode,
+        teamProjectTeamId,
+        siteMapId || null,
+        boqId || null,
+        addressData.address_id
+      ]
     )[0];
 
     team_project_data = {
@@ -20404,7 +20860,6 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -21119,7 +21574,7 @@ DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_memb
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
+USING (true);
 
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
