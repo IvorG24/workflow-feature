@@ -194,13 +194,13 @@ const AddTeamApprover = ({
         color: "green",
       });
       setIsAddingApprover(false);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
     }
-    return;
   };
 
   const watchGroupApprovers = watch("approvers");

@@ -4540,23 +4540,45 @@ AS $$
       teamApproverIdList,
       updateRole
     } = input_data;
-    teamApproverIdList.forEach(id => {
-      const member = plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
-      const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
 
-      approverList.push({
-        team_member_id: member.team_member_id,
+    approverList = plv8.execute(
+      `
+        WITH updated AS (
+          UPDATE team_schema.team_member_table 
+          SET 
+            team_member_role = $1
+          WHERE 
+            team_member_id = ANY($2)
+          RETURNING *
+        )
+        SELECT
+          team_member_id,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar,
+          user_email
+        FROM updated
+        INNER JOIN user_schema.user_table
+          ON user_id = team_member_user_id
+      `, [
+        updateRole,
+        teamApproverIdList
+      ]
+    ).map(data => {
+      return {
+        team_member_id: data.team_member_id,
         team_member_user: {
-          user_id: user.user_id,
-          user_first_name: user.user_first_name,
-          user_last_name: user.user_last_name,
-          user_avatar: user.user_avatar,
-          user_email: user.user_email
+          user_id: data.user_id,
+          user_first_name: data.user_first_name,
+          user_last_name: data.user_last_name,
+          user_avatar: data.user_avatar,
+          user_email: data.user_email
         }
-      });
+      }
     });
- });
- return approverList;
+  });
+  return approverList;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_multiple_admin(
