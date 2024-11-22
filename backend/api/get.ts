@@ -12,6 +12,7 @@ import {
   IT_ASSET_FIELD_ID_LIST,
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  PRACTICAL_TEST_FIELD_LIST,
   ROW_PER_PAGE,
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
@@ -97,6 +98,7 @@ import {
   RequestWithResponseType,
   SCICEmployeeTableRow,
   SectionWithFieldType,
+  SidebarPreference,
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
@@ -141,6 +143,24 @@ import {
 import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
+
+export async function getUserSidebarPreference(
+  supabaseClient: SupabaseClient<Database>,
+  params: { userId: string }
+):Promise<SidebarPreference | null> {
+  const { userId } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sidebar_preference_table")
+    .select("*")
+    .eq("user_sidebar_preference_user_id", userId)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data;
+}
 
 export async function getFileUrl(
   supabaseClient: SupabaseClient<Database>,
@@ -1214,8 +1234,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -3999,6 +4019,9 @@ export const getFormSection = async (
       break;
     case "Technical Assessment":
       query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
+      break;
+    case "Practical Test":
+      query = query.in("field_table.field_id", PRACTICAL_TEST_FIELD_LIST);
       break;
   }
 

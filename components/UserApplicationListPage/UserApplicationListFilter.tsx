@@ -32,7 +32,11 @@ const UserApplicationListFilter = ({
         <TextInput
           placeholder="Search by application id"
           rightSection={
-            <ActionIcon size="xs" type="submit">
+            <ActionIcon
+              disabled={isFetchingApplicationList}
+              size="xs"
+              type="submit"
+            >
               <IconSearch />
             </ActionIcon>
           }

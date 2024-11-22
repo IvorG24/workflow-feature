@@ -2663,3 +2663,26 @@ export type PreferredPositionType = {
 export type PreferredPositionFormType = {
   selectedPositions: { [key: string]: string[] };
 };
+
+export type SidebarPreference = {
+  user_sidebar_preference_id: string;
+  user_sidebar_preference_user_id: string;
+  user_sidebar_preference_date_created: string;
+  user_sidebar_preference_metrics: boolean;
+  user_sidebar_preference_human_resources: boolean;
+  user_sidebar_preference_create: boolean;
+  user_sidebar_preference_list: boolean;
+  user_sidebar_preference_form: boolean;
+  user_sidebar_preference_team: boolean;
+  user_sidebar_preference_jira: boolean;
+};
+
+export type SidebarStorePreference = {
+  metrics: boolean;
+  humanResources: boolean;
+  create: boolean;
+  list: boolean;
+  form: boolean;
+  team: boolean;
+  jira: boolean;
+};

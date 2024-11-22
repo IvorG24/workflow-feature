@@ -283,6 +283,21 @@ CREATE TABLE user_schema.invitation_table (
   invitation_from_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
 
+CREATE TABLE user_schema.user_sidebar_preference_table (
+  user_sidebar_preference_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_sidebar_preference_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_sidebar_preference_metrics BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_human_resources BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_create BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_list BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_form BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_team BOOLEAN DEFAULT FALSE NOT NULL,
+  user_sidebar_preference_jira BOOLEAN DEFAULT FALSE NOT NULL,
+
+  user_sidebar_preference_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
+  CONSTRAINT unique_user_sidebar_preference_user_id UNIQUE (user_sidebar_preference_user_id)
+)
+
 CREATE TABLE notification_table (
   notification_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   notification_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -21262,6 +21277,33 @@ USING (
     AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
+);
+
+--- user_schema.user_sidebar_preference_table
+ALTER TABLE user_schema.user_sidebar_preference_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON user_schema.user_sidebar_preference_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON user_schema.user_sidebar_preference_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+    (( SELECT auth.uid() AS uid) = user_sidebar_preference_user_id)
+);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_schema.user_sidebar_preference_table;
+CREATE POLICY "Allow READ for authenticated users" ON user_schema.user_sidebar_preference_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (
+  (( SELECT auth.uid() AS uid) = user_sidebar_preference_user_id)
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_schema.user_sidebar_preference_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON user_schema.user_sidebar_preference_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (( SELECT auth.uid() AS uid) = user_sidebar_preference_user_id)
 );
 
 --- form_schema.option_table
