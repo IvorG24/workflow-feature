@@ -1041,13 +1041,10 @@ export const insertProjectMember = async (
     teamGroupIdList: string[];
   }
 ) => {
-  const { data, error } = await supabaseClient
+  const {  error } = await supabaseClient
     .rpc("insert_project_member", { input_data: params })
     .select("*");
-
   if (error) throw error;
-
-  return data as unknown as { data: ProjectTeamMemberType[]; count: number };
 };
 
 export const cancelTeamInvitation = async (

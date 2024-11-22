@@ -4180,10 +4180,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_project_member(
   input_data JSON
 )
-RETURNS JSON
+RETURNS VOID
 SET search_path TO ''
 AS $$
-  let project_data;
   plv8.subtransaction(function(){
     const {
       projectId,
@@ -4191,57 +4190,56 @@ AS $$
       teamGroupIdList
     } = input_data;
 
-    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",")
+    const projectInsertData = teamMemberIdList.map((memberId) => {
+      return `('${memberId}', '${projectId}')`;
+    }).join(", ");
 
-    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_project_member_table WHERE team_project_id='${projectId}' AND team_member_id IN (${teamMemberIdListValues});`);
-
-    const alreadyMemberId = alreadyMemberData.map(
-      (member) => member.team_member_id
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_project_member_table 
+        (
+          team_member_id,
+          team_project_id
+        ) 
+        VALUES ${projectInsertData}
+        ON CONFLICT (
+          team_member_id,
+          team_project_id
+        )
+        DO NOTHING
+        RETURNING *
+      `
     );
 
-    const insertData = [];
-    teamMemberIdList.forEach((memberId) => {
-      if (!alreadyMemberId.includes(memberId)) {
-        insertData.push({
-          team_project_id: projectId,
-          team_member_id: memberId,
+    if (teamGroupIdList.length) {
+      const groupInsertData = [];
+      teamGroupIdList.forEach(groupId => {
+        teamMemberIdList.forEach(memberId => {
+          groupInsertData.push(`(
+            '${memberId}',
+            '${groupId}'
+          )`)
         });
-      }
-    });
+      });
 
-    const projectMemberValues = insertData
-      .map(
-        (member) =>
-          `('${member.team_member_id}','${member.team_project_id}')`
-      )
-      .join(",");
-
-    const projectInsertData = plv8.execute(`INSERT INTO team_schema.team_project_member_table (team_member_id,team_project_id) VALUES ${projectMemberValues} RETURNING *;`);
-
-    const projectInsertValues = projectInsertData.map(project=>`('${project.team_project_member_id}','${project.team_member_id}','${project.team_project_id}')`).join(",")
-
-    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_schema.team_project_member_table tpm LEFT JOIN team_schema.team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`)
-
-    teamGroupIdList.forEach(groupId => {
-      insertData.forEach(member => {
-        plv8.execute(
-          `
-            INSERT INTO team_schema.team_group_member_table (team_member_id, team_group_id)
-            SELECT '${member.team_member_id}', '${groupId}'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM team_schema.team_group_member_table
-              WHERE
-                team_member_id = '${member.team_member_id}'
-                AND team_group_id = '${groupId}'
-            )
-          `
-        )
-      })
-    })
-
-    project_data = {data: projectJoin, count: projectJoin.length};
- });
- return project_data;
+      plv8.execute(
+        `
+          INSERT INTO team_schema.team_group_member_table 
+          (
+            team_member_id,
+            team_group_id
+          ) 
+          VALUES ${groupInsertData.join(', ')}
+          ON CONFLICT (
+            team_member_id,
+            team_group_id
+          )
+          DO NOTHING
+          RETURNING *
+        `
+      );
+    }
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_form_group(
