@@ -18,7 +18,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, CSI_HIDDEN_FIELDS, formatDate } from "@/utils/constant";
+import { BASE_URL, CSI_HIDDEN_FIELDS, formatDateTime } from "@/utils/constant";
 import { mostOccurringElement, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -91,7 +91,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
@@ -186,6 +186,8 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         },
         ...prev,
       ]);
+
+      console.log("request is: ", request);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

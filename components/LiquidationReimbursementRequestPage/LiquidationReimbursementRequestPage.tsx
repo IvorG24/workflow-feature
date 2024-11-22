@@ -25,7 +25,7 @@ import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFu
 import {
   ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
   costCodeExemptionList,
-  formatDate,
+  formatDateTime,
 } from "@/utils/constant";
 import { isError, safeParse } from "@/utils/functions";
 import {
@@ -129,7 +129,7 @@ const LiquidationReimbursementRequestPage = ({
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
   const selectedDepartment = safeParse(
     request.request_form.form_section[0].section_field[2].field_response[0]
       .request_response
