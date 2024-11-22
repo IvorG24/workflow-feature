@@ -1,5 +1,5 @@
 import { getTeamMembersWithMemberRole } from "@/backend/api/get";
-import { updateApproverRole } from "@/backend/api/update";
+import { updateMemberRole } from "@/backend/api/update";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import {
@@ -179,13 +179,13 @@ const AddTeamApprover = ({
 
   const onSubmit = async (data: GroupForm) => {
     try {
-      const newApproverList = await updateApproverRole(supabaseClient, {
-        teamApproverIdList: data.approvers,
+      const newApproverList = await updateMemberRole(supabaseClient, {
+        memberIdList: data.approvers,
         updateRole: "APPROVER",
       });
 
       setApproverList((prev) => {
-        prev.unshift(...newApproverList);
+        prev.unshift(...(newApproverList as TeamApproverType[]));
         return prev;
       });
       setApproverListCount((prev) => prev + data.approvers.length);

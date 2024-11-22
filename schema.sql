@@ -4528,20 +4528,20 @@ AS $$
   });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_multiple_approver(
+CREATE OR REPLACE FUNCTION update_member_role(
   input_data JSON
 )
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let approverList = [];
+  let memberList = [];
   plv8.subtransaction(function(){
     const {
-      teamApproverIdList,
+      memberIdList,
       updateRole
     } = input_data;
 
-    approverList = plv8.execute(
+    memberList = plv8.execute(
       `
         WITH updated AS (
           UPDATE team_schema.team_member_table 
@@ -4563,7 +4563,7 @@ AS $$
           ON user_id = team_member_user_id
       `, [
         updateRole,
-        teamApproverIdList
+        memberIdList
       ]
     ).map(data => {
       return {
@@ -4578,38 +4578,7 @@ AS $$
       }
     });
   });
-  return approverList;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION update_multiple_admin(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let adminList = [];
-  plv8.subtransaction(function(){
-    const {
-      teamAdminIdList,
-      updateRole
-    } = input_data;
-    teamAdminIdList.forEach(id => {
-      const member = plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
-      const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
-
-      adminList.push({
-        team_member_id: member.team_member_id,
-        team_member_user: {
-          user_id: user.user_id,
-          user_first_name: user.user_first_name,
-          user_last_name: user.user_last_name,
-          user_avatar: user.user_avatar,
-          user_email: user.user_email
-        }
-      });
-    });
- });
- return adminList;
+  return memberList;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION request_page_on_load(
