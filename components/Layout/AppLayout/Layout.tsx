@@ -236,7 +236,7 @@ const Layout = ({ children }: LayoutProps) => {
           const success = navigator.sendBeacon(
             "/api/formsly/save-sidebar-preference",
             JSON.stringify({
-              userId: userId || "",
+              userId: userId,
               preference: savedSidebarPreference,
             })
           );
