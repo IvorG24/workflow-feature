@@ -12,6 +12,7 @@ import {
   IT_ASSET_FIELD_ID_LIST,
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  PRACTICAL_TEST_FIELD_LIST,
   ROW_PER_PAGE,
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
@@ -1233,8 +1234,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -4018,6 +4019,9 @@ export const getFormSection = async (
       break;
     case "Technical Assessment":
       query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
+      break;
+    case "Practical Test":
+      query = query.in("field_table.field_id", PRACTICAL_TEST_FIELD_LIST);
       break;
   }
 
