@@ -4628,24 +4628,27 @@ AS $$
 
     let isWithNextStep = false;
     if(request.request_status === 'APPROVED' && request.form_is_public_form){
-      const connectedRequestCount = plv8.execute(
-        `
-          SELECT COUNT(*)
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_field_id IN (
-              '44edd3e4-9595-4b7c-a924-98b084346d36',
-              'be0e130b-455b-47e0-a804-f90943f7bc07',
-              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
-              'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
-              '362bff3d-54fa-413b-992c-fd344d8552c6'
+      isWithNextStep = !(
+        plv8.execute(
+          `
+            SELECT EXISTS (
+              SELECT 1
+              FROM request_schema.request_response_table
+              WHERE
+                request_response_field_id IN (
+                  '44edd3e4-9595-4b7c-a924-98b084346d36',
+                  'be0e130b-455b-47e0-a804-f90943f7bc07',
+                  'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
+                  'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
+                  '362bff3d-54fa-413b-992c-fd344d8552c6'
+                )
+                AND request_response = $1
             )
-            AND request_response = '"${request.request_formsly_id}"'
-        `
-      )[0].count;
-      if(!connectedRequestCount){
-        isWithNextStep = true;
-      }
+          `, [
+            `"${request.request_formsly_id}"`
+          ]
+        )[0].exists
+      );
     }
 
     if (!request.form_is_formsly_form || (
@@ -4664,7 +4667,7 @@ AS $$
         )
       ) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
-      if(!request) throw new Error('404');
+      if (!request) throw new Error('404');
       returnData = {
         request: {
           ...requestData,
@@ -4686,9 +4689,11 @@ AS $$
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           INNER JOIN form_schema.section_table ON section_id = field_section_id
           WHERE
-            request_response_request_id = '${requestData.request_id}'
+            request_response_request_id = $1
           ORDER BY section_order
-        `
+        `, [
+          requestData.request_id
+        ]
       );
 
       returnData =  {
@@ -4707,9 +4712,11 @@ AS $$
           SELECT DISTINCT(request_response_duplicatable_section_id)
           FROM request_schema.request_response_table
           WHERE
-            request_response_request_id = '${requestData.request_id}'
+            request_response_request_id = $1
             AND request_response_duplicatable_section_id IS NOT NULL
-        `
+        `, [
+          requestData.request_id
+        ]
       ).map(response => response.request_response_duplicatable_section_id);
 
       returnData =  {
@@ -4720,8 +4727,8 @@ AS $$
         duplicatableSectionIdList
       };
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_team_member_on_load(
