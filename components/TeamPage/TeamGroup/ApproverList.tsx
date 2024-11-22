@@ -1,5 +1,5 @@
 import { getTeamApproverListWithFilter } from "@/backend/api/get";
-import { updateApproverRole } from "@/backend/api/update";
+import { updateMemberRole } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { getAvatarColor } from "@/utils/styling";
@@ -185,8 +185,8 @@ const ApproverList = ({
 
     try {
       setCheckList([]);
-      await updateApproverRole(supabaseClient, {
-        teamApproverIdList: checkList,
+      await updateMemberRole(supabaseClient, {
+        memberIdList: checkList,
         updateRole: "MEMBER",
       });
       handleFetch("", 1);

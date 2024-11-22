@@ -1,5 +1,5 @@
 import { getTeamAdminListWithFilter } from "@/backend/api/get";
-import { updateAdminRole } from "@/backend/api/update";
+import { updateMemberRole } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { getAvatarColor } from "@/utils/styling";
@@ -180,8 +180,8 @@ const AdminList = ({
 
     try {
       setCheckList([]);
-      await updateAdminRole(supabaseClient, {
-        teamAdminIdList: checkList,
+      await updateMemberRole(supabaseClient, {
+        memberIdList: checkList,
         updateRole: "MEMBER",
       });
       handleFetch("", 1);

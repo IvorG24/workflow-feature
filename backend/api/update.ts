@@ -1,6 +1,5 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
-import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { PersonalInfoForm } from "@/components/UserSettingsPage/UserSettingsPage";
 import { Database } from "@/utils/database";
 import {
@@ -355,32 +354,18 @@ export const deleteTeam = async (
   if (error) throw error;
 };
 
-export const updateApproverRole = async (
+export const updateMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    teamApproverIdList: string[];
+    memberIdList: string[];
     updateRole: string;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc("update_multiple_approver", {
+  const { data, error } = await supabaseClient.rpc("update_member_role", {
     input_data: params,
   });
   if (error) throw error;
-  return data as unknown as TeamApproverChoiceType[];
-};
-
-export const updateAdminRole = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamAdminIdList: string[];
-    updateRole: string;
-  }
-) => {
-  const { data, error } = await supabaseClient.rpc("update_multiple_admin", {
-    input_data: params,
-  });
-  if (error) throw error;
-  return data as unknown as TeamApproverChoiceType[];
+  return data;
 };
 
 export const updateOtpId = async (
