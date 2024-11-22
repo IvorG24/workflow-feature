@@ -4305,23 +4305,55 @@ AS $$
      groupId
     } = input_data;
 
-    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_group_member_table where team_group_id='${groupId}';`);
+    const teamGroupMemberData = plv8.execute(
+      `
+        SELECT team_member_id 
+        FROM team_schema.team_group_member_table 
+        WHERE 
+          team_group_id = $1
+      `, [
+        groupId
+      ]
+    );
 
-    const condition = teamGroupMemberData.map((member) => `'${member.team_member_id}'`).join(",");
+    const condition = teamGroupMemberData.map((member) => member.team_member_id);
 
-    let teamMemberList = [];
-
-    if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
-    }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
-    }
-
-    member_data = teamMemberList.sort((a, b) =>
-      a.user_first_name < b.user_first_name ? -1 : (a.user_first_name > b.user_first_name ? 1 : 0)
-    )
- });
- return member_data;
+    member_data = plv8.execute(
+      `
+        SELECT 
+          team_member_id, 
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar,
+          user_email
+        FROM team_schema.team_member_table
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE 
+          team_member_team_id = $1
+          AND team_member_is_disabled = FALSE 
+          AND team_member_id != ANY($2)
+        ORDER BY
+          user_first_name ASC,
+          user_last_name ASC
+      `, [
+        teamId,
+        condition.length ? condition : [plv8.execute(`SELECT extensions.uuid_generate_v4()`)[0].uuid_generate_v4]
+      ]
+    ).map(teamMember => {
+      return {
+        team_member_id: teamMember.team_member_id,
+        team_member_user: {
+          user_id: teamMember.user_id,
+          user_first_name: teamMember.user_first_name,
+          user_last_name: teamMember.user_last_name,
+          user_avatar: teamMember.user_avatar,
+          user_email: teamMember.user_email
+        }
+      }
+    });
+  });
+  return member_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
