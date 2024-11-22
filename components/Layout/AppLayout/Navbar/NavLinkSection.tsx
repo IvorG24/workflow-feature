@@ -20,6 +20,9 @@ export type NavLinkType = {
 };
 
 type NavLinkSectionProps = {
+  accordionItemValue: string;
+  accordionValue: string | null;
+  accordionOnChange: (value: string) => void;
   label?: string;
   links: NavLinkType[];
 } & NavLinkProps;
@@ -29,6 +32,9 @@ const isPathActive = (path:string, segment: string): boolean => {
 };
 
 const NavLinkSection = ({
+  accordionItemValue,
+  accordionValue, 
+  accordionOnChange,
   label,
   links,
   rightSection,
@@ -38,8 +44,13 @@ const NavLinkSection = ({
 
   return (
     <Box h="fit-content">
-      <Accordion variant="separated">
-        <Accordion.Item value="dynamicItem">
+      <Accordion variant="separated"
+        value={accordionValue}
+        onChange={accordionOnChange}
+      >
+        <Accordion.Item value={
+          accordionItemValue
+        }>
           <Accordion.Control>
             <Text mb={4} size="sm" weight={400}>
               {label}
