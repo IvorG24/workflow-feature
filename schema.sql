@@ -4255,13 +4255,40 @@ AS $$
      groupList
     } = input_data;
 
-    plv8.execute(`UPDATE form_schema.form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
+    plv8.execute(
+      `
+        UPDATE form_schema.form_table 
+        SET 
+          form_is_for_every_member = $1
+          WHERE form_id = $2
+      `, [
+        isForEveryone,
+        formId
+      ]
+    );
 
-    plv8.execute(`DELETE FROM form_schema.form_team_group_table WHERE form_id='${formId}';`);
+    plv8.execute(
+      `
+        DELETE FROM form_schema.form_team_group_table 
+        WHERE form_id $1
+      `, [
+        formId
+      ]
+    );
 
-    const newGroupInsertValues = groupList.map((group) =>`('${group}','${formId}')`).join(",");
+    const newGroupInsertValues = groupList.map((group) =>`('${group}', '${formId}')`).join(",");
 
-    plv8.execute(`INSERT INTO form_schema.form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
+    plv8.execute(
+      `
+        INSERT INTO form_schema.form_team_group_table 
+        (
+          team_group_id,
+          form_id
+        ) 
+        VALUES ${newGroupInsertValues}
+        RETURNING *
+      `
+    );
   });
 $$ LANGUAGE plv8;
 
