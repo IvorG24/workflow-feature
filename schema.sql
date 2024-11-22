@@ -296,7 +296,7 @@ CREATE TABLE user_schema.user_sidebar_preference_table (
 
   user_sidebar_preference_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   CONSTRAINT unique_user_sidebar_preference_user_id UNIQUE (user_sidebar_preference_user_id)
-)
+);
 
 CREATE TABLE notification_table (
   notification_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
