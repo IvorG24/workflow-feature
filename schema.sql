@@ -4428,74 +4428,104 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-    const user = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
-    const isUserOwner = user.team_member_role === 'OWNER';
+    const user = plv8.execute(
+      `
+        SELECT * FROM 
+        team_schema.team_member_table 
+        WHERE 
+          team_member_team_id = $1
+          AND team_member_id = $2
+          AND team_member_role = $3
+        LIMIT 1
+      `, [
+        team_id,
+        team_member_id,
+        'OWNER'
+      ]
+    );
+    if (!user.length) return;
 
-    if (!isUserOwner) return;
+    plv8.execute(
+      `
+        UPDATE team_schema.team_table 
+        SET 
+          team_is_disabled = $1
+        WHERE 
+          team_id = $2
+      `, [
+        true,
+        team_id
+      ]
+    );
 
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table 
+        SET 
+          team_member_is_disabled = $1
+        WHERE 
+          team_member_team_id = $2
+      `, [
+        true,
+        team_id
+      ]
+    );
 
-    plv8.execute(`UPDATE team_schema.team_table SET team_is_disabled=TRUE WHERE team_id='${team_id}'`);
+    plv8.execute(
+      `
+        UPDATE invitation_table
+        SET 
+          invitation_is_disabled = $1
+        FROM team_schema.team_member_table
+        WHERE 
+          team_member_team_id = $2
+          AND team_member_id = invitation_from_team_member_id 
+      `, [
+        true,
+        team_id
+      ]
+    );
 
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}'`);
-
-    plv8.execute(`UPDATE invitation_table it
-      SET invitation_is_disabled=TRUE
-      FROM team_schema.team_member_table tm
-      WHERE tm.team_member_team_id='${team_id}'
-      AND tm.team_member_id = it.invitation_from_team_member_id `);
-
-    plv8.execute(`UPDATE form_schema.form_table ft
-      SET form_is_disabled=TRUE
-      FROM team_schema.team_member_table tm
-      WHERE tm.team_member_team_id='${team_id}'
-      AND tm.team_member_id = ft.form_team_member_id `);
-
-    plv8.execute(`UPDATE request_schema.request_table rt
-      SET request_is_disabled=TRUE
-      FROM team_schema.team_member_table tm
-      WHERE tm.team_member_team_id='${team_id}'
-      AND tm.team_member_id = rt.request_team_member_id `);
-
-    plv8.execute(`UPDATE form_schema.signer_table st
-      SET signer_is_disabled=TRUE
-      FROM team_schema.team_member_table tm
-      WHERE tm.team_member_team_id='${team_id}'
-      AND tm.team_member_id = st.signer_team_member_id `);
-
-    plv8.execute(`UPDATE request_schema.comment_table ct
-      SET comment_is_disabled=TRUE
-      FROM team_schema.team_member_table tm
-      WHERE tm.team_member_team_id='${team_id}'
-      AND tm.team_member_id = ct.comment_team_member_id `);
-
-    plv8.execute(`UPDATE team_schema.team_group_table SET team_group_is_disabled=TRUE WHERE team_group_team_id='${team_id}'`);
-
-    plv8.execute(`UPDATE team_schema.team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
-
-    plv8.execute(`UPDATE item_schema.item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
-
-    plv8.execute(`UPDATE item_schema.item_description_table dt
-      SET item_description_is_disabled=TRUE, item_description_is_available=FALSE
-      FROM item_schema.item_table it
-      WHERE it.item_team_id='${team_id}'
-      AND dt.item_description_item_id = it.item_id `);
-
-    plv8.execute(`UPDATE item_schema.item_description_field_table AS idf
-      SET item_description_field_is_disabled=TRUE, item_description_field_is_available=FALSE
-      FROM item_schema.item_description_table AS dt
-      JOIN item_schema.item_table AS it ON it.item_id = dt.item_description_item_id
-      WHERE dt.item_description_id = idf.item_description_field_item_description_id
-      AND it.item_team_id = '${team_id}'
-      AND dt.item_description_item_id = it.item_id`);
-
-    const userTeamList = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
+    const userTeamList = plv8.execute(
+      `
+        SELECT * 
+        FROM team_schema.team_member_table 
+        WHERE 
+          team_member_id = $1
+          AND team_member_is_disabled = $2
+      `, [
+        team_member_id,
+        false
+      ]
+    );
 
     if (userTeamList.length > 0) {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table 
+          SET 
+            user_active_team_id = $1
+          WHERE 
+            user_id = $2
+        `, [
+          userTeamList[0].team_member_team_id,
+          user[0].team_member_user_id
+        ]
+      );
     } else {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id=NULL WHERE user_id='${user.team_member_user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table 
+          SET user_active_team_id = $1
+          WHERE
+            user_id = $2
+        `, [
+          null,
+          user[0].team_member_user_id
+        ]
+      );
     }
- });
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_multiple_approver(
