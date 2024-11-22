@@ -186,8 +186,6 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         },
         ...prev,
       ]);
-
-      console.log("request is: ", request);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

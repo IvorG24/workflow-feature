@@ -51,8 +51,6 @@ const BackgroundInvestigationRequestPage = ({ request }: Props) => {
     }
   }, []);
 
-  console.log("REQUEST BACKGROUND INVESTIGATION: ", request);
-
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
