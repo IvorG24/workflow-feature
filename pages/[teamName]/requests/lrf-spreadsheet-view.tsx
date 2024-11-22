@@ -15,6 +15,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         page: 1,
         sortFilter: "DESC",
       });
+
       return {
         props: data as {
           data: LRFSpreadsheetData[];

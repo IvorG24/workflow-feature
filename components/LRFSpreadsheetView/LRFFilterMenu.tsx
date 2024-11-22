@@ -1,5 +1,5 @@
 import { OptionType } from "@/utils/types";
-import { Button, Drawer, MultiSelect, Stack } from "@mantine/core";
+import { Button, Drawer, MultiSelect, Stack, TextInput } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { IconFilter } from "@tabler/icons-react";
@@ -15,7 +15,16 @@ const LRFFilterMenu = ({ projectListOptions, handleFilterData }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
 
-  const { handleSubmit, control } = useFormContext<FilterFormValues>();
+  const { handleSubmit, control, reset } = useFormContext<FilterFormValues>();
+
+  const handleReset = async () => {
+    reset();
+    handleFilterData({
+      requestIdFilter: "",
+      projectFilter: [],
+      dateFilter: [null, null],
+    });
+  };
 
   return (
     <>
@@ -29,6 +38,17 @@ const LRFFilterMenu = ({ projectListOptions, handleFilterData }: Props) => {
         title="Spreadsheet Filter Menu"
       >
         <Stack p="sm">
+          <Controller
+            control={control}
+            name="requestIdFilter"
+            render={({ field: { value, onChange } }) => (
+              <TextInput
+                placeholder="Liquidation Reimbursement Request ID"
+                value={value || ""}
+                onChange={onChange}
+              />
+            )}
+          />
           <Controller
             control={control}
             name="projectFilter"
@@ -58,9 +78,14 @@ const LRFFilterMenu = ({ projectListOptions, handleFilterData }: Props) => {
             )}
           />
 
-          <Button type="submit" onClick={handleSubmit(handleFilterData)}>
-            Apply Filter
-          </Button>
+          <Stack spacing={8}>
+            <Button type="submit" onClick={handleSubmit(handleFilterData)}>
+              Apply Filter
+            </Button>
+            <Button variant="light" onClick={handleReset}>
+              Reset Filter
+            </Button>
+          </Stack>
         </Stack>
       </Drawer>
     </>

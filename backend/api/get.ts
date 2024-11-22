@@ -4496,6 +4496,7 @@ export const getLRFSummaryData = async (
     startDate?: string;
     endDate?: string;
     sortFilter: string;
+    requestIdFilter?: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {

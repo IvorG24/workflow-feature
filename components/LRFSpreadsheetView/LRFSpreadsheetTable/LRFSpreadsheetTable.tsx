@@ -17,15 +17,9 @@ const useStyles = createStyles((theme) => ({
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.blue[6]
-          : theme.colors.red[3],
+          ? theme.colors.gray[9]
+          : theme.colors.gray[3],
       height: 48,
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.red[9]
-          : theme.colors.red[0],
     },
     "& td": {
       minWidth: 130,

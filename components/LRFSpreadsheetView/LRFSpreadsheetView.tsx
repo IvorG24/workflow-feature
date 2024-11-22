@@ -18,6 +18,7 @@ type Props = {
 };
 
 export type FilterFormValues = {
+  requestIdFilter?: string;
   projectFilter: string[];
   dateFilter: [Date | null, Date | null];
 };
@@ -38,11 +39,13 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
     projectFilter = [],
     dateFilter = [null, null],
     sortFilter = sortAscending,
+    requestIdFilter = undefined,
   }: {
     currentPage: number;
     projectFilter: string[];
     dateFilter: FilterFormValues["dateFilter"];
     sortFilter: boolean;
+    requestIdFilter?: string;
   }) => {
     try {
       if (!user) return;
@@ -62,8 +65,8 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
         startDate: startDate ?? undefined,
         endDate: endDate ?? undefined,
         sortFilter: sortFilter ? "ASC" : "DESC",
+        requestIdFilter,
       });
-
       return newData;
     } catch (e) {
       notifications.show({
@@ -82,7 +85,6 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
       ...data,
       sortFilter: sortAscending,
     });
-
     if (!newData) throw Error;
 
     setData(newData);
