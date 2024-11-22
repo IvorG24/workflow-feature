@@ -3974,31 +3974,80 @@ AS $$
       zipCode
     } = input_data;
 
-    const projectInitialCount = plv8.execute(`
-      SELECT COUNT(*) FROM team_schema.team_project_table
-      WHERE team_project_team_id = $1
-      AND team_project_code ILIKE '%' || $2 || '%';
-    `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
+    const projectInitialCount = plv8.execute(
+      `
+        SELECT COUNT(*) FROM team_schema.team_project_table
+        WHERE 
+          team_project_team_id = $1
+          AND team_project_code ILIKE '%' || $2 || '%'
+      `, [
+        teamProjectTeamId, 
+        teamProjectInitials
+      ]
+    )[0].count + 1n;
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
     const addressData = plv8.execute(
       `
         INSERT INTO public.address_table
-          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        (
+          address_region,
+          address_province,
+          address_city,
+          address_barangay,
+          address_street,
+          address_zip_code
+        )
         VALUES
-          ('${region}', '${province}', '${city}', '${barangay}', '${street}', '${zipCode}') RETURNING *
-      `
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+        ) 
+        RETURNING *
+      `, [
+        region,
+        province,
+        city,
+        barangay,
+        street,
+        zipCode
+      ]
     )[0];
 
     teamData = plv8.execute(
       `
         INSERT INTO team_schema.team_project_table
-          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id)
+        (
+          team_project_name,
+          team_project_code,
+          team_project_team_id,
+          team_project_site_map_attachment_id,
+          team_project_boq_attachment_id,
+          team_project_address_id
+        )
         VALUES
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', ${siteMapId ? `'${siteMapId}'` : null},  ${boqId ? `'${boqId}'` : null}, '${addressData.address_id}')
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6
+        )
         RETURNING *
-      `
+      `, [
+        teamProjectName,
+        teamProjectCode,
+        teamProjectTeamId,
+        siteMapId || null,
+        boqId || null,
+        addressData.address_id
+      ]
     )[0];
 
     team_project_data = {
