@@ -127,16 +127,10 @@ const ReviewAppNavLink = () => {
   );
   const teamMemberGroup = useUserTeamMemberGroupList();
   const teamMemberGroups = useUserTeamMemberGroupList();
-  const { preferences, updatePreference, initializePreferences } =
-    useSidebarStore((state) => ({
-      preferences: state.preferences,
-      updatePreference: state.setUpdatedPreference,
-      initializePreferences: state.initializePreferences,
-    }));
-
-  useEffect(() => {
-    initializePreferences();
-  }, [initializePreferences]);
+  const { preferences, updatePreference } = useSidebarStore((state) => ({
+    preferences: state.preferences,
+    updatePreference: state.setUpdatedPreference,
+  }));
 
   const createRequestFormList = forms.filter(
     (form) =>
