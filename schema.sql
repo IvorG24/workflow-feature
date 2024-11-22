@@ -4063,10 +4063,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_group_member(
   input_data JSON
 )
-RETURNS JSON
+RETURNS VOID
 SET search_path TO ''
 AS $$
-  let group_data;
   plv8.subtransaction(function(){
     const {
      groupId,
@@ -4074,101 +4073,108 @@ AS $$
      teamProjectIdList
     } = input_data;
 
-    const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",");
+    const groupInsertData = teamMemberIdList.map((memberId) => {
+      return `('${memberId}', '${groupId}')`;
+    }).join(", ");
 
-    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_group_member_table WHERE team_group_id='${groupId}' AND team_member_id IN (${teamMemberIdListValues});`);
-
-    const alreadyMemberId = alreadyMemberData.map(
-      (member) => member.team_member_id
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_group_member_table 
+        (
+          team_member_id,
+          team_group_id
+        ) 
+        VALUES ${groupInsertData}
+        ON CONFLICT (
+          team_member_id,
+          team_group_id
+        )
+        DO NOTHING
+        RETURNING *
+      `
     );
 
-    const insertData = [];
-    teamMemberIdList.forEach((memberId) => {
-      if (!alreadyMemberId.includes(memberId)) {
-        insertData.push({
-          team_group_id: groupId,
-          team_member_id: memberId,
+    if (teamProjectIdList.length) {
+      const projectInsertData = [];
+      teamProjectIdList.forEach(projectId => {
+        teamMemberIdList.forEach(memberId => {
+          projectInsertData.push(`(
+            '${memberId}',
+            '${projectId}'
+          )`)
         });
-      }
-    });
+      });
 
-    const groupMemberValues = insertData
-      .map(
-        (member) =>
-          `('${member.team_member_id}','${member.team_group_id}')`
-      )
-      .join(",");
-
-    const groupInsertData = plv8.execute(`INSERT INTO team_schema.team_group_member_table (team_member_id,team_group_id) VALUES ${groupMemberValues} RETURNING *;`);
-
-    const groupInsertValues = groupInsertData.map(group=>`('${group.team_group_member_id}','${group.team_member_id}','${group.team_group_id}')`).join(",");
-
-    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_schema.team_group_member_table tgm LEFT JOIN team_schema.team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
-
-    teamProjectIdList.forEach(projectId => {
-      insertData.forEach(member => {
-        plv8.execute(
-          `
-            INSERT INTO team_schema.team_project_member_table (team_member_id, team_project_id)
-            SELECT '${member.team_member_id}', '${projectId}'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM team_schema.team_project_member_table
-              WHERE
-                team_member_id = '${member.team_member_id}'
-                AND team_project_id = '${projectId}'
-            )
-          `
-        )
-      })
-    })
+      plv8.execute(
+        `
+          INSERT INTO team_schema.team_project_member_table 
+          (
+            team_member_id,
+            team_project_id
+          ) 
+          VALUES ${projectInsertData.join(', ')}
+          ON CONFLICT (
+            team_member_id,
+            team_project_id
+          )
+          DO NOTHING
+          RETURNING *
+        `
+      );
+    }
 
     if (groupId === 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a') {
-      teamMemberIdList.forEach(teamMemberId => {
-        const signerData = plv8.execute(
-          `
-            SELECT *
-            FROM form_schema.signer_table
-            WHERE
+      const signerInput = teamMemberIdList.map(teamMemberId => {
+        return `(
+          true,
+          1,
+          'Approved',
+          true,
+          '16ae1f62-c553-4b0e-909a-003d92828036'::UUID,
+          '${teamMemberId}'::UUID
+        )`;
+      }).join(', ');
+
+      plv8.execute(
+        `
+          WITH batch_data (
+            signer_is_primary_signer,
+            signer_order,
+            signer_action,
+            signer_is_disabled,
+            signer_form_id,
+            signer_team_member_id
+          ) AS (
+            VALUES ${signerInput}
+          )
+          INSERT INTO form_schema.signer_table
+          (
+            signer_is_primary_signer,
+            signer_order,
+            signer_action,
+            signer_is_disabled,
+            signer_form_id,
+            signer_team_member_id
+          )
+          SELECT *
+          FROM batch_data
+          WHERE NOT EXISTS (
+            SELECT 1 
+            FROM form_schema.signer_table 
+            WHERE 
               signer_is_primary_signer = true
               AND signer_order = 1
               AND signer_action = 'Approved'
               AND signer_is_disabled = true
               AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-              AND signer_team_member_id = '${teamMemberId}'
-            LIMIT 1
-          `
-        );
-
-        if (!signerData.length) {
-          plv8.execute(
-            `
-              INSERT INTO form_schema.signer_table
-              (
-                signer_is_primary_signer,
-                signer_order,
-                signer_action,
-                signer_is_disabled,
-                signer_form_id,
-                signer_team_member_id
-              )
-              VALUES
-              (
-                true,
-                1,
-                'Approved',
-                true,
-                '16ae1f62-c553-4b0e-909a-003d92828036',
-                '${teamMemberId}'
-              )
-            `
+              AND signer_team_member_id = ANY($1)
           );
-        }
-      });
+        `, [
+          teamMemberIdList
+        ]
+      );
     }
-
-    group_data = {data: groupJoin, count: groupJoin.length};
- });
- return group_data;
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION insert_project_member(
