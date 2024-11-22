@@ -147,7 +147,7 @@ const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 export async function getUserSidebarPreference(
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string }
-):Promise<SidebarPreference | null> {
+): Promise<SidebarPreference | null> {
   const { userId } = params;
 
   const { data, error } = await supabaseClient
@@ -1234,8 +1234,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };

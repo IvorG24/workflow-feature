@@ -4746,39 +4746,92 @@ AS $$
     const member = plv8.execute(
       `
         SELECT
-          tmt.*,
+          team_member_table.*,
           json_build_object(
-            'user_id', usert.user_id,
-            'user_first_name', usert.user_first_name,
-            'user_last_name', usert.user_last_name,
-            'user_avatar', usert.user_avatar,
-            'user_email', usert.user_email,
-            'user_phone_number', usert.user_phone_number,
-            'user_username', usert.user_username,
-            'user_job_title', usert.user_job_title,
-            'user_employee_number', uent.user_employee_number
+            'user_id', user_id,
+            'user_first_name', user_first_name,
+            'user_last_name', user_last_name,
+            'user_avatar', user_avatar,
+            'user_email', user_email,
+            'user_phone_number', user_phone_number,
+            'user_username', user_username,
+            'user_job_title', user_job_title,
+            'user_employee_number', user_employee_number
           ) AS team_member_user
-        FROM team_schema.team_member_table tmt
-        INNER JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
-        LEFT JOIN user_schema.user_employee_number_table uent
-          ON uent.user_employee_number_user_id = usert.user_id
-          AND uent.user_employee_number_is_disabled = false
-        WHERE team_member_id='${teamMemberId}'
-      `
+        FROM team_schema.team_member_table
+        INNER JOIN user_schema.user_table 
+          ON user_id = team_member_user_id
+        LEFT JOIN user_schema.user_employee_number_table
+          ON user_employee_number_user_id = user_id
+          AND user_employee_number_is_disabled = $1
+        WHERE team_member_id = $2
+      `, [
+        false,
+        teamMemberId
+      ]
     )[0];
 
-    const userValidId = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_user_id='${member.team_member_user.user_id}';`)[0];
+    const userValidId = plv8.execute(
+      `
+        SELECT * FROM user_schema.user_valid_id_table 
+        WHERE 
+          user_valid_id_user_id = $1
+      `, [
+        member.team_member_user.user_id
+      ]
+    )[0];
 
-    const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_schema.team_group_member_table tgmt2 INNER JOIN team_schema.team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
+    const memberGroupToSelect = plv8.execute(
+      `
+        SELECT 
+          tgmt2.team_group_member_id,
+          tgt2.team_group_name 
+        FROM team_schema.team_group_member_table tgmt2 
+        INNER JOIN team_schema.team_group_table tgt2 
+          ON tgt2.team_group_id = tgmt2.team_group_id 
+        WHERE 
+          tgmt2.team_member_id $1
+        ORDER BY tgt2.team_group_name ASC 
+        LIMIT 10
+      `, [
+        teamMemberId
+      ]
+    );
 
     let groupList = []
     let groupCount = 0
-    if(memberGroupToSelect.length > 0){
-      const memberGroupToSelectArray = memberGroupToSelect.map(group=>`'${group.team_group_member_id}'`).join(",")
+    if (memberGroupToSelect.length) {
+      const memberGroupToSelectArray = memberGroupToSelect.map(group => group.team_group_member_id);
 
-      groupList = plv8.execute(`SELECT tgmt.team_group_member_id , ( SELECT row_to_json(tgt) FROM team_schema.team_group_table tgt WHERE tgt.team_group_id = tgmt.team_group_id) AS team_group FROM team_schema.team_group_member_table tgmt WHERE tgmt.team_member_id='${teamMemberId}' AND tgmt.team_group_member_id IN (${memberGroupToSelectArray});`);
+      groupList = plv8.execute(
+        `
+          SELECT 
+            tgmt.team_group_member_id,
+            ( 
+              SELECT row_to_json(tgt) 
+              FROM team_schema.team_group_table tgt 
+              WHERE 
+                tgt.team_group_id = tgmt.team_group_id
+            ) AS team_group 
+          FROM team_schema.team_group_member_table tgmt 
+          WHERE 
+            tgmt.team_member_id = $1
+            AND tgmt.team_group_member_id = ANY($2)
+        `, [
+          teamMemberId,
+          memberGroupToSelectArray
+        ]
+      );
 
-      groupCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      groupCount = plv8.execute(
+        `
+          SELECT COUNT(*) FROM team_schema.team_group_member_table 
+          WHERE 
+            team_member_id = $1
+        `, [
+          teamMemberId
+        ]
+      )[0].count
     }
 
     const memberProjectToSelect = plv8.execute(
@@ -4787,18 +4840,21 @@ AS $$
           tpmt2.team_project_member_id,
           tpt2.team_project_name
         FROM team_schema.team_project_member_table tpmt2
-        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id
+        INNER JOIN team_schema.team_project_table tpt2 
+          ON tpt2.team_project_id = tpmt2.team_project_id
         WHERE
-          tpmt2.team_member_id='${teamMemberId}'
+          tpmt2.team_member_id = $1
         ORDER BY tpt2.team_project_name ASC
         LIMIT 10
-      `
+      `, [
+        teamMemberId
+      ]
     );
 
     let projectList = []
     let projectCount = 0
-    if(memberProjectToSelect.length > 0){
-      const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
+    if (memberProjectToSelect.length > 0) {
+      const memberProjectToSelectArray = memberProjectToSelect.map(project => project.team_project_member_id);
 
       projectList = plv8.execute(
         `
@@ -4812,17 +4868,36 @@ AS $$
             ) AS team_project
             FROM team_schema.team_project_member_table tpmt
             WHERE
-              tpmt.team_member_id='${teamMemberId}'
-              AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
-        `
+              tpmt.team_member_id = $1
+              AND tpmt.team_project_member_id = ANY($2)
+        `, [
+          teamMemberId,
+          memberProjectToSelectArray
+        ]
       );
 
-      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      projectCount = plv8.execute(
+        `
+          SELECT COUNT(*) 
+          FROM team_schema.team_project_member_table 
+          WHERE 
+            team_member_id = $1
+        `, [
+          teamMemberId
+        ]
+      )[0].count
     }
 
-    team_member_data = {member: member, userValidId, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
- });
- return team_member_data;
+    team_member_data = {
+      member: member, 
+      userValidId, 
+      groupList, 
+      groupCount: Number(groupCount), 
+      projectList, 
+      projectCount: Number(projectCount)
+    }
+  });
+  return team_member_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_team_on_load(
