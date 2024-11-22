@@ -1,6 +1,5 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
-import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import {
   APP_SOURCE_ID,
@@ -1028,13 +1027,10 @@ export const insertGroupMember = async (
     teamProjectIdList: string[];
   }
 ) => {
-  const { data, error } = await supabaseClient
+  const { error } = await supabaseClient
     .rpc("insert_group_member", { input_data: params })
     .select("*");
-
   if (error) throw error;
-
-  return data as unknown as { data: GroupTeamMemberType[]; count: number };
 };
 
 export const insertProjectMember = async (
@@ -1045,13 +1041,10 @@ export const insertProjectMember = async (
     teamGroupIdList: string[];
   }
 ) => {
-  const { data, error } = await supabaseClient
+  const {  error } = await supabaseClient
     .rpc("insert_project_member", { input_data: params })
     .select("*");
-
   if (error) throw error;
-
-  return data as unknown as { data: ProjectTeamMemberType[]; count: number };
 };
 
 export const cancelTeamInvitation = async (
