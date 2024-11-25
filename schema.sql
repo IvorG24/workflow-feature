@@ -1501,17 +1501,15 @@ AS $$
           )
           VALUES
           (
-            $1,
-            'You have been invited to join ' || $2,
-            '/user/invitation/' || $3,
-            $4,
-            $5
+            'GENERAL', 
+            'You have been invited to join ' || $1,
+            '/user/invitation/' || $2,
+            'INVITE', 
+            $3
           )
         `, [
-          'GENERAL',
           invitation.team_name,
           invitation.invitation_id,
-          'INVITE',
           user_id
         ]
       );
@@ -2413,7 +2411,8 @@ AS $$
               notification_redirect_url,
               notification_user_id,
               notification_team_id
-            ) VALUES
+            ) 
+            VALUES
             (
               $1,
               $2,
@@ -2474,12 +2473,11 @@ AS $$
               WHERE
                 request_signer_request_id = $1
                 AND request_signer_id != $2
-                AND request_signer_status != $3
+                AND request_signer_status != 'APPROVED'
             )
           `, [
             requestId,
-            requestSignerId,
-            'APPROVED'
+            requestSignerId
           ]
         )[0].exists
         if (!isAllPrimaryApprovedTheRequest) {
@@ -2861,10 +2859,9 @@ AS $$
         FROM form_schema.section_table
         WHERE
           section_form_id = $1
-          AND section_name = $2
+          AND section_name = 'Item'
       `, [
-        formId,
-        'Item'
+        formId
       ]
     )[0];
     const itemDescriptionInput = [];
@@ -3111,10 +3108,9 @@ AS $$
         DELETE FROM user_schema.invitation_table
         WHERE
           invitation_to_email = ANY($1)
-          AND invitation_status = $2
+          AND invitation_status = 'PENDING'
       `, [
-        emailList,
-        'PENDING'
+        emailList
       ]
     );
 
@@ -3239,11 +3235,10 @@ AS $$
           FROM team_schema.team_member_table 
           WHERE 
             team_member_user_id = $1
-            AND team_member_is_disabled = $2
+            AND team_member_is_disabled = false
           LIMIT 1
         `, [
-          user_id,
-          false
+          user_id
         ]
       );
 
@@ -3272,12 +3267,10 @@ AS $$
         FROM item_schema.item_table 
         WHERE 
           item_team_id = $1
-          AND item_is_available = $2
-          AND item_is_disabled = $3
+          AND item_is_available = true
+          AND item_is_disabled = false
       `, [
-        team_id,
-        true,
-        false
+        team_id
       ]
     )[0];
 
@@ -3287,12 +3280,10 @@ AS $$
         FROM form_schema.signer_table 
         WHERE 
           signer_form_id = $1
-          AND signer_is_disabled = $2
-          AND signer_is_primary_signer = $3
+          AND signer_is_disabled = false
+          AND signer_is_primary_signer = true
       `, [
-        form_id,
-        false,
-        true
+        form_id
       ]
     )[0];
 
@@ -3319,11 +3310,10 @@ AS $$
       `
         UPDATE team_schema.team_member_table 
         SET 
-          team_member_role = $1
+          team_member_role = 'OWNER',
         WHERE 
-          team_member_id = $2
+          team_member_id = $1
       `, [
-        'OWNER',
         member_id
       ]
     );
@@ -3331,11 +3321,10 @@ AS $$
       `
         UPDATE team_schema.team_member_table 
         SET
-          team_member_role = $1
+          team_member_role = 'APPROVER'
         WHERE 
-          team_member_id = $2
+          team_member_id = $1
       `, [
-        'APPROVER',
         owner_id
       ]
     );
@@ -3361,12 +3350,11 @@ AS $$
           WHERE 
             team_member_team_id = $1
             AND team_member_user_id = $2
-            AND team_member_is_disabled = $3
+            AND team_member_is_disabled = true
         )
       `, [
         team_id,
-        user_id,
-        true
+        user_id
       ]
     )[0].exists;
     
@@ -3388,12 +3376,11 @@ AS $$
         `
           UPDATE team_schema.team_member_table 
           SET 
-            team_member_is_disabled = $1 
+            team_member_is_disabled = false
           WHERE 
-            team_member_team_id = $2
-            AND team_member_user_id = $3
+            team_member_team_id = $1
+            AND team_member_user_id = $2
         `, [
-          false,
           team_id,
           user_id
         ]
@@ -3435,11 +3422,10 @@ AS $$
       `
         UPDATE user_schema.invitation_table 
         SET 
-          invitation_status = $1
+          invitation_status = 'ACCEPTED'
         WHERE 
-          invitation_id = $2
+          invitation_id = $1
       `, [
-        'ACCEPTED',
         invitation_id
       ]
     );
@@ -3451,11 +3437,10 @@ AS $$
         INNER JOIN team_schema.team_table 
           ON team_id = team_member_team_id
         WHERE 
-          team_member_is_disabled = $1
-          AND team_member_user_id = $2
+          team_member_is_disabled = false
+          AND team_member_user_id = $1
         ORDER BY team_date_created DESC
       `, [
-        false,
         user_id
       ]
     );
@@ -3477,13 +3462,11 @@ AS $$
       `
         UPDATE request_schema.request_table 
         SET 
-          request_status = $1,
-          request_status_date_updated = $2
+          request_status = 'CANCELED',
+          request_status_date_updated = NOW()
         WHERE 
-          request_id = $3
+          request_id = $2
       `, [
-        'CANCELED',
-        'NOW()',
         request_id
       ]
     );
@@ -3717,24 +3700,23 @@ AS $$
         WHERE 
           notification_user_id = $1
           AND (
-            notification_app = $2
-            OR notification_app = $3
+            notification_app = 'GENERAL'
+            OR notification_app = $2
           ) 
           AND (
             notification_team_id IS NULL 
             ${team_query}
           ) 
         ORDER BY notification_date_created DESC 
-        LIMIT $4
-        OFFSET $5
+        LIMIT $3
+        OFFSET $4
       `, [
         userId,
-        'GENERAL',
         app,
         limit,
         start
       ]
-     );
+    );
 
     const unread_notification_count = plv8.execute(
       `
@@ -3743,17 +3725,16 @@ AS $$
         WHERE 
           notification_user_id = $1
           AND (
-            notification_app = $2
-            OR notification_app = $3
+            notification_app = 'GENERAL'
+            OR notification_app = $2
           ) 
           AND (
             notification_team_id IS NULL 
             ${team_query}
           ) 
-          AND notification_is_read = $4
+          AND notification_is_read = $3
       `, [
         userId,
-        'GENERAL',
         app,
         false
       ]
@@ -4450,12 +4431,11 @@ AS $$
         WHERE 
           team_member_team_id = $1
           AND team_member_id = $2
-          AND team_member_role = $3
+          AND team_member_role = 'OWNER'
         LIMIT 1
       `, [
         team_id,
-        team_member_id,
-        'OWNER'
+        team_member_id
       ]
     );
     if (!user.length) return;
@@ -4531,11 +4511,10 @@ AS $$
       plv8.execute(
         `
           UPDATE user_schema.user_table 
-          SET user_active_team_id = $1
+          SET user_active_team_id = NULL
           WHERE
-            user_id = $2
+            user_id = $1
         `, [
-          null,
           user[0].team_member_user_id
         ]
       );
@@ -4608,7 +4587,7 @@ AS $$
       requestId
     } = input_data;
 
-    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition($1)`, [requestId])[0].generate_request_id_condition;
 
     const request = plv8.execute(
       `
@@ -4666,7 +4645,7 @@ AS $$
           ].includes(request.form_name)
         )
       ) {
-      const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
+      const requestData = plv8.execute(`SELECT public.get_request($1)`, [requestId])[0].get_request;
       if (!request) throw new Error('404');
       returnData = {
         request: {
@@ -4676,7 +4655,7 @@ AS $$
       };
       return;
     } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section($1)`, [requestId])[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
@@ -4704,7 +4683,7 @@ AS $$
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section($1)`, [requestId])[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const duplicatableSectionIdList = plv8.execute(
@@ -4763,10 +4742,9 @@ AS $$
           ON user_id = team_member_user_id
         LEFT JOIN user_schema.user_employee_number_table
           ON user_employee_number_user_id = user_id
-          AND user_employee_number_is_disabled = $1
-        WHERE team_member_id = $2
+          AND user_employee_number_is_disabled = false
+        WHERE team_member_id = $1
       `, [
-        false,
         teamMemberId
       ]
     )[0];
@@ -4913,7 +4891,7 @@ AS $$
       teamMemberLimit
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_schema.team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
 
