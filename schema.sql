@@ -5172,26 +5172,68 @@ AS $$
       unreadOnly
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
     const start = (page - 1) * limit;
 
-    let team_query = '';
-    let unread_query = '';
-    let last_query = ` ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}'`;
+    const notificationList = plv8.execute(
+      `
+        SELECT * 
+        FROM public.notification_table
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = 'GENERAL' 
+            OR notification_app = $2
+          ) 
+          AND (
+            notification_team_id IS NULL
+            OR notification_team_id = $3
+          )
+          AND notification_is_read = ANY($4)
+        ORDER BY notification_date_created DESC 
+        LIMIT $5
+        OFFSET $6
+      `, [
+        userId,
+        app,
+        teamId,
+        [!unreadOnly, false],
+        limit,
+        start
+      ]
+    );
 
-    if(teamId) team_query = `OR notification_team_id='${teamId}'`;
-    if(unreadOnly) unread_query = 'AND notification_is_read=false';
+    const totalNotificationCount = plv8.execute(
+      `
+        SELECT * 
+        FROM public.notification_table
+        WHERE 
+          notification_user_id = $1
+          AND (
+            notification_app = 'GENERAL' 
+            OR notification_app = $2
+          ) 
+          AND (
+            notification_team_id IS NULL
+            OR notification_team_id = $3
+          )
+          AND notification_is_read = ANY($4)
+        ORDER BY notification_date_created DESC 
+      `, [
+        userId,
+        app,
+        teamId,
+        [!unreadOnly, false]
+      ]
+    )[0].count;
 
-    const query = (toSelect) => `SELECT ${toSelect} FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ${unread_query}`
-
-    const notificationList = plv8.execute(`${query('*')} ${last_query};`);
-    const totalNotificationCount = plv8.execute(`${query('COUNT(*)')};`)[0].count;
-
-    const tab = unreadOnly ? "unread" : "all";
-    notification_data = {notificationList, totalNotificationCount: parseInt(totalNotificationCount), tab}
- });
- return notification_data;
+    notification_data = {
+      notificationList, 
+      totalNotificationCount: Number(totalNotificationCount), 
+      tab: unreadOnly ? "unread" : "all"
+    }
+  });
+  return notification_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_ssot_on_load(
