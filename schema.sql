@@ -5356,7 +5356,7 @@ AS $$
       limit
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const formList = plv8.execute(
       `
@@ -5368,27 +5368,37 @@ AS $$
           user_last_name,
           user_avatar
         FROM form_schema.form_table
-        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-          AND team_member_team_id = '${teamId}'
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        INNER JOIN team_schema.team_member_table 
+          ON team_member_id = form_team_member_id
+          AND team_member_team_id = $1
+        INNER JOIN user_schema.user_table 
+          ON user_id = team_member_user_id
         WHERE
           form_is_disabled = false
           AND form_app = 'REQUEST'
-        LIMIT ${limit}
-      `);
+        LIMIT $2
+      `, [
+        teamId,
+        limit
+      ]
+    );
 
     const formListCount = plv8.execute(
       `
         SELECT COUNT(*)
         FROM form_schema.form_table
-        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-          AND team_member_team_id = '${teamId}'
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        INNER JOIN team_schema.team_member_table 
+          ON team_member_id = form_team_member_id
+          AND team_member_team_id = $1
+        INNER JOIN user_schema.user_table 
+          ON user_id = team_member_user_id
         WHERE
           form_is_disabled = false
           AND form_app = 'REQUEST'
-        LIMIT ${limit}
-      `)[0].count;
+      `, [
+        teamId
+      ]
+    )[0].count;
 
     returnData = {
       formList: formList.map(form => {
@@ -5420,11 +5430,11 @@ AS $$
           }
         }
       }),
-      formListCount: Number(`${formListCount}`),
+      formListCount: Number(formListCount),
       teamId
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION build_form_page_on_load(
