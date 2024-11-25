@@ -5449,16 +5449,25 @@ AS $$
       userId
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-    const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
+    const groupList = plv8.execute(
+      `
+        SELECT * 
+        FROM team_schema.team_group_table 
+        WHERE 
+          team_group_team_id = $1
+          AND team_group_is_disabled = false
+      `, [
+        teamId
+      ]
+    );
     const formId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
-
     returnData = {
       groupList,
       formId
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION form_page_on_load(
