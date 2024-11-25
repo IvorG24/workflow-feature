@@ -5485,25 +5485,62 @@ AS $$
       limit
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-    const teamGroupList = plv8.execute(`SELECT team_group_id, team_group_name FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false;`);
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
+    const teamGroupList = plv8.execute(
+      `
+        SELECT 
+          team_group_id,
+          team_group_name
+        FROM team_schema.team_group_table
+        WHERE 
+          team_group_team_id = $1
+          AND team_group_is_disabled = false
+      `, [
+        teamId
+      ]
+    );
 
     if(isFormslyForm){
-      const teamProjectList = plv8.execute(`SELECT team_project_id, team_project_name FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit};`);
-      const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
+      const teamProjectList = plv8.execute(
+        `
+          SELECT 
+            team_project_id, 
+            team_project_name 
+          FROM team_schema.team_project_table 
+          WHERE 
+            team_project_team_id = $1
+            AND team_project_is_disabled = false 
+          ORDER BY team_project_name ASC 
+          LIMIT $2
+        `, [
+          teamId,
+          limit
+        ]
+      );
+      const teamProjectListCount = plv8.execute(
+        `
+          SELECT COUNT(*) 
+          FROM team_schema.team_project_table 
+          WHERE 
+            team_project_team_id = $1
+            AND team_project_is_disabled = false
+        `, [
+          teamId
+        ]
+      )[0].count;
 
       returnData = {
         teamGroupList,
         teamProjectList,
-        teamProjectListCount: Number(`${teamProjectListCount}`)
+        teamProjectListCount: Number(teamProjectListCount)
       }
     } else {
       returnData = {
         teamGroupList
       }
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request_page_on_load(
@@ -8177,7 +8214,7 @@ AS $$
       WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
     }
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const member = plv8.execute(
       `
@@ -8587,7 +8624,7 @@ plv8.subtransaction(function(){
     referenceOnly
   } = input_data;
 
-  const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+  const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
   if (!teamId) throw new Error("No team found");
 
   const isUUID = (str) => {
@@ -10099,7 +10136,7 @@ AS $$
       userId,
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
@@ -10122,7 +10159,7 @@ AS $$
       userId
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const member = plv8.execute(
       `
