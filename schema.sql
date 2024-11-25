@@ -5303,15 +5303,44 @@ AS $$
       userId
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(*) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM form_schema.form_table 
+          INNER JOIN team_schema.team_member_table 
+            ON form_team_member_id = team_member_id 
+          WHERE 
+            team_member_team_id = $1
+            AND form_is_formsly_form = true
+        )
+      `, [
+        teamId
+      ]
+    )[0].exists;
 
-    const projectList = plv8.execute(`SELECT team_project_name, team_project_code FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
+    const projectList = plv8.execute(
+      `
+        SELECT 
+          team_project_name, 
+          team_project_code 
+        FROM team_schema.team_project_table 
+        WHERE 
+          team_project_is_disabled = false
+          AND team_project_team_id = $1
+      `, [
+        teamId
+      ]
+    );
 
-    request_data = {isFormslyTeam,projectList}
- });
- return request_data;
+    request_data = {
+      isFormslyTeam,
+      projectList
+    }
+  });
+  return request_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION form_list_page_on_load(
