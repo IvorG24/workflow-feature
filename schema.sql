@@ -5252,18 +5252,43 @@ AS $$
       unreadOnly
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
-    const itemList = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
+    const itemList = plv8.execute(
+      `
+        SELECT item_general_name
+        FROM item_schema.item_table 
+        WHERE item_team_id = $1
+          AND item_is_disabled = false 
+          AND item_is_available = true 
+        ORDER BY item_general_name ASC
+      `, [
+        teamId
+      ]
+    );
 
-    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+    const projectList = plv8.execute(
+      `
+        SELECT team_project_name
+        FROM team_schema.team_project_table 
+        WHERE 
+          team_project_team_id = $1
+          AND team_project_is_disabled = false 
+        ORDER BY team_project_name ASC
+      `, [
+        teamId
+      ]
+    );
 
-    const itemNameList = itemList.map(item=>item.item_general_name);
-    const projectNameList = projectList.map(project=>project.team_project_name);
+    const itemNameList = itemList.map(item => item.item_general_name);
+    const projectNameList = projectList.map(project => project.team_project_name);
 
-    ssot_data = { itemNameList, projectNameList }
- });
- return ssot_data;
+    ssot_data = { 
+      itemNameList, 
+      projectNameList 
+    }
+  });
+  return ssot_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_request_list_on_load(
