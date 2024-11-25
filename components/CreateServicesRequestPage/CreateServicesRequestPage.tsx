@@ -137,7 +137,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         userId: requestorProfile.user_id,
       });
       isSubmitting.current = true;
-      removeLocalState();
+
       notifications.show({
         message: "Request created.",
         color: "green",
