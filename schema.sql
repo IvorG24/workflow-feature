@@ -3732,11 +3732,10 @@ AS $$
             notification_team_id IS NULL 
             ${team_query}
           ) 
-          AND notification_is_read = $3
+          AND notification_is_read = false
       `, [
         userId,
-        app,
-        false
+        app
       ]
     )[0].count;
 
@@ -3766,13 +3765,12 @@ AS $$
       `
         UPDATE form_schema.signer_table 
         SET 
-          signer_is_disabled = $1 
+          signer_is_disabled = true
         WHERE 
-          signer_form_id = $2
+          signer_form_id = $1
           AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"} 
           AND signer_team_department_id IS NULL
       `, [
-        true,
         formId
       ]
     );
@@ -4444,11 +4442,10 @@ AS $$
       `
         UPDATE team_schema.team_table 
         SET 
-          team_is_disabled = $1
+          team_is_disabled = true
         WHERE 
-          team_id = $2
+          team_id = $1
       `, [
-        true,
         team_id
       ]
     );
@@ -4457,11 +4454,10 @@ AS $$
       `
         UPDATE team_schema.team_member_table 
         SET 
-          team_member_is_disabled = $1
+          team_member_is_disabled = true
         WHERE 
-          team_member_team_id = $2
+          team_member_team_id = $1
       `, [
-        true,
         team_id
       ]
     );
@@ -4470,13 +4466,12 @@ AS $$
       `
         UPDATE invitation_table
         SET 
-          invitation_is_disabled = $1
+          invitation_is_disabled = true
         FROM team_schema.team_member_table
         WHERE 
-          team_member_team_id = $2
+          team_member_team_id = $1
           AND team_member_id = invitation_from_team_member_id 
       `, [
-        true,
         team_id
       ]
     );
@@ -4487,10 +4482,9 @@ AS $$
         FROM team_schema.team_member_table 
         WHERE 
           team_member_id = $1
-          AND team_member_is_disabled = $2
+          AND team_member_is_disabled = false
       `, [
-        team_member_id,
-        false
+        team_member_id
       ]
     );
 
@@ -5090,66 +5084,76 @@ AS $$
 
     const start = (page - 1) * limit;
 
+    const searchCondition = `
+      AND (
+        CONCAT(user_first_name, ' ', user_last_name) ILIKE '%${search}%'
+        OR user_email ILIKE '%${search}%'
+      )
+    `
     const teamMembers = plv8.execute(
       `
         SELECT
-          tmt.team_member_id,
-          tmt.team_member_role,
+          team_member_id,
+          team_member_role,
           json_build_object(
-            'user_id', usert.user_id,
-            'user_first_name', usert.user_first_name,
-            'user_last_name', usert.user_last_name,
-            'user_avatar', usert.user_avatar,
-            'user_email', usert.user_email,
-            'user_employee_number', uent.user_employee_number
+            'user_id', user_id,
+            'user_first_name', user_first_name,
+            'user_last_name', user_last_name,
+            'user_avatar', user_avatar,
+            'user_email', user_email,
+            'user_employee_number', user_employee_number
           ) AS team_member_user
-        FROM team_schema.team_member_table tmt
-        INNER JOIN user_schema.user_table usert
-          ON tmt.team_member_user_id = usert.user_id
-          AND usert.user_is_disabled=false
-          ${search && `AND (
-            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
-            OR usert.user_email ILIKE '%${search}%'
-          )`}
-        LEFT JOIN user_schema.user_employee_number_table uent
-          ON uent.user_employee_number_user_id = usert.user_id
-          AND uent.user_employee_number_is_disabled=false
+        FROM team_schema.team_member_table 
+        INNER JOIN user_schema.user_table 
+          ON team_member_user_id = user_id
+          AND user_is_disabled = false
+          ${searchCondition}
+        LEFT JOIN user_schema.user_employee_number_table 
+          ON user_employee_number_user_id = user_id
+          AND user_employee_number_is_disabled = false
         WHERE
-          tmt.team_member_team_id='${teamId}'
-          AND tmt.team_member_is_disabled=false
+          team_member_team_id = $1
+          AND team_member_is_disabled = false
         ORDER BY
-          CASE tmt.team_member_role
-              WHEN 'OWNER' THEN 1
-              WHEN 'ADMIN' THEN 2
-              WHEN 'APPROVER' THEN 3
-              WHEN 'MEMBER' THEN 4
+          CASE team_member_role
+            WHEN 'OWNER' THEN 1
+            WHEN 'ADMIN' THEN 2
+            WHEN 'APPROVER' THEN 3
+            WHEN 'MEMBER' THEN 4
           END ASC,
-          usert.user_first_name ASC,
-          usert.user_last_name ASC
-        OFFSET ${start}
-        LIMIT ${limit}
-      `
+          user_first_name ASC,
+          user_last_name ASC
+        OFFSET $2
+        LIMIT $3
+      `, [
+        teamId,
+        start,
+        limit
+      ]
     );
 
     const teamMembersCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
+        FROM team_schema.team_member_table 
+        INNER JOIN user_schema.user_table
+          ON team_member_user_id = user_id
+          AND user_is_disabled = false
+          ${searchCondition}
         WHERE
-          team_member_team_id='${teamId}'
-          AND tmt.team_member_is_disabled=false
-          AND usert.user_is_disabled=false
-          ${search && `AND (
-            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
-            OR usert.user_email ILIKE '%${search}%'
-          )`}
-      `
+          team_member_team_id = $1
+          AND team_member_is_disabled = false
+      `, [
+        teamId
+      ]
     )[0].count;
 
-    team_data = { teamMembers, teamMembersCount: Number(teamMembersCount) }
- });
- return team_data;
+    team_data = { 
+      teamMembers, 
+      teamMembersCount: Number(teamMembersCount) 
+    }
+  });
+  return team_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_notification_on_load(

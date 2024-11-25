@@ -185,8 +185,8 @@ const TeamPage = ({
 
   const handleSearchTeamMember = async (data: SearchForm) => {
     try {
-      setIsUpdatingTeamMembers(true);
       setTeamMemberPage(1);
+      setIsUpdatingTeamMembers(true);
       const formattedData = await getTeamMemberWithFilter(supabaseClient, {
         teamId: team.team_id,
         page: 1,
@@ -196,12 +196,14 @@ const TeamPage = ({
 
       setTeamMemberList(formattedData.teamMembers);
       setTeamMemberCount(formattedData.teamMembersCount || 0);
-      setIsUpdatingTeamMembers(false);
-    } catch {
+    } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
@@ -293,12 +295,13 @@ const TeamPage = ({
 
       setTeamMemberList(formattedData.teamMembers);
       setTeamMemberCount(formattedData.teamMembersCount || 0);
-      setIsUpdatingTeamMembers(false);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
