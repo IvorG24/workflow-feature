@@ -4893,60 +4893,103 @@ AS $$
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
-    const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_schema.team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
+    const team = plv8.execute(
+      `
+        SELECT 
+          team_id, 
+          team_name, 
+          team_logo 
+        FROM team_schema.team_table 
+        WHERE 
+          team_id = $1
+          AND team_is_disabled = false
+      `, [
+        teamId
+      ]
+    )[0];
 
     const teamMembers = plv8.execute(
       `
         SELECT
-          tmt.team_member_id,
-          tmt.team_member_role,
+          team_member_id,
+          team_member_role,
           json_build_object(
-            'user_id', usert.user_id,
-            'user_first_name', usert.user_first_name,
-            'user_last_name', usert.user_last_name,
-            'user_avatar', usert.user_avatar,
-            'user_email', usert.user_email,
-            'user_employee_number', uent.user_employee_number
+            'user_id', user_id,
+            'user_first_name', user_first_name,
+            'user_last_name', user_last_name,
+            'user_avatar', user_avatar,
+            'user_email', user_email,
+            'user_employee_number', user_employee_number
           ) AS team_member_user
-        FROM
-          team_schema.team_member_table tmt
-        JOIN
-          user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
-        LEFT JOIN
-          user_schema.user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
-          AND uent.user_employee_number_is_disabled = false
+        FROM team_schema.team_member_table
+        JOIN user_schema.user_table 
+          ON team_member_user_id = user_id
+        LEFT JOIN user_schema.user_employee_number_table 
+          ON user_employee_number_user_id = user_id
+          AND user_employee_number_is_disabled = false
         WHERE
-          tmt.team_member_team_id = '${teamId}'
-          AND tmt.team_member_is_disabled = false
-          AND usert.user_is_disabled = false
+          team_member_team_id = $1
+          AND team_member_is_disabled = false
+          AND user_is_disabled = false
         ORDER BY
-          CASE tmt.team_member_role
+          CASE team_member_role
             WHEN 'OWNER' THEN 1
             WHEN 'ADMIN' THEN 2
             WHEN 'APPROVER' THEN 3
             WHEN 'MEMBER' THEN 4
           END ASC,
-          usert.user_first_name ASC,
-          usert.user_last_name ASC
-        LIMIT '${teamMemberLimit}'
-      `
+          user_first_name ASC,
+          user_last_name ASC
+        LIMIT $2
+      `, [
+        teamId ,
+        teamMemberLimit
+      ]
     );
 
     const teamMembersCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
+        FROM team_schema.team_member_table
+        JOIN user_schema.user_table 
+          ON team_member_user_id = user_id
         WHERE
-          tmt.team_member_team_id='${teamId}'
-          AND tmt.team_member_is_disabled=false
-          AND usert.user_is_disabled=false
-      `
+          team_member_team_id = $1
+          AND team_member_is_disabled = false
+          AND user_is_disabled = false
+      `, [
+        teamId
+      ]
     )[0].count;
 
-    const teamGroups = plv8.execute(`SELECT team_group_id, team_group_name, team_group_team_id FROM team_schema.team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
+    const teamGroups = plv8.execute(
+      `
+        SELECT 
+          team_group_id, 
+          team_group_name, 
+          team_group_team_id 
+        FROM team_schema.team_group_table 
+        WHERE 
+          team_group_team_id = $1
+          AND team_group_is_disabled = false 
+        ORDER BY team_group_date_created DESC
+        LIMIT 10
+      `, [
+        teamId
+      ]
+    );
 
-    const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
+    const teamGroupsCount = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM team_schema.team_group_table 
+        WHERE 
+          team_group_team_id = $1
+          AND team_group_is_disabled = false
+      `, [
+        teamId
+      ]
+    )[0].count;
 
     const teamProjects = plv8.execute(
       `
@@ -4956,39 +4999,50 @@ AS $$
           site_map.attachment_value AS team_project_site_map_attachment_id,
           address_table.*
         FROM team_schema.team_project_table
-        LEFT JOIN public.attachment_table boq ON (
-          team_project_boq_attachment_id = boq.attachment_id
-          AND boq.attachment_is_disabled = false
-        )
-        LEFT JOIN public.attachment_table site_map ON (
-          team_project_site_map_attachment_id = site_map.attachment_id
-          AND site_map.attachment_is_disabled = false
-        )
-        LEFT JOIN public.address_table ON (
-          team_project_address_id = address_id
-        )
+        LEFT JOIN public.attachment_table boq 
+          ON (
+            team_project_boq_attachment_id = boq.attachment_id
+            AND boq.attachment_is_disabled = false
+          )
+        LEFT JOIN public.attachment_table site_map 
+          ON (
+            team_project_site_map_attachment_id = site_map.attachment_id
+            AND site_map.attachment_is_disabled = false
+          )
+        LEFT JOIN public.address_table 
+          ON (
+            team_project_address_id = address_id
+          )
         WHERE
-          team_project_team_id='${teamId}'
-          AND team_project_is_disabled=false
+          team_project_team_id = $1
+          AND team_project_is_disabled = false
         ORDER BY team_project_name ASC
         LIMIT 10
-      `
+      `, [
+        teamId
+      ]
     );
 
-    const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
-
-    // const pendingValidIDList = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_status='PENDING';`);
+    const teamProjectsCount = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM team_schema.team_project_table 
+          WHERE team_project_team_id = $1
+          AND team_project_is_disabled = false
+      `, [
+        teamId
+      ]
+    )[0].count;
 
     team_data = {
       team,
       teamMembers,
       teamGroups,
-      teamGroupsCount: `${teamGroupsCount}`,
+      teamGroupsCount: Number(teamGroupsCount),
       teamProjects: teamProjects.map(project => {
         if(!project.address_id){
           return project;
         }
-
         return {
           team_project_id: project.team_project_id,
           team_project_date_created: project.team_project_date_created,
@@ -5011,12 +5065,12 @@ AS $$
           }
         }
       }),
-      teamProjectsCount: `${teamProjectsCount}`,
+      teamProjectsCount: Number(teamProjectsCount),
       teamMembersCount: Number(teamMembersCount),
       pendingValidIDList: []
     }
- });
- return team_data;
+  });
+  return team_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
