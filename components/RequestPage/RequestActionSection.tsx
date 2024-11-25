@@ -5,9 +5,10 @@ import {
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { JiraTicketData } from "@/utils/types";
-import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
+import { Button, Paper, Space, Stack, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
-import { modals, openConfirmModal } from "@mantine/modals";
+import { useDisclosure } from "@mantine/hooks";
+import RequestConfirmModal from "../Modal/RequestConfirmModal";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
@@ -54,6 +55,8 @@ const RequestActionSection = ({
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
+  const [requestAction, setRequestAction] = useState<string>("");
 
   const handleApproveItemRequest = async (
     onCreateJiraTicket: () => Promise<JiraTicketData>
@@ -98,101 +101,15 @@ const RequestActionSection = ({
     }
   };
 
-  const handleAction = async (action: string, color: string) => {
+  const handleAction = async (action: string) => {
     try {
       const isStatusUpdated = await checkRequestStatus();
       if (!isStatusUpdated) {
         router.reload();
         return;
       }
-
-      if (isItemForm && action === "approve" && isUserPrimarySigner) {
-        modals.open({
-          modalId: "approveRf",
-          title: <Text>Please confirm your action.</Text>,
-          children: (
-            <>
-              <Text size={14}>
-                Are you sure you want to {action} this request?
-              </Text>
-              {onCreateJiraTicket ? (
-                <Flex mt="md" align="center" justify="flex-end" gap="sm">
-                  <Button
-                    variant="default"
-                    color="dimmed"
-                    onClick={() => {
-                      modals.close("approveRf");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    color="green"
-                    onClick={async () => {
-                      modals.close("approveRf");
-                      handleApproveItemRequest(onCreateJiraTicket);
-                    }}
-                  >
-                    Approve
-                  </Button>
-                </Flex>
-              ) : (
-                <>
-                  <Flex mt="md" align="center" justify="flex-end" gap="sm">
-                    <Button
-                      variant="default"
-                      color="dimmed"
-                      onClick={() => {
-                        modals.close("approveRf");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      color="green"
-                      onClick={async () => {
-                        modals.close("approveRf");
-                        handleUpdateRequest("APPROVED");
-                      }}
-                    >
-                      Approve
-                    </Button>
-                  </Flex>
-                </>
-              )}
-            </>
-          ),
-          centered: true,
-        });
-      } else {
-        openConfirmModal({
-          title: <Text>Please confirm your action.</Text>,
-          children: (
-            <Text size={14}>
-              Are you sure you want to {action} this request?
-            </Text>
-          ),
-          labels: { confirm: "Confirm", cancel: "Cancel" },
-          centered: true,
-          confirmProps: { color },
-
-          onConfirm: () => {
-            switch (action) {
-              case "approve":
-                handleUpdateRequest("APPROVED");
-                break;
-              case "reject":
-                handleUpdateRequest("REJECTED");
-                break;
-              case "cancel":
-                handleCancelRequest();
-                break;
-            }
-          },
-        });
-      }
+      setRequestAction(action);
+      open();
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -210,6 +127,35 @@ const RequestActionSection = ({
 
   return (
     <Paper p="xl" shadow="xs">
+      <RequestConfirmModal
+        action={requestAction}
+        opened={opened}
+        close={close}
+        isCreateJiraTicket={onCreateJiraTicket ? true : false}
+        onCancelClick={() => close()}
+        onConfirmClick={async () => {
+          switch (requestAction) {
+            case "approve":
+              if (isItemForm && isUserPrimarySigner && onCreateJiraTicket) {
+                handleApproveItemRequest(onCreateJiraTicket);
+                close();
+              } else {
+                // handleUpdateRequest("APPROVED");
+                console.log("ey");
+                close();
+              }
+              break;
+            case "reject":
+              handleUpdateRequest("REJECTED");
+              close();
+              break;
+            case "cancel":
+              handleCancelRequest();
+              close();
+              break;
+          }
+        }}
+      />
       <Title order={4} color="dimmed">
         Request Action
       </Title>
@@ -236,7 +182,7 @@ const RequestActionSection = ({
             <Button
               color="green"
               fullWidth
-              onClick={() => handleAction("approve", "green")}
+              onClick={() => handleAction("approve")}
               disabled={isLoading}
             >
               Approve Request
@@ -244,7 +190,7 @@ const RequestActionSection = ({
             <Button
               color="red"
               fullWidth
-              onClick={() => handleAction("reject", "red")}
+              onClick={() => handleAction("reject")}
               disabled={isLoading}
             >
               Reject Request
@@ -272,7 +218,7 @@ const RequestActionSection = ({
           <Button
             variant="default"
             fullWidth
-            onClick={() => handleAction("cancel", "blue")}
+            onClick={() => handleAction("cancel")}
             disabled={isLoading}
           >
             Cancel Request
