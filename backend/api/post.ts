@@ -1,6 +1,5 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
-import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import {
   APP_SOURCE_ID,
   BASE_URL,
@@ -16,6 +15,7 @@ import {
 } from "@/utils/string";
 import {
   AdOwnerRequestTableInsert,
+  AssigneeInformation,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
@@ -252,7 +252,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -581,6 +581,11 @@ export const createRequest = async (
       };
       tradeTestId: string;
     };
+    itAssetAutomationParams?: {
+      position: string;
+      manPowerLoadingId: string;
+      referenceId: string;
+    };
   }
 ) => {
   const {
@@ -603,6 +608,7 @@ export const createRequest = async (
     interviewParams,
     backgroundCheckParams,
     tradeTestParams,
+    itAssetAutomationParams,
   } = params;
 
   const requestId = uuidv4();
@@ -750,6 +756,7 @@ export const createRequest = async (
         rootFormslyRequestId,
         recruiter,
         applicationInformationParams,
+        itAssetAutomationParams,
         interviewParams,
         backgroundCheckParams,
         tradeTestParams,
@@ -1041,7 +1048,7 @@ export const insertProjectMember = async (
     teamGroupIdList: string[];
   }
 ) => {
-  const {  error } = await supabaseClient
+  const { error } = await supabaseClient
     .rpc("insert_project_member", { input_data: params })
     .select("*");
   if (error) throw error;
@@ -2728,5 +2735,24 @@ export const insertUpdateHrPreferredPosition = async (
     }
   );
   if (error) throw error;
+  return data;
+};
+
+export const handleUpdateEmployeeHrisId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeData: AssigneeInformation;
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "update_hris_id_laptop_request",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
   return data;
 };

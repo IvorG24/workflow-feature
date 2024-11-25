@@ -1116,6 +1116,13 @@ CREATE TABLE hr_schema.job_offer_reason_for_rejection_table (
   job_offer_reason_for_rejection_job_offer_id UUID REFERENCES hr_schema.job_offer_table(job_offer_id) NOT NULL
 );
 
+CREATE TABLE hr_schema.job_offer_laptop_details_table(
+    job_offer_laptop_details_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    job_offer_laptop_details_department UUID REFERENCES team_schema.team_department_table(team_department_id) NOT NULL,
+    job_offer_laptop_details_project UUID REFERENCES team_schema.team_project_table(team_project_id) NOT NULL,
+    job_offer_laptop_details_job_offer_id UUID REFERENCES hr_schema.job_offer_table(job_offer_id) NOT NULL
+);
+
 CREATE TABLE hr_schema.request_connection_table (
   request_connection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
 
@@ -1149,13 +1156,6 @@ CREATE TABLE hr_schema.hr_project_table (
   hr_project_name VARCHAR(4000) NOT NULL,
 
   hr_project_address_id UUID REFERENCES public.address_table(address_id) NOT NULL
-);
-
-CREATE TABLE hr_schema.hr_preferred_position_table (
-  hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-
-  hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
-  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id)
 );
 
 CREATE TABLE lookup_schema.degree_table (
@@ -1238,7 +1238,16 @@ CREATE TABLE lookup_schema.position_table (
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
-  position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id)
+  position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id),
+  position_is_with_laptop BOOLEAN DEFAULT false NOT NULL,
+  position_laptop_type VARCHAR(4000)
+);
+
+CREATE TABLE hr_schema.hr_preferred_position_table (
+  hr_preferred_position_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+
+  hr_preferred_position_group_member_id UUID NOT NULL REFERENCES team_schema.team_group_member_table(team_group_member_id),
+  hr_preferred_position_position_id UUID NOT NULL REFERENCES lookup_schema.position_table(position_id)
 );
 
 CREATE TABLE user_schema.email_resend_table (
@@ -1590,7 +1599,8 @@ AS $$
       applicationInformationParams,
       interviewParams,
       backgroundCheckParams,
-      tradeTestParams
+      tradeTestParams,
+      itAssetAutomationParams
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -2188,6 +2198,23 @@ AS $$
           requestId
         ]
       );
+    } else if (itAssetAutomationParams){
+      plv8.execute(`
+            INSERT INTO request_schema.comment_table
+            (
+            comment_request_id,
+            comment_team_member_id,
+            comment_type,
+            comment_content
+            )
+            VALUES
+            (
+            '${requestId}',
+            'f0ae4d53-427c-4223-84ea-c007a186ae82',
+            'ACTION_APPROVED',
+            'This request is intended for ${itAssetAutomationParams.position} under ${itAssetAutomationParams.manPowerLoadingId}'
+            )
+        `);
     }
   });
   return request_data;
@@ -3120,9 +3147,9 @@ AS $$
 
     const userData = plv8.execute(
       `
-        SELECT * 
-        FROM user_schema.user_table 
-        WHERE 
+        SELECT *
+        FROM user_schema.user_table
+        WHERE
           user_email = ANY($1)
       `, [
         emailList
@@ -3177,12 +3204,12 @@ AS $$
 
       invitation_data = plv8.execute(
         `
-          INSERT INTO user_schema.invitation_table 
+          INSERT INTO user_schema.invitation_table
           (
             invitation_id,
             invitation_to_email,
             invitation_from_team_member_id
-          ) 
+          )
           VALUES ${invitationValues}
           RETURNING *
         `
@@ -3197,14 +3224,14 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO public.notification_table 
+          INSERT INTO public.notification_table
           (
             notification_app,
             notification_content,
             notification_redirect_url,
             notification_type,
             notification_user_id
-          ) 
+          )
           VALUES ${notificationValues}
         `
       );
@@ -3223,9 +3250,9 @@ AS $$
   plv8.subtransaction(function(){
     const user_data = plv8.execute(
       `
-        SELECT * 
-        FROM user_schema.user_table 
-        WHERE user_id = $1 
+        SELECT *
+        FROM user_schema.user_table
+        WHERE user_id = $1
         LIMIT 1
       `, [
         user_id
@@ -3235,9 +3262,9 @@ AS $$
     if (!user_data.user_active_team_id) {
       const team_member = plv8.execute(
         `
-          SELECT * 
-          FROM team_schema.team_member_table 
-          WHERE 
+          SELECT *
+          FROM team_schema.team_member_table
+          WHERE
             team_member_user_id = $1
             AND team_member_is_disabled = $2
           LIMIT 1
@@ -3268,9 +3295,9 @@ AS $$
   plv8.subtransaction(function(){
     const item_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM item_schema.item_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM item_schema.item_table
+        WHERE
           item_team_id = $1
           AND item_is_available = $2
           AND item_is_disabled = $3
@@ -3283,9 +3310,9 @@ AS $$
 
     const signer_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM form_schema.signer_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM form_schema.signer_table
+        WHERE
           signer_form_id = $1
           AND signer_is_disabled = $2
           AND signer_is_primary_signer = $3
@@ -3317,10 +3344,10 @@ AS $$
   plv8.subtransaction(function(){
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
-        SET 
+        UPDATE team_schema.team_member_table
+        SET
           team_member_role = $1
-        WHERE 
+        WHERE
           team_member_id = $2
       `, [
         'OWNER',
@@ -3329,10 +3356,10 @@ AS $$
     );
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
+        UPDATE team_schema.team_member_table
         SET
           team_member_role = $1
-        WHERE 
+        WHERE
           team_member_id = $2
       `, [
         'APPROVER',
@@ -3357,8 +3384,8 @@ AS $$
       `
         SELECT EXISTS (
           SELECT 1
-          FROM team_schema.team_member_table 
-          WHERE 
+          FROM team_schema.team_member_table
+          WHERE
             team_member_team_id = $1
             AND team_member_user_id = $2
             AND team_member_is_disabled = $3
@@ -3369,14 +3396,14 @@ AS $$
         true
       ]
     )[0].exists;
-    
+
     const userData = plv8.execute(
       `
-        SELECT 
-          user_id, 
-          user_active_team_id 
-        FROM user_schema.user_table 
-        WHERE 
+        SELECT
+          user_id,
+          user_active_team_id
+        FROM user_schema.user_table
+        WHERE
           user_id = $1
       `, [
         user_id
@@ -3386,10 +3413,10 @@ AS $$
     if (isUserPreviousMember) {
       plv8.execute(
         `
-          UPDATE team_schema.team_member_table 
-          SET 
-            team_member_is_disabled = $1 
-          WHERE 
+          UPDATE team_schema.team_member_table
+          SET
+            team_member_is_disabled = $1
+          WHERE
             team_member_team_id = $2
             AND team_member_user_id = $3
         `, [
@@ -3401,11 +3428,11 @@ AS $$
     } else {
       plv8.execute(
         `
-          INSERT INTO team_schema.team_member_table 
+          INSERT INTO team_schema.team_member_table
           (
             team_member_team_id,
             team_member_user_id
-          ) VALUES 
+          ) VALUES
           (
             $1,
             $2
@@ -3420,8 +3447,8 @@ AS $$
     if (!userData.user_active_team_id) {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
-          SET 
+          UPDATE user_schema.user_table
+          SET
             user_active_team_id = $1
           WHERE user_id = $2
         `, [
@@ -3433,10 +3460,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE user_schema.invitation_table 
-        SET 
+        UPDATE user_schema.invitation_table
+        SET
           invitation_status = $1
-        WHERE 
+        WHERE
           invitation_id = $2
       `, [
         'ACCEPTED',
@@ -3448,9 +3475,9 @@ AS $$
       `
         SELECT team_table.*
         FROM team_schema.team_member_table
-        INNER JOIN team_schema.team_table 
+        INNER JOIN team_schema.team_table
           ON team_id = team_member_team_id
-        WHERE 
+        WHERE
           team_member_is_disabled = $1
           AND team_member_user_id = $2
         ORDER BY team_date_created DESC
@@ -3475,11 +3502,11 @@ AS $$
   plv8.subtransaction(function(){
     plv8.execute(
       `
-        UPDATE request_schema.request_table 
-        SET 
+        UPDATE request_schema.request_table
+        SET
           request_status = $1,
           request_status_date_updated = $2
-        WHERE 
+        WHERE
           request_id = $3
       `, [
         'CANCELED',
@@ -3489,14 +3516,14 @@ AS $$
     );
     plv8.execute(
       `
-        INSERT INTO request_schema.comment_table 
+        INSERT INTO request_schema.comment_table
         (
           comment_request_id,
           comment_team_member_id,
           comment_type,
           comment_content
-        ) 
-        VALUES 
+        )
+        VALUES
         (
           $1,
           $2,
@@ -3538,15 +3565,15 @@ AS $$
 
     form_data = plv8.execute(
       `
-        INSERT INTO form_schema.form_table 
+        INSERT INTO form_schema.form_table
         (
           form_app,
           form_description,
           form_name,form_team_member_id,
           form_id,form_is_signature_required,
           form_is_for_every_member
-        ) 
-        VALUES 
+        )
+        VALUES
         (
           $1,
           $2,
@@ -3555,7 +3582,7 @@ AS $$
           $5,
           $6,
           $7
-        ) 
+        )
         RETURNING *
       `, [
         formType,
@@ -3619,19 +3646,19 @@ AS $$
       .join(",");
 
     const section_query = `
-      INSERT INTO form_schema.section_table 
+      INSERT INTO form_schema.section_table
       (
         section_id,
         section_form_id,
         section_is_duplicatable,
         section_name,
         section_order
-      ) 
+      )
       VALUES ${sectionValues}
     `;
 
     const field_query = `
-      INSERT INTO form_schema.field_table 
+      INSERT INTO form_schema.field_table
       (
         field_id,
         field_name,
@@ -3641,46 +3668,46 @@ AS $$
         field_order,
         field_section_id,
         field_special_field_template_id
-      ) 
+      )
       VALUES ${fieldValues}
     `;
 
     const option_query = `
-      INSERT INTO form_schema.option_table 
+      INSERT INTO form_schema.option_table
       (
         option_id,option_value,
         option_order,
         option_field_id
-      ) 
+      )
       VALUES ${optionValues}
     `;
 
     const signer_query = `
-      INSERT INTO form_schema.signer_table 
+      INSERT INTO form_schema.signer_table
       (
         signer_id,
         signer_form_id,
         signer_team_member_id,
         signer_action,
         signer_is_primary_signer,signer_order
-      ) 
+      )
       VALUES ${signerValues}
     `;
 
     const form_group_query = `
-      INSERT INTO form_schema.form_team_group_table 
+      INSERT INTO form_schema.form_team_group_table
       (
         form_id,
         team_group_id
-      ) 
+      )
       VALUES ${groupValues}
     `;
 
     const all_query = `
-      ${section_query}; 
-      ${field_query}; 
-      ${optionInput.length>0?option_query : ''}; 
-      ${signer_query}; 
+      ${section_query};
+      ${field_query};
+      ${optionInput.length>0?option_query : ''};
+      ${signer_query};
       ${groupList.length > 0 ? form_group_query : ''};
     `
     plv8.execute(all_query);
@@ -3713,18 +3740,18 @@ AS $$
 
     const notification_list = plv8.execute(
       `
-        SELECT  * FROM public.notification_table 
-        WHERE 
+        SELECT  * FROM public.notification_table
+        WHERE
           notification_user_id = $1
           AND (
             notification_app = $2
             OR notification_app = $3
-          ) 
+          )
           AND (
-            notification_team_id IS NULL 
+            notification_team_id IS NULL
             ${team_query}
-          ) 
-        ORDER BY notification_date_created DESC 
+          )
+        ORDER BY notification_date_created DESC
         LIMIT $4
         OFFSET $5
       `, [
@@ -3738,18 +3765,18 @@ AS $$
 
     const unread_notification_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM public.notification_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM public.notification_table
+        WHERE
           notification_user_id = $1
           AND (
             notification_app = $2
             OR notification_app = $3
-          ) 
+          )
           AND (
-            notification_team_id IS NULL 
+            notification_team_id IS NULL
             ${team_query}
-          ) 
+          )
           AND notification_is_read = $4
       `, [
         userId,
@@ -3783,12 +3810,12 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE form_schema.signer_table 
-        SET 
-          signer_is_disabled = $1 
-        WHERE 
+        UPDATE form_schema.signer_table
+        SET
+          signer_is_disabled = $1
+        WHERE
           signer_form_id = $2
-          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"} 
+          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"}
           AND signer_team_department_id IS NULL
       `, [
         true,
@@ -3805,7 +3832,7 @@ AS $$
 
     signer_data = plv8.execute(
       `
-        INSERT INTO form_schema.signer_table 
+        INSERT INTO form_schema.signer_table
         (
           signer_id,
           signer_form_id,
@@ -3815,18 +3842,18 @@ AS $$
           signer_order,
           signer_is_disabled,
           signer_team_project_id
-        ) 
-        VALUES ${signerValues} 
-        ON CONFLICT 
-        ON CONSTRAINT signer_table_pkey 
-        DO UPDATE 
-        SET 
+        )
+        VALUES ${signerValues}
+        ON CONFLICT
+        ON CONSTRAINT signer_table_pkey
+        DO UPDATE
+        SET
           signer_team_member_id = excluded.signer_team_member_id,
           signer_action = excluded.signer_action,
           signer_is_primary_signer = excluded.signer_is_primary_signer,
           signer_order = excluded.signer_order,
           signer_is_disabled = excluded.signer_is_disabled,
-          signer_team_project_id = excluded.signer_team_project_id 
+          signer_team_project_id = excluded.signer_team_project_id
         RETURNING *
       `
     );
@@ -3909,7 +3936,7 @@ AS $$
             )
           )
           FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table 
+          INNER JOIN form_schema.signer_table
             ON request_signer_signer_id = signer_id
           WHERE request_signer_request_id = request_id
         )
@@ -3992,11 +4019,11 @@ AS $$
     const projectInitialCount = plv8.execute(
       `
         SELECT COUNT(*) FROM team_schema.team_project_table
-        WHERE 
+        WHERE
           team_project_team_id = $1
           AND team_project_code ILIKE '%' || $2 || '%'
       `, [
-        teamProjectTeamId, 
+        teamProjectTeamId,
         teamProjectInitials
       ]
     )[0].count + 1n;
@@ -4022,7 +4049,7 @@ AS $$
           $4,
           $5,
           $6,
-        ) 
+        )
         RETURNING *
       `, [
         region,
@@ -4094,11 +4121,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO team_schema.team_group_member_table 
+        INSERT INTO team_schema.team_group_member_table
         (
           team_member_id,
           team_group_id
-        ) 
+        )
         VALUES ${groupInsertData}
         ON CONFLICT (
           team_member_id,
@@ -4122,11 +4149,11 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO team_schema.team_project_member_table 
+          INSERT INTO team_schema.team_project_member_table
           (
             team_member_id,
             team_project_id
-          ) 
+          )
           VALUES ${projectInsertData.join(', ')}
           ON CONFLICT (
             team_member_id,
@@ -4174,9 +4201,9 @@ AS $$
           SELECT *
           FROM batch_data
           WHERE NOT EXISTS (
-            SELECT 1 
-            FROM form_schema.signer_table 
-            WHERE 
+            SELECT 1
+            FROM form_schema.signer_table
+            WHERE
               signer_is_primary_signer = true
               AND signer_order = 1
               AND signer_action = 'Approved'
@@ -4211,11 +4238,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO team_schema.team_project_member_table 
+        INSERT INTO team_schema.team_project_member_table
         (
           team_member_id,
           team_project_id
-        ) 
+        )
         VALUES ${projectInsertData}
         ON CONFLICT (
           team_member_id,
@@ -4239,11 +4266,11 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO team_schema.team_group_member_table 
+          INSERT INTO team_schema.team_group_member_table
           (
             team_member_id,
             team_group_id
-          ) 
+          )
           VALUES ${groupInsertData.join(', ')}
           ON CONFLICT (
             team_member_id,
@@ -4272,8 +4299,8 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE form_schema.form_table 
-        SET 
+        UPDATE form_schema.form_table
+        SET
           form_is_for_every_member = $1
           WHERE form_id = $2
       `, [
@@ -4284,7 +4311,7 @@ AS $$
 
     plv8.execute(
       `
-        DELETE FROM form_schema.form_team_group_table 
+        DELETE FROM form_schema.form_team_group_table
         WHERE form_id $1
       `, [
         formId
@@ -4295,11 +4322,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO form_schema.form_team_group_table 
+        INSERT INTO form_schema.form_team_group_table
         (
           team_group_id,
           form_id
-        ) 
+        )
         VALUES ${newGroupInsertValues}
         RETURNING *
       `
@@ -4322,9 +4349,9 @@ AS $$
 
     const teamGroupMemberData = plv8.execute(
       `
-        SELECT team_member_id 
-        FROM team_schema.team_group_member_table 
-        WHERE 
+        SELECT team_member_id
+        FROM team_schema.team_group_member_table
+        WHERE
           team_group_id = $1
       `, [
         groupId
@@ -4335,8 +4362,8 @@ AS $$
 
     member_data = plv8.execute(
       `
-        SELECT 
-          team_member_id, 
+        SELECT
+          team_member_id,
           user_id,
           user_first_name,
           user_last_name,
@@ -4344,9 +4371,9 @@ AS $$
           user_email
         FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE 
+        WHERE
           team_member_team_id = $1
-          AND team_member_is_disabled = FALSE 
+          AND team_member_is_disabled = FALSE
           AND team_member_id != ALL($2)
         ORDER BY
           user_first_name ASC,
@@ -4386,9 +4413,9 @@ AS $$
 
     const teamProjectMemberData = plv8.execute(
       `
-        SELECT team_member_id 
-        FROM team_schema.team_project_member_table 
-        WHERE 
+        SELECT team_member_id
+        FROM team_schema.team_project_member_table
+        WHERE
           team_project_id = $1
       `, [
         projectId
@@ -4399,8 +4426,8 @@ AS $$
 
     member_data = plv8.execute(
       `
-        SELECT 
-          team_member_id, 
+        SELECT
+          team_member_id,
           user_id,
           user_first_name,
           user_last_name,
@@ -4408,9 +4435,9 @@ AS $$
           user_email
         FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE 
+        WHERE
           team_member_team_id = $1
-          AND team_member_is_disabled = FALSE 
+          AND team_member_is_disabled = FALSE
           AND team_member_id != ALL($2)
         ORDER BY
           user_first_name ASC,
@@ -4445,9 +4472,9 @@ AS $$
   plv8.subtransaction(function(){
     const user = plv8.execute(
       `
-        SELECT * FROM 
-        team_schema.team_member_table 
-        WHERE 
+        SELECT * FROM
+        team_schema.team_member_table
+        WHERE
           team_member_team_id = $1
           AND team_member_id = $2
           AND team_member_role = $3
@@ -4462,10 +4489,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE team_schema.team_table 
-        SET 
+        UPDATE team_schema.team_table
+        SET
           team_is_disabled = $1
-        WHERE 
+        WHERE
           team_id = $2
       `, [
         true,
@@ -4475,10 +4502,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
-        SET 
+        UPDATE team_schema.team_member_table
+        SET
           team_member_is_disabled = $1
-        WHERE 
+        WHERE
           team_member_team_id = $2
       `, [
         true,
@@ -4489,12 +4516,12 @@ AS $$
     plv8.execute(
       `
         UPDATE invitation_table
-        SET 
+        SET
           invitation_is_disabled = $1
         FROM team_schema.team_member_table
-        WHERE 
+        WHERE
           team_member_team_id = $2
-          AND team_member_id = invitation_from_team_member_id 
+          AND team_member_id = invitation_from_team_member_id
       `, [
         true,
         team_id
@@ -4503,9 +4530,9 @@ AS $$
 
     const userTeamList = plv8.execute(
       `
-        SELECT * 
-        FROM team_schema.team_member_table 
-        WHERE 
+        SELECT *
+        FROM team_schema.team_member_table
+        WHERE
           team_member_id = $1
           AND team_member_is_disabled = $2
       `, [
@@ -4517,10 +4544,10 @@ AS $$
     if (userTeamList.length > 0) {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
-          SET 
+          UPDATE user_schema.user_table
+          SET
             user_active_team_id = $1
-          WHERE 
+          WHERE
             user_id = $2
         `, [
           userTeamList[0].team_member_team_id,
@@ -4530,7 +4557,7 @@ AS $$
     } else {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
+          UPDATE user_schema.user_table
           SET user_active_team_id = $1
           WHERE
             user_id = $2
@@ -4559,10 +4586,10 @@ AS $$
     memberList = plv8.execute(
       `
         WITH updated AS (
-          UPDATE team_schema.team_member_table 
-          SET 
+          UPDATE team_schema.team_member_table
+          SET
             team_member_role = $1
-          WHERE 
+          WHERE
             team_member_id = ANY($2)
           RETURNING *
         )
@@ -15327,14 +15354,22 @@ AS $$
       `
         SELECT
           job_offer_table.*,
-          attachment_table.*
+          attachment_table.*,
+          CASE
+            WHEN job_offer_laptop_details_table.job_offer_laptop_details_id IS NOT NULL THEN true
+              ELSE false
+            END AS job_offer_with_laptop
         FROM hr_schema.job_offer_table
-        LEFT JOIN public.attachment_table ON attachment_id = job_offer_attachment_id
+        LEFT JOIN public.attachment_table
+        ON attachment_id = job_offer_attachment_id
+        LEFT JOIN hr_schema.job_offer_laptop_details_table
+        ON job_offer_id = job_offer_laptop_details_job_offer_id
         WHERE job_offer_request_id = '${requestUUID}'
         ORDER BY job_offer_date_created DESC
-        LIMIT 1
+        LIMIT 1;
       `
     );
+
     if (!jobOfferData.length) {
       returnData = {
         applicationInformationData,
@@ -17031,7 +17066,8 @@ AS $$
             application_information_additional_details_last_name
           ) AS application_information_full_name,
           application_information_additional_details_contact_number AS application_information_contact_number,
-          application_information_additional_details_email AS application_information_email
+          application_information_additional_details_email AS application_information_email,
+          position_is_with_laptop
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -17050,6 +17086,7 @@ AS $$
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+        INNER JOIN lookup_schema.position_table  AS positionWithLaptop ON positionWithLaptop.position_alias = application_information_additional_details_position
         INNER JOIN (
           SELECT
             JobOffer.*,
@@ -17088,6 +17125,8 @@ AS $$
       title,
       projectAssignment,
       projectAddress,
+      requestingProject,
+      requestingDepartment,
       manpowerLoadingId,
       manpowerLoadingReferenceCreatedBy,
       compensation,
@@ -17130,7 +17169,22 @@ AS $$
         RETURNING job_offer_id
       `
     )[0].job_offer_id;
-
+    if(requestingProject && requestingDepartment){
+        plv8.execute(`
+            INSERT INTO hr_schema.job_offer_laptop_details_table
+            (
+                job_offer_laptop_details_department,
+                job_offer_laptop_details_project,
+                job_offer_laptop_details_job_offer_id
+            )
+            VALUES
+            (
+                '${requestingDepartment}',
+                '${requestingProject}',
+                '${jobOfferId}'
+            )
+        `)
+    }
     const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
@@ -20988,6 +21042,633 @@ AS $$
     });
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION automated_laptop_item_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const { formId, jobOfferId, requestId } = input_data;
+  const formDataResult = plv8.execute(`
+  SELECT public.create_request_page_on_load($1)
+  `, [JSON.stringify({ formId, userId: "4d9978f1-65e0-4922-9c94-710fff2c63d6" })])[0]?.create_request_page_on_load?.form;
+
+  const futureDate = plv8.execute(`
+	  SELECT (public.get_current_date()::date + interval '5 days')::date
+  `)[0].date;
+
+  const requestDetailsData = plv8.execute(`
+    SELECT
+      td.team_department_name,
+      tp.team_project_name,
+      tp.team_project_id
+    FROM hr_schema.job_offer_laptop_details_table jo
+    JOIN team_schema.team_department_table td
+      ON jo.job_offer_laptop_details_department = td.team_department_id
+    JOIN team_schema.team_project_table tp
+      ON jo.job_offer_laptop_details_project = tp.team_project_id
+    JOIN hr_schema.job_offer_table jot
+      ON jot.job_offer_id = jo.job_offer_laptop_details_job_offer_id
+    WHERE jot.job_offer_id = $1
+    ORDER BY jot.job_offer_date_created DESC
+    LIMIT 1
+  `,[jobOfferId])[0];
+
+  const itemData = plv8.execute(`
+    SELECT item_gl_account, item_unit
+    FROM item_schema.item_table
+    WHERE item_general_name = $1
+  `,['LAPTOP'])[0];
+
+  const itemDetails = {
+    generalName: "LAPTOP",
+    baseUnitMeasurement: itemData.item_unit,
+    quantity: 1,
+    itemGlAccount: itemData.item_gl_account
+  };
+
+  const assigneeInformation = plv8.execute(`
+    SELECT *
+    FROM hr_schema.application_information_additional_details_table
+    WHERE application_information_additional_details_request_id = $1
+  `,[requestId])[0];
+
+  const laptopType = plv8.execute(`
+    SELECT *
+    FROM form_schema.field_table
+    WHERe field_id = $1
+  `,['c226b242-afe1-411c-a97e-c9e0dfffe7ed'])[0];
+
+  const checkLaptopType = plv8.execute(`
+    SELECT position_laptop_type
+    FROM lookup_schema.position_table
+    WHERE position_alias = $1
+  `,[assigneeInformation.application_information_additional_details_position])[0];
+
+  const formData = {
+    form: {
+      ...formDataResult,
+      form_section: [
+        {
+          ...formDataResult.form_section[0],
+          section_field: [
+            {
+              ...formDataResult.form_section[0].section_field[0],
+              field_option: [
+                {
+                  option_value: requestDetailsData.team_project_name,
+                  option_id: requestDetailsData.team_project_id,
+                }
+              ],
+              field_response: requestDetailsData.team_project_name,
+            },
+            {
+              ...formDataResult.form_section[0].section_field[1],
+              field_response: futureDate
+            },
+            {
+              ...formDataResult.form_section[0].section_field[2],
+              field_response: requestDetailsData.team_department_name
+            },
+            {
+              ...formDataResult.form_section[0].section_field[3],
+              field_response: "New request"
+            }
+          ]
+        },
+        {
+          ...formDataResult.form_section[1],
+          section_field: [
+            {
+              ...formDataResult.form_section[1].section_field[0],
+              field_response: itemDetails.generalName
+            },
+            {
+              ...formDataResult.form_section[1].section_field[1],
+              field_response: itemDetails.baseUnitMeasurement
+            },
+            {
+              ...formDataResult.form_section[1].section_field[2],
+              field_response: itemDetails.quantity
+            },
+            {
+              ...formDataResult.form_section[1].section_field[3],
+              field_response: itemDetails.itemGlAccount
+            },
+            {
+             ...laptopType,
+              field_response: checkLaptopType.position_laptop_type
+            }
+          ]
+        },
+        {
+          ...formDataResult.form_section[2],
+          section_field: [
+            {
+              ...formDataResult.form_section[2].section_field[0],
+              field_response: "To be filled out by HR Deployment and Records"
+            },
+            {
+              ...formDataResult.form_section[2].section_field[1],
+              field_response: assigneeInformation.application_information_additional_details_position
+            },
+            {
+              ...formDataResult.form_section[2].section_field[2],
+              field_response: assigneeInformation.application_information_additional_details_first_name.toUpperCase()
+            },
+            {
+              ...formDataResult.form_section[2].section_field[3],
+              field_response: assigneeInformation.application_information_additional_details_middle_name.toUpperCase()
+            },
+             {
+              ...formDataResult.form_section[2].section_field[4],
+              field_response: assigneeInformation.application_information_additional_details_last_name.toUpperCase()
+            },
+            {
+              ...formDataResult.form_section[2].section_field[5],
+              field_response: ""
+            },
+            {
+              ...formDataResult.form_section[2].section_field[6],
+              field_response: assigneeInformation.application_information_additional_details_contact_number
+            },
+            {
+              ...formDataResult.form_section[2].section_field[7],
+              field_response: assigneeInformation.application_information_additional_details_email
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  returnData = formData.form;
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION deployment_record_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {
+  data: [],
+  count: 0,
+};
+plv8.subtransaction(function () {
+  const { teamId, formId, search, isAscendingSort, limit, page, columnAccessor } = input_data;
+
+  const offset = (page - 1) * limit;
+
+  const searchCondition = search
+    ? `AND CONCAT(r.request_formsly_id_prefix, '-', r.request_formsly_id_serial) = '${search}'`
+    : "";
+  const sortCondition = isAscendingSort ? "ASC" : "DESC";
+  const sortingCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortCondition}` : "";
+
+  const itRequestRecords = plv8.execute(`
+    SELECT
+      r.request_id,
+      r.request_formsly_id_prefix,
+      r.request_formsly_id_serial,
+      r.request_date_created
+    FROM request_schema.request_table r
+    JOIN request_schema.request_response_table rr
+      ON r.request_id = rr.request_response_request_id
+    WHERE r.request_form_id = $1
+      AND r.request_team_member_id = $2
+      AND rr.request_response = $3
+      AND rr.request_response_field_id = $4
+      ${searchCondition}
+      ${sortingCondition}
+    LIMIT $5 OFFSET $6
+  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769", limit, offset]);
+
+  const itRequestCount = plv8.execute(`
+    SELECT COUNT(*)
+    FROM request_schema.request_table r
+    JOIN request_schema.request_response_table rr
+      ON r.request_id = rr.request_response_request_id
+    WHERE r.request_form_id = $1
+      AND r.request_team_member_id = $2
+      AND rr.request_response = $3
+      AND rr.request_response_field_id = $4
+      ${searchCondition}
+  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769"]);
+
+  returnData.count = Number(itRequestCount[0].count);
+
+  returnData.data = itRequestRecords.map(request => {
+    return {
+      request_id: request.request_id,
+      request_formsly_id: `${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`,
+      request_date_created:request.request_date_created,
+    };
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_applicant_assignee_information(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function () {
+  const { requestId } = input_data;
+
+  if (!requestId) {
+    throw new Error("requestId is required in input_data");
+  }
+
+  const fieldIdToFetch = [
+    '60b17659-6f6e-4719-99f1-47bed94fe7a8',
+    '13269f6e-fbfb-4ca3-83fc-93f38478aba2',
+    '710ccab8-7e55-4ed8-83b4-7af8720d4168',
+    '920a35a6-92be-4d4f-ac5e-7454d6c8d3a4',
+    'f2ac0b86-c483-435c-abda-08bf310e570b',
+    'cfdba656-ad4f-4bec-9541-96d9fbfcf03f'
+  ];
+  const assigneeInformation = plv8.execute(`
+    SELECT request_response_field_id, request_response
+    FROM request_schema.request_response_table
+    WHERE request_response_field_id = ANY ($1)
+      AND request_response_request_id = $2
+  `, [fieldIdToFetch, requestId]);
+
+  const responseMap = {};
+    assigneeInformation.forEach(row => {
+    responseMap[row.request_response_field_id] = row.request_response.replace(/"/g, '');
+  });
+
+  returnData = {
+    position: responseMap['60b17659-6f6e-4719-99f1-47bed94fe7a8'] || null,
+    firstName: responseMap['13269f6e-fbfb-4ca3-83fc-93f38478aba2'] || null,
+    middleName: responseMap['710ccab8-7e55-4ed8-83b4-7af8720d4168'] || null,
+    lastName: responseMap['920a35a6-92be-4d4f-ac5e-7454d6c8d3a4'] || null,
+    contactNumber: responseMap['f2ac0b86-c483-435c-abda-08bf310e570b'] || null,
+    email: responseMap['cfdba656-ad4f-4bec-9541-96d9fbfcf03f'] || null,
+  };
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_hris_id_laptop_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const { employeeData, requestId } = input_data;
+
+  const hrisId = employeeData.hrisId.trim().replace(/\s\s+/g, " ");
+  const firstName = employeeData.firstName.trim().toUpperCase();
+  const middleName = employeeData.middleName?.trim().toUpperCase() || null;
+  const lastName = employeeData.lastName.trim().toUpperCase();
+
+  plv8.execute(`
+    UPDATE request_schema.request_response_table
+    SET
+        request_response = $1
+    WHERE request_response_field_id = $2
+    AND request_response_request_id = $3
+  `, [hrisId, '85a78a9f-d0cd-45d5-b781-c909efab5769', requestId]);
+
+  plv8.execute(`
+    UPDATE lookup_schema.scic_employee_table
+    SET
+        scic_employee_first_name = $1,
+        scic_employee_middle_name = $2,
+        scic_employee_last_name = $3
+    WHERE scic_employee_hris_id_number = $4
+  `, [firstName, middleName, lastName, employeeData.hrisId]);
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION automated_laptop_item_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const { formId, jobOfferId, requestId } = input_data;
+
+  const formDataResult = plv8.execute(`
+    SELECT public.create_request_page_on_load(
+      '{"formId":$1,"userId":$2}'
+    )
+  `,[formId,'4d9978f1-65e0-4922-9c94-710fff2c63d6'])[0].create_request_page_on_load.form;
+
+  const futureDate = plv8.execute(`
+	  SELECT (public.get_current_date()::date + interval '5 days')::date
+  `)[0].date;
+
+  const requestDetailsData = plv8.execute(`
+    SELECT
+      td.team_department_name,
+      tp.team_project_name,
+      tp.team_project_id
+    FROM hr_schema.job_offer_laptop_details_table jo
+    JOIN team_schema.team_department_table td
+      ON jo.job_offer_laptop_details_department = td.team_department_id
+    JOIN team_schema.team_project_table tp
+      ON jo.job_offer_laptop_details_project = tp.team_project_id
+    JOIN hr_schema.job_offer_table jot
+      ON jot.job_offer_id = jo.job_offer_laptop_details_job_offer_id
+    WHERE jot.job_offer_id = $1
+    ORDER BY jot.job_offer_date_created DESC
+    LIMIT 1
+  `,[jobOfferId])[0];
+
+  const itemData = plv8.execute(`
+    SELECT item_gl_account, item_unit
+    FROM item_schema.item_table
+    WHERE item_general_name = $1
+  `,['LAPTOP'])[0];
+
+  const itemDetails = {
+    generalName: "LAPTOP",
+    baseUnitMeasurement: itemData.item_unit,
+    quantity: 1,
+    itemGlAccount: itemData.item_gl_account
+  };
+
+  const assigneeInformation = plv8.execute(`
+    SELECT *
+    FROM hr_schema.application_information_additional_details_table
+    WHERE application_information_additional_details_request_id = $1
+  `,[requestId])[0];
+
+  const laptopType = plv8.execute(`
+    SELECT *
+    FROM form_schema.field_table
+    WHERe field_id = $1
+  `,['c226b242-afe1-411c-a97e-c9e0dfffe7ed'])[0];
+
+  const checkLaptopType = plv8.execute(`
+    SELECT position_laptop_type
+    FROM lookup_schema.position_table
+    WHERE position_alias = $1
+  `,[assigneeInformation.application_information_additional_details_position])[0];
+
+  const formData = {
+    form: {
+      ...formDataResult,
+      form_section: [
+        {
+          ...formDataResult.form_section[0],
+          section_field: [
+            {
+              ...formDataResult.form_section[0].section_field[0],
+              field_option: [
+                {
+                  option_value: requestDetailsData.team_project_name,
+                  option_id: requestDetailsData.team_project_id,
+                }
+              ],
+              field_response: requestDetailsData.team_project_name,
+            },
+            {
+              ...formDataResult.form_section[0].section_field[1],
+              field_response: futureDate
+            },
+            {
+              ...formDataResult.form_section[0].section_field[2],
+              field_response: requestDetailsData.team_department_name
+            },
+            {
+              ...formDataResult.form_section[0].section_field[3],
+              field_response: "New request"
+            }
+          ]
+        },
+        {
+          ...formDataResult.form_section[1],
+          section_field: [
+            {
+              ...formDataResult.form_section[1].section_field[0],
+              field_response: itemDetails.generalName
+            },
+            {
+              ...formDataResult.form_section[1].section_field[1],
+              field_response: itemDetails.baseUnitMeasurement
+            },
+            {
+              ...formDataResult.form_section[1].section_field[2],
+              field_response: itemDetails.quantity
+            },
+            {
+              ...formDataResult.form_section[1].section_field[3],
+              field_response: itemDetails.itemGlAccount
+            },
+            {
+             ...laptopType,
+              field_response: checkLaptopType.position_laptop_type
+            }
+          ]
+        },
+        {
+          ...formDataResult.form_section[2],
+          section_field: [
+            {
+              ...formDataResult.form_section[2].section_field[0],
+              field_response: "To be filled out by HR Deployment and Records"
+            },
+            {
+              ...formDataResult.form_section[2].section_field[1],
+              field_response: assigneeInformation.application_information_additional_details_position
+            },
+            {
+              ...formDataResult.form_section[2].section_field[2],
+              field_response: assigneeInformation.application_information_additional_details_first_name
+            },
+            {
+              ...formDataResult.form_section[2].section_field[3],
+              field_response: assigneeInformation.application_information_additional_details_middle_name
+            },
+             {
+              ...formDataResult.form_section[2].section_field[4],
+              field_response: assigneeInformation.application_information_additional_details_last_name
+            },
+            {
+              ...formDataResult.form_section[2].section_field[5],
+              field_response: ""
+            },
+            {
+              ...formDataResult.form_section[2].section_field[6],
+              field_response: assigneeInformation.application_information_additional_details_contact_number
+            },
+            {
+              ...formDataResult.form_section[2].section_field[7],
+              field_response: assigneeInformation.application_information_additional_details_email
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  returnData = formData.form;
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION deployment_record_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {
+  data: [],
+  count: 0,
+};
+plv8.subtransaction(function () {
+  const { teamId, formId, search, isAscendingSort, limit, page, columnAccessor } = input_data;
+
+  const offset = (page - 1) * limit;
+
+  const searchCondition = search
+    ? `AND CONCAT(r.request_formsly_id_prefix, '-', r.request_formsly_id_serial) = '${search}'`
+    : "";
+  const sortCondition = isAscendingSort ? "ASC" : "DESC";
+  const sortingCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortCondition}` : "";
+
+  const itRequestRecords = plv8.execute(`
+    SELECT
+      r.request_id,
+      r.request_formsly_id_prefix,
+      r.request_formsly_id_serial,
+      r.request_date_created
+    FROM request_schema.request_table r
+    JOIN request_schema.request_response_table rr
+      ON r.request_id = rr.request_response_request_id
+    WHERE r.request_form_id = $1
+      AND r.request_team_member_id = $2
+      AND rr.request_response = $3
+      AND rr.request_response_field_id = $4
+      ${searchCondition}
+      ${sortingCondition}
+    LIMIT $5 OFFSET $6
+  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769", limit, offset]);
+
+  const itRequestCount = plv8.execute(`
+    SELECT COUNT(*)
+    FROM request_schema.request_table r
+    JOIN request_schema.request_response_table rr
+      ON r.request_id = rr.request_response_request_id
+    WHERE r.request_form_id = $1
+      AND r.request_team_member_id = $2
+      AND rr.request_response = $3
+      AND rr.request_response_field_id = $4
+      ${searchCondition}
+  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769"]);
+
+  returnData.count = Number(itRequestCount[0].count);
+
+  returnData.data = itRequestRecords.map(request => {
+    return {
+      request_id: request.request_id,
+      request_formsly_id: `${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`,
+      request_date_created:request.request_date_created,
+    };
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_applicant_assignee_information(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function () {
+  const { requestId } = input_data;
+
+  if (!requestId) {
+    throw new Error("requestId is required in input_data");
+  }
+
+  const fieldIdToFetch = [
+    '60b17659-6f6e-4719-99f1-47bed94fe7a8',
+    '13269f6e-fbfb-4ca3-83fc-93f38478aba2',
+    '710ccab8-7e55-4ed8-83b4-7af8720d4168',
+    '920a35a6-92be-4d4f-ac5e-7454d6c8d3a4',
+    'f2ac0b86-c483-435c-abda-08bf310e570b',
+    'cfdba656-ad4f-4bec-9541-96d9fbfcf03f'
+  ];
+  const assigneeInformation = plv8.execute(`
+    SELECT request_response_field_id, request_response
+    FROM request_schema.request_response_table
+    WHERE request_response_field_id = ANY ($1)
+      AND request_response_request_id = $2
+  `, [fieldIdToFetch, requestId]);
+
+  const responseMap = {};
+    assigneeInformation.forEach(row => {
+    responseMap[row.request_response_field_id] = row.request_response.replace(/"/g, '');
+  });
+
+  returnData = {
+    position: responseMap['60b17659-6f6e-4719-99f1-47bed94fe7a8'] || null,
+    firstName: responseMap['13269f6e-fbfb-4ca3-83fc-93f38478aba2'] || null,
+    middleName: responseMap['710ccab8-7e55-4ed8-83b4-7af8720d4168'] || null,
+    lastName: responseMap['920a35a6-92be-4d4f-ac5e-7454d6c8d3a4'] || null,
+    contactNumber: responseMap['f2ac0b86-c483-435c-abda-08bf310e570b'] || null,
+    email: responseMap['cfdba656-ad4f-4bec-9541-96d9fbfcf03f'] || null,
+  };
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_hris_id_laptop_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const { employeeData, requestId } = input_data;
+
+  const hrisId = employeeData.hrisId.trim().replace(/\s\s+/g, " ");
+  const firstName = employeeData.firstName.trim().toUpperCase();
+  const middleName = employeeData.middleName?.trim().toUpperCase() || null;
+  const lastName = employeeData.lastName.trim().toUpperCase();
+
+  plv8.execute(`
+    UPDATE request_schema.request_response_table
+    SET
+        request_response = $1
+    WHERE request_response_field_id = $2
+    AND request_response_request_id = $3
+  `, [hrisId, '85a78a9f-d0cd-45d5-b781-c909efab5769', requestId]);
+
+  plv8.execute(`
+    UPDATE lookup_schema.scic_employee_table
+    SET
+        scic_employee_first_name = $1,
+        scic_employee_middle_name = $2,
+        scic_employee_last_name = $3
+    WHERE scic_employee_hris_id_number = $4
+  `, [firstName, middleName, lastName, employeeData.hrisId]);
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
@@ -25038,6 +25719,27 @@ USING (true);
 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table;
 CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.job_offer_laptop_details_table
+ALTER TABLE hr_schema.job_offer_laptop_details_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.job_offer_laptop_details_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.job_offer_laptop_details_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.job_offer_laptop_details_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.job_offer_laptop_details_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_laptop_details_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_laptop_details_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (true);

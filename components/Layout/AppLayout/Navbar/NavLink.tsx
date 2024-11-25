@@ -4,12 +4,12 @@ import {
 } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -32,6 +32,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
   IconClipboard,
+  IconClockRecord,
   IconCode,
   IconDashboard,
   IconDeviceIpadHorizontalQuestion,
@@ -228,8 +229,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-              ? ["create"]
-              : []
+                ? ["create"]
+                : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -436,8 +437,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-              ? ["form"]
-              : []
+                ? ["form"]
+                : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));
@@ -952,6 +953,20 @@ const ReviewAppNavLink = () => {
               </Box>
             ),
             href: `/${activeTeamNameToUrl}/preferred-position`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN" &&
+    teamMemberGroup.includes("DEPLOYMENT AND RECORDS")
+      ? [
+          {
+            label: `Deployment And Records`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconClockRecord {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/deployment-records`,
           },
         ]
       : []),

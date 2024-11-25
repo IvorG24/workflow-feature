@@ -31,6 +31,7 @@ import {
   ApplicationListItemType,
   ApproverUnresolvedRequestCountType,
   AppType,
+  AssigneeInformation,
   AttachmentBucketType,
   AttachmentTableRow,
   BackgroundCheckFilterFormValues,
@@ -43,6 +44,7 @@ import {
   CSICodeTableRow,
   DashboardRequestorAndSignerType,
   Dataset,
+  DeploymentRecordType,
   EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
   EquipmentPartType,
@@ -104,6 +106,7 @@ import {
   SignerWithProfile,
   SSOTOnLoad,
   SSOTType,
+  TeamDepartmentTableRow,
   TeamGroupTableRow,
   TeamMemberOnLoad,
   TeamMembershipRequestTableRow,
@@ -147,7 +150,7 @@ const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 export async function getUserSidebarPreference(
   supabaseClient: SupabaseClient<Database>,
   params: { userId: string }
-):Promise<SidebarPreference | null> {
+): Promise<SidebarPreference | null> {
   const { userId } = params;
 
   const { data, error } = await supabaseClient
@@ -4211,7 +4214,7 @@ export const getTeamDepartmentOptions = async (
     .range(index, index + limit - 1);
   if (error) throw error;
 
-  return data;
+  return data as TeamDepartmentTableRow[];
 };
 
 export const getEquipmentCodeOptions = async (
@@ -6774,7 +6777,10 @@ export const getUserApplicationProgressOnLoad = async (
     technicalInterview2Data?: TechnicalInterviewTableRow | null;
     tradeTestData?: TradeTestTableRow | null;
     backgroundCheckData?: BackgroundCheckTableRow | null;
-    jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
+    jobOfferData?:
+      | (JobOfferTableRow &
+          AttachmentTableRow & { job_offer_with_laptop: boolean })
+      | null;
   };
 };
 
@@ -6863,4 +6869,66 @@ export const fetchPreferredHrPosition = async (
     }[];
     positionId: string[];
   };
+};
+
+export const automatedLaptopItemForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    requestId: string;
+    jobOfferId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "automated_laptop_item_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as FormWithResponseType;
+};
+
+export const deploymentRecordOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    formId: string;
+    page: number;
+    limit: number;
+    isAscendingSort: boolean;
+    columnAccessor: string;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "deployment_record_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    data: DeploymentRecordType[];
+    count: 0;
+  };
+};
+
+export const fetchAssigneeinformation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_applicant_assignee_information",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as AssigneeInformation;
 };

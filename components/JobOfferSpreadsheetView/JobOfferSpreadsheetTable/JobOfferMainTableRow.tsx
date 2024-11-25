@@ -23,8 +23,10 @@ import {
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
   OptionType,
+  TeamDepartmentTableRow,
   TeamMemberTableRow,
   TeamMemberType,
+  TeamProjectTableRow,
   TeamTableRow,
   UserTableRow,
 } from "@/utils/types";
@@ -35,6 +37,7 @@ import {
   Button,
   Center,
   createStyles,
+  Divider,
   FileInput,
   Flex,
   Group,
@@ -42,6 +45,7 @@ import {
   Modal,
   ScrollArea,
   Select,
+  Space,
   Stack,
   Text,
   TextInput,
@@ -87,6 +91,8 @@ type Props = {
   teamMemberGroupList: string[];
   teamMemberOptions: TeamMemberType[];
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
+  teamProjects: TeamProjectTableRow[];
+  teamDepartment: TeamDepartmentTableRow[];
 };
 
 const JobOfferMainTableRow = ({
@@ -102,6 +108,8 @@ const JobOfferMainTableRow = ({
   teamMemberGroupList,
   teamMemberOptions,
   handleOverride,
+  teamProjects,
+  teamDepartment,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -152,6 +160,8 @@ const JobOfferMainTableRow = ({
       setValue("attachment", null);
       setValue("projectLatitude", undefined);
       setValue("projectLongitude", undefined);
+      setValue("requestingProject", "");
+      setValue("requestingDepartment", "");
       clearErrors();
     }
   }, [jobOfferModalIsOpen]);
@@ -340,6 +350,16 @@ const JobOfferMainTableRow = ({
       onConfirm: async () => handleUpdateJobOffer(),
     });
 
+  const teamProjectOptions = teamProjects.map((project) => ({
+    label: project.team_project_name,
+    value: project.team_project_id,
+  }));
+
+  const teamDepartmentOptions = teamDepartment.map((department) => ({
+    label: department.team_department_name,
+    value: department.team_department_id,
+  }));
+
   const isForPooling = ![
     "ACCEPTED",
     "PENDING",
@@ -459,6 +479,7 @@ const JobOfferMainTableRow = ({
                   required: "Project assignment is required.",
                 }}
               />
+
               <TextInput
                 label="Project Address"
                 {...register("projectAddress", {
@@ -551,6 +572,61 @@ const JobOfferMainTableRow = ({
                   },
                 }}
               />
+              <Space />
+              {item.position_is_with_laptop && (
+                <Stack>
+                  <Divider label={"Position With Laptop"} />
+                  <Controller
+                    control={control}
+                    name="requestingProject"
+                    render={({ field: { value, onChange } }) => {
+                      return (
+                        <Select
+                          label="Requesting Project"
+                          clearable
+                          value={value}
+                          required
+                          searchable
+                          onChange={(value) => {
+                            onChange(value);
+                          }}
+                          error={errors.requestingProject?.message}
+                          data={teamProjectOptions}
+                          withinPortal
+                        />
+                      );
+                    }}
+                    rules={{
+                      required: "Rquesting Project is required.",
+                    }}
+                  />
+                  <Controller
+                    control={control}
+                    name="requestingDepartment"
+                    render={({ field: { value, onChange } }) => {
+                      return (
+                        <Select
+                          label="Requesting Department"
+                          clearable
+                          value={value}
+                          required
+                          searchable
+                          onChange={(value) => {
+                            onChange(value);
+                          }}
+                          error={errors.requestingDepartment?.message}
+                          data={teamDepartmentOptions}
+                          withinPortal
+                          autoFocus={false}
+                        />
+                      );
+                    }}
+                    rules={{
+                      required: "Project assignment is required.",
+                    }}
+                  />
+                </Stack>
+              )}
             </Stack>
           </form>
 
