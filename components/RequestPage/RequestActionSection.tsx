@@ -140,8 +140,7 @@ const RequestActionSection = ({
                 handleApproveItemRequest(onCreateJiraTicket);
                 close();
               } else {
-                // handleUpdateRequest("APPROVED");
-                console.log("ey");
+                handleUpdateRequest("APPROVED");
                 close();
               }
               break;
