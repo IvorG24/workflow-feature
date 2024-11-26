@@ -3,19 +3,13 @@ import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { LRFSpreadsheetData, OptionType } from "@/utils/types";
 import { ActionIcon, Box, Group, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import ExportCSVButton from "./ExportCSVButton";
 import LRFFilterMenu from "./LRFFilterMenu";
 import LRFSpreadsheetTable from "./LRFSpreadsheetTable/LRFSpreadsheetTable";
-
-type Props = {
-  initialData: LRFSpreadsheetData[];
-  projectListOptions: OptionType[];
-};
 
 export type FilterFormValues = {
   requestIdFilter?: string;
@@ -23,15 +17,21 @@ export type FilterFormValues = {
   dateFilter: [Date | null, Date | null];
 };
 
-const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
-  const user = useUser();
+type Props = {
+  teamId: string;
+  projectListOptions: OptionType[];
+};
+
+let isInitialized = false;
+
+const LRFSpreadsheetView = ({ teamId, projectListOptions }: Props) => {
   const supabaseClient = useSupabaseClient();
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState<LRFSpreadsheetData[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [sortAscending, setSortAscending] = useState(false);
   const [renderCsvDownload, setRenderCsvDownload] = useState(false);
-
+  console.log(renderCsvDownload);
   const filterFormMethods = useForm<FilterFormValues>();
 
   const fetchData = async ({
@@ -48,7 +48,6 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
     requestIdFilter?: string;
   }) => {
     try {
-      if (!user) return;
       setLoading(true);
 
       const projectFilterCondition = projectFilter
@@ -57,8 +56,8 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
 
       const startDate = dateFilter[0] ? moment(dateFilter[0]).format() : null;
       const endDate = dateFilter[1] ? moment(dateFilter[1]).format() : null;
-      const { data: newData } = await getLRFSummaryData(supabaseClient, {
-        userId: user.id,
+      const response = await getLRFSummaryData(supabaseClient, {
+        teamId,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: currentPage,
         projectFilter: projectFilterCondition,
@@ -66,8 +65,10 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
         endDate: endDate ?? undefined,
         sortFilter: sortFilter ? "ASC" : "DESC",
         requestIdFilter,
+        projectListOptions,
       });
-      return newData;
+      console.log(response);
+      return response.data;
     } catch (e) {
       notifications.show({
         message: "Failed to fetch data",
@@ -108,6 +109,7 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
   const handlePagination = async (currentPage: number) => {
     setPage(currentPage);
     const currentFilters = filterFormMethods.getValues();
+
     const newData = await fetchData({
       currentPage,
       ...currentFilters,
@@ -125,6 +127,11 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
   useEffect(() => {
     if (window !== undefined) {
       setRenderCsvDownload(true);
+    }
+
+    if (!isInitialized) {
+      handlePagination(1);
+      isInitialized = true;
     }
   }, []);
 
@@ -148,9 +155,9 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
               handleFilterData={handleFilterData}
             />
           </FormProvider>
-          {renderCsvDownload && data.length > 0 && (
+          {/* {renderCsvDownload && data.length > 0 && (
             <ExportCSVButton data={data} />
-          )}
+          )} */}
         </Group>
       </Box>
       <LRFSpreadsheetTable

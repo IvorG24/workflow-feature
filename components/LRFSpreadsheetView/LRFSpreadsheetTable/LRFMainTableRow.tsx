@@ -55,6 +55,7 @@ const LRFMainTableRow = ({ item, index }: Props) => {
     requestResponseList: LRFSpreadsheetData["request_response_list"];
     parentIndex: number;
   }) => {
+    // console.log(requestResponseList);
     const groupedRows = renderNestedRows(requestResponseList);
     return (
       <Table

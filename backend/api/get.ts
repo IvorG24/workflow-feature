@@ -4489,7 +4489,7 @@ export const checkUserEmail = async (
 export const getLRFSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    userId: string;
+    teamId: string;
     limit: number;
     page: number;
     projectFilter?: string;
@@ -4497,12 +4497,13 @@ export const getLRFSummaryData = async (
     endDate?: string;
     sortFilter: string;
     requestIdFilter?: string;
+    projectListOptions: OptionType[];
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {
     input_data: params,
   });
-
+  console.log(data);
   if (error) throw error;
 
   return data as { data: LRFSpreadsheetData[]; count: number };

@@ -1,27 +1,23 @@
-import { getLRFSummaryData } from "@/backend/api/get";
+import { getAllTeamProjects } from "@/backend/api/get";
 import LRFSpreadsheetView from "@/components/LRFSpreadsheetView/LRFSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { LRFSpreadsheetData, OptionType } from "@/utils/types";
+import { OptionType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, user }) => {
+  async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const data = await getLRFSummaryData(supabaseClient, {
-        userId: user.id,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
-        page: 1,
-        sortFilter: "DESC",
+      const projectList = await getAllTeamProjects(supabaseClient, {
+        teamId: userActiveTeam.team_id,
       });
 
+      const projectListOptions = projectList.map((project) => ({
+        value: project.team_project_id,
+        label: project.team_project_name,
+      }));
       return {
-        props: data as {
-          data: LRFSpreadsheetData[];
-          count: number;
-          projectListOptions: OptionType[];
-        },
+        props: { teamId: userActiveTeam.team_id, projectListOptions },
       };
     } catch (e) {
       return {
@@ -35,20 +31,19 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  data: LRFSpreadsheetData[];
-  count: number;
+  teamId: string;
   projectListOptions: OptionType[];
 };
 
-const Page = ({ data, projectListOptions }: Props) => {
+const Page = ({ teamId, projectListOptions }: Props) => {
   return (
     <>
       <Meta
-        description="Spreadsheet View Page"
+        description="LRF Spreadsheet View Page"
         url="/{teamName}/requests/lrf-spreadsheet-view"
       />
       <LRFSpreadsheetView
-        initialData={data}
+        teamId={teamId}
         projectListOptions={projectListOptions}
       />
     </>

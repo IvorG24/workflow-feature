@@ -2,6 +2,7 @@ import { formatDate, formatTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { LRFSpreadsheetData } from "@/utils/types";
 import { Button } from "@mantine/core";
+import { useEffect, useState } from "react";
 import { CSVLink } from "react-csv";
 
 type CSVData = {
@@ -19,27 +20,27 @@ type CSVData = {
   boq_code: string;
 };
 
+const headers = [
+  { label: "Request ID", key: "request_id" },
+  { label: "Project Code", key: "request_project_code" },
+  { label: "Department Code", key: "request_department_code" },
+  { label: "Jira ID", key: "request_jira_id" },
+  { label: "Date Created", key: "request_date_created" },
+  { label: "BOQ Request", key: "request_boq_id" },
+  // { label: "Supplier Name/Payee", key: "supplier_name_payee" },
+  { label: "Type of Request", key: "type_of_request" },
+  { label: "Invoice Amount", key: "invoice_amount" },
+  { label: "VAT", key: "vat" },
+  { label: "Cost", key: "cost" },
+  { label: "Equipment Code", key: "equipment_code" },
+  { label: "Cost Code", key: "cost_code" },
+  { label: "BOQ Code", key: "boq_code" },
+];
+
 const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
-  const headers = [
-    { label: "Request ID", key: "request_id" },
-    { label: "Project Code", key: "request_project_code" },
-    { label: "Department Code", key: "request_department_code" },
-    { label: "Jira ID", key: "request_jira_id" },
-    { label: "Date Created", key: "request_date_created" },
-    { label: "BOQ Request", key: "request_boq_id" },
-    // { label: "Supplier Name/Payee", key: "supplier_name_payee" },
-    { label: "Type of Request", key: "type_of_request" },
-    { label: "Invoice Amount", key: "invoice_amount" },
-    { label: "VAT", key: "vat" },
-    { label: "Cost", key: "cost" },
-    { label: "Equipment Code", key: "equipment_code" },
-    { label: "Cost Code", key: "cost_code" },
-    { label: "BOQ Code", key: "boq_code" },
-  ];
+  const [csvData, setCSVData] = useState<CSVData[]>([]);
 
   const formatDataForCSV = (data: LRFSpreadsheetData[]) => {
-    const csvData: CSVData[] = [];
-
     data.forEach((item) => {
       const groupedResponses = item.request_response_list.reduce(
         (acc, curr) => {
@@ -268,7 +269,12 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
     return csvData;
   };
 
-  const csvData = formatDataForCSV(data);
+  useEffect(() => {
+    if (data.length > 0) {
+      const newCSVData = formatDataForCSV(data);
+      setCSVData(newCSVData);
+    }
+  }, [data]);
 
   return (
     <Button>
