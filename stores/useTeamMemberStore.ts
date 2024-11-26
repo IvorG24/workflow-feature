@@ -23,7 +23,7 @@ export const useTeamMemberStore = create<Store>((set) => ({
 export const useTeamMemberList = (withRole?: "OWNER & APPROVER" | "ADMIN") =>
   useTeamMemberStore((state) => {
     if (withRole === "OWNER & APPROVER") {
-      return state.teamMemberList.filter(
+      return state.teamMemberList?.filter(
         (member) =>
           member.team_member_role === "APPROVER" ||
           member.team_member_role === "OWNER"
@@ -33,9 +33,37 @@ export const useTeamMemberList = (withRole?: "OWNER & APPROVER" | "ADMIN") =>
         (member) => member.team_member_role === "ADMIN"
       );
     } else {
-      return state.teamMemberList;
+      return state.teamMemberList || [];
     }
   });
 
 export const useTeamMemberListActions = () =>
   useTeamMemberStore((state) => state.actions);
+
+// type Store = {
+//   teamMemberList: TeamMemberType[];
+//   teamMembersCount: number;
+//   actions: {
+//     setTeamMemberStore: (teamMember: TeamMemberType[]) => void;
+//     setTeamMembersCount: (count: number) => void;
+//   };
+// };
+
+// export const useTeamMemberStore = create<Store>((set) => ({
+//   teamMemberList: [],
+//   teamMembersCount: 0,
+//   actions: {
+//     setTeamMemberStore(teamMember) {
+//       set((state) => ({
+//         ...state,
+//         teamMemberList: teamMember,
+//       }));
+//     },
+//     setTeamMembersCount(count) {
+//       set((state) => ({
+//         ...state,
+//         teamMembersCount: count,
+//       }));
+//     },
+//   },
+// }));

@@ -7,6 +7,10 @@ import {
   updateTeamMemberRole,
   updateTeamOwner,
 } from "@/backend/api/update";
+import {
+  useTeamMemberList,
+  useTeamMemberListActions,
+} from "@/stores/useTeamMemberStore";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -88,11 +92,18 @@ const TeamPage = ({
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
-  const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
-  const [teamMemberList, setTeamMemberList] = useState(teamMembers);
+  // const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
+  // const [teamMemberList, setTeamMemberList] = useState(teamMembers);
+  const teamMemberList = useTeamMemberList() || [];
+  const teamMemberCount = teamMemberList.length;
+  const { setTeamMemberStore } = useTeamMemberListActions();
+
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamMemberPage, setTeamMemberPage] = useState(1);
+  console.log("Current Page:", teamMemberPage);
+  console.log("Team Members Count:", teamMemberCount);
+  console.log("Team Members List:", teamMemberList);
 
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
@@ -109,6 +120,10 @@ const TeamPage = ({
   });
 
   const searchTeamMemberMethods = useForm<SearchForm>();
+
+  useEffect(() => {
+    setTeamMemberStore(teamMembers);
+  }, [teamMembers, setTeamMemberStore]);
 
   const handleUpdateTeam = async (data: UpdateTeamInfoForm) => {
     const { teamName } = data;
@@ -194,8 +209,9 @@ const TeamPage = ({
         search: data.keyword,
       });
 
-      setTeamMemberList(formattedData.teamMembers);
-      setTeamMemberCount(formattedData.teamMembersCount || 0);
+      // setTeamMemberList(formattedData.teamMembers);
+      // setTeamMemberCount(formattedData.teamMembersCount || 0);
+      setTeamMemberStore(formattedData.teamMembers);
       setIsUpdatingTeamMembers(false);
     } catch {
       notifications.show({
@@ -279,6 +295,8 @@ const TeamPage = ({
   };
 
   const handleMemberPageChange = async (page: number) => {
+    console.log("Changing to page:", page);
+
     try {
       setTeamMemberPage(page);
       setIsUpdatingTeamMembers(true);
@@ -290,11 +308,15 @@ const TeamPage = ({
         limit: ROW_PER_PAGE,
         search: keyword,
       });
+      console.log("API Response:", formattedData);
 
-      setTeamMemberList(formattedData.teamMembers);
-      setTeamMemberCount(formattedData.teamMembersCount || 0);
+      // setTeamMemberList(formattedData.teamMembers);
+      // setTeamMemberCount(formattedData.teamMembersCount || 0);
+      setTeamMemberStore(formattedData.teamMembers);
       setIsUpdatingTeamMembers(false);
-    } catch {
+    } catch (error) {
+      console.error("Error fetching page data:", error);
+
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -426,7 +448,9 @@ const TeamPage = ({
         </>
       ) : null}
 
-      {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
+      {/* {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />} */}
+      {isOwner && <DeleteTeamSection totalMembers={teamMemberList.length} />}
+
       {!isOwner && <LeaveTeamSection onLeaveTeam={handleLeaveTeam} />}
 
       <Space mt={32} />

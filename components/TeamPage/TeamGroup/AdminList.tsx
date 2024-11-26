@@ -68,7 +68,7 @@ const AdminList = ({
   }, []);
 
   useEffect(() => {
-    const updatedAdminList = teamMemberList.filter(
+    const updatedAdminList = (teamMemberList || []).filter(
       (member) => member.team_member_role === "ADMIN"
     );
 
