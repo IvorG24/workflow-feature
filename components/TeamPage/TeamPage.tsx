@@ -101,9 +101,7 @@ const TeamPage = ({
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamMemberPage, setTeamMemberPage] = useState(1);
-  console.log("Current Page:", teamMemberPage);
-  console.log("Team Members Count:", teamMemberCount);
-  console.log("Team Members List:", teamMemberList);
+  console.log("Page:", teamMemberPage, "List:", teamMemberList);
 
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
@@ -295,8 +293,6 @@ const TeamPage = ({
   };
 
   const handleMemberPageChange = async (page: number) => {
-    console.log("Changing to page:", page);
-
     try {
       setTeamMemberPage(page);
       setIsUpdatingTeamMembers(true);
@@ -308,15 +304,12 @@ const TeamPage = ({
         limit: ROW_PER_PAGE,
         search: keyword,
       });
-      console.log("API Response:", formattedData);
 
       // setTeamMemberList(formattedData.teamMembers);
       // setTeamMemberCount(formattedData.teamMembersCount || 0);
       setTeamMemberStore(formattedData.teamMembers);
       setIsUpdatingTeamMembers(false);
-    } catch (error) {
-      console.error("Error fetching page data:", error);
-
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

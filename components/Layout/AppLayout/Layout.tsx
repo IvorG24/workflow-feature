@@ -5,7 +5,6 @@ import {
   getFormList,
   getTeamMemberList,
   getUser,
-  getUserSidebarPreference,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
@@ -13,7 +12,6 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Database } from "@/utils/database";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
@@ -96,18 +94,6 @@ const Layout = ({ children }: LayoutProps) => {
 
         //set user profile
         setUserProfile(user);
-
-        // get user sidebar preference
-        const sidebarPreference = await getUserSidebarPreference(
-          supabaseClient,
-          {
-            userId: userId,
-          }
-        );
-
-        if (sidebarPreference) {
-          useSidebarStore.getState().initializePreferences(sidebarPreference);
-        }
 
         let activeTeamId = "";
         if (teamList.length !== 0) {
@@ -226,33 +212,6 @@ const Layout = ({ children }: LayoutProps) => {
     };
 
     fetchInitialData();
-  }, [userId]);
-
-  useEffect(() => {
-    const handleBeforeUnload = async () => {
-      const savedSidebarPreference = useSidebarStore.getState().preferences;
-      try {
-        if (userId) {
-          const success = navigator.sendBeacon(
-            "/api/formsly/save-sidebar-preference",
-            JSON.stringify({
-              userId: userId,
-              preference: savedSidebarPreference,
-            })
-          );
-
-          if (!success) {
-            console.error("Failed to send beacon");
-          }
-        }
-      } catch (error) {
-        console.error("Error saving sidebar preference before unload:", error);
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
   }, [userId]);
 
   return (
