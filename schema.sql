@@ -1238,7 +1238,9 @@ CREATE TABLE lookup_schema.position_table (
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
-  position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id)
+  position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id),
+  position_is_with_laptop BOOLEAN DEFAULT false NOT NULL,
+  position_laptop_type VARCHAR(4000)
 );
 
 CREATE TABLE hr_schema.hr_preferred_position_table (
