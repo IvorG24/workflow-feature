@@ -5834,7 +5834,8 @@ AS $$
           SELECT
             request_id,
             request_form_id,
-            request_project_id
+            request_project_id,
+            request_team_member_id
           FROM
             request_schema.request_table
           WHERE
@@ -6508,31 +6509,72 @@ AS $$
         ]
       )[0].section_id;
 
-      const signerList = plv8.execute(
+      let signerList = []
+
+      const hasSpecialSigner = plv8.execute(
         `
-          SELECT
-            signer_id,
-            signer_is_primary_signer,
-            signer_action,
-            signer_order,
-            team_member_id,
-            user_id,
-            user_first_name,
-            user_last_name,
-            user_avatar
-          FROM form_schema.signer_table
-          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          SELECT requester_primary_signer_signer_id
+          FROM form_schema.requester_primary_signer_table
+          INNER JOIN form_schema.signer_table 
+            ON signer_id = requester_primary_signer_signer_id
           WHERE
-            signer_is_disabled = false
-            AND signer_form_id = $1
-            AND signer_team_project_id = $2
-          ORDER BY signer_order
+            requester_team_member_id = $1
+            AND signer_form_id = $2
         `, [
-          form.form_id,
-          connectedRequest.request_project_id
+          connectedRequest.request_team_member_id,
+          form.form_id
         ]
-      );
+      )[0];
+
+      if (hasSpecialSigner) {
+        signerList = plv8.execute(
+          `
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM form_schema.signer_table
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              signer_id = $1
+          `, [
+            hasSpecialSigner.requester_primary_signer_signer_id
+          ]
+        );
+      } else {
+        signerList = plv8.execute(
+          `
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM form_schema.signer_table
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              signer_is_disabled = false
+              AND signer_form_id = $1
+              AND signer_team_project_id = $2
+            ORDER BY signer_order
+          `, [
+            form.form_id,
+            connectedRequest.request_project_id
+          ]
+        );
+      }
 
       const formattedSignerList = signerList.map(signer => {
         return {
@@ -6974,6 +7016,20 @@ AS $$
       const isChargeToProject = chargeToProjectField ? Boolean(chargeToProjectField.request_response) : false;
       let signerList = [];
 
+      const hasSpecialSigner = plv8.execute(
+        `
+          SELECT requester_primary_signer_signer_id
+          FROM form_schema.requester_primary_signer_table
+          INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+          WHERE
+              requester_team_member_id = $1
+              AND signer_form_id = $2
+        `, [
+          connectedRequest.request_team_member_id, 
+          form.form_id
+        ]
+      )[0];
+
       if (isChargeToProject && connectedRequestChargeToProjectId !== "") {
         signerList = plv8.execute(
           `
@@ -7000,6 +7056,28 @@ AS $$
         `, [
             form.form_id,
             connectedRequestChargeToProjectId
+          ]
+        );
+      } else if (hasSpecialSigner) {
+        signerList = plv8.execute(
+          `
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM form_schema.signer_table
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              signer_id = $1
+          `, [
+            hasSpecialSigner.requester_primary_signer_signer_id
           ]
         );
       } else {
