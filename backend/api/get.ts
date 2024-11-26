@@ -6864,3 +6864,39 @@ export const fetchPreferredHrPosition = async (
     positionId: string[];
   };
 };
+
+export const getMemberTeamProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memberId: string;
+    offset: number;
+    limit: number;
+  }
+) => {
+  const { memberId, offset, limit } = params;
+
+  const start = offset * limit;
+  const end = start + limit;
+
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_project_member_table")
+    .select(
+      "team_project_id, team_project_name: team_project_id!inner(team_project_name)"
+    )
+    .eq("team_member_id", memberId)
+    .range(start, end);
+  if (error) throw error;
+
+  const dataWithType = data as unknown as {
+    team_project_id: string;
+    team_project_name: { team_project_name: string };
+  }[];
+
+  const formattedData = dataWithType.map((d) => ({
+    team_project_id: d.team_project_id,
+    team_project_name: d.team_project_name.team_project_name,
+  }));
+
+  return formattedData;
+};
