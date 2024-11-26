@@ -5,6 +5,7 @@ type Store = {
   preferences: SidebarStorePreference;
   initializePreferences: () => void;
   setUpdatedPreference: (section: string, value: boolean) => void;
+  clearPreferences: () => void;
 };
 
 export const useSidebarStore = create<Store>((set, get) => ({
@@ -42,4 +43,17 @@ export const useSidebarStore = create<Store>((set, get) => ({
       JSON.stringify(updatedPreferences)
     );
   },
+
+  clearPreferences: () => {
+    set({ preferences: {
+      metrics: false,
+      humanResources: false,
+      create: false,
+      list: false,
+      form: false,
+      team: false,
+      jira: false,
+    }});
+    localStorage.removeItem("sidebar-preferences");
+  }
 }));
