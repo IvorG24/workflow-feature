@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { SidebarPreference, SidebarStorePreference } from "@/utils/types";
+import { SidebarStorePreference } from "@/utils/types";
 
 type Store = {
   preferences: SidebarStorePreference;
-  initializePreferences: (data: SidebarPreference) => void;
+  initializePreferences: () => void;
   setUpdatedPreference: (section: string, value: boolean) => void;
 };
 
@@ -17,32 +17,14 @@ export const useSidebarStore = create<Store>((set, get) => ({
     team: false,
     jira: false,
   },
-  initializePreferences: async (data) => {
+  initializePreferences: async () => {
     try {
-      if (!data) {
-        //if there's no data from server, it checks if the user has any preferences stored in local storage
         const storedPreferences = JSON.parse(
           localStorage.getItem("sidebar-preferences") || "{}"
         );
         if (storedPreferences) {
           set({ preferences: storedPreferences });
         }
-      } else {
-        const preferences = {
-          metrics: data.user_sidebar_preference_metrics,
-          humanResources: data.user_sidebar_preference_human_resources,
-          create: data.user_sidebar_preference_create,
-          list: data.user_sidebar_preference_list,
-          form: data.user_sidebar_preference_form,
-          team: data.user_sidebar_preference_team,
-          jira: data.user_sidebar_preference_jira,
-        };
-        set({ preferences });
-        localStorage.setItem(
-          "sidebar-preferences",
-          JSON.stringify(preferences)
-        );
-      }
     } catch (error) {
       console.error("Error initializing sidebar preferences:", error);
     }
