@@ -2401,7 +2401,6 @@ export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
   job_offer_status: string;
   job_offer_project_assignment: string;
   job_offer_attachment: AttachmentTableRow | null;
-  position_is_with_laptop: boolean;
 };
 
 export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {

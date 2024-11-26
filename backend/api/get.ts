@@ -87,6 +87,7 @@ import {
   OptionType,
   OtherExpensesTypeTableRow,
   PendingInviteType,
+  PositionTableRow,
   PracticalTestTableRow,
   PracticalTestType,
   PreferredPositionType,
@@ -6931,4 +6932,23 @@ export const fetchAssigneeinformation = async (
   if (error) throw error;
 
   return data as AssigneeInformation;
+};
+
+export const getPositionJobOffer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; position: string }
+) => {
+  const { teamId, position } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .ilike("position_alias", position)
+    .single();
+
+  if (error) throw error;
+
+  return data as PositionTableRow;
 };

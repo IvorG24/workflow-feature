@@ -1,7 +1,8 @@
-import { getJobHistory } from "@/backend/api/get";
+import { getJobHistory, getPositionJobOffer } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   formatDate,
   formatTime,
@@ -23,6 +24,7 @@ import {
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
   OptionType,
+  PositionTableRow,
   TeamDepartmentTableRow,
   TeamMemberTableRow,
   TeamMemberType,
@@ -113,7 +115,7 @@ const JobOfferMainTableRow = ({
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const activeTeam = useActiveTeam();
   const { setIsLoading } = useLoadingActions();
 
   const [
@@ -127,6 +129,7 @@ const JobOfferMainTableRow = ({
   const [isScheduling, setIsScheduling] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
+  const [position, setPosition] = useState<PositionTableRow | null>(null);
 
   const {
     handleSubmit,
@@ -373,6 +376,22 @@ const JobOfferMainTableRow = ({
   ].includes(item.job_offer_status);
 
   if (!team.team_name) return null;
+
+  const handleFetchJobPosition = async (value: string | null) => {
+    try {
+      const positionData = await getPositionJobOffer(supabaseClient, {
+        teamId: activeTeam.team_id,
+        position: value ?? "",
+      });
+      setPosition(positionData);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <tr className={classes.row}>
       <Modal
@@ -410,7 +429,10 @@ const JobOfferMainTableRow = ({
                       value={value}
                       required
                       searchable
-                      onChange={onChange}
+                      onChange={(value) => {
+                        handleFetchJobPosition(value);
+                        onChange(value);
+                      }}
                       error={errors.title?.message}
                       data={positionOptionList}
                       withinPortal
@@ -573,7 +595,7 @@ const JobOfferMainTableRow = ({
                 }}
               />
               <Space />
-              {item.position_is_with_laptop && (
+              {position && position.position_is_with_laptop && (
                 <Stack>
                   <Divider label={"Position With Laptop"} />
                   <Controller

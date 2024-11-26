@@ -17066,8 +17066,7 @@ AS $$
             application_information_additional_details_last_name
           ) AS application_information_full_name,
           application_information_additional_details_contact_number AS application_information_contact_number,
-          application_information_additional_details_email AS application_information_email,
-          position_is_with_laptop
+          application_information_additional_details_email AS application_information_email
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -17086,7 +17085,6 @@ AS $$
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
-        INNER JOIN lookup_schema.position_table  AS positionWithLaptop ON positionWithLaptop.position_alias = application_information_additional_details_position
         INNER JOIN (
           SELECT
             JobOffer.*,
@@ -21054,7 +21052,7 @@ let returnData = {};
 plv8.subtransaction(function() {
   const { formId, jobOfferId, requestId } = input_data;
   const formDataResult = plv8.execute(`
-  SELECT public.create_request_page_on_load($1)
+    SELECT public.create_request_page_on_load($1)
   `, [JSON.stringify({ formId, userId: "4d9978f1-65e0-4922-9c94-710fff2c63d6" })])[0]?.create_request_page_on_load?.form;
 
   const futureDate = plv8.execute(`
@@ -21078,6 +21076,12 @@ plv8.subtransaction(function() {
     LIMIT 1
   `,[jobOfferId])[0];
 
+   const jobOfferPosition = plv8.execute(`
+        SELECT *
+        FROM hr_schema.job_offer_table
+        WHERE job_offer_id = $1
+   `,[jobOfferId])[0].job_offer_title;
+
   const itemData = plv8.execute(`
     SELECT item_gl_account, item_unit
     FROM item_schema.item_table
@@ -21096,6 +21100,15 @@ plv8.subtransaction(function() {
     FROM hr_schema.application_information_additional_details_table
     WHERE application_information_additional_details_request_id = $1
   `,[requestId])[0];
+
+  const applicantSSSNumber = plv8.execute(`
+    SELECT *
+    FROM request_schema.request_response_table
+    WHERE request_response_request_id = $1 AND
+    request_response_field_id = $2
+  `, [requestId, 'ab7bf673-c22d-4290-b858-7cba2c4d2474'])[0].request_response
+    .replace(/\s\s+/g, " ")
+    .replace(/^"|"$/g, '');
 
   const laptopType = plv8.execute(`
     SELECT *
@@ -21170,11 +21183,11 @@ plv8.subtransaction(function() {
           section_field: [
             {
               ...formDataResult.form_section[2].section_field[0],
-              field_response: "To be filled out by HR Deployment and Records"
+              field_response: applicantSSSNumber
             },
             {
               ...formDataResult.form_section[2].section_field[1],
-              field_response: assigneeInformation.application_information_additional_details_position
+              field_response: jobOfferPosition
             },
             {
               ...formDataResult.form_section[2].section_field[2],
@@ -21233,34 +21246,49 @@ plv8.subtransaction(function () {
   const sortingCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortCondition}` : "";
 
   const itRequestRecords = plv8.execute(`
-    SELECT
+      SELECT
       r.request_id,
       r.request_formsly_id_prefix,
       r.request_formsly_id_serial,
-      r.request_date_created
-    FROM request_schema.request_table r
-    JOIN request_schema.request_response_table rr
+      r.request_date_created,
+      rr.request_response
+      FROM request_schema.request_table r
+      JOIN request_schema.request_response_table rr
       ON r.request_id = rr.request_response_request_id
-    WHERE r.request_form_id = $1
+      WHERE r.request_form_id = $1
       AND r.request_team_member_id = $2
-      AND rr.request_response = $3
-      AND rr.request_response_field_id = $4
+      AND rr.request_response_field_id = $3
+      AND LENGTH(TRIM(BOTH '"' FROM rr.request_response)) = 10
+      AND TRIM(BOTH '"' FROM rr.request_response) ~ '^[0-9]{10}$'
       ${searchCondition}
       ${sortingCondition}
-    LIMIT $5 OFFSET $6
-  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769", limit, offset]);
+      LIMIT $4 OFFSET $5
+    `, [
+      formId,
+      'f0ae4d53-427c-4223-84ea-c007a186ae82',
+      '85a78a9f-d0cd-45d5-b781-c909efab5769',
+      limit,
+      offset
+    ]);
 
   const itRequestCount = plv8.execute(`
-    SELECT COUNT(*)
+    SELECT
+     COUNT(*)
     FROM request_schema.request_table r
     JOIN request_schema.request_response_table rr
       ON r.request_id = rr.request_response_request_id
     WHERE r.request_form_id = $1
       AND r.request_team_member_id = $2
-      AND rr.request_response = $3
-      AND rr.request_response_field_id = $4
+      AND rr.request_response_field_id = $3
+      AND LENGTH(TRIM(BOTH '"' FROM rr.request_response)) = 10
+      AND TRIM(BOTH '"' FROM rr.request_response) ~ '^[0-9]{10}$'
       ${searchCondition}
-  `, [formId, 'f0ae4d53-427c-4223-84ea-c007a186ae82', '"To be filled out by HR Deployment and Records"', "85a78a9f-d0cd-45d5-b781-c909efab5769"]);
+  `, [
+    formId,
+    'f0ae4d53-427c-4223-84ea-c007a186ae82',
+    '85a78a9f-d0cd-45d5-b781-c909efab5769'
+  ]);
+
 
   returnData.count = Number(itRequestCount[0].count);
 
