@@ -1,5 +1,6 @@
 import {
   getEmployeeName,
+  getMemberTeamProjectList,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { createRequest, insertError } from "@/backend/api/post";
@@ -17,6 +18,7 @@ import {
   FormWithResponseType,
   OptionTableRow,
   RequestResponseTableRow,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   Alert,
@@ -59,6 +61,11 @@ type Props = {
   equipmentCodeOptions: OptionTableRow[];
 };
 
+type TeamMemberProjectList = Pick<
+  TeamProjectTableRow,
+  "team_project_id" | "team_project_name"
+>[];
+
 const CreatePettyCashVoucherRequestPage = ({
   form,
   projectOptions,
@@ -72,6 +79,9 @@ const CreatePettyCashVoucherRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+  const [memberTeamProjectOptions, setMemberTeamProjectOptions] = useState<
+    OptionTableRow[]
+  >([]);
 
   const requestorProfile = useUserProfile();
 
@@ -401,7 +411,7 @@ const CreatePettyCashVoucherRequestPage = ({
           section_field: [
             {
               ...requestDetailsSection.section_field[0],
-              field_option: projectOptions,
+              field_option: memberTeamProjectOptions,
             },
             requestDetailsSection.section_field[1],
             {
@@ -799,11 +809,59 @@ const CreatePettyCashVoucherRequestPage = ({
     }
   };
 
+  const fetchMemberTeamProjectList = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) return;
+      const allTeamMemberProjectList: TeamMemberProjectList = [];
+      let offset = 0;
+      const limit = 100;
+      let fetchMoreProject = true;
+
+      while (fetchMoreProject) {
+        const data = await getMemberTeamProjectList(supabaseClient, {
+          memberId: teamMember.team_member_id,
+          offset,
+          limit,
+        });
+
+        if (data.length > 0) {
+          allTeamMemberProjectList.push(...data);
+          offset += limit;
+        }
+
+        fetchMoreProject = data.length === limit;
+      }
+
+      const allTeamMemberProjectOptions = allTeamMemberProjectList.map(
+        (project, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        }
+      );
+
+      setMemberTeamProjectOptions(allTeamMemberProjectOptions);
+    } catch (e) {
+      notifications.show({
+        message:
+          "Failed to fetch your team projects. Please contact the IT team.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!activeTeam.team_id) return;
+        await fetchMemberTeamProjectList();
         replaceSection([form.form_section[0]]);
       } catch (e) {
         notifications.show({
@@ -815,7 +873,7 @@ const CreatePettyCashVoucherRequestPage = ({
       }
     };
     fetchOptions();
-  }, [activeTeam]);
+  }, [activeTeam, teamMember]);
 
   return (
     <Container>
