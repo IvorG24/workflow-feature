@@ -1,6 +1,7 @@
 import { ItemWithDescriptionType } from "@/utils/types";
-import { Center, Container, Paper, Space, Text } from "@mantine/core";
+import { Container, Paper } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
+import BreadcrumbWrapper from "@/components/BreadCrumbs/BreadCrumbWrapper";
 import ItemDescription from "../ItemDescription/ItemDescription";
 import CreateItem from "../ItemList/CreateItem";
 import ItemList from "../ItemList/ItemList";
@@ -31,10 +32,30 @@ const ItemFormDetails = ({
   setEditItem,
   selectedItem,
 }: Props) => {
+
+  const ItemFormDetailsItems = [
+    {
+      title: "List of PED Items",
+      action: () => {
+        setSelectedItem(null);
+        setEditItem(null);
+      },
+    },
+  ];
+
+  if (selectedItem || editItem ) {
+    ItemFormDetailsItems.push({
+      title: selectedItem?.item_general_name ?? editItem?.item_general_name ?? "",
+      action: () => {
+        setSelectedItem(selectedItem || editItem);
+      },
+    });
+  }
+
   return (
     <Container p={0} fluid pos="relative">
-      <Paper p="xl" shadow="xs">
-        {!isCreatingItem && !editItem ? (
+      <BreadcrumbWrapper breadcrumbItems={ItemFormDetailsItems}>
+        {!isCreatingItem && !editItem && !selectedItem ? (
           <ItemList
             itemList={itemList}
             setItemList={setItemList}
@@ -56,21 +77,15 @@ const ItemFormDetails = ({
             editItem={editItem}
           />
         ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedItem ? (
-          <Center>
-            <Text color="dimmed">No item selected</Text>
-          </Center>
-        ) : null}
-        {selectedItem ? (
-          <ItemDescription
-            selectedItem={selectedItem}
-            setSelectedItem={setSelectedItem}
-          />
-        ) : null}
-      </Paper>
+        <Paper>
+          {selectedItem ? (
+            <ItemDescription
+              selectedItem={selectedItem}
+              setSelectedItem={setSelectedItem}
+            />
+          ) : null}
+        </Paper>
+      </BreadcrumbWrapper>
     </Container>
   );
 };

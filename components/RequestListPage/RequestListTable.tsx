@@ -725,13 +725,18 @@ const RequestListTable = ({
             }
 
             const {
-              team_member_user: { user_id, user_first_name, user_last_name },
+              team_member_user: {
+                user_id,
+                user_first_name,
+                user_last_name,
+                user_avatar,
+              },
             } = requestorMemberData;
 
             return (
               <Flex px={0} gap={8} align="center">
                 <Avatar
-                  // src={requestor.user_avatar}
+                  src={user_avatar}
                   {...defaultAvatarProps}
                   color={
                     user_id

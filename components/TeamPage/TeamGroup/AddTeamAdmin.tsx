@@ -1,5 +1,5 @@
 import { getTeamMembersWithMemberRole } from "@/backend/api/get";
-import { updateAdminRole } from "@/backend/api/update";
+import { updateMemberRole } from "@/backend/api/update";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import {
@@ -178,13 +178,13 @@ const AddTeamAdmin = ({
 
   const onSubmit = async (data: GroupForm) => {
     try {
-      const newAdminList = await updateAdminRole(supabaseClient, {
-        teamAdminIdList: data.admins,
+      const newAdminList = await updateMemberRole(supabaseClient, {
+        memberIdList: data.admins,
         updateRole: "ADMIN",
       });
 
       setAdminList((prev) => {
-        prev.unshift(...newAdminList);
+        prev.unshift(...(newAdminList as TeamAdminType[]));
         return prev;
       });
       setAdminListCount((prev) => prev + data.admins.length);

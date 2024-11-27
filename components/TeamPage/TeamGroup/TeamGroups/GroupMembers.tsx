@@ -115,32 +115,40 @@ const GroupMembers = ({
 
   useEffect(() => {
     const fetchTeamMemberChoiceList = async () => {
-      setIsFetchingMembers(true);
-      const choices = await getAllTeamMembersWithoutGroupMembers(
-        supabaseClient,
-        { teamId: teamId, groupId: selectedGroup.team_group_id }
-      );
-      const teamMemberChoices = choices as unknown as TeamMemberChoiceType[];
-      const formattedChoices = teamMemberChoices.map((member) => {
-        return {
-          label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
-          value: member.team_member_id,
-          member: member,
-        };
-      });
-      setGroupMemberChoiceList(formattedChoices);
+      try {
+        setIsFetchingMembers(true);
+        const choices = await getAllTeamMembersWithoutGroupMembers(
+          supabaseClient,
+          { teamId: teamId, groupId: selectedGroup.team_group_id }
+        );
+        const teamMemberChoices = choices as unknown as TeamMemberChoiceType[];
+        const formattedChoices = teamMemberChoices.map((member) => {
+          return {
+            label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+            value: member.team_member_id,
+            member: member,
+          };
+        });
+        setGroupMemberChoiceList(formattedChoices);
 
-      const projectChoices = await getAllProjects(supabaseClient, {
-        teamId: teamId,
-      });
-      const formattedProjectChoices = projectChoices.map((project) => {
-        return {
-          label: project.team_project_name,
-          value: project.team_project_id,
-        };
-      });
-      setTeamProjectChoiceList(formattedProjectChoices);
-      setIsFetchingMembers(false);
+        const projectChoices = await getAllProjects(supabaseClient, {
+          teamId: teamId,
+        });
+        const formattedProjectChoices = projectChoices.map((project) => {
+          return {
+            label: project.team_project_name,
+            value: project.team_project_id,
+          };
+        });
+        setTeamProjectChoiceList(formattedProjectChoices);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsFetchingMembers(false);
+      }
     };
     if (isAddingMember) {
       fetchTeamMemberChoiceList();
@@ -161,7 +169,7 @@ const GroupMembers = ({
       <Divider mb="xl" mt="sm" />
 
       <Box mt="xl">
-        <Paper >
+        <Paper>
           {!isAddingMember ? (
             <MemberList
               groupMemberList={groupMemberList}

@@ -2663,3 +2663,13 @@ export type PreferredPositionType = {
 export type PreferredPositionFormType = {
   selectedPositions: { [key: string]: string[] };
 };
+
+export type SidebarStorePreference = {
+  metrics: boolean;
+  humanResources: boolean;
+  create: boolean;
+  list: boolean;
+  form: boolean;
+  team: boolean;
+  jira: boolean;
+};

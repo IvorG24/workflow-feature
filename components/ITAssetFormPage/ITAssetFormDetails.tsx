@@ -1,6 +1,7 @@
 import { ItemCategoryWithSigner, ItemWithDescriptionType } from "@/utils/types";
-import { Center, Container, Paper, Space, Text } from "@mantine/core";
+import { Container, Paper, Space } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
+import BreadcrumbWrapper from "../BreadCrumbs/BreadCrumbWrapper";
 import CreateItemCategory from "../ItemFormPage/ItemCategoryList/CreateItemCategory";
 import ItemCategoryList from "../ItemFormPage/ItemCategoryList/ItemCategoryList";
 import UpdateItemCategory from "../ItemFormPage/ItemCategoryList/UpdateItemCategory";
@@ -52,10 +53,29 @@ const ITAssetFormDetails = ({
   setIsCreatingItemCategory,
   setEditItemCategory,
 }: Props) => {
+  const itAssetFormDetailItems = [
+    {
+      title: "List of IT Assets",
+      action: () => {
+        setSelectedItem(null);
+        setEditItem(null);
+      },
+    },
+  ];
+
+  if (selectedItem || editItem) {
+    itAssetFormDetailItems.push({
+      title: selectedItem?.item_general_name ?? editItem?.item_general_name ?? "",
+      action: () => {
+        setSelectedItem(selectedItem || editItem);
+      },
+    });
+  }
+
   return (
     <Container p={0} fluid pos="relative">
-      <Paper p="xl" shadow="xs">
-        {!isCreatingItem && !editItem ? (
+      <BreadcrumbWrapper breadcrumbItems={itAssetFormDetailItems}>
+        {!isCreatingItem && !editItem && !selectedItem ? (
           <ItemList
             itemList={itemList}
             setItemList={setItemList}
@@ -70,7 +90,7 @@ const ITAssetFormDetails = ({
         {isCreatingItem ? (
           <CreateItem formId={formId} setIsCreatingItem={setIsCreatingItem} />
         ) : null}
-        {editItem ? (
+        {editItem && !selectedItem ? (
           <UpdateItem
             formId={formId}
             setItemList={setItemList}
@@ -78,21 +98,15 @@ const ITAssetFormDetails = ({
             editItem={editItem}
           />
         ) : null}
-      </Paper>
-      <Space h="xl" />
-      <Paper p="xl" shadow="xs">
-        {!selectedItem ? (
-          <Center>
-            <Text color="dimmed">No item selected</Text>
-          </Center>
-        ) : null}
-        {selectedItem ? (
-          <ItemDescription
-            selectedItem={selectedItem}
-            setSelectedItem={setSelectedItem}
-          />
-        ) : null}
-      </Paper>
+        <Paper>
+          {selectedItem ? (
+            <ItemDescription
+              selectedItem={selectedItem}
+              setSelectedItem={setSelectedItem}
+            />
+          ) : null}
+        </Paper>
+      </BreadcrumbWrapper>
       <Space h="xl" />
       <Paper p="xl" shadow="xs">
         {!isCreatingItemCategory && !editItemCategory ? (
