@@ -5,6 +5,7 @@ import {
   useUserIntials,
   useUserProfile,
 } from "@/stores/useUserStore";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import {
   // NOTIFICATION_LIST_LIMIT,
   SIGN_IN_PAGE_PATH,
@@ -39,8 +40,10 @@ const HeaderMenu = () => {
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
   const user = useUserProfile();
+  const { clearPreferences } = useSidebarStore();
 
   const handleLogout = async () => {
+    clearPreferences();
     await supabaseClient.auth.signOut();
     await router.push(SIGN_IN_PAGE_PATH);
   };

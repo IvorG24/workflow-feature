@@ -101,7 +101,6 @@ import {
   RequestWithResponseType,
   SCICEmployeeTableRow,
   SectionWithFieldType,
-  SidebarPreference,
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
@@ -147,24 +146,6 @@ import {
 import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
-
-export async function getUserSidebarPreference(
-  supabaseClient: SupabaseClient<Database>,
-  params: { userId: string }
-): Promise<SidebarPreference | null> {
-  const { userId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("user_schema")
-    .from("user_sidebar_preference_table")
-    .select("*")
-    .eq("user_sidebar_preference_user_id", userId)
-    .maybeSingle();
-  if (error) {
-    throw error;
-  }
-  return data;
-}
 
 export async function getFileUrl(
   supabaseClient: SupabaseClient<Database>,

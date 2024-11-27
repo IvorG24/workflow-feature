@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDate } from "@/utils/constant";
+import { formatDate, formatDateTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import {
@@ -52,7 +52,7 @@ const ExportToPdf = ({
 }: Props) => {
   const router = useRouter();
   const requestor = request.request_team_member.team_member_user;
-  const requestDateCreated = getReadableDate(request.request_date_created);
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   const requestDetails = [
     {

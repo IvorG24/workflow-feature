@@ -1,6 +1,6 @@
 import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
-import { formatDate, formatTime } from "@/utils/constant";
+import { formatDate, formatDateTime, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getJiraTicketStatusColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
@@ -99,7 +99,7 @@ const RequestDetailsSection = ({
     },
     {
       label: "Date Created",
-      value: formatDate(new Date(requestDateCreated)),
+      value: formatDateTime(requestDateCreated),
     },
     ...(request.request_form.form_type && request.request_form.form_sub_type
       ? [

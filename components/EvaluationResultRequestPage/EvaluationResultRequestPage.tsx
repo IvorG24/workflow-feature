@@ -3,7 +3,7 @@ import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { formatDateTime } from "@/utils/constant";
 import { RequestCommentType, RequestWithResponseType } from "@/utils/types";
 import { Container, Flex, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -30,7 +30,7 @@ const EvaluationResultRequestPage = ({ request }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
 
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   useEffect(() => {
     try {
