@@ -8,6 +8,7 @@ import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import ExportCSVButton from "./ExportCSVButton";
 import LRFFilterMenu from "./LRFFilterMenu";
 import LRFSpreadsheetTable from "./LRFSpreadsheetTable/LRFSpreadsheetTable";
 
@@ -31,7 +32,6 @@ const LRFSpreadsheetView = ({ teamId, projectListOptions }: Props) => {
   const [page, setPage] = useState(1);
   const [sortAscending, setSortAscending] = useState(false);
   const [renderCsvDownload, setRenderCsvDownload] = useState(false);
-  console.log(renderCsvDownload);
   const filterFormMethods = useForm<FilterFormValues>();
 
   const fetchData = async ({
@@ -67,7 +67,7 @@ const LRFSpreadsheetView = ({ teamId, projectListOptions }: Props) => {
         requestIdFilter,
         projectListOptions,
       });
-      console.log(response);
+
       return response.data;
     } catch (e) {
       notifications.show({
@@ -155,9 +155,9 @@ const LRFSpreadsheetView = ({ teamId, projectListOptions }: Props) => {
               handleFilterData={handleFilterData}
             />
           </FormProvider>
-          {/* {renderCsvDownload && data.length > 0 && (
+          {renderCsvDownload && data.length > 0 && (
             <ExportCSVButton data={data} />
-          )} */}
+          )}
         </Group>
       </Box>
       <LRFSpreadsheetTable

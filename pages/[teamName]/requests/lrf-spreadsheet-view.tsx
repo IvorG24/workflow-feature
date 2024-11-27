@@ -16,6 +16,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         value: project.team_project_id,
         label: project.team_project_name,
       }));
+
       return {
         props: { teamId: userActiveTeam.team_id, projectListOptions },
       };

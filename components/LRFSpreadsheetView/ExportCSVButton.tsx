@@ -142,13 +142,14 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
               acc[duplicateIndex].response_list = acc[
                 duplicateIndex
               ].response_list.map((response) => {
+                let requestResponse = response.request_response;
                 if (response.field_name === "Invoice Amount") {
-                  response.request_response = `${invoiceAmountFieldNewValue}`;
+                  requestResponse = `${invoiceAmountFieldNewValue}`;
                 } else if (response.field_name === "Cost") {
-                  response.request_response = `${costFieldNewValue}`;
+                  requestResponse = `${costFieldNewValue}`;
                 }
 
-                return response;
+                return { ...response, request_response: requestResponse };
               });
 
               if (vatFieldIndex > 0) {
@@ -158,7 +159,7 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
                   ) +
                   Number(
                     responseList.find((field) => field.field_name === "VAT")
-                      ?.request_response
+                      ?.request_response || 0
                   );
 
                 acc[duplicateIndex].response_list = acc[

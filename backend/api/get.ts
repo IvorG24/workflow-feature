@@ -4507,10 +4507,12 @@ export const getLRFSummaryData = async (
   const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {
     input_data: params,
   });
-  console.log(data);
   if (error) throw error;
 
-  return data as { data: LRFSpreadsheetData[]; count: number };
+  return data as {
+    data: LRFSpreadsheetData[];
+    count: number;
+  };
 };
 
 export const getApplicationInformationPositionOptions = async (

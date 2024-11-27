@@ -6958,7 +6958,9 @@ AS $$
               `
                 SELECT team_project_id
                 FROM team_schema.team_project_table
-                WHERE team_project_name = $1
+                WHERE 
+                    team_project_name = $1
+                    AND team_project_is_disabled = false
               `, [
                 parseProjectName
               ]
@@ -6973,9 +6975,11 @@ AS $$
             `
               SELECT team_project_id
               FROM team_schema.team_project_table
-              WHERE team_project_name = $1
+              WHERE 
+                    team_project_name = $1
+                    AND team_project_is_disabled = false
             `, [
-              parentRequestIdFieldRespons
+              parentRequestIdFieldResponse
             ]
           )[0];
 

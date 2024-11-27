@@ -55,7 +55,6 @@ const LRFMainTableRow = ({ item, index }: Props) => {
     requestResponseList: LRFSpreadsheetData["request_response_list"];
     parentIndex: number;
   }) => {
-    // console.log(requestResponseList);
     const groupedRows = renderNestedRows(requestResponseList);
     return (
       <Table
@@ -168,13 +167,14 @@ const LRFMainTableRow = ({ item, index }: Props) => {
             );
 
           acc[key] = acc[key].map((response) => {
+            let requestResponse = response.request_response;
             if (response.field_name === "Invoice Amount") {
-              response.request_response = `${invoiceAmountFieldNewValue}`;
+              requestResponse = `${invoiceAmountFieldNewValue}`;
             } else if (response.field_name === "Cost") {
-              response.request_response = `${costFieldNewValue}`;
+              requestResponse = `${costFieldNewValue}`;
             }
 
-            return response;
+            return { ...response, request_response: requestResponse };
           });
 
           if (vatFieldIndex > 0) {
