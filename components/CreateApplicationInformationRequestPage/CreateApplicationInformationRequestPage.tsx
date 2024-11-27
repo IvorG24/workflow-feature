@@ -278,6 +278,9 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           contactNumber: data.sections[2].section_field[0]
             .field_response as string,
           email: data.sections[2].section_field[1].field_response as string,
+          sssNumber: (
+            data.sections[3].section_field[0].field_response as string
+          ).replace(/\D/g, ""),
         },
       });
 
