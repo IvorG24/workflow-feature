@@ -1,76 +1,78 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import {
-    APP_SOURCE_ID,
-    BASE_URL,
-    formatDate,
-    formslyPremadeFormsData,
+  APP_SOURCE_ID,
+  BASE_URL,
+  formatDate,
+  formslyPremadeFormsData,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData, shortId } from "@/utils/functions";
 import {
-    escapeQuotes,
-    escapeQuotesForObject,
-    getFileType,
+  escapeQuotes,
+  escapeQuotesForObject,
+  getFileType,
 } from "@/utils/string";
 import {
-    AdOwnerRequestTableInsert,
-    AttachmentBucketType,
-    AttachmentTableInsert,
-    CommentTableInsert,
-    CreatePracticalTestFormType,
-    CreateTicketFormValues,
-    EquipmentDescriptionTableInsert,
-    EquipmentPartTableInsert,
-    EquipmentTableInsert,
-    ErrorTableInsert,
-    FieldCorrectResponseTableInsert,
-    FieldTableInsert,
-    FormTableRow,
-    FormType,
-    FormWithModuleResponseType,
-    InterviewOnlineMeetingTableInsert,
-    InterviewOnlineMeetingTableRow,
-    InvitationTableRow,
-    ItemDescriptionFieldTableInsert,
-    ItemDescriptionFieldUOMTableInsert,
-    ItemDescriptionTableUpdate,
-    ItemForm,
-    ItemTableInsert,
-    JiraFormslyItemCategoryWithUserDataType,
-    JiraItemCategoryTableInsert,
-    JiraItemCategoryUserTableInsert,
-    JiraItemUserTableData,
-    JiraOrganizationTableInsert,
-    JiraProjectTableInsert,
-    JiraUserAccountTableInsert,
-    JobTitleTableInsert,
-    MemoAgreementTableRow,
-    MemoLineItem,
-    MemoTableRow,
-    ModuleType,
-    NotificationTableInsert,
-    OtherExpensesTypeTableInsert,
-    QuestionOption,
-    ReferenceMemoType,
-    RequestResponseTableInsert,
-    RequestSignerTableInsert,
-    RequestTableRow,
-    SCICEmployeeTableInsert,
-    SCICEmployeeTableUpdate,
-    SignerTableInsert,
-    TeamGroupTableInsert,
-    TeamMemberTableInsert,
-    TeamProjectWithAddressType,
-    TeamTableInsert,
-    TechnicalAssessmentTableRow,
-    TechnicalQuestionFormValues,
-    TicketCommentTableInsert,
-    TicketCommentTableRow,
-    TicketResponseTableInsert,
-    TicketTableRow,
-    UserSSSTableInsert,
-    UserTableInsert,
+  AdOwnerRequestTableInsert,
+  AttachmentBucketType,
+  AttachmentTableInsert,
+  BasicEdgeType,
+  BasicNodeType,
+  CommentTableInsert,
+  CreatePracticalTestFormType,
+  CreateTicketFormValues,
+  EquipmentDescriptionTableInsert,
+  EquipmentPartTableInsert,
+  EquipmentTableInsert,
+  ErrorTableInsert,
+  FieldCorrectResponseTableInsert,
+  FieldTableInsert,
+  FormTableRow,
+  FormType,
+  FormWithModuleResponseType,
+  InterviewOnlineMeetingTableInsert,
+  InterviewOnlineMeetingTableRow,
+  InvitationTableRow,
+  ItemDescriptionFieldTableInsert,
+  ItemDescriptionFieldUOMTableInsert,
+  ItemDescriptionTableUpdate,
+  ItemForm,
+  ItemTableInsert,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableInsert,
+  JiraItemCategoryUserTableInsert,
+  JiraItemUserTableData,
+  JiraOrganizationTableInsert,
+  JiraProjectTableInsert,
+  JiraUserAccountTableInsert,
+  JobTitleTableInsert,
+  MemoAgreementTableRow,
+  MemoLineItem,
+  MemoTableRow,
+  ModuleType,
+  NotificationTableInsert,
+  OtherExpensesTypeTableInsert,
+  QuestionOption,
+  ReferenceMemoType,
+  RequestResponseTableInsert,
+  RequestSignerTableInsert,
+  RequestTableRow,
+  SCICEmployeeTableInsert,
+  SCICEmployeeTableUpdate,
+  SignerTableInsert,
+  TeamGroupTableInsert,
+  TeamMemberTableInsert,
+  TeamProjectWithAddressType,
+  TeamTableInsert,
+  TechnicalAssessmentTableRow,
+  TechnicalQuestionFormValues,
+  TicketCommentTableInsert,
+  TicketCommentTableRow,
+  TicketResponseTableInsert,
+  TicketTableRow,
+  UserSSSTableInsert,
+  UserTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -253,7 +255,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -1042,7 +1044,7 @@ export const insertProjectMember = async (
     teamGroupIdList: string[];
   }
 ) => {
-  const {  error } = await supabaseClient
+  const { error } = await supabaseClient
     .rpc("insert_project_member", { input_data: params })
     .select("*");
   if (error) throw error;
@@ -2733,345 +2735,345 @@ export const insertUpdateHrPreferredPosition = async (
 };
 
 export const createWorkflow = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      label: string;
-      nodes: BasicNodeType[];
-      edges: BasicEdgeType[];
-      teamId: string;
-      teamMemberId: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .rpc("create_workflow", { input_data: params as unknown as Json })
-      .select("*");
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+    nodes: BasicNodeType[];
+    edges: BasicEdgeType[];
+    teamId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_workflow", { input_data: params })
+    .select("*");
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data as unknown as string;
-  };
+  return data as unknown as string;
+};
 
-  export const checkWorkflowLabelExists = async (
-    supabaseClient: SupabaseClient<Database>,
-    label: string
-  ): Promise<boolean> => {
-    const formattedLabel = label.trim().toLowerCase();
-    const { data, error } = await supabaseClient
-      .schema("workflow_schema")
-      .from("workflow_table")
-      .select("workflow_label,workflow_id")
-      .eq("workflow_is_disabled", false)
-      .ilike("workflow_label", `%${formattedLabel}%`);
+export const checkWorkflowLabelExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  label: string
+): Promise<boolean> => {
+  const formattedLabel = label.trim().toLowerCase();
+  const { data, error } = await supabaseClient
+    .schema("workflow_schema")
+    .from("workflow_table")
+    .select("workflow_label,workflow_id")
+    .eq("workflow_is_disabled", false)
+    .ilike("workflow_label", `%${formattedLabel}%`);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data.length > 0;
-  };
+  return data.length > 0;
+};
 
-  export const createNodeStyle = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      label: string;
-      backgroundColor: string;
-      fontColor: string;
-      activeTeamID: string;
-    }
-  ): Promise<{
-    id: string;
-  }> => {
-    const { label, backgroundColor, fontColor, activeTeamID } = params;
-    const { data, error } = await supabaseClient
-      .schema("workflow_schema")
-      .from("node_type_table")
-      .insert([
-        {
-          node_type_label: label,
-          node_type_background_color: backgroundColor,
-          node_type_font_color: fontColor,
-          node_type_variant: "basic",
-          node_type_is_disabled: false,
-          node_type_team_id: activeTeamID,
-        },
-      ])
-      .select("node_type_id")
-      .single();
+export const createNodeStyle = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+    backgroundColor: string;
+    fontColor: string;
+    activeTeamID: string;
+  }
+): Promise<{
+  id: string;
+}> => {
+  const { label, backgroundColor, fontColor, activeTeamID } = params;
+  const { data, error } = await supabaseClient
+    .schema("workflow_schema")
+    .from("node_type_table")
+    .insert([
+      {
+        node_type_label: label,
+        node_type_background_color: backgroundColor,
+        node_type_font_color: fontColor,
+        node_type_variant: "basic",
+        node_type_is_disabled: false,
+        node_type_team_id: activeTeamID,
+      },
+    ])
+    .select("node_type_id")
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return { id: data.node_type_id };
-  };
+  return { id: data.node_type_id };
+};
 
-  export const checkUniqueLabelNodeType = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      label: string;
-    }
-  ): Promise<boolean> => {
-    const { label } = params;
-    const formattedLabel = label.trim().toLowerCase();
-    const { data, error } = await supabaseClient
-      .schema("workflow_schema")
-      .from("node_type_table")
-      .select("node_type_label")
-      .eq("node_type_is_disabled", false)
-      .ilike("node_type_label", `%${formattedLabel}%`);
+export const checkUniqueLabelNodeType = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+  }
+): Promise<boolean> => {
+  const { label } = params;
+  const formattedLabel = label.trim().toLowerCase();
+  const { data, error } = await supabaseClient
+    .schema("workflow_schema")
+    .from("node_type_table")
+    .select("node_type_label")
+    .eq("node_type_is_disabled", false)
+    .ilike("node_type_label", `%${formattedLabel}%`);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data.length === 0;
-  };
+  return data.length === 0;
+};
 
-  export const checkIfLabelIsBeingUsed = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      nodeTypeId: string;
-    }
-  ): Promise<boolean> => {
-    const { nodeTypeId } = params;
-    const { data, error } = await supabaseClient
-      .schema("workflow_schema")
-      .from("node_table")
-      .select("*")
-      .eq("node_type_node_id", nodeTypeId);
+export const checkIfLabelIsBeingUsed = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    nodeTypeId: string;
+  }
+): Promise<boolean> => {
+  const { nodeTypeId } = params;
+  const { data, error } = await supabaseClient
+    .schema("workflow_schema")
+    .from("node_table")
+    .select("*")
+    .eq("node_type_node_id", nodeTypeId);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data.length === 0;
-  };
+  return data.length === 0;
+};
 
-  export const createModule = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      label: string;
-      moduleItems: ModuleType[];
-      teamId: string;
-      teamMemberId: string;
-      currentDate: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .rpc("create_module", { input_data: params })
-      .select("*");
+export const createModule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    label: string;
+    moduleItems: ModuleType[];
+    teamId: string;
+    teamMemberId: string;
+    currentDate: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_module", { input_data: params })
+    .select("*");
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data as unknown as string;
-  };
+  return data as unknown as string;
+};
 
-  export const createNewVersionModule = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      moduleItems: ModuleType[];
-      moduleId: string;
-      teamMemberId: string;
-      currentDate: string;
-    }
-  ) => {
-    const { data, error } = await supabaseClient
-      .rpc("create_new_version_module", { input_data: params })
-      .select("*");
+export const createNewVersionModule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    moduleItems: ModuleType[];
+    moduleId: string;
+    teamMemberId: string;
+    currentDate: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("create_new_version_module", { input_data: params })
+    .select("*");
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data as unknown as string;
-  };
+  return data as unknown as string;
+};
 
-  export const createModuleRequest = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      requestFormValues: RequestFormValues;
-      formId: string;
-      moduleId: string;
-      teamMemberId: string;
-      moduleRequestId?: string;
-      signers: FormWithModuleResponseType["form_signer"];
-      teamId: string;
-      requesterName: string;
-      formName: string;
-      userId:string;
-      isFormslyForm: boolean;
-      projectId: string;
-      teamName: string;
-    }
-  ) => {
-    const {
-      requestFormValues,
-      signers,
-      moduleRequestId,
-      teamId,
-      requesterName,
-      formName,
-      isFormslyForm,
-      projectId,
-      teamName,
-      userId
-    } = params;
+export const createModuleRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestFormValues: RequestFormValues;
+    formId: string;
+    moduleId: string;
+    teamMemberId: string;
+    moduleRequestId?: string;
+    signers: FormWithModuleResponseType["form_signer"];
+    teamId: string;
+    requesterName: string;
+    formName: string;
+    userId: string;
+    isFormslyForm: boolean;
+    projectId: string;
+    teamName: string;
+  }
+) => {
+  const {
+    requestFormValues,
+    signers,
+    moduleRequestId,
+    teamId,
+    requesterName,
+    formName,
+    isFormslyForm,
+    projectId,
+    teamName,
+    userId,
+  } = params;
 
-    const requestId = uuidv4();
+  const requestId = uuidv4();
 
-    const requestResponseInput: RequestResponseTableInsert[] = [];
-    for (const section of requestFormValues.sections) {
-      for (const field of section.section_field) {
-        let responseValue = field.field_response;
+  const requestResponseInput: RequestResponseTableInsert[] = [];
+  for (const section of requestFormValues.sections) {
+    for (const field of section.section_field) {
+      let responseValue = field.field_response;
+
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue ||
+        field.field_type === "SWITCH" ||
+        (field.field_type === "NUMBER" && responseValue === 0)
+      ) {
+        if (field.field_type === "FILE") {
+          const fileResponse = responseValue as File;
+
+          const fileType = getFileType(field.field_name);
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = (
+              await uploadImage(supabaseClient, {
+                image: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
+          } else {
+            responseValue = (
+              await uploadFile(supabaseClient, {
+                file: fileResponse,
+                bucket: "REQUEST_ATTACHMENTS",
+                fileType,
+                userId,
+              })
+            ).publicUrl;
+          }
+        } else if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
+        } else if (
+          ["TEXT", "TEXTAREA", "AUTOCOMPLETE"].includes(field.field_type)
+        ) {
+          responseValue = (responseValue ? `${responseValue}` : "")
+            .trim()
+            .replace(/\s\s+/g, " ");
+        }
 
         if (
-          typeof responseValue === "boolean" ||
-          responseValue ||
-          field.field_type === "SWITCH" ||
-          (field.field_type === "NUMBER" && responseValue === 0)
+          isFormslyForm &&
+          formName === "Application Information" &&
+          [
+            "SSS ID Number",
+            "Philhealth Number",
+            "Pag-IBIG Number",
+            "TIN",
+          ].includes(field.field_name)
         ) {
-          if (field.field_type === "FILE") {
-            const fileResponse = responseValue as File;
-
-            const fileType = getFileType(field.field_name);
-            if (fileResponse["type"].split("/")[0] === "image") {
-              responseValue = (
-                await uploadImage(supabaseClient, {
-                  image: fileResponse,
-                  bucket: "REQUEST_ATTACHMENTS",
-                  fileType,
-                  userId,
-                })
-              ).publicUrl;
-            } else {
-              responseValue = (
-                await uploadFile(supabaseClient, {
-                  file: fileResponse,
-                  bucket: "REQUEST_ATTACHMENTS",
-                  fileType,
-                  userId,
-                })
-              ).publicUrl;
-            }
-          } else if (field.field_type === "SWITCH" && !field.field_response) {
-            responseValue = false;
-          } else if (
-            ["TEXT", "TEXTAREA", "AUTOCOMPLETE"].includes(field.field_type)
-          ) {
-            responseValue = (responseValue ? `${responseValue}` : "")
-              .trim()
-              .replace(/\s\s+/g, " ");
-          }
-
-          if (
-            isFormslyForm &&
-            formName === "Application Information" &&
-            [
-              "SSS ID Number",
-              "Philhealth Number",
-              "Pag-IBIG Number",
-              "TIN",
-            ].includes(field.field_name)
-          ) {
-            responseValue = `${responseValue}`.replace(/\D/g, "");
-          }
-
-          const response = {
-            request_response: JSON.stringify(responseValue),
-            request_response_duplicatable_section_id:
-              field.field_section_duplicatable_id ?? null,
-            request_response_field_id: field.field_id,
-            request_response_request_id: requestId,
-            request_response_prefix: field.field_prefix ?? null,
-          };
-          requestResponseInput.push(response);
+          responseValue = `${responseValue}`.replace(/\D/g, "");
         }
+
+        const response = {
+          request_response: JSON.stringify(responseValue),
+          request_response_duplicatable_section_id:
+            field.field_section_duplicatable_id ?? null,
+          request_response_field_id: field.field_id,
+          request_response_request_id: requestId,
+          request_response_prefix: field.field_prefix ?? null,
+        };
+        requestResponseInput.push(response);
       }
     }
-    // get request signers
-    const requestSignerInput: RequestSignerTableInsert[] = [];
-    const signerIdList: string[] = [];
+  }
+  // get request signers
+  const requestSignerInput: RequestSignerTableInsert[] = [];
+  const signerIdList: string[] = [];
 
-    // get signer notification
-    const requestSignerNotificationInput: NotificationTableInsert[] = [];
+  // get signer notification
+  const requestSignerNotificationInput: NotificationTableInsert[] = [];
 
-    signers.forEach((signer) => {
-      if (!signerIdList.includes(signer.signer_id)) {
-        requestSignerInput.push({
-          request_signer_signer_id: signer.signer_id,
-          request_signer_request_id: requestId,
-        });
-        requestSignerNotificationInput.push({
-          notification_app: "REQUEST",
-          notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-          notification_redirect_url: `/${teamName}/requests/${requestId}`,
-          notification_team_id: teamId,
-          notification_type: "REQUEST",
-          notification_user_id:
-            signer.signer_team_member.team_member_user.user_id,
-        });
-        signerIdList.push(signer.signer_id);
-      }
-    });
-
-    const responseValues = requestResponseInput
-      .map((response) => {
-        const escapedResponse = escapeQuotes(response.request_response);
-        return `('${escapedResponse}',${
-          response.request_response_duplicatable_section_id
-            ? `'${response.request_response_duplicatable_section_id}'`
-            : "NULL"
-        },'${response.request_response_field_id}','${
-          response.request_response_request_id
-        }', '${
-          response.request_response_prefix
-            ? `${response.request_response_prefix}`
-            : "NULL"
-        }')`;
-      })
-      .join(",");
-
-    const signerValues = requestSignerInput
-      .map(
-        (signer) =>
-          `('${signer.request_signer_signer_id}','${signer.request_signer_request_id}')`
-      )
-      .join(",");
-
-    const { data, error } = await supabaseClient
-      .rpc("create_module_request", {
-        input_data: {
-          requestId,
-          formId: params.formId,
-          moduleId: params.moduleId,
-          teamMemberId: params.teamMemberId,
-          moduleRequestId: moduleRequestId,
-          responseValues,
-          signerValues,
-          requestSignerNotificationInput,
-          formName,
-          isFormslyForm,
-          projectId,
-          teamId,
-        },
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return data as RequestTableRow;
-  };
-
-  export const moduleSignerValidation = async (
-    supabaseClient: SupabaseClient<Database>,
-    params: {
-      requestId: string;
-      requestSignerId: string;
-      requestStatus: string;
-      groupMember: string[];
-      signerTeamGroups: string[];
-      signerFullName: string;
-      requestAction: string;
-      memberId: string;
+  signers.forEach((signer) => {
+    if (!signerIdList.includes(signer.signer_id)) {
+      requestSignerInput.push({
+        request_signer_signer_id: signer.signer_id,
+        request_signer_request_id: requestId,
+      });
+      requestSignerNotificationInput.push({
+        notification_app: "REQUEST",
+        notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
+        notification_team_id: teamId,
+        notification_type: "REQUEST",
+        notification_user_id:
+          signer.signer_team_member.team_member_user.user_id,
+      });
+      signerIdList.push(signer.signer_id);
     }
-  ) => {
-    const { data, error } = await supabaseClient.rpc(
-      "module_request_signer_count",
-      {
-        input_data: { ...params },
-      }
-    );
+  });
 
-    if (error) throw error;
+  const responseValues = requestResponseInput
+    .map((response) => {
+      const escapedResponse = escapeQuotes(response.request_response);
+      return `('${escapedResponse}',${
+        response.request_response_duplicatable_section_id
+          ? `'${response.request_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.request_response_field_id}','${
+        response.request_response_request_id
+      }', '${
+        response.request_response_prefix
+          ? `${response.request_response_prefix}`
+          : "NULL"
+      }')`;
+    })
+    .join(",");
 
-    return data as number;
-  };
+  const signerValues = requestSignerInput
+    .map(
+      (signer) =>
+        `('${signer.request_signer_signer_id}','${signer.request_signer_request_id}')`
+    )
+    .join(",");
+
+  const { data, error } = await supabaseClient
+    .rpc("create_module_request", {
+      input_data: {
+        requestId,
+        formId: params.formId,
+        moduleId: params.moduleId,
+        teamMemberId: params.teamMemberId,
+        moduleRequestId: moduleRequestId,
+        responseValues,
+        signerValues,
+        requestSignerNotificationInput,
+        formName,
+        isFormslyForm,
+        projectId,
+        teamId,
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as RequestTableRow;
+};
+
+export const moduleSignerValidation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    requestSignerId: string;
+    requestStatus: string;
+    groupMember: string[];
+    signerTeamGroups: string[];
+    signerFullName: string;
+    requestAction: string;
+    memberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "module_request_signer_count",
+    {
+      input_data: { ...params },
+    }
+  );
+
+  if (error) throw error;
+
+  return data as number;
+};
