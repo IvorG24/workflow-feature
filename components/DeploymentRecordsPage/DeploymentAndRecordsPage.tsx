@@ -7,10 +7,11 @@ import {
   DeploymentRecordType,
   TechnicalAssessmentFilterValues,
 } from "@/utils/types";
-import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
+import { Alert, Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -96,23 +97,13 @@ const DeploymentAndRecordsPage = () => {
   };
 
   const handleFilterForms = async () => {
-    try {
-      setActivePage(1);
-      await hanldeFetchDeploymentRecords(1);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(1);
+    await hanldeFetchDeploymentRecords(1);
   };
 
   const handlePagination = async (page: number) => {
-    try {
-      setActivePage(page);
-      await hanldeFetchDeploymentRecords(page);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(page);
+    await hanldeFetchDeploymentRecords(page);
   };
 
   useEffect(() => {
@@ -147,15 +138,27 @@ const DeploymentAndRecordsPage = () => {
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <DeploymentAndRecordsCards
-            deploymentRecordList={deploymentRecordList}
-            deploymentRecordCount={deploymentRecordCount}
-            activePage={activePage}
-            setActivePage={setActivePage}
-            isFetchingRequestList={isFetchingRequestList}
-            handlePagination={handlePagination}
-            setValue={setValue}
-          />
+          {!deploymentRecordList.length ? (
+            <Alert
+              variant="light"
+              color="blue"
+              title="No Records"
+              icon={<IconAlertCircle size={16} />}
+            >
+              All HRIS numbers in the automated laptop request are updated.
+            </Alert>
+          ) : null}
+          {deploymentRecordList.length ? (
+            <DeploymentAndRecordsCards
+              deploymentRecordList={deploymentRecordList}
+              deploymentRecordCount={deploymentRecordCount}
+              activePage={activePage}
+              setActivePage={setActivePage}
+              isFetchingRequestList={isFetchingRequestList}
+              handlePagination={handlePagination}
+              setValue={setValue}
+            />
+          ) : null}
         </Box>
       </Paper>
     </Container>

@@ -138,7 +138,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
       case "ACTION_REVERSED":
         return "orange";
       case "ACTION_GENERAL":
-        return "default";
+        return "blue";
     }
   };
 

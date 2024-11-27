@@ -252,7 +252,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert,
+    } & TeamMemberTableInsert
   ];
 };
 
@@ -546,6 +546,7 @@ export const createRequest = async (
       lastName: string;
       contactNumber: string;
       email: string;
+      sssNumber: string;
     };
     interviewParams?: {
       status: string;
@@ -2751,7 +2752,6 @@ export const handleUpdateEmployeeHrisId = async (
       input_data: params,
     }
   );
-
   if (error) throw error;
 
   return data;

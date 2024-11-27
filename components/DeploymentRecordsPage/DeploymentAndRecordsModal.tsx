@@ -3,18 +3,11 @@ import {
   checkHRISNumber,
   handleUpdateEmployeeHrisId,
 } from "@/backend/api/post";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { AssigneeInformation } from "@/utils/types";
-import {
-  Anchor,
-  Button,
-  Flex,
-  Loader,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Anchor, Button, Flex, Stack, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -37,10 +30,14 @@ type ModalFormType = {
 };
 
 const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
-  const [assigneeInformation, setAssigneeInformation] =
-    useState<AssigneeInformation | null>(null);
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
+  const { setIsLoading } = useLoadingActions();
+
+  const [assigneeInformation, setAssigneeInformation] =
+    useState<AssigneeInformation | null>(null);
+  const [isFetchingData, setIsFetchingData] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -63,6 +60,8 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
 
   const handleUpdateHrisId = async (data: ModalFormType) => {
     try {
+      setIsLoading(true);
+      modals.close("updateModal");
       await handleUpdateEmployeeHrisId(supabaseClient, {
         employeeData: data,
         requestId: requestId,
@@ -72,12 +71,13 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
         color: "green",
       });
       handleFetch();
-      modals.close("updateModal");
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,7 +116,9 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
                       <Text>
                         HRIS ID Does Not Exist. Please{" "}
                         <Anchor
-                          href={`/${formatTeamNameToUrlKey(activeTeam.team_name)}/settings`}
+                          href={`/${formatTeamNameToUrlKey(
+                            activeTeam.team_name
+                          )}/settings`}
                           target="_blank"
                         >
                           Go To Manage Team
@@ -142,6 +144,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
                 required: "Position is required",
               })}
               error={errors.firstName?.message}
+              variant="filled"
             />
 
             <TextInput
@@ -151,6 +154,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
                 required: "First name is required.",
               })}
               error={errors.firstName?.message}
+              variant="filled"
             />
 
             <TextInput
@@ -158,6 +162,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
               readOnly
               {...register("middleName")}
               error={errors.middleName?.message}
+              variant="filled"
             />
 
             <TextInput
@@ -165,6 +170,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
               readOnly
               {...register("lastName", { required: "Last name is required." })}
               error={errors.lastName?.message}
+              variant="filled"
             />
 
             <TextInput
@@ -172,6 +178,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
               readOnly
               {...register("email", { required: "Email is required." })}
               error={errors.email?.message}
+              variant="filled"
             />
 
             <TextInput
@@ -182,6 +189,7 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
                 required: "Contact number is required.",
               })}
               error={errors.contactNumber?.message}
+              variant="filled"
             />
 
             <Flex mt="md" align="center" justify="flex-end" gap="sm">
@@ -195,8 +203,8 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                {isSubmitting ? <Loader /> : "Save"}
+              <Button type="submit" disabled={isSubmitting}>
+                Save
               </Button>
             </Flex>
           </Stack>
@@ -208,20 +216,21 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
 
   const handleFetchApplicantInfo = async (requestId: string) => {
     try {
+      setIsFetchingData(true);
       const data = await fetchAssigneeinformation(supabaseClient, {
         requestId,
       });
+
       setAssigneeInformation(data);
       openModal();
     } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     } finally {
+      setIsFetchingData(false);
     }
-  };
-
-  const handleModelOpen = (requestId: string) => {
-    try {
-      handleFetchApplicantInfo(requestId);
-    } catch (e) {}
   };
 
   useEffect(() => {
@@ -242,8 +251,9 @@ const DeploymentAndRecordsModal = ({ requestId, handleFetch }: Props) => {
     <Button
       variant="light"
       maw={120}
-      onClick={() => handleModelOpen(requestId)}
+      onClick={() => handleFetchApplicantInfo(requestId)}
       color="blue"
+      loading={isFetchingData}
     >
       Edit HRIS ID
     </Button>

@@ -193,6 +193,9 @@ const ReviewAppNavLink = () => {
   };
 
   const analyticsMenuOptions = ["Human Resources"];
+  const isUserHR =
+    teamMemberGroups.includes("HUMAN RESOURCES") ||
+    teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
 
   const handleRedirectToAnalyticsPage = (option: string) => {
     const url = `/${activeTeamNameToUrl}/analytics/${formatTeamNameToUrlKey(
@@ -200,10 +203,7 @@ const ReviewAppNavLink = () => {
     )}`;
     switch (option) {
       case "Human Resources":
-        const isUserAllowed =
-          teamMemberGroups.includes("HUMAN RESOURCES") ||
-          teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
-        if (!isUserAllowed) {
+        if (!isUserHR) {
           notifications.show({
             message: "You do not have permission to access this page.",
             color: "red",
@@ -229,8 +229,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-                ? ["create"]
-                : []
+              ? ["create"]
+              : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -437,8 +437,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-                ? ["form"]
-                : []
+              ? ["form"]
+              : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));
@@ -840,84 +840,88 @@ const ReviewAppNavLink = () => {
   ];
 
   const hrSection = [
-    {
-      label: `Application Information`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconInfoCircle {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/application-information-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.applicationInformation),
-      indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
-    },
-    {
-      label: `HR Interview`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconPhoneCall {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/hr-phone-interview-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.hrPhoneInterview),
-      indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
-    },
-    {
-      label: `Department Interview`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconCode {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/technical-interview-1-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.technicalInterview1),
-      indicatorLabel: `${hrIndicatorCount.technicalInterview1}`,
-    },
-    {
-      label: `Requestor Interview`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconTerminal {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
-      indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
-    },
-    {
-      label: `Practical Test`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconTools {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.tradeTest),
-      indicatorLabel: `${hrIndicatorCount.tradeTest}`,
-    },
-    {
-      label: `Background Check`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconShieldCheck {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/background-check-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.backgroundCheck),
-      indicatorLabel: `${hrIndicatorCount.backgroundCheck}`,
-    },
-    {
-      label: `Job Offer`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconFileCertificate {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.jobOffer),
-      indicatorLabel: `${hrIndicatorCount.jobOffer}`,
-    },
-    ...(userTeamMemberData?.team_member_role === "ADMIN"
+    ...(isUserHR
+      ? [
+          {
+            label: `Application Information`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconInfoCircle {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/application-information-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.applicationInformation),
+            indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
+          },
+          {
+            label: `HR Interview`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconPhoneCall {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/hr-phone-interview-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.hrPhoneInterview),
+            indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
+          },
+          {
+            label: `Department Interview`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconCode {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/technical-interview-1-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.technicalInterview1),
+            indicatorLabel: `${hrIndicatorCount.technicalInterview1}`,
+          },
+          {
+            label: `Requestor Interview`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconTerminal {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
+            indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
+          },
+          {
+            label: `Practical Test`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconTools {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.tradeTest),
+            indicatorLabel: `${hrIndicatorCount.tradeTest}`,
+          },
+          {
+            label: `Background Check`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconShieldCheck {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/background-check-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.backgroundCheck),
+            indicatorLabel: `${hrIndicatorCount.backgroundCheck}`,
+          },
+          {
+            label: `Job Offer`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconFileCertificate {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
+            withIndicator: Boolean(hrIndicatorCount.jobOffer),
+            indicatorLabel: `${hrIndicatorCount.jobOffer}`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN" && isUserHR
       ? [
           {
             label: `Questionnaire List`,
@@ -930,7 +934,7 @@ const ReviewAppNavLink = () => {
           },
         ]
       : []),
-    ...(userTeamMemberData?.team_member_role === "ADMIN"
+    ...(userTeamMemberData?.team_member_role === "ADMIN" && isUserHR
       ? [
           {
             label: `Practical Test Form`,
@@ -943,7 +947,7 @@ const ReviewAppNavLink = () => {
           },
         ]
       : []),
-    ...(userTeamMemberData?.team_member_role === "ADMIN"
+    ...(userTeamMemberData?.team_member_role === "ADMIN" && isUserHR
       ? [
           {
             label: `Preferred Position`,
@@ -956,8 +960,7 @@ const ReviewAppNavLink = () => {
           },
         ]
       : []),
-    ...(userTeamMemberData?.team_member_role === "ADMIN" &&
-    teamMemberGroup.includes("DEPLOYMENT AND RECORDS")
+    ...(teamMemberGroup.includes("DEPLOYMENT AND RECORDS")
       ? [
           {
             label: `Deployment And Records`,
@@ -1052,21 +1055,18 @@ const ReviewAppNavLink = () => {
           renderMetricsMenu()
         : null}
 
-      {!isEmpty(activeTeam) &&
-        hasTeam &&
-        (teamMemberGroup.includes("HUMAN RESOURCES") ||
-          teamMemberGroup.includes("HUMAN RESOURCES VIEWER")) && (
-          <NavLinkSection
-            accordionItemValue="hr"
-            accordionValue={preferences.humanResources ? "hr" : null}
-            accordionOnChange={(value) => {
-              updatePreference("humanResources", value === "hr");
-            }}
-            label={"Human Resources"}
-            links={hrSection}
-            {...defaultNavLinkProps}
-          />
-        )}
+      {!isEmpty(activeTeam) && hasTeam && hrSection.length ? (
+        <NavLinkSection
+          accordionItemValue="hr"
+          accordionValue={preferences.humanResources ? "hr" : null}
+          accordionOnChange={(value) => {
+            updatePreference("humanResources", value === "hr");
+          }}
+          label={"Human Resources"}
+          links={hrSection}
+          {...defaultNavLinkProps}
+        />
+      ) : null}
 
       {itemForm &&
       itemForm.form_is_hidden === false &&

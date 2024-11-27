@@ -144,7 +144,16 @@ const JobOffer = ({
             token: `Bearer ${session?.access_token}`,
           }),
         };
-        await fetch(`${BASE_URL}/api/formsly/accept-job-offer`, requestOptions);
+        const response = await fetch(
+          `${BASE_URL}/api/formsly/accept-job-offer`,
+          requestOptions
+        );
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          throw new Error(
+            errorMessage || `HTTP error! Status: ${response.status}`
+          );
+        }
 
         if (jobOfferData.job_offer_with_laptop) {
           const form = await automatedLaptopItemForm(supabaseClient, {
@@ -187,7 +196,7 @@ const JobOffer = ({
             formId: form.form_id,
             teamMemberId: "f0ae4d53-427c-4223-84ea-c007a186ae82",
             signers: [...signerList],
-            requesterName: `Formsly AUTOMATION`,
+            requesterName: "Formsly Automation",
             formName: form.form_name,
             isFormslyForm: true,
             projectId,
