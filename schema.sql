@@ -25922,6 +25922,7 @@ CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_lapt
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (true);
+
 --- error_table
 ALTER TABLE error_table ENABLE ROW LEVEL SECURITY;
 
