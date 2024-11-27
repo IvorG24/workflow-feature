@@ -3,17 +3,19 @@ import {
   getAllGroupOfTeamMember,
   getAllTeamOfUser,
   getFormList,
+  getModuleFormList,
   getTeamMemberList,
   getUser,
   getUserSidebarPreference,
   getUserTeamMemberData,
 } from "@/backend/api/get";
+import { useModuleAction } from "@/hooks/useModuleStore";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Database } from "@/utils/database";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
@@ -39,6 +41,7 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setTeamMemberStore } = useTeamMemberListActions();
+  const { setModuleList } = useModuleAction();
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
   const {
@@ -162,6 +165,12 @@ const Layout = ({ children }: LayoutProps) => {
         if (activeTeamId) {
           const teamMemberList = await fetchAllTeamMembers(activeTeamId);
           setTeamMemberStore(teamMemberList);
+
+          const moduleList = await getModuleFormList(supabaseClient, {
+            teamId: activeTeamId,
+          });
+
+          setModuleList(moduleList);
         }
 
         // fetch notification list

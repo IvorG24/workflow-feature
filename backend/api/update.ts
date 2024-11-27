@@ -11,6 +11,7 @@ import {
   ApiKeyData,
   AppType,
   BackgroundCheckSpreadsheetData,
+  createUpdateWorkflowParams,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
@@ -1618,4 +1619,46 @@ export const updateUserUsernameOrSignature = async (
     .select("*")
     .single();
   if (error) throw error;
+};
+
+export const updateWorkflow = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: createUpdateWorkflowParams
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_workflow", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as string;
+};
+export const updateModuleRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    signerTeamGroup: string[];
+    moduleRequestId: string;
+    requestSignerId: string;
+    requestStatus: string;
+    requestOwnerId: string;
+    signerFullName: string;
+    formName: string;
+    requestAction: string;
+    memberId: string;
+    teamId: string;
+    jiraId?: string;
+    jiraLink?: string;
+    requestFormslyId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_status_module_request", {
+      input_data: { ...params },
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data as string;
 };

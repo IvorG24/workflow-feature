@@ -1,7 +1,12 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import { MeetingDetails, MeetingType, SectionWithField } from "./types";
+import {
+  MeetingDetails,
+  MeetingType,
+  NodeOption,
+  SectionWithField,
+} from "./types";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -727,4 +732,47 @@ export const costCodeExemptionList = [
   "CENTRAL OFFICE",
   "SANTISIMO LOGISTICS",
   "BATCHING PLANT",
+];
+
+export const END_NODE_OPTION: NodeOption = {
+  value: "12038a33-aad2-47f8-872b-fd86defb2a85",
+  label: "Next Node",
+  type: "end",
+  presetLabel: "End",
+  presetBackgroundColor: "FFE4E1",
+  presetTextColor: "#FFFFFF",
+};
+export const CREATE_NODE_OPTION: NodeOption = {
+  value: "12038a33-aad2-47f8-8742-fd86defb2a85",
+  label: "Add New Node",
+  type: "basic",
+  presetLabel: "",
+  presetBackgroundColor: "",
+  presetTextColor: "",
+};
+
+export const COLOR_SET_OPTIONS = [
+  { value: "#000000", label: "Black" },
+  { value: "#ffffff", label: "White" },
+  { value: "#f03e3e", label: "Red" },
+  { value: "#f06595", label: "Pink" },
+  { value: "#7048e8", label: "Violet" },
+  { value: "#9c36b5", label: "Grape" },
+  { value: "#339af0", label: "Blue" },
+  { value: "#4263eb", label: "Indigo" },
+  { value: "#1098ad", label: "Cyan" },
+  { value: "#099268", label: "Teal" },
+  { value: "#2f9e44", label: "Green" },
+  { value: "#74b816", label: "Lime" },
+  { value: "#ffd43b", label: "Yellow" },
+  { value: "#ff922b", label: "Orange" },
+];
+
+export const REQUEST_LIST_HIDDEN_FORMS = [
+  "Quotation",
+  "Receiving Inspecting Report",
+  "Release Order",
+  "Sourced Item",
+  "Transfer Receipt",
+  "Subcon",
 ];

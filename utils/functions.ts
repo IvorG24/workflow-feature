@@ -411,3 +411,11 @@ export const removeDuplicates = (
 
   return Array.from(uniqueObjects.values());
 };
+
+export const removeObjectProperty = (
+  obj: Record<string, any>,
+  propertyToRemove: string
+) => {
+  const { [propertyToRemove]: _, ...newObj } = obj;
+  return newObj;
+};

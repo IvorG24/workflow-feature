@@ -2,14 +2,15 @@ import {
   getApproverRequestCount,
   getHRIndicatorCount,
 } from "@/backend/api/get";
+import { useModuleList } from "@/hooks/useModuleStore";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
+import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { useSidebarStore } from "@/stores/useSidebarStore";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -31,6 +32,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconBook,
   IconClipboard,
   IconCode,
   IconDashboard,
@@ -43,6 +45,7 @@ import {
   IconFileStack,
   IconFileText,
   IconFiles,
+  IconFolderDown,
   IconInfoCircle,
   IconListDetails,
   IconPhoneCall,
@@ -50,6 +53,7 @@ import {
   IconReportAnalytics,
   IconSettingsAutomation,
   IconShieldCheck,
+  IconTableExport,
   IconTerminal,
   IconTicket,
   IconTools,
@@ -158,7 +162,7 @@ const ReviewAppNavLink = () => {
     "Request for Payment Code",
     "Bill of Quantity",
   ];
-
+  const moduleForms = useModuleList();
   const hrManageForm = forms.filter((form) =>
     hrFormNames.includes(form.form_name)
   );
@@ -228,8 +232,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-              ? ["create"]
-              : []
+                ? ["create"]
+                : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -419,6 +423,42 @@ const ReviewAppNavLink = () => {
                   </Menu.Dropdown>
                 </Portal>
               </Menu>
+              <Menu
+                shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                withArrow
+                position="right"
+              >
+                {(userTeamMemberData?.team_member_role === "ADMIN" ||
+                  userTeamMemberData?.team_member_role === "OWNER") && (
+                  <Stack align="start" {...defaultNavLinkContainerProps}>
+                    <Menu.Target>
+                      <Button
+                        fw={400}
+                        leftIcon={<IconFileStack {...defaultIconProps} />}
+                        variant="transparent"
+                      >
+                        Create Module Request
+                      </Button>
+                    </Menu.Target>
+                    <Portal>
+                      <Menu.Dropdown>
+                        {moduleForms.map((module) => (
+                          <Menu.Item
+                            key={module.module_id}
+                            onClick={async () =>
+                              await router.push(
+                                `/${activeTeamNameToUrl}/module-forms/${module.module_id}/create`
+                              )
+                            }
+                          >
+                            {module.module_name}
+                          </Menu.Item>
+                        ))}
+                      </Menu.Dropdown>
+                    </Portal>
+                  </Stack>
+                )}
+              </Menu>
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
@@ -436,8 +476,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-              ? ["form"]
-              : []
+                ? ["form"]
+                : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));
@@ -815,6 +855,48 @@ const ReviewAppNavLink = () => {
       ),
       href: `/${activeTeamNameToUrl}/memo`,
     },
+    ...(userTeamMemberData?.team_member_role === "ADMIN" ||
+    userTeamMemberData?.team_member_role === "OWNER"
+      ? [
+          {
+            label: `Workflow List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconFolderDown {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/workflows`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN" ||
+    userTeamMemberData?.team_member_role === "OWNER"
+      ? [
+          {
+            label: `Module List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconBook {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/modules`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN" ||
+    userTeamMemberData?.team_member_role === "OWNER"
+      ? [
+          {
+            label: `Module Request List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconTableExport {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/module-request`,
+          },
+        ]
+      : []),
   ];
 
   const teamSectionWithManageTeam = [

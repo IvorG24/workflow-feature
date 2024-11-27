@@ -36,6 +36,8 @@ import {
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
   BackgroundCheckTableRow,
+  BasicEdgeType,
+  BasicNodeType,
   ConnectedRequestFormProps,
   CreatePracticalTestFormType,
   CreateTicketFormValues,
@@ -79,6 +81,12 @@ import {
   LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
+  ModuleData,
+  ModuleFormItem,
+  ModuleListType,
+  ModuleRequestList,
+  NodeData,
+  NodeOption,
   NotificationOnLoad,
   NotificationTableRow,
   OptionTableRow,
@@ -129,6 +137,7 @@ import {
   TransactionTableRow,
   UnformattedRequestListItemRequestSigner,
   UserIssuedItem,
+  WorkflowTableParams,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -6900,3 +6909,550 @@ export const getMemberTeamProjectList = async (
 
   return formattedData;
 };
+
+export const getWorkflowPageOnLoad = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      workflowId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .rpc("workflow_page_on_load", { input_data: params })
+      .select("*");
+
+    if (error) throw error;
+    return data as unknown as {
+      initialData: { initialLabel: string; initialVersion: number };
+      workflowVersionId: string;
+    };
+  };
+
+  export const getNodeInWorkflowPage = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      index: number;
+      workflowVersionId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .rpc("fetch_workflow_page_node", { input_data: params })
+      .select("*");
+
+    if (error) throw error;
+    return data as BasicNodeType[];
+  };
+
+  export const getEdgeInWorkflowPage = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      workflowVersionId: string;
+    }
+  ) => {
+    const { workflowVersionId } = params;
+    const { data, error } = await supabaseClient
+      .schema("workflow_schema")
+      .from("edge_table")
+      .select("*")
+      .eq("edge_workflow_version_id", workflowVersionId);
+    if (error) throw error;
+
+    const formattedData = data.map((edge) => {
+      return {
+        id: edge.edge_id,
+        source: edge.edge_source_node_id,
+        target: edge.edge_target_node_id,
+        type: "basic",
+        markerEnd: {
+          type: edge.edge_marker_end_type,
+        },
+        sourceHandle: edge.edge_source_handle,
+        targetHandle: edge.edge_target_handle,
+        data: {
+          label: edge.edge_label,
+          description: "",
+          showTransitionLabel: false,
+          isStartEdge: edge.edge_is_start_edge,
+          isEndEdge: edge.edge_is_end_edge,
+        },
+        selected: false,
+      };
+    });
+
+    return formattedData as unknown as BasicEdgeType[];
+  };
+
+  export const getWorkFlowTableOnLoad = async (
+    supabaseClient: SupabaseClient,
+    params: WorkflowTableParams
+  ) => {
+    const {
+      search,
+      page,
+      limit,
+      isAscendingSort,
+      creatorList,
+      dateRange,
+      teamId,
+    } = params;
+
+    const creatorListArray = Array.isArray(creatorList)
+      ? creatorList
+      : [creatorList];
+    const searchCondition =
+      search && validate(search)
+        ? `wt.workflow_id = '${search}'`
+        : `wt.workflow_label::text ILIKE '%' || '${search}' || '%'`;
+
+    const creatorCondition =
+      creatorListArray.length > 0
+        ? creatorListArray
+            .map((value) => `tmt.team_member_role = '${value}'`)
+            .join(" OR ")
+        : "";
+
+    const dateRangeCondition =
+      dateRange.length === 2 && dateRange[0] && dateRange[1]
+        ? `(wt.workflow_date_created BETWEEN '${new Date(
+            dateRange[0]
+          ).toISOString()}' AND '${new Date(dateRange[1]).toISOString()}')`
+        : dateRange.length === 1 && dateRange[0]
+          ? `wt.workflow_date_created = '${new Date(dateRange[0]).toISOString()}'`
+          : "";
+
+    const input = {
+      page: page,
+      limit: limit,
+      search: searchCondition,
+      isAscendingSort: isAscendingSort,
+      creatorList: creatorCondition ? `AND (${creatorCondition})` : "",
+      dateRange: dateRangeCondition ? `AND (${dateRangeCondition})` : "",
+      teamId: teamId,
+    };
+
+    const { data, error } = await supabaseClient.rpc("workflow_table_on_load", {
+      input_data: input,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      workFlowData: data.workflowData || [],
+      count: data.count || 0,
+    };
+  };
+
+  export const getNodeTypesOption = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: { activeTeam: string }
+  ): Promise<NodeOption[]> => {
+    const { activeTeam } = params;
+
+    const { data, error } = await supabaseClient
+      .schema("workflow_schema")
+      .from("node_type_table")
+      .select("*")
+      .eq("node_type_is_disabled", false)
+      .eq("node_type_team_id", activeTeam)
+      .order("node_type_date_created", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const formattedData = data
+      ?.filter(
+        (node) =>
+          node.node_type_variant !== "origin" && node.node_type_variant !== "end"
+      )
+      .map((node) => ({
+        value: node.node_type_id,
+        label: node.node_type_label,
+        type: node.node_type_variant as "basic",
+        presetLabel: node.node_type_label,
+        presetBackgroundColor: node.node_type_background_color,
+        presetTextColor: node.node_type_font_color,
+        dateCreated: node.node_type_date_created,
+      }));
+
+    return formattedData || [];
+  };
+
+  export const getModuleRequestList = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      page: number;
+      limit: number;
+      isAscendingSort: boolean;
+      search?: string;
+      requestor?: string[];
+      approver?: string[];
+      form?: string[];
+      teamId: string;
+    }
+  ) => {
+    const {
+      page,
+      limit,
+      isAscendingSort,
+      search,
+      requestor,
+      approver,
+      teamId,
+      form,
+    } = params;
+
+    const creatorListArray = Array.isArray(requestor) ? requestor : [requestor];
+    const approverListArray = Array.isArray(approver) ? approver : [approver];
+    const formListArray = Array.isArray(form) ? form : [form];
+
+    const searchCondition =
+      search && validate(search)
+        ? `mr.module_request_id = '${search}'`
+        : `mr.module_request_id::text ILIKE '%' || '${search}' || '%'`;
+
+    const formListCondition =
+      formListArray.length > 0
+        ? formListArray
+            .map((value) => `mr.module_request_latest_form_name = '${value}'`)
+            .join(" OR ")
+        : "";
+
+    const creatorCondition =
+      creatorListArray.length > 0
+        ? creatorListArray
+            .map((value) => `tm.team_member_role = '${value}'`)
+            .join(" OR ")
+        : "";
+
+    const approverCondition =
+      approverListArray.length > 0
+        ? approverListArray
+            .map(
+              (value) =>
+                `mr.module_request_latest_approver ILIKE '%' || '${value}' || '%'`
+            )
+            .join(" OR ")
+        : "";
+
+    const input = {
+      page: page,
+      limit: limit,
+      isAscendingSort: isAscendingSort,
+      search: searchCondition ? `AND (${searchCondition})` : "",
+      form: formListCondition ? `AND (${formListCondition})` : "",
+      creator: creatorCondition ? `AND (${creatorCondition})` : "",
+      approver: approverCondition ? `AND (${approverCondition})` : "",
+      teamId: teamId,
+    };
+
+    const { data, error } = await supabaseClient.rpc(
+      "module_request_table_on_load",
+      {
+        input_data: input,
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return data as {
+      ModuleRequestList: ModuleRequestList[];
+      count: number;
+    };
+  };
+  export const getModulePageOnLoad = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .rpc("module_page_on_load", { input_data: params })
+      .select("*");
+
+    if (error) throw error;
+    return data as unknown as {
+      initialData: { initialLabel: string; initialVersion: number };
+      moduleVersionId: string;
+    };
+  };
+
+  export const getModulePageNode = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleVersionId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .rpc("fetch_module_page_node", { input_data: params })
+      .select("*");
+
+    if (error) throw error;
+    return data;
+  };
+
+  export const getModuleList = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      teamId: string;
+      page: number;
+      limit: number;
+      creator: string[];
+      dateRange: Date[];
+      sort?: boolean;
+      searchFilter?: string;
+      columnAccessor?: string;
+    }
+  ) => {
+    const { teamId, creator, dateRange, page, limit, sort, searchFilter } =
+      params;
+    const searchCondition =
+      searchFilter && validate(searchFilter)
+        ? `module_id = '${searchFilter}'`
+        : `module_id::text ILIKE '%' || '${searchFilter}' || '%'`;
+
+    const creatorCondition =
+      creator.length > 0
+        ? creator
+            .map((value) => `tmtc.team_member_role = '${value}'`)
+            .join(" OR ")
+        : "";
+
+    const dateRangeCondition =
+      dateRange.length === 2 && dateRange[0] && dateRange[1]
+        ? `(module_version_date_created BETWEEN '${new Date(
+            dateRange[0]
+          ).toISOString()}' AND '${new Date(dateRange[1]).toISOString()}')`
+        : dateRange.length === 1 && dateRange[0]
+          ? `module_version_date_created = '${new Date(dateRange[0]).toISOString()}'`
+          : "";
+
+    const { data, error } = await supabaseClient.rpc("get_module_list", {
+      input_data: {
+        teamId,
+        page,
+        limit,
+        sort: sort,
+        searchFilter: searchCondition,
+        creator: creatorCondition ? `AND (${creatorCondition})` : "",
+        dateRange: dateRangeCondition ? `AND (${dateRangeCondition})` : "",
+      },
+    });
+
+    if (error) throw Error;
+
+    return data as unknown as {
+      moduleData: ModuleListType[];
+      moduleCount: number;
+    };
+  };
+
+  export const getModuleFormList = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      teamId: string;
+    }
+  ) => {
+    const { teamId } = params;
+
+    const { data, error } = await supabaseClient.rpc("get_module_request_form", {
+      input_data: {
+        teamId,
+      },
+    });
+
+    if (error) throw Error;
+
+    return data as ModuleFormList[];
+  };
+
+  export const getFormid = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleId: string;
+      moduleVersionId?: string;
+    }
+  ) => {
+    const { moduleId, moduleVersionId } = params;
+
+    const { data, error } = await supabaseClient.rpc("get_module_form_on_load", {
+      input_data: {
+        moduleId,
+        moduleVersionId,
+      },
+    });
+    if (error) throw Error;
+
+    return data as unknown as ModuleFormItem[];
+  };
+
+  export const checkFormIfExist = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleRequestId: string;
+      formData?: ModuleFormItem[];
+    }
+  ) => {
+    const { moduleRequestId, formData } = params;
+
+    const { data, error } = await supabaseClient.rpc("check_form_exist", {
+      input_data: {
+        moduleRequestId,
+        formData,
+      },
+    });
+    if (error) throw Error;
+
+    return data as ModuleFormItem[];
+  };
+
+  export const getRequestId = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: { moduleRequestId: string }
+  ) => {
+    const { moduleRequestId } = params;
+
+    const { data, error } = await supabaseClient
+      .schema("request_schema")
+      .from("request_table")
+      .select("request_id")
+      .eq("request_module_request_id", moduleRequestId);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  };
+
+  export const getTargetNode = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      requestId: string;
+      currentStatus: string;
+      workflowId: string;
+      workflowVersionId: string;
+    }
+  ) => {
+    const { requestId, currentStatus, workflowId, workflowVersionId } = params;
+
+    const { data, error } = await supabaseClient.rpc("get_target_node", {
+      input_data: {
+        requestId,
+        currentStatus,
+        workflowId,
+        workflowVersionId,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+    return data as unknown as NodeData;
+  };
+
+  export const checkMemberTeamGroup = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      memberId: string;
+      requestId: string;
+      currentStatus: string;
+      userGroupData: string[];
+      signerTeamGroups: string[];
+    }
+  ) => {
+    const {
+      memberId,
+      requestId,
+      currentStatus,
+      signerTeamGroups,
+      userGroupData,
+    } = params;
+
+    const { data, error } = await supabaseClient.rpc("check_member_team_group", {
+      input_data: {
+        memberId,
+        requestId,
+        currentStatus,
+        signerTeamGroups,
+        userGroupData,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+    return data as string[];
+  };
+
+  export const checkApproverGroup = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      requestId: string;
+      requestStatus: string[];
+    }
+  ) => {
+    const { requestId, requestStatus } = params;
+
+    const { data, error } = await supabaseClient.rpc("check_approver_group", {
+      input_data: {
+        requestId,
+        requestStatus,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+    return data;
+  };
+
+  export const checkIfFormCreated = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleRequestId: string;
+      formId: string;
+    }
+  ) => {
+    const { moduleRequestId, formId } = params;
+
+    const { data, error } = await supabaseClient
+      .schema("request_schema")
+      .from("request_table")
+      .select("*")
+      .eq("request_form_id", formId)
+      .eq("request_module_request_id", moduleRequestId);
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.length > 0) {
+      return true;
+    } else {
+      false;
+    }
+  };
+
+  export const getModuleInformation = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      moduleRequestId: string;
+    }
+  ) => {
+    const { moduleRequestId } = params;
+
+    const { data, error } = await supabaseClient.rpc("view_page_on_load", {
+      input_data: {
+        moduleRequestId,
+      },
+    });
+
+    if (error) throw error;
+
+    return data as unknown as ModuleData;
+  }
+

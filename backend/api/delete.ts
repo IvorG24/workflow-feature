@@ -231,3 +231,16 @@ export const deleteTeamMembershipRequest = async (
 
   if (error) throw error;
 };
+
+export const deleteNodeType = async (
+    supabaseClient: SupabaseClient<Database>,
+    node_type_id: string
+  ) => {
+    const { error: disableError } = await supabaseClient
+      .schema("workflow_schema")
+      .from("node_type_table")
+      .update({ node_type_is_disabled: true })
+      .eq("node_type_id", node_type_id);
+
+    if (disableError) throw disableError;
+  };

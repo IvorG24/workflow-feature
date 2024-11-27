@@ -1,5 +1,6 @@
 import { Database } from "@/utils/database";
 import { Database as OneOfficeDatabase } from "oneoffice-api";
+import { Edge, Node } from "@xyflow/react";
 
 // Start: Database Table Types
 export type AttachmentTableRow =
@@ -2685,4 +2686,366 @@ export type SidebarStorePreference = {
   form: boolean;
   team: boolean;
   jira: boolean;
+};
+
+export type ModuleType = {
+  module_temp_id: number;
+  module_temp_form_name: string;
+  module_temp_workflow_name: string;
+  module_connection_workflow_id: string;
+  module_connection_form_id: string;
+};
+
+export type ModuleListType = {
+  module_id: string;
+  module_name: string;
+  module_version_label: string;
+  module_version_date_created: Date;
+  module_version_date_updated: Date;
+  module_version_created_by_team_member_id: string;
+  module_version_updated_by_team_member_id: string;
+  module_created_by: {
+    user_first_name: string;
+    user_last_name: string;
+    user_id: string;
+    user_avatar: string | null;
+  };
+  module_updated_by: {
+    user_first_name: string;
+    user_last_name: string;
+    user_id: string;
+    user_avatar: string | null;
+  };
+};
+
+export type FormWithModuleResponseType = {
+  form_id: string;
+  form_name: string;
+  form_description: string;
+  form_date_created: string;
+  form_is_hidden: boolean;
+  form_is_formsly_form: boolean;
+  form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_username: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+  };
+  form_signer: {
+    signer_team_member: any;
+    signer_id: string;
+    signer_is_primary_signer?: boolean;
+    signer_action: string;
+    signer_order?: number;
+    signer_team_group?: {
+      team_group_id: string;
+      team_group_name: string;
+    }[];
+  }[];
+  form_section: (SectionTableRow & {
+    section_field: (FieldTableRow & {
+      field_section_duplicatable_id?: string;
+    } & {
+      field_option: OptionTableRow[];
+      field_response?: unknown;
+      field_prefix?: string;
+    })[];
+  })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
+};
+
+export type RequestWithModuleResponseType = RequestTableRow & {
+  request_formsly_id: string;
+} & {
+  request_form: {
+    form_id: string;
+    form_name: string;
+    form_description: string;
+    form_is_formsly_form: boolean;
+    form_type?: string;
+    form_sub_type?: string;
+    form_section: (SectionTableRow & {
+      section_field: (FieldTableRow & {
+        field_section_duplicatable_id?: string;
+        field_option: OptionTableRow[];
+        field_response: RequestResponseTableRow[];
+      } & {
+        field_options?: OptionTableRow[] | null;
+      })[];
+    })[];
+  };
+} & {
+  request_team_member: {
+    team_member_team_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_username: string;
+      user_avatar: string;
+      user_job_title: string;
+    };
+  };
+} & {
+  request_signer: (RequestSignerTableRow & {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_status_color: string;
+    request_status_font_color: string;
+    request_module_name: string;
+    request_workflow_id: string;
+    request_workflow_version: string;
+    request_module_version_id: string;
+    request_signer_signer: {
+      signer_id: string;
+      signer_action: string;
+      signer_order: number;
+      signer_team_group: {
+        team_group_name: string;
+        team_group_id: string;
+      }[];
+    };
+  })[];
+} & {
+  request_comment: {
+    comment_id: string;
+    comment_date_created: string;
+    comment_content: string;
+    comment_is_edited: boolean;
+    comment_last_updated: string;
+    comment_type: CommentType;
+    comment_team_member_id: string;
+    comment_team_member: {
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_username: string;
+        user_avatar: string;
+      };
+    };
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  }[];
+} & {
+  request_project: {
+    team_project_name: string;
+    team_project_id: string;
+  };
+};
+
+export type RequestModuleCommentType =
+  RequestWithModuleResponseType["request_comment"][0] & {
+    comment_attachment: CommentAttachmentWithPublicUrl;
+  };
+
+export type NodeChangeStylesFormValues = {
+  fontColor: string;
+  backgroundColor: string;
+};
+
+export type NodeAdvanceSettings = {
+  nodeStyle: {
+    label: string;
+    fontColor: string;
+    backgroundColor: string;
+  };
+  nodeProjectWithSignerList: {
+    signerList: string[];
+    signerCount?: number;
+  }[];
+};
+
+export type BasicNodeType = Node & {
+  data: NodeAdvanceSettings & {
+    onNodeStyleChange: (
+      nodeId: string,
+      newData: BasicNodeType["data"]["nodeStyle"]
+    ) => void;
+    onNodeSignerChange: (
+      nodeId: string,
+      newData: BasicNodeType["data"]["nodeProjectWithSignerList"]
+    ) => void;
+  };
+};
+
+export type BasicEdgeType = Edge & {
+  data: {
+    label: string;
+    showTransitionLabel: boolean;
+    onEdgeDataChange: (id: string, newData: BasicEdgeType["data"]) => void;
+    onDeleteEdge: (nodeId: string) => void;
+    isStartEdge: boolean;
+    isEndEdge: boolean;
+  };
+};
+
+export type WorkFlowTableValues = {
+  workflow_date_created: string;
+  workflow_date_updated: string;
+  workflow_update_by: string;
+  workflow_id: string;
+  workflow_is_disabled: boolean;
+  workflow_label: string;
+  workflow_team_id: string;
+  workflow_version_label: string;
+  created_by: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+    team_member_id: string;
+  };
+  updated_by: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+    team_member_id: string;
+  };
+};
+
+export type WorkFlowProps = {
+  teamMemberList: TeamMemberWithUserType[];
+  workFlowData: WorkFlowTableValues[];
+  count: number;
+};
+export type FilterFormValues = {
+  creatorList: string[];
+  dateRange: string[];
+  isAscendingSort: boolean;
+  searchFilter: string;
+};
+
+export type WorkflowTableParams = {
+  isAscendingSort: boolean;
+  page: number;
+  limit: number;
+  search?: string;
+  creatorList: string[];
+  dateRange: (Date | "")[];
+  teamId: string;
+};
+
+export type NodeOption = {
+  value: string;
+  label: string;
+  type: "basic" | "end";
+  presetLabel: string;
+  presetBackgroundColor: string;
+  presetTextColor: string;
+};
+
+export type createUpdateWorkflowParams = {
+  workflowId: string;
+  label: string;
+  nodes: BasicNodeType[];
+  edges: BasicEdgeType[];
+  teamId: string;
+  teamMemberId: string;
+};
+
+export type NodeTypeData = {
+  presetLabel: string;
+  presetBackgroundColor: string;
+  presetTextColor: string;
+};
+
+export type ModuleRequestList = {
+  request_id: string;
+  module_request_id: string;
+  module_name: string;
+  module_connection_module_version_id: string;
+  date_created: string;
+  form_name: string;
+  request_status: string;
+  status_color: string;
+  status_font_color: string;
+  created_by: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+    team_member_id: string;
+  };
+  team_group_names: string[];
+};
+export type FormList = {
+  form_id: string;
+  form_name: string;
+  request_id?: string;
+}[];
+
+export type ModuleFormList = {
+  module_name: string;
+  module_id: string;
+};
+
+export type ModuleFormItem = {
+  form_name: string;
+  form_id: string;
+  request_id: string;
+};
+
+export type TargetNode = {
+  target_node_type_label: string;
+  edge_transition_label: string;
+  target_node_background_color: string;
+  target_node_font_color: string;
+  signer_count: number;
+};
+
+export type NodeData = {
+  targetNode: TargetNode[];
+  workflowNode: TargetNode[];
+};
+export type ModuleFormId = {
+  module_connection_form_id: string;
+}[];
+
+export type workFlowType = {
+  workflow_date_created: string;
+  workflow_id: string;
+  workflow_is_disabled: boolean;
+  workflow_label: string;
+  workflow_team_id: string;
+};
+
+export type SelectedForm = {
+  fontColor: string;
+  backgroundColor: string;
+  moduleName: string;
+  formName: string;
+  dateCreated: string;
+  currentStatus: string;
+};
+
+type Requestor = {
+  user_id: string;
+  user_first_name: string;
+  user_last_name: string;
+  user_avatar: string;
+};
+
+export type ModuleData = {
+  module_request_id: string;
+  module_date_created: string;
+  module_name: string;
+  module_form: string;
+  module_status: string;
+  module_status_color: string;
+  module_status_font_color: string;
+  requestor: Requestor;
 };
