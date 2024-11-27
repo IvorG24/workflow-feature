@@ -1,5 +1,4 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getTeamMemberWithFilter } from "@/backend/api/get";
 import { uploadImage } from "@/backend/api/post";
 import {
   leaveTeam,
@@ -7,10 +6,7 @@ import {
   updateTeamMemberRole,
   updateTeamOwner,
 } from "@/backend/api/update";
-import {
-  useTeamMemberList,
-  useTeamMemberListActions,
-} from "@/stores/useTeamMemberStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -64,10 +60,8 @@ export type SearchForm = {
 
 type Props = {
   team: TeamTableRow;
-  teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
   teamProjects: TeamProjectWithAddressType[];
-  teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
   pendingValidIDList: UserValidIDTableRow[];
@@ -75,7 +69,6 @@ type Props = {
 
 const TeamPage = ({
   team: initialTeam,
-  teamMembers,
   teamGroups,
   teamProjects,
   teamGroupsCount,
@@ -88,19 +81,25 @@ const TeamPage = ({
   const teamMember = useUserTeamMember();
   const user = useUser();
 
+  const teamMemberListFromStore = useTeamMemberList();
+
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
-  // const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
-  // const [teamMemberList, setTeamMemberList] = useState(teamMembers);
-  const teamMemberList = useTeamMemberList();
-  const teamMemberCount = teamMemberList.length;
-  const { setTeamMemberStore } = useTeamMemberListActions();
+  const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>(
+    teamMemberListFromStore
+  );
+  const [teamMemberCount, setTeamMemberCount] = useState<number>(
+    teamMemberListFromStore.length
+  );
+  const [filteredTeamMemberList, setFilteredTeamMemberList] = useState<
+    TeamMemberType[]
+  >(teamMemberListFromStore);
 
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
+
   const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamMemberPage, setTeamMemberPage] = useState(1);
-  console.log("Page:", teamMemberPage, "List:", teamMemberList);
 
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
@@ -112,15 +111,31 @@ const TeamPage = ({
   const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
   const isOwner = userRole === "OWNER";
 
+  const ROLE_PRIORITY = {
+    OWNER: 1,
+    ADMIN: 2,
+    APPROVER: 3,
+    MEMBER: 4,
+  };
+
+  useEffect(() => {
+    const sortedMembers = [...teamMemberListFromStore].sort(
+      (a, b) =>
+        ROLE_PRIORITY[a.team_member_role] - ROLE_PRIORITY[b.team_member_role]
+    );
+
+    setTeamMemberList(sortedMembers);
+    setTeamMemberCount(sortedMembers.length);
+
+    const initialPageData = sortedMembers.slice(0, ROW_PER_PAGE);
+    setFilteredTeamMemberList(initialPageData);
+  }, [teamMemberListFromStore]);
+
   const updateTeamMethods = useForm<UpdateTeamInfoForm>({
     defaultValues: { teamName: team.team_name, teamLogo: team.team_logo || "" },
   });
 
   const searchTeamMemberMethods = useForm<SearchForm>();
-
-  useEffect(() => {
-    setTeamMemberStore(teamMembers);
-  }, [teamMembers, setTeamMemberStore]);
 
   const handleUpdateTeam = async (data: UpdateTeamInfoForm) => {
     const { teamName } = data;
@@ -195,26 +210,65 @@ const TeamPage = ({
     }
   };
 
-  const handleSearchTeamMember = async (data: SearchForm) => {
+  const getFilteredTeamMembers = ({
+    keyword,
+    page,
+    limit,
+  }: {
+    keyword: string;
+    page: number;
+    limit: number;
+  }): {
+    teamMembers: TeamMemberType[];
+    teamMembersCount: number;
+  } => {
+    const searchKeyword = keyword.trim().toLowerCase();
+
+    const filteredMembers = teamMemberList.filter((member) => {
+      const fullName =
+        `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`.toLowerCase();
+      const email = member.team_member_user.user_email.toLowerCase();
+      const employeeNumber = member.team_member_user.user_employee_number || "";
+
+      return (
+        fullName.includes(searchKeyword) ||
+        email.includes(searchKeyword) ||
+        employeeNumber.includes(searchKeyword)
+      );
+    });
+
+    const startIndex = (page - 1) * limit;
+    const paginatedMembers = filteredMembers.slice(
+      startIndex,
+      startIndex + limit
+    );
+
+    return {
+      teamMembers: paginatedMembers,
+      teamMembersCount: filteredMembers.length,
+    };
+  };
+
+  const handleSearchTeamMember = (data: SearchForm) => {
     try {
-      setIsUpdatingTeamMembers(true);
       setTeamMemberPage(1);
-      const formattedData = await getTeamMemberWithFilter(supabaseClient, {
-        teamId: team.team_id,
+      setIsUpdatingTeamMembers(true);
+
+      const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
+        keyword: data.keyword,
         page: 1,
         limit: ROW_PER_PAGE,
-        search: data.keyword,
       });
 
-      // setTeamMemberList(formattedData.teamMembers);
-      // setTeamMemberCount(formattedData.teamMembersCount || 0);
-      setTeamMemberStore(formattedData.teamMembers);
-      setIsUpdatingTeamMembers(false);
-    } catch {
+      setFilteredTeamMemberList(teamMembers);
+      setTeamMemberCount(teamMembersCount);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
@@ -291,28 +345,31 @@ const TeamPage = ({
     }
   };
 
-  const handleMemberPageChange = async (page: number) => {
+  const handleMemberPageChange = (page: number) => {
     try {
       setTeamMemberPage(page);
       setIsUpdatingTeamMembers(true);
-      const keyword = searchTeamMemberMethods.getValues("keyword");
 
-      const formattedData = await getTeamMemberWithFilter(supabaseClient, {
-        teamId: team.team_id,
+      const keyword = searchTeamMemberMethods
+        .getValues("keyword")
+        .trim()
+        .toLowerCase();
+
+      const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
+        keyword,
         page,
         limit: ROW_PER_PAGE,
-        search: keyword,
       });
 
-      // setTeamMemberList(formattedData.teamMembers);
-      // setTeamMemberCount(formattedData.teamMembersCount || 0);
-      setTeamMemberStore(formattedData.teamMembers);
-      setIsUpdatingTeamMembers(false);
-    } catch {
+      setFilteredTeamMemberList(teamMembers);
+      setTeamMemberCount(teamMembersCount);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsUpdatingTeamMembers(false);
     }
   };
 
@@ -375,7 +432,7 @@ const TeamPage = ({
 
       <FormProvider {...searchTeamMemberMethods}>
         <TeamMemberList
-          // teamMemberList={teamMemberList}
+          teamMemberList={filteredTeamMemberList}
           teamMemberCount={teamMemberCount}
           isUpdatingTeamMembers={isUpdatingTeamMembers}
           onSearchTeamMember={handleSearchTeamMember}
@@ -390,10 +447,7 @@ const TeamPage = ({
       {isOwner && (
         <Box mt="xl">
           <Paper p="xl" shadow="xs">
-            <AdminGroup
-              teamId={initialTeam.team_id}
-              // teamMemberList={teamMembers}
-            />
+            <AdminGroup teamId={initialTeam.team_id} />
           </Paper>
         </Box>
       )}
@@ -401,10 +455,7 @@ const TeamPage = ({
       {isOwnerOrAdmin && (
         <Box mt="xl">
           <Paper p="xl" shadow="xs">
-            <ApproverGroup
-              teamId={initialTeam.team_id}
-              teamMemberList={teamMembers}
-            />
+            <ApproverGroup teamId={initialTeam.team_id} />
           </Paper>
         </Box>
       )}
@@ -433,16 +484,13 @@ const TeamPage = ({
           <InviteMember
             isOwnerOrAdmin={isOwnerOrAdmin}
             memberEmailList={memberEmailList}
-            teamMemberList={teamMembers}
           />
           <QuickOnboarding memberEmailList={memberEmailList} />
           <ValidIDVerificationList pendingValidIDList={pendingValidIDList} />
         </>
       ) : null}
 
-      {/* {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />} */}
       {isOwner && <DeleteTeamSection totalMembers={teamMemberList.length} />}
-
       {!isOwner && <LeaveTeamSection onLeaveTeam={handleLeaveTeam} />}
 
       <Space mt={32} />

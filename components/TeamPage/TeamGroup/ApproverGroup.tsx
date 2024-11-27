@@ -1,4 +1,4 @@
-import { TeamMemberType } from "@/utils/types";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { Box } from "@mantine/core";
 import { useState } from "react";
 import AddTeamApprover from "./AddTeamApprover";
@@ -30,10 +30,10 @@ export type TeamApproverChoiceType = {
 
 type Props = {
   teamId: string;
-  teamMemberList: TeamMemberType[];
 };
 
-const ApproverGroup = ({ teamId, teamMemberList }: Props) => {
+const ApproverGroup = ({ teamId }: Props) => {
+  const teamMemberList = useTeamMemberList();
   const [approverList, setApproverList] = useState<TeamApproverType[]>([]);
   const [approverListCount, setApproverListCount] = useState(0);
   const [isAddingApprover, setIsAddingApprover] = useState(false);
@@ -48,7 +48,7 @@ const ApproverGroup = ({ teamId, teamMemberList }: Props) => {
           setIsAddingApprover={setIsAddingApprover}
           approverListCount={approverListCount}
           setApproverListCount={setApproverListCount}
-          teamMemberList={teamMemberList}
+          teamMemberList={teamMemberList} // Pass the fetched team members
         />
       ) : null}
       {isAddingApprover ? (

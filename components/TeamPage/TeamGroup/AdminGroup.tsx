@@ -30,14 +30,14 @@ export type TeamAdminChoiceType = {
 
 type Props = {
   teamId: string;
-  // teamMemberList: TeamMemberType[];
 };
 
 const AdminGroup = ({ teamId }: Props) => {
+  const teamMemberList = useTeamMemberList();
+
   const [adminList, setAdminList] = useState<TeamAdminType[]>([]);
   const [adminListCount, setAdminListCount] = useState(0);
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
-  const teamMemberList = useTeamMemberList();
 
   return (
     <Box>
