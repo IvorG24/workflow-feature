@@ -94,7 +94,7 @@ const TeamPage = ({
 
   // const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
   // const [teamMemberList, setTeamMemberList] = useState(teamMembers);
-  const teamMemberList = useTeamMemberList() || [];
+  const teamMemberList = useTeamMemberList();
   const teamMemberCount = teamMemberList.length;
   const { setTeamMemberStore } = useTeamMemberListActions();
 
@@ -376,7 +376,7 @@ const TeamPage = ({
 
       <FormProvider {...searchTeamMemberMethods}>
         <TeamMemberList
-          teamMemberList={teamMemberList}
+          // teamMemberList={teamMemberList}
           teamMemberCount={teamMemberCount}
           isUpdatingTeamMembers={isUpdatingTeamMembers}
           onSearchTeamMember={handleSearchTeamMember}
@@ -393,7 +393,7 @@ const TeamPage = ({
           <Paper p="xl" shadow="xs">
             <AdminGroup
               teamId={initialTeam.team_id}
-              teamMemberList={teamMembers}
+              // teamMemberList={teamMembers}
             />
           </Paper>
         </Box>

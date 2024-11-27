@@ -1,8 +1,9 @@
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { customMathCeil } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import { MemberRoleType, TeamMemberType } from "@/utils/types";
+import { MemberRoleType } from "@/utils/types";
 import {
   ActionIcon,
   Avatar,
@@ -23,7 +24,7 @@ import TeamMemberMenu from "./TeamMemberMenu";
 import { SearchForm } from "./TeamPage";
 
 type Props = {
-  teamMemberList: TeamMemberType[];
+  // teamMemberList: TeamMemberType[];
   isUpdatingTeamMembers: boolean;
   onSearchTeamMember: (data: SearchForm) => void;
   onRemoveFromTeam: (memberId: string) => void;
@@ -34,7 +35,7 @@ type Props = {
   teamMemberCount: number;
 };
 const TeamMemberList = ({
-  teamMemberList,
+  // teamMemberList,
   isUpdatingTeamMembers,
   onSearchTeamMember,
   onRemoveFromTeam,
@@ -45,6 +46,7 @@ const TeamMemberList = ({
   teamMemberCount,
 }: Props) => {
   const { register, handleSubmit } = useFormContext<SearchForm>();
+  const teamMemberList = useTeamMemberList();
 
   const rows = teamMemberList.map((member) => {
     const { team_member_role: role, team_member_user: user } = member;
