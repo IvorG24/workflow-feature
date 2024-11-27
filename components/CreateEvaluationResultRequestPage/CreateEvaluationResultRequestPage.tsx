@@ -79,7 +79,6 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
 
   useEffect(() => {
     const fetchAutomaticResponse = async () => {
-      console.log();
       setIsLoading(true);
       if (!requestorProfile) return;
       try {
