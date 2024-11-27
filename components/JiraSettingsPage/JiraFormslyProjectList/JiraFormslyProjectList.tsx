@@ -47,6 +47,8 @@ type Props = {
   jiraProjectList: JiraProjectTableRow[];
   jiraOrganizationList: JiraOrganizationTableRow[];
   selectedFormslyProject: string | null;
+  isShowTable: boolean;
+  setIsShowTable: Dispatch<SetStateAction<boolean>>;
   setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
   setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
   setJiraFormslyProjectList: Dispatch<SetStateAction<JiraFormslyProjectType[]>>;
@@ -75,8 +77,10 @@ const JiraFormslyProjectList = ({
   jiraFormslyProjectCount,
   jiraProjectList,
   jiraOrganizationList,
+  isShowTable,
   setIsManagingUserAccountList,
   setSelectedFormslyProject,
+  setIsShowTable,
   selectedFormslyProject,
   setJiraFormslyProjectList,
   setJiraFormslyProjectCount,
@@ -363,154 +367,160 @@ const JiraFormslyProjectList = ({
 
   return (
     <Box>
-      <Paper pos="relative">
-        <Group>
-          <Title order={3}>Team Projects</Title>
-          <form
-            onSubmit={searchTeamProjectFormMethods.handleSubmit(
-              handleSearchTeamProject
-            )}
-          >
-            <TextInput
-              aria-label="search-project"
-              miw={250}
-              maxLength={4000}
-              placeholder="Project Name"
-              rightSection={
-                <ActionIcon
-                  aria-label="search-project-button"
-                  onClick={() =>
-                    handleSearchTeamProject(
-                      searchTeamProjectFormMethods.getValues()
-                    )
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchTeamProjectFormMethods.register("search")}
-            />
-          </form>
-        </Group>
-        <DataTable
-          mt="xs"
-          withBorder
-          fw="bolder"
-          c="dimmed"
-          minHeight={390}
-          idAccessor="team_project_id"
-          totalRecords={jiraFormslyProjectCount}
-          recordsPerPage={ROW_PER_PAGE}
-          page={projectActivePage}
-          onPageChange={handlePagination}
-          records={jiraFormslyProjectList}
-          fetching={isLoading}
-          columns={[
-            {
-              accessor: "team_project_name",
-              title: "Formsly Project Name",
-              render: ({ team_project_name }) => team_project_name,
-            },
-            {
-              accessor:
-                "assigned_jira_project.jira_project.jira_project_jira_label",
-              title: "Jira Project Name",
-              render: ({ assigned_jira_project }) =>
-                assigned_jira_project?.jira_project
-                  ?.jira_project_jira_label ?? (
-                  <Badge color="orange">UNASSIGNED</Badge>
+      {isShowTable && (
+        <Paper pos="relative">
+          <Group>
+            <Title order={3}>Team Projects</Title>
+            <form
+              onSubmit={searchTeamProjectFormMethods.handleSubmit(
+                handleSearchTeamProject
+              )}
+            >
+              <TextInput
+                aria-label="search-project"
+                miw={250}
+                maxLength={4000}
+                placeholder="Project Name"
+                rightSection={
+                  <ActionIcon
+                    aria-label="search-project-button"
+                    onClick={() =>
+                      handleSearchTeamProject(
+                        searchTeamProjectFormMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchTeamProjectFormMethods.register("search")}
+              />
+            </form>
+          </Group>
+          <DataTable
+            mt="xs"
+            withBorder
+            fw="bolder"
+            c="dimmed"
+            minHeight={390}
+            idAccessor="team_project_id"
+            totalRecords={jiraFormslyProjectCount}
+            recordsPerPage={ROW_PER_PAGE}
+            page={projectActivePage}
+            onPageChange={handlePagination}
+            records={jiraFormslyProjectList}
+            fetching={isLoading}
+            columns={[
+              {
+                accessor: "team_project_name",
+                title: "Formsly Project Name",
+                render: ({ team_project_name }) => team_project_name,
+              },
+              {
+                accessor:
+                  "assigned_jira_project.jira_project.jira_project_jira_label",
+                title: "Jira Project Name",
+                render: ({ assigned_jira_project }) =>
+                  assigned_jira_project?.jira_project
+                    ?.jira_project_jira_label ?? (
+                    <Badge color="orange">UNASSIGNED</Badge>
+                  ),
+              },
+              {
+                accessor:
+                  "assigned_jira_organization.jira_organization_team_project_organization.jira_organization_jira_label",
+                title: "Jira Organization",
+                render: ({ assigned_jira_organization }) =>
+                  assigned_jira_organization
+                    ?.jira_organization_team_project_organization
+                    ?.jira_organization_jira_label ?? (
+                    <Badge color="orange">UNASSIGNED</Badge>
+                  ),
+              },
+              {
+                accessor: "assign_to_jira_project",
+                title: "Action",
+                render: ({
+                  team_project_id,
+                  assigned_jira_project,
+                  assigned_jira_organization,
+                }) => (
+                  <Menu aria-label="project-menu">
+                    <Menu.Target>
+                      <ActionIcon>
+                        <IconSettings size={16} />
+                      </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        icon={<IconPlugConnected size={14} />}
+                        onClick={() => {
+                          setSelectedFormslyProject(team_project_id);
+                          setIsShowTable(true);
+                          setOpenJiraProjectFormModal(true);
+
+                          if (assigned_jira_project !== null) {
+                            setIsReassignJiraFormslyProject(true);
+                            assignFormslyProjectFormMethods.setValue(
+                              "jiraProjectId",
+                              assigned_jira_project.jira_project_id
+                            );
+                          }
+                        }}
+                      >
+                        {`${
+                          assigned_jira_project ? "Reassign" : "Assign"
+                        } to Jira Project`}
+                      </Menu.Item>
+
+                      <Menu.Item
+                        icon={<IconLine size={14} />}
+                        onClick={() => {
+                          setSelectedFormslyProject(team_project_id);
+                          setIsShowTable(true);
+                          setOpenJiraOrganizationFormModal(true);
+                          const isReassignOrganization =
+                            assigned_jira_organization !== null &&
+                            assigned_jira_organization.jira_organization_team_project_organization;
+
+                          if (isReassignOrganization) {
+                            setIsReassignJiraOrganization(true);
+                            assignJiraOrganizationFormMethods.setValue(
+                              "jiraOrganizationId",
+                              assigned_jira_organization.jira_organization_team_project_organization_id
+                            );
+                          }
+                        }}
+                      >
+                        {`${
+                          assigned_jira_organization?.jira_organization_team_project_organization
+                            ? "Reassign"
+                            : "Assign"
+                        } to Jira Organization`}
+                      </Menu.Item>
+
+                      <Menu.Divider />
+
+                      <Menu.Item
+                        icon={<IconUsersGroup size={14} />}
+                        onClick={() => {
+                          setIsManagingUserAccountList(true);
+                          setIsShowTable(false);
+                          setSelectedFormslyProject(team_project_id);
+                        }}
+                      >
+                        Manage Project Users
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
                 ),
-            },
-            {
-              accessor:
-                "assigned_jira_organization.jira_organization_team_project_organization.jira_organization_jira_label",
-              title: "Jira Organization",
-              render: ({ assigned_jira_organization }) =>
-                assigned_jira_organization
-                  ?.jira_organization_team_project_organization
-                  ?.jira_organization_jira_label ?? (
-                  <Badge color="orange">UNASSIGNED</Badge>
-                ),
-            },
-            {
-              accessor: "assign_to_jira_project",
-              title: "Action",
-              render: ({
-                team_project_id,
-                assigned_jira_project,
-                assigned_jira_organization,
-              }) => (
-                <Menu aria-label="project-menu">
-                  <Menu.Target>
-                    <ActionIcon>
-                      <IconSettings size={16} />
-                    </ActionIcon>
-                  </Menu.Target>
+              },
+            ]}
+          />
+        </Paper>
+      )}
 
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      icon={<IconPlugConnected size={14} />}
-                      onClick={() => {
-                        setSelectedFormslyProject(team_project_id);
-                        setOpenJiraProjectFormModal(true);
-
-                        if (assigned_jira_project !== null) {
-                          setIsReassignJiraFormslyProject(true);
-                          assignFormslyProjectFormMethods.setValue(
-                            "jiraProjectId",
-                            assigned_jira_project.jira_project_id
-                          );
-                        }
-                      }}
-                    >
-                      {`${
-                        assigned_jira_project ? "Reassign" : "Assign"
-                      } to Jira Project`}
-                    </Menu.Item>
-
-                    <Menu.Item
-                      icon={<IconLine size={14} />}
-                      onClick={() => {
-                        setSelectedFormslyProject(team_project_id);
-                        setOpenJiraOrganizationFormModal(true);
-                        const isReassignOrganization =
-                          assigned_jira_organization !== null &&
-                          assigned_jira_organization.jira_organization_team_project_organization;
-
-                        if (isReassignOrganization) {
-                          setIsReassignJiraOrganization(true);
-                          assignJiraOrganizationFormMethods.setValue(
-                            "jiraOrganizationId",
-                            assigned_jira_organization.jira_organization_team_project_organization_id
-                          );
-                        }
-                      }}
-                    >
-                      {`${
-                        assigned_jira_organization?.jira_organization_team_project_organization
-                          ? "Reassign"
-                          : "Assign"
-                      } to Jira Organization`}
-                    </Menu.Item>
-
-                    <Menu.Divider />
-
-                    <Menu.Item
-                      icon={<IconUsersGroup size={14} />}
-                      onClick={() => {
-                        setIsManagingUserAccountList(true);
-                        setSelectedFormslyProject(team_project_id);
-                      }}
-                    >
-                      Manage Project Users
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              ),
-            },
-          ]}
-        />
-      </Paper>
       {/* Jira Project Form */}
       <FormProvider {...assignFormslyProjectFormMethods}>
         <JiraProjectForm
