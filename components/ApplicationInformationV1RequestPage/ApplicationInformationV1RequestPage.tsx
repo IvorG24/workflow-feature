@@ -14,7 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { formatDateTime } from "@/utils/constant";
 import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -91,7 +91,7 @@ const ApplicationInformationV1RequestPage = ({ request }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
 
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
