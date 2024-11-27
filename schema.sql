@@ -14371,31 +14371,34 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      userId,
+      teamId,
       limit,
       page,
       projectFilter,
       startDate,
       endDate,
-      sortFilter
+      sortFilter,
+      requestIdFilter,
+      projectListOptions
     } = input_data;
 
     const offset = (page - 1) * limit;
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
 
     const projectFilterCondition = projectFilter ? `AND request_project_id IN (${projectFilter})` : '';
     const startDateCondition = startDate ? `AND request_date_created >= '${startDate}'` : '';
     const endDateCondition = endDate ? `AND request_date_created <= '${endDate}'` : '';
 
-    const projectList = plv8.execute(`
-        SELECT * 
-        FROM team_schema.team_project_table 
-        WHERE 
-            team_project_team_id='${teamId}' 
-            AND team_project_is_disabled=false ORDER BY team_project_name ASC;
-    `);
+    let requestFormslyIdPrefix = '';
+    let requestFormslyIdSerial = '';
+    let requestIdCondition = '';
 
-    const projectListOptions = projectList.map(project=> ({value: project.team_project_id, label: project.team_project_name}));
+    if (requestIdFilter) {
+        const requestIdValues = requestIdFilter.split('-');
+        requestFormslyIdPrefix = requestIdValues[0];
+        requestFormslyIdSerial = requestIdValues[1];
+
+        requestIdCondition = `AND (request_formsly_id_prefix = '${requestFormslyIdPrefix}' AND request_formsly_id_serial = '${requestFormslyIdSerial}')`;
+    }
 
     const requestCount = plv8.execute(`
       SELECT
@@ -14408,6 +14411,7 @@ AS $$
         ${projectFilterCondition}
         ${startDateCondition}
         ${endDateCondition}
+        ${requestIdCondition}
     `)[0].count;
 
     const parentRequests = plv8.execute(`
@@ -14428,6 +14432,7 @@ AS $$
         ${projectFilterCondition}
         ${startDateCondition}
         ${endDateCondition}
+        ${requestIdCondition}
       ORDER BY request_date_created ${sortFilter}
       LIMIT '${limit}'
       OFFSET '${offset}'
@@ -14449,7 +14454,6 @@ AS $$
         WHERE
             rr.request_response_request_id = ANY($1)
             AND ft.field_name IN (
-                'Supplier Name/Payee',
                 'Type of Request',
                 'Invoice Amount',
                 'VAT',
@@ -14468,7 +14472,7 @@ AS $$
         map[response.request_response_request_id].push(response);
         return map;
     }, {});
-
+    
     const departmentCache = {};
     Object.entries(parentResponseMap).forEach(([requestId, responses]) => {
         const department = JSON.parse(
@@ -14477,8 +14481,8 @@ AS $$
 
         if (department && !departmentCache[department]) {
             const deptCodeQuery = `
-                SELECT team_department_code
-                FROM team_schema.team_department_table
+                SELECT team_department_code 
+                FROM team_schema.team_department_table 
                 WHERE team_department_name = $1
             `;
             departmentCache[department] = plv8.execute(deptCodeQuery, [department])[0]?.team_department_code;
@@ -14489,11 +14493,11 @@ AS $$
     parentRequests.forEach(parent => {
         if (!jiraProjectMap[parent.request_project_id]) {
             const jiraProjectQuery = `
-                SELECT
-                    jpt.jira_project_jira_label
-                FROM jira_schema.jira_formsly_project_table AS jfp
-                INNER JOIN jira_schema.jira_project_table AS jpt
-                ON jpt.jira_project_id = jfp.jira_project_id
+                SELECT 
+                    jpt.jira_project_jira_label 
+                FROM jira_schema.jira_formsly_project_table AS jfp 
+                INNER JOIN jira_schema.jira_project_table AS jpt 
+                ON jpt.jira_project_id = jfp.jira_project_id 
                 WHERE jfp.formsly_project_id = $1
                 LIMIT 1
             `;
@@ -14512,7 +14516,7 @@ AS $$
             rt.request_jira_id,
             rt.request_form_id AS form_id
         FROM request_schema.request_table AS rt
-        INNER JOIN request_schema.request_response_table AS rrt
+        INNER JOIN request_schema.request_response_table AS rrt 
             ON rrt.request_response_request_id = rt.request_id
             AND REPLACE(rrt.request_response, '"', '') = ANY($1)
         WHERE
@@ -14538,7 +14542,6 @@ AS $$
         WHERE
             rr.request_response_request_id = ANY($1)
             AND ft.field_name IN (
-                'Supplier Name/Payee',
                 'Type of Request',
                 'Invoice Amount',
                 'VAT',
@@ -14583,11 +14586,12 @@ AS $$
     });
 
     const boqRequestIds = childRequests.map(request => `'${request.request_id}'`).join(',');
-
     const boqParentIdResponses = childResponses.filter((res) => res.request_response_field_id === 'eff42959-8552-4d7e-836f-f89018293ae8');
 
-    const reducedRequestListWithResponses = requestListWithResponses
-    .reduce((acc, current) => {
+
+    const finalRequestListWithResponses = requestListWithResponses.map((request) => {
+        let current = request;
+
         const connectedBoqRequest = boqParentIdResponses.find(
             res => res.request_response === `"${current.request_id}"`
         )
@@ -14610,18 +14614,12 @@ AS $$
             }
         }
 
-        acc.push(current);
-
-        return acc;
-    }, []);
-
-
+        return current;
+    });
 
     returnData = {
-      data: reducedRequestListWithResponses,
       count: parseInt(requestCount),
-      projectListOptions,
-      projectFilter
+      data: finalRequestListWithResponses,
     };
  });
 return returnData;
