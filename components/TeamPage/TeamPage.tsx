@@ -78,7 +78,6 @@ const TeamPage = ({
   teamMembers,
   teamGroups,
   teamProjects,
-  teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
   pendingValidIDList,
