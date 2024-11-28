@@ -2,6 +2,8 @@ import {
   checkJobOfferRow,
   getHRProjectOptions,
   getJobOfferSummaryData,
+  getTeamDepartmentOptions,
+  getTeamProjectList,
 } from "@/backend/api/get";
 import { DEFAULT_NUMBER_HR_SSOT_ROWS } from "@/utils/constant";
 import {
@@ -9,6 +11,8 @@ import {
   JobOfferFilterFormValues,
   JobOfferSpreadsheetData,
   OptionType,
+  TeamDepartmentTableRow,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -95,6 +99,10 @@ const JobOfferSpreadsheetView = ({
   });
   const teamMemberOptions = useTeamMemberList();
   const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
+  const [teamDepartment, setTeamDepartment] = useState<
+    TeamDepartmentTableRow[]
+  >([]);
+  const [teamProject, setTeamProject] = useState<TeamProjectTableRow[]>([]);
 
   const prevSortRef = useRef<{
     sortBy: string;
@@ -202,6 +210,20 @@ const JobOfferSpreadsheetView = ({
         setIsLoading(true);
         const projectData = await getHRProjectOptions(supabaseClient);
         setProjectOptions(projectData);
+
+        const teamDepartment = await getTeamDepartmentOptions(supabaseClient, {
+          index: 1,
+          limit: 500,
+        });
+        setTeamDepartment(teamDepartment);
+
+        const { data } = await getTeamProjectList(supabaseClient, {
+          teamId: team.team_id,
+          limit: 500,
+          page: 1,
+        });
+
+        setTeamProject(data);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -338,6 +360,8 @@ const JobOfferSpreadsheetView = ({
         team={team}
         projectOptions={projectOptions}
         teamMemberGroupList={teamMemberGroupList}
+        teamProjects={teamProject}
+        teamDepartment={teamDepartment}
         teamMemberOptions={teamMemberOptions}
         handleOverride={handleOverride}
       />

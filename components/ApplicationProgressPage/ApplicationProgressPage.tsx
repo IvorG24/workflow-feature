@@ -14,6 +14,7 @@ import {
   Container,
   Flex,
   Paper,
+  Stack,
   Stepper,
   Text,
   Title,
@@ -49,7 +50,10 @@ type Props = {
   technicalInterview2Data?: TechnicalInterviewTableRow | null;
   tradeTestData?: TradeTestTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
-  jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
+  jobOfferData?:
+    | (JobOfferTableRow &
+        AttachmentTableRow & { job_offer_with_laptop: boolean })
+    | null;
 };
 const ApplicationProgressPage = (props: Props) => {
   const {
@@ -120,7 +124,9 @@ const ApplicationProgressPage = (props: Props) => {
         jobOfferData={jobOfferData}
         jobOfferStatus={jobOfferStatus}
         setJobOfferStatus={setJobOfferStatus}
-        applicationInformationFormslyId={applicationInformationData.request_formsly_id}
+        applicationInformationFormslyId={
+          applicationInformationData.request_formsly_id
+        }
       />
     ) : null,
   };
@@ -342,31 +348,33 @@ const ApplicationProgressPage = (props: Props) => {
         </Stepper>
         <Paper p="xl" shadow="xs" sx={{ flex: 1 }}>
           <Flex direction="column" h="100%" justify="space-between">
-            {renderContent()}
-            <Center>
-              <Flex gap="xs">
-                <Button
-                  w={100}
-                  variant="light"
-                  onClick={() => {
-                    setStepperValue((prev) => prev - 1);
-                  }}
-                  disabled={stepperValue === 0}
-                >
-                  Previous
-                </Button>
-                <Button
-                  w={100}
-                  variant="light"
-                  onClick={() => {
-                    setStepperValue((prev) => prev + 1);
-                  }}
-                  disabled={stepperValue === currentMaxValue}
-                >
-                  Next
-                </Button>
-              </Flex>
-            </Center>
+            <Stack>
+              {renderContent()}
+              <Center>
+                <Flex gap="xs">
+                  <Button
+                    w={100}
+                    variant="light"
+                    onClick={() => {
+                      setStepperValue((prev) => prev - 1);
+                    }}
+                    disabled={stepperValue === 0}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    w={100}
+                    variant="light"
+                    onClick={() => {
+                      setStepperValue((prev) => prev + 1);
+                    }}
+                    disabled={stepperValue === currentMaxValue}
+                  >
+                    Next
+                  </Button>
+                </Flex>
+              </Center>
+            </Stack>
           </Flex>
         </Paper>
       </Flex>

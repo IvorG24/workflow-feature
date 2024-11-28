@@ -4,8 +4,10 @@ import {
   HRProjectType,
   JobOfferSpreadsheetData,
   OptionType,
+  TeamDepartmentTableRow,
   TeamMemberTableRow,
   TeamMemberType,
+  TeamProjectTableRow,
   TeamTableRow,
   UserTableRow,
 } from "@/utils/types";
@@ -102,6 +104,8 @@ type Props = {
   teamMemberGroupList: string[];
   teamMemberOptions: TeamMemberType[];
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
+  teamProjects: TeamProjectTableRow[];
+  teamDepartment: TeamDepartmentTableRow[];
 };
 
 const JobOfferSpreadsheetTable = ({
@@ -122,7 +126,9 @@ const JobOfferSpreadsheetTable = ({
   projectOptions,
   teamMemberGroupList,
   teamMemberOptions,
-  handleOverride
+  handleOverride,
+  teamProjects,
+  teamDepartment,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -210,6 +216,8 @@ const JobOfferSpreadsheetTable = ({
                   teamMemberGroupList={teamMemberGroupList}
                   teamMemberOptions={teamMemberOptions}
                   handleOverride={handleOverride}
+                  teamDepartment={teamDepartment}
+                  teamProjects={teamProjects}
                 />
               ))}
             </tbody>

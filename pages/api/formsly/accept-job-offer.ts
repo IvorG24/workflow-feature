@@ -29,6 +29,7 @@ export default async function handler(
     if (!requestIdListResponse.ok) {
       throw new Error(await requestIdListResponse.text());
     }
+
     const requestIdList = await requestIdListResponse.json();
 
     const updateStatusResponse = await fetch(
@@ -73,24 +74,26 @@ export default async function handler(
     }
     const jobOfferList = await jobOfferListResponse.json();
 
-    const updateJobOfferResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/accept_job_offer_update_job_offer`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          Authorization: data.token,
-        },
-        body: JSON.stringify({
-          input_data: {
-            jobOfferList,
+    if (jobOfferList.length) {
+      const updateJobOfferResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/accept_job_offer_update_job_offer`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            Authorization: data.token,
           },
-        }),
+          body: JSON.stringify({
+            input_data: {
+              jobOfferList,
+            },
+          }),
+        }
+      );
+      if (!updateJobOfferResponse.ok) {
+        throw new Error(await updateJobOfferResponse.text());
       }
-    );
-    if (!updateJobOfferResponse.ok) {
-      throw new Error(await updateJobOfferResponse.text());
     }
 
     return res.status(200).send("Success");
