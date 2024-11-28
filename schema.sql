@@ -7391,99 +7391,226 @@ AS $$
             )
             FROM team_schema.team_project_table
             WHERE team_project_id = request_project_id
+          ),
+          'request_comment', COALESCE (
+            (
+              SELECT jsonb_agg (
+                jsonb_build_object (
+                  'comment_id', comment_id,
+                  'comment_date_created', comment_date_created,
+                  'comment_content', comment_content,
+                  'comment_is_edited', comment_is_edited,
+                  'comment_last_updated', comment_last_updated,
+                  'comment_type', comment_type,
+                  'comment_team_member_id', comment_team_member_id,
+                  'comment_team_member', (
+                    jsonb_build_object (
+                      'team_member_user', (
+                        jsonb_build_object (
+                          'user_id', user_id,
+                          'user_first_name', user_first_name,
+                          'user_last_name', user_last_name,
+                          'user_username', user_username,
+                          'user_avatar', user_avatar
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              FROM request_schema.comment_table
+              INNER JOIN team_schema.team_member_table
+                ON team_member_id = comment_team_member_id
+              INNER JOIN user_schema.user_table
+                ON user_id = team_member_user_id
+              WHERE comment_request_id = request_id
+            ), '[]'::jsonb
           )
         ) FROM request_data
       `
     )[0].jsonb_build_object;
 
-    formSection = plv8.execute(
-      `
-        WITH section_data AS (
-          SELECT *
-          FROM form_schema.section_table
-          WHERE
-            section_form_id = $1
-          ORDER BY section_order
-        )
-        SELECT jsonb_agg (
-          jsonb_build_object (
-            'section_id', section_id,
-            'section_name', section_name,
-            'section_order', section_order,
-            'section_is_duplicatable', section_is_duplicatable,
-            'section_form_id', section_form_id,
-            'section_field', (
-              SELECT jsonb_agg (
-                jsonb_build_object (
-                  'field_id', field_id,
-                  'field_name', field_name,
-                  'field_is_required', field_is_required,
-                  'field_type', field_type,
-                  'field_order', field_order,
-                  'field_is_positive_metric', field_is_positive_metric,
-                  'field_is_read_only', field_is_read_only,
-                  'field_section_id', field_section_id,
-                  'field_special_field_template_id', field_special_field_template_id,
-                  'field_option', COALESCE (
-                    (
+    let formSection = [];
+    // Conditional and all required fields
+    if (requestData.request_form.form_is_formsly_form && (["Item", "IT Asset", "PED Item", "Subcon", "Technical Assessment"].includes(requestData.request_form.form_name))) {
+      formSection = plv8.execute(
+        `
+          WITH section_data AS (
+            SELECT *
+            FROM form_schema.section_table
+            WHERE
+              section_form_id = $1
+            ORDER BY section_order
+          )
+          SELECT jsonb_agg (
+            jsonb_build_object (
+              'section_id', section_id,
+              'section_name', section_name,
+              'section_order', section_order,
+              'section_is_duplicatable', section_is_duplicatable,
+              'section_form_id', section_form_id,
+              'section_field', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'field_id', field_id,
+                    'field_name', field_name,
+                    'field_is_required', field_is_required,
+                    'field_type', field_type,
+                    'field_order', field_order,
+                    'field_is_positive_metric', field_is_positive_metric,
+                    'field_is_read_only', field_is_read_only,
+                    'field_section_id', field_section_id,
+                    'field_special_field_template_id', field_special_field_template_id,
+                    'field_option', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'option_id', option_id,
+                            'option_value', option_value,
+                            'option_order', option_order,
+                            'option_field_id', option_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM form_schema.option_table
+                          WHERE option_field_id = field_id
+                          ORDER BY option_order ASC
+                        ) ordered_option
+                      ), '[]'::jsonb
+                    ),
+                    'field_response', (
                       SELECT jsonb_agg (
                         jsonb_build_object (
-                          'option_id', option_id,
-                          'option_value', option_value,
-                          'option_order', option_order,
-                          'option_field_id', option_field_id
+                          'request_response_id', request_response_id,
+                          'request_response', request_response,
+                          'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                          'request_response_prefix', request_response_prefix,
+                          'request_response_request_id', request_response_request_id,
+                          'request_response_field_id', request_response_field_id
                         )
                       )
                       FROM (
                         SELECT *
-                        FROM form_schema.option_table
-                        WHERE option_field_id = field_id
-                        ORDER BY option_order ASC
-                      ) ordered_option
-                    ), '[]'::jsonb
-                  ),
-                  'field_response', (
-                    SELECT jsonb_agg (
-                      jsonb_build_object (
-                        'request_response_id', request_response_id,
-                        'request_response', request_response,
-                        'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
-                        'request_response_prefix', request_response_prefix,
-                        'request_response_request_id', request_response_request_id,
-                        'request_response_field_id', request_response_field_id
-                      )
+                        FROM request_schema.request_response_table
+                        WHERE request_response_field_id = field_id
+                          AND request_response_request_id = $2
+                          AND request_response IS NOT NULL
+                      ) response_data
                     )
-                    FROM (
-                      SELECT *
-                      FROM request_schema.request_response_table
-                      WHERE request_response_field_id = field_id
-                        AND request_response_request_id = $2
-                        AND request_response IS NOT NULL
-                    ) response_data
                   )
                 )
+                FROM (
+                  SELECT 
+                    DISTINCT(field_table.*),
+                    item_description_order 
+                  FROM form_schema.field_table
+                  LEFT JOIN item_schema.item_description_table
+                    ON item_description_field_id  = field_id 
+                  WHERE field_section_id = section_id
+                  AND EXISTS (
+                    SELECT 1
+                    FROM request_schema.request_response_table
+                    WHERE request_response_field_id = field_id
+                      AND request_response_request_id = $2
+                      AND request_response IS NOT NULL
+                  )
+                  ORDER BY 
+                    field_order ASC,
+                    item_description_order ASC
+                ) filtered_field
               )
-              FROM (
-                SELECT *
-                FROM form_schema.field_table
-                WHERE field_section_id = section_id
-                AND EXISTS (
-                  SELECT 1
-                  FROM request_schema.request_response_table
-                  WHERE request_response_field_id = field_id
-                    AND request_response_request_id = $2
-                    AND request_response IS NOT NULL
+            ) 
+          ) FROM section_data
+        `, [
+          requestData.request_form.form_id,
+          requestData.request_id
+        ]
+      );
+    } else {
+      formSection = plv8.execute(
+        `
+          WITH section_data AS (
+            SELECT *
+            FROM form_schema.section_table
+            WHERE
+              section_form_id = $1
+            ORDER BY section_order
+          )
+          SELECT jsonb_agg (
+            jsonb_build_object (
+              'section_id', section_id,
+              'section_name', section_name,
+              'section_order', section_order,
+              'section_is_duplicatable', section_is_duplicatable,
+              'section_form_id', section_form_id,
+              'section_field', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'field_id', field_id,
+                    'field_name', field_name,
+                    'field_is_required', field_is_required,
+                    'field_type', field_type,
+                    'field_order', field_order,
+                    'field_is_positive_metric', field_is_positive_metric,
+                    'field_is_read_only', field_is_read_only,
+                    'field_section_id', field_section_id,
+                    'field_special_field_template_id', field_special_field_template_id,
+                    'field_option', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'option_id', option_id,
+                            'option_value', option_value,
+                            'option_order', option_order,
+                            'option_field_id', option_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM form_schema.option_table
+                          WHERE option_field_id = field_id
+                          ORDER BY option_order ASC
+                        ) ordered_option
+                      ), '[]'::jsonb
+                    ),
+                    'field_response', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'request_response_id', request_response_id,
+                            'request_response', request_response,
+                            'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                            'request_response_prefix', request_response_prefix,
+                            'request_response_request_id', request_response_request_id,
+                            'request_response_field_id', request_response_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM request_schema.request_response_table
+                          WHERE request_response_field_id = field_id
+                            AND request_response_request_id = $2
+                        ) response_data
+                      ), '[]'::jsonb
+                    )
+                  )
                 )
-                ORDER BY field_order ASC
-              ) filtered_field
-            )
-          ) 
-        ) FROM section_data
-      `, [
-        requestData.request_form.form_id,
-        requestData.request_id
-      ]
-    );
+                FROM (
+                  SELECT *
+                  FROM form_schema.field_table
+                  WHERE field_section_id = section_id
+                  ORDER BY field_order ASC
+                ) filtered_field
+              )
+            ) 
+          ) FROM section_data
+        `, [
+          requestData.request_form.form_id,
+          requestData.request_id
+        ]
+      );
+    }
 
     const form = {
       ...requestData.request_form,
@@ -7492,7 +7619,21 @@ AS $$
 
     returnData = {
       ...requestData,
-      request_form: form
+      request_form: form,
+      request_team_member: requestData.request_team_member ?? {
+        team_member_id: null,
+        team_member_user: {
+          user_id: null,
+          user_first_name: null,
+          user_last_name: null,
+          user_username: null,
+          user_avatar: null,
+          user_job_title: null
+        }
+      }, 
+      request_project: requestData.request_project ?? {
+        request_project_name: null
+      }
     };
   });
   return returnData;
