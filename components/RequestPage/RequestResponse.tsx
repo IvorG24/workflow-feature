@@ -104,6 +104,7 @@ const RequestResponse = ({
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
     const parsedValue = response.value === "" ? "" : safeParse(response.value);
+
     const responseType =
       response.type === "DROPDOWN" && isAnon ? "TEXT" : response.type;
 
@@ -375,27 +376,40 @@ const RequestResponse = ({
           </Flex>
         );
       case "MULTIPLE CHOICE":
-        return (
-          <Radio.Group
-            {...inputProps}
-            label={response.label}
-            mb="md"
-            value={parsedValue}
-          >
-            <Stack mt="xs">
-              {response.options.map((option, optionIdx) => (
-                <Radio
-                  ml="xs"
-                  key={option.option_id}
-                  value={option.option_value}
-                  label={`${String.fromCharCode(65 + optionIdx)} ) ${
-                    option.option_value
-                  }`}
-                />
-              ))}
-            </Stack>
-          </Radio.Group>
-        );
+        if (response.options.length) {
+          return (
+            <Radio.Group
+              {...inputProps}
+              label={response.label}
+              mb="md"
+              value={parsedValue}
+            >
+              <Stack mt="xs">
+                {response.options.map((option, optionIdx) => (
+                  <Radio
+                    ml="xs"
+                    key={option.option_id}
+                    value={option.option_value}
+                    label={`${String.fromCharCode(65 + optionIdx)} ) ${
+                      option.option_value
+                    }`}
+                  />
+                ))}
+              </Stack>
+            </Radio.Group>
+          );
+        } else {
+          return (
+            <Flex w="100%" align="flex-end" gap="xs">
+              <TextInput
+                label={response.label}
+                {...inputProps}
+                sx={{ flex: 1 }}
+                value={parsedValue}
+              />
+            </Flex>
+          );
+        }
     }
   };
 

@@ -352,7 +352,6 @@ CREATE TABLE form_schema.field_table (
   field_order INT NOT NULL,
   field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
   field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
-
   field_section_id UUID REFERENCES form_schema.section_table(section_id) NOT NULL,
   field_special_field_template_id UUID REFERENCES form_schema.special_field_template_table(special_field_template_id)
 );
@@ -1361,15 +1360,15 @@ AS $$
         ORDER BY request_status_date_updated DESC
         OFFSET $3 ROWS FETCH FIRST $4 ROWS ONLY
       )
-      SELECT jsonb_build_object(
+      SELECT jsonb_build_object (
         'item_request_id', request_id,
         'item_request_formsly_id', request_formsly_id,
         'item_request_jira_id', request_jira_id,
         'item_request_otp_id', request_otp_id,
         'item_request_date_created', request_date_created,
         'item_request_response', (
-          SELECT jsonb_agg(
-            jsonb_build_object(
+          SELECT jsonb_agg (
+            jsonb_build_object (
               'request_response', request_response,
               'request_response_field_name', field_name,
               'request_response_field_type', field_type,
@@ -1382,7 +1381,7 @@ AS $$
             request_response_request_id = request_id
         ),
         'item_request_owner', (
-          SELECT jsonb_build_object(
+          SELECT jsonb_build_object (
             'user_first_name', user_first_name,
             'user_last_name', user_last_name
           )
@@ -3891,7 +3890,7 @@ AS $$
 
     const request_signer_query = `
       )
-      SELECT jsonb_build_object(
+      SELECT jsonb_build_object (
         'request_id', request_id,
         'request_formsly_id', request_formsly_id,
         'request_date_created', request_date_created,
@@ -3903,8 +3902,8 @@ AS $$
         'request_form_id', request_form_id,
         'form_name', form_name,
         'request_signer', (
-          SELECT jsonb_agg(
-            jsonb_build_object(
+          SELECT jsonb_agg (
+            jsonb_build_object (
               'request_signer_id', request_signer_id,
               'request_signer_status', request_signer_status,
               'signer_is_primary_signer', signer_is_primary_signer,
@@ -4651,7 +4650,8 @@ AS $$
 
     if (!request.form_is_formsly_form || (
         request.form_is_formsly_form && [
-            'Subcon', 'Request For Payment v1',
+            'Subcon',
+            'Request For Payment v1',
             'Petty Cash Voucher',
             'Petty Cash Voucher Balance',
             'Application Information v1',
@@ -4745,7 +4745,7 @@ AS $$
       `
         SELECT
           team_member_table.*,
-          json_build_object(
+          jsonb_build_object(
             'user_id', user_id,
             'user_first_name', user_first_name,
             'user_last_name', user_last_name,
@@ -4932,7 +4932,7 @@ AS $$
         SELECT
           team_member_id,
           team_member_role,
-          json_build_object(
+          jsonb_build_object(
             'user_id', user_id,
             'user_first_name', user_first_name,
             'user_last_name', user_last_name,
@@ -5120,7 +5120,7 @@ AS $$
         SELECT
           team_member_id,
           team_member_role,
-          json_build_object(
+          jsonb_build_object(
             'user_id', user_id,
             'user_first_name', user_first_name,
             'user_last_name', user_last_name,
@@ -5608,7 +5608,7 @@ AS $$
             form_id = $1
           LIMIT 1
         )
-        SELECT jsonb_build_object(
+        SELECT jsonb_build_object (
           'form_id', form_id,
           'form_name', form_name,
           'form_description', form_description,
@@ -5619,10 +5619,10 @@ AS $$
           'form_type', form_type,
           'form_sub_type', form_sub_type,
           'form_team_member', (
-            SELECT jsonb_build_object(
+            SELECT jsonb_build_object (
               'team_member_id', team_member_id,
               'team_member_user', (
-                SELECT jsonb_build_object(
+                SELECT jsonb_build_object (
                   'user_id', user_id,
                   'user_first_name', user_first_name,
                   'user_last_name', user_last_name,
@@ -5638,7 +5638,7 @@ AS $$
             WHERE
               team_member_id = form_team_member_id
           ),
-          'form_signer', COALESCE(
+          'form_signer', COALESCE (
             (
               SELECT jsonb_agg (
                 jsonb_build_object (
@@ -5695,7 +5695,7 @@ AS $$
                       'field_is_read_only', field_is_read_only,
                       'field_section_id', field_section_id,
                       'field_special_field_template_id', field_special_field_template_id,
-                      'field_option', COALESCE(
+                      'field_option', COALESCE (
                         (
                           SELECT jsonb_agg (
                             jsonb_build_object (
@@ -7282,458 +7282,361 @@ AS $$
       }
     };
 
-    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition($1)`, [request_id])[0].generate_request_id_condition;
 
     const requestData = plv8.execute(
       `
-        SELECT
-          request_view.*,
-          team_member_team_id,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_username,
-          user_avatar,
-          user_job_title,
-          form_id,
-          form_name,
-          form_description,
-          form_is_formsly_form,
-          form_type,
-          form_sub_type,
-          team_project_name
-        FROM public.request_view
-        LEFT JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        INNER JOIN form_schema.form_table ON form_id = request_form_id
-        LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
-        WHERE
-          ${idCondition}
-          AND request_is_disabled = false
-      `
-    )[0];
-
-    const requestSignerData = plv8.execute(
-      `
-        SELECT
-          request_signer_id,
-          request_signer_status,
-          request_signer_status_date_updated,
-          signer_id,
-          signer_is_primary_signer,
-          signer_action,
-          signer_order,
-          signer_form_id,
-          team_member_id,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_job_title,
-          attachment_value
-        FROM request_schema.request_signer_table
-        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        LEFT JOIN public.attachment_table on attachment_id = user_signature_attachment_id
-        WHERE request_signer_request_id = '${requestData.request_id}'
-      `
-    );
-
-    const requestCommentData = plv8.execute(
-      `
-        SELECT
-          comment_id,
-          comment_date_created,
-          comment_content,
-          comment_is_edited,
-          comment_last_updated,
-          comment_type,
-          comment_team_member_id,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_username,
-          user_avatar
-        FROM request_schema.comment_table
-        INNER JOIN team_schema.team_member_table ON team_member_id = comment_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          comment_request_id = '${requestData.request_id}'
-        ORDER BY comment_date_created DESC
-      `
-    );
-
-    const sectionData = plv8.execute(
-      `
-        SELECT *
-        FROM form_schema.section_table
-        WHERE section_form_id = '${requestData.form_id}'
-        ORDER BY section_order ASC
-      `
-    );
-
-    const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")) {
-      sectionData.forEach(section => {
-        const fieldData = plv8.execute(
-          `
-            SELECT DISTINCT field_table.*
-            FROM form_schema.field_table
-            INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
-              AND request_response_request_id = '${requestData.request_id}'
+        WITH request_data AS (
+          SELECT
+            request_view.*,
+            form_table.*
+          FROM public.request_view
+          INNER JOIN form_schema.form_table 
+            ON form_id = request_form_id
+          WHERE
+            ${idCondition}
+            AND request_is_disabled = false
+          LIMIT 1
+        ) 
+        SELECT jsonb_build_object (
+          'request_id', request_id,
+          'request_formsly_id', request_formsly_id,
+          'request_date_created', request_date_created,
+          'request_status', request_status,
+          'request_is_disabled', request_is_disabled,
+          'request_team_member_id', request_team_member_id,
+          'request_form_id', request_form_id,
+          'request_project_id', request_project_id,
+          'request_jira_id', request_jira_id,
+          'request_jira_link', request_jira_link,
+          'request_otp_id', request_otp_id,
+          'request_form', (
+            jsonb_build_object (
+              'form_id', form_id,
+              'form_name', form_name,
+              'form_description', form_description,
+              'form_is_formsly_form', form_is_formsly_form,
+              'form_type', form_type,
+              'form_sub_type', form_sub_type
+            )
+          ),
+          'request_team_member', (
+            SELECT jsonb_build_object (
+              'team_member_team_id', team_member_team_id,
+              'team_member_user', (
+                jsonb_build_object (
+                  'user_id', user_id,
+                  'user_first_name', user_first_name,
+                  'user_last_name', user_last_name,
+                  'user_username', user_username,
+                  'user_avatar', user_avatar,
+                  'user_job_title', user_job_title
+                )
+              )
+            )
+            FROM team_schema.team_member_table
+            INNER JOIN user_schema.user_table
+              ON user_id = team_member_user_id
             WHERE
-              field_section_id = '${section.section_id}'
-            ORDER BY field_order ASC
-          `
-        );
-        const fieldWithOptionAndResponse = [];
-        fieldData.forEach(field => {
-          const requestResponseData = plv8.execute(
-            `
-              SELECT *
-              FROM request_schema.request_response_table
-              WHERE request_response_request_id = '${requestData.request_id}'
-              AND request_response_field_id = '${field.field_id}'
-            `
-          );
-          const optionData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE option_field_id = '${field.field_id}'
-              ORDER BY option_order ASC
-            `
-          );
-          let fieldItemDescriptionOrder = 0;
-          const order = plv8.execute(
-            `
-              SELECT item_description_order
-              FROM item_schema.item_description_table
-              WHERE item_description_field_id = '${field.field_id}'
-            `
-          );
-          if(order.length > 0){
-            fieldItemDescriptionOrder = order[0].item_description_order;
-          }
-
-          fieldWithOptionAndResponse.push({
-            ...field,
-            field_order: field.field_order + fieldItemDescriptionOrder,
-            field_response: requestResponseData,
-            field_option: optionData
-          });
-        });
-
-        formSection.push({
-          ...section,
-          section_field: fieldWithOptionAndResponse.sort((a,b) => a.field_order - b.field_order),
-        })
-      });
-    } else if (requestData.form_is_formsly_form && (requestData.form_name === "Technical Assessment")) {
-      const technicalAssessmentResult = plv8.execute(`
-        SELECT request_id
-        FROM public.request_view
-        WHERE request_formsly_id = '${request_id}'
-      `);
-      const technicalAssessmentId = technicalAssessmentResult[0].request_id;
-
-      const generalAssessmentData = plv8.execute(`
-      SELECT
-        request_response,
-        field_id
-      FROM request_schema.request_response_table
-      INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        AND field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
-      WHERE
-        request_response_request_id = '${technicalAssessmentId}'
-        ORDER BY field_order
-      `);
-
-      const generalAssessmentId = generalAssessmentData[0].request_response;
-
-      const generalRequestData = plv8.execute(`
-        SELECT request_id
-        FROM public.request_view
-        WHERE request_formsly_id = '${safeParse(generalAssessmentId)}'
-      `);
-
-      if (!generalRequestData.length) {
-        throw new Error("General request data not found.");
-      }
-
-      const requestId = generalRequestData[0].request_id;
-
-      const applicantData = plv8.execute(`
-        SELECT
-          request_response,
-          field_id
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          AND field_id IN (
-            'be0e130b-455b-47e0-a804-f90943f7bc07',
-            '5c5284cd-7647-4307-b558-40b9076d9f7f',
-            'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-            'd209aed6-e560-49a8-aa77-66c9cada168d',
-            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6',
-            'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
-            '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
-            '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
-            '69a2664f-c34d-4381-b19c-749c4a9a012b',
-            '8abe5d1a-8370-4472-b88e-3580f724d12d'
+              team_member_id = request_team_member_id
+          ),
+          'request_signer', COALESCE (
+            (
+              SELECT jsonb_agg (
+                jsonb_build_object (
+                  'request_signer_id', request_signer_id,
+                  'request_signer_status', request_signer_status,
+                  'request_signer_status_date_updated', request_signer_status_date_updated,
+                  'request_signer_signer', (
+                    jsonb_build_object (
+                      'signer_id', signer_id,
+                      'signer_is_primary_signer', signer_is_primary_signer,
+                      'signer_action', signer_action,
+                      'signer_order', signer_order,
+                      'signer_form_id', signer_form_id,
+                      'signer_team_member', (
+                        jsonb_build_object (
+                          'team_member_id', team_member_id,
+                          'team_member_user', (
+                            jsonb_build_object (
+                              'user_id', user_id,
+                              'user_first_name', user_first_name,
+                              'user_last_name', user_last_name,
+                              'user_job_title', user_job_title,
+                              'user_signature_attachment_id', user_signature_attachment_id
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              FROM request_schema.request_signer_table
+              INNER JOIN form_schema.signer_table
+                ON signer_id = request_signer_signer_id
+              LEFT JOIN team_schema.team_member_table
+                ON team_member_id = signer_team_member_id
+              LEFT JOIN user_schema.user_table
+                ON user_id = team_member_user_id
+              LEFT JOIN public.attachment_table
+                ON attachment_id = user_signature_attachment_id
+              WHERE 
+                request_signer_request_id = request_id
+            ), '[]'::jsonb
+          ),
+          'request_project', (
+            SELECT jsonb_build_object (
+              'team_project_name', team_project_name
+            )
+            FROM team_schema.team_project_table
+            WHERE team_project_id = request_project_id
+          ),
+          'request_comment', COALESCE (
+            (
+              SELECT jsonb_agg (
+                jsonb_build_object (
+                  'comment_id', comment_id,
+                  'comment_date_created', comment_date_created,
+                  'comment_content', comment_content,
+                  'comment_is_edited', comment_is_edited,
+                  'comment_last_updated', comment_last_updated,
+                  'comment_type', comment_type,
+                  'comment_team_member_id', comment_team_member_id,
+                  'comment_team_member', (
+                    jsonb_build_object (
+                      'team_member_user', (
+                        jsonb_build_object (
+                          'user_id', user_id,
+                          'user_first_name', user_first_name,
+                          'user_last_name', user_last_name,
+                          'user_username', user_username,
+                          'user_avatar', user_avatar
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+              FROM request_schema.comment_table
+              INNER JOIN team_schema.team_member_table
+                ON team_member_id = comment_team_member_id
+              INNER JOIN user_schema.user_table
+                ON user_id = team_member_user_id
+              WHERE comment_request_id = request_id
+            ), '[]'::jsonb
           )
-        WHERE
-          request_response_request_id = '${requestId}'
-        ORDER BY field_order
-      `);
+        ) FROM request_data
+      `
+    )[0].jsonb_build_object;
 
-      if (!applicantData.length) {
-        throw new Error("Applicant data not found.");
-      }
-
-      const requestApplicationData = plv8.execute(`
-        SELECT request_id
-        FROM public.request_view
-        WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
-      `);
-
-      if (!requestApplicationData.length) {
-        throw new Error("Request application data not found.");
-      }
-
-      const positionData = plv8.execute(`
-        SELECT
-          request_response,
-          field_id
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          AND field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
-        WHERE
-          request_response_request_id = '${requestApplicationData[0].request_id}'
-        ORDER BY field_order ASC
-      `);
-
-      if (!positionData.length) {
-        throw new Error("Position data not found.");
-      }
-
-      const position_type = safeParse(positionData[0].request_response);
-
-      sectionData.forEach((section, index) => {
-        if (index === 2) {
-          const fieldData = plv8.execute(`
-            SELECT f.*, qq.questionnaire_question_id
-            FROM form_schema.questionnaire_table q
-            JOIN form_schema.questionnaire_question_table qq
-            ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
-            JOIN form_schema.field_table f
-            ON f.field_id = qq.questionnaire_question_field_id
-            JOIN lookup_schema.position_table p
-            ON p.position_questionnaire_id  = q.questionnaire_id
-            WHERE p.position_alias = '${position_type}' AND qq.questionnaire_question_is_disabled = FALSE
-            ORDER BY field_order ASC
-          `);
-
-          const fieldWithOptionAndResponse = fieldData.map(field => {
-            const optionData = plv8.execute(`
-              SELECT *
-              FROM form_schema.question_option_table
-              WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-              ORDER BY question_option_order ASC;
-            `);
-
-            const requestResponseData = plv8.execute(`
-              SELECT *
-              FROM request_schema.request_response_table
-              WHERE
-                request_response_field_id = '${field.field_id}'
-                AND request_response_request_id = '${technicalAssessmentId}'
-            `);
-
-            return {
-              ...field,
-              field_response:requestResponseData,
-              field_option: optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
-                option_id: option.question_option_id,
-                option_value: option.question_option_value,
-                option_order: option.question_option_order,
-              }))
-            };
-          });
-
-          formSection.push({
-            ...section,
-            section_field: fieldWithOptionAndResponse,
-          });
-        } else {
-          const fieldData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.field_table
-              WHERE field_section_id = '${section.section_id}'
-              ORDER BY field_order ASC
-            `
-          );
-          const fieldWithOptionAndResponse = fieldData.map(field => {
-            const optionData = plv8.execute(
-              `
-                SELECT *
-                FROM form_schema.option_table
-                WHERE option_field_id = '${field.field_id}'
-                ORDER BY option_order ASC
-              `
-            );
-
-            const requestResponseData = plv8.execute(
-              `
-                SELECT *
-                FROM request_schema.request_response_table
-                WHERE
-                  request_response_field_id = '${field.field_id}'
-                  AND request_response_request_id = '${requestData.request_id}'
-              `
-            );
-
-            return {
-              ...field,
-              field_response: requestResponseData,
-              field_option: optionData
-            };
-          });
-
-          formSection.push({
-            ...section,
-            section_field: fieldWithOptionAndResponse,
-          })
-        }
-      });
-    } else {
-      sectionData.forEach(section => {
-        const fieldData = plv8.execute(
-          `
+    let formSection = [];
+    // Conditional and all required fields
+    if (requestData.request_form.form_is_formsly_form && (["Item", "IT Asset", "PED Item", "Subcon", "Technical Assessment"].includes(requestData.request_form.form_name))) {
+      formSection = plv8.execute(
+        `
+          WITH section_data AS (
             SELECT *
-            FROM form_schema.field_table
-            WHERE field_section_id = '${section.section_id}'
-            ORDER BY field_order ASC
-          `
-        );
-        const fieldWithOptionAndResponse = fieldData.map(field => {
-          const optionData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE option_field_id = '${field.field_id}'
-              ORDER BY option_order ASC
-            `
-          );
-
-          const requestResponseData = plv8.execute(
-            `
-              SELECT *
-              FROM request_schema.request_response_table
-              WHERE
-                request_response_field_id = '${field.field_id}'
-                AND request_response_request_id = '${requestData.request_id}'
-            `
-          );
-
-          return {
-            ...field,
-            field_response: requestResponseData,
-            field_option: optionData
-          };
-        });
-
-        formSection.push({
-          ...section,
-          section_field: fieldWithOptionAndResponse,
-        })
-      });
+            FROM form_schema.section_table
+            WHERE
+              section_form_id = $1
+            ORDER BY section_order
+          )
+          SELECT jsonb_agg (
+            jsonb_build_object (
+              'section_id', section_id,
+              'section_name', section_name,
+              'section_order', section_order,
+              'section_is_duplicatable', section_is_duplicatable,
+              'section_form_id', section_form_id,
+              'section_field', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'field_id', field_id,
+                    'field_name', field_name,
+                    'field_is_required', field_is_required,
+                    'field_type', field_type,
+                    'field_order', field_order,
+                    'field_is_positive_metric', field_is_positive_metric,
+                    'field_is_read_only', field_is_read_only,
+                    'field_section_id', field_section_id,
+                    'field_special_field_template_id', field_special_field_template_id,
+                    'field_option', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'option_id', option_id,
+                            'option_value', option_value,
+                            'option_order', option_order,
+                            'option_field_id', option_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM form_schema.option_table
+                          WHERE option_field_id = field_id
+                          ORDER BY option_order ASC
+                        ) ordered_option
+                      ), '[]'::jsonb
+                    ),
+                    'field_response', (
+                      SELECT jsonb_agg (
+                        jsonb_build_object (
+                          'request_response_id', request_response_id,
+                          'request_response', request_response,
+                          'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                          'request_response_prefix', request_response_prefix,
+                          'request_response_request_id', request_response_request_id,
+                          'request_response_field_id', request_response_field_id
+                        )
+                      )
+                      FROM (
+                        SELECT *
+                        FROM request_schema.request_response_table
+                        WHERE request_response_field_id = field_id
+                          AND request_response_request_id = $2
+                          AND request_response IS NOT NULL
+                      ) response_data
+                    )
+                  )
+                )
+                FROM (
+                  SELECT 
+                    DISTINCT(field_table.*),
+                    item_description_order 
+                  FROM form_schema.field_table
+                  LEFT JOIN item_schema.item_description_table
+                    ON item_description_field_id  = field_id 
+                  WHERE field_section_id = section_id
+                  AND EXISTS (
+                    SELECT 1
+                    FROM request_schema.request_response_table
+                    WHERE request_response_field_id = field_id
+                      AND request_response_request_id = $2
+                      AND request_response IS NOT NULL
+                  )
+                  ORDER BY 
+                    field_order ASC,
+                    item_description_order ASC
+                ) filtered_field
+              )
+            ) 
+          ) FROM section_data
+        `, [
+          requestData.request_form.form_id,
+          requestData.request_id
+        ]
+      );
+    } else {
+      formSection = plv8.execute(
+        `
+          WITH section_data AS (
+            SELECT *
+            FROM form_schema.section_table
+            WHERE
+              section_form_id = $1
+            ORDER BY section_order
+          )
+          SELECT jsonb_agg (
+            jsonb_build_object (
+              'section_id', section_id,
+              'section_name', section_name,
+              'section_order', section_order,
+              'section_is_duplicatable', section_is_duplicatable,
+              'section_form_id', section_form_id,
+              'section_field', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'field_id', field_id,
+                    'field_name', field_name,
+                    'field_is_required', field_is_required,
+                    'field_type', field_type,
+                    'field_order', field_order,
+                    'field_is_positive_metric', field_is_positive_metric,
+                    'field_is_read_only', field_is_read_only,
+                    'field_section_id', field_section_id,
+                    'field_special_field_template_id', field_special_field_template_id,
+                    'field_option', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'option_id', option_id,
+                            'option_value', option_value,
+                            'option_order', option_order,
+                            'option_field_id', option_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM form_schema.option_table
+                          WHERE option_field_id = field_id
+                          ORDER BY option_order ASC
+                        ) ordered_option
+                      ), '[]'::jsonb
+                    ),
+                    'field_response', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'request_response_id', request_response_id,
+                            'request_response', request_response,
+                            'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                            'request_response_prefix', request_response_prefix,
+                            'request_response_request_id', request_response_request_id,
+                            'request_response_field_id', request_response_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM request_schema.request_response_table
+                          WHERE request_response_field_id = field_id
+                            AND request_response_request_id = $2
+                        ) response_data
+                      ), '[]'::jsonb
+                    )
+                  )
+                )
+                FROM (
+                  SELECT *
+                  FROM form_schema.field_table
+                  WHERE field_section_id = section_id
+                  ORDER BY field_order ASC
+                ) filtered_field
+              )
+            ) 
+          ) FROM section_data
+        `, [
+          requestData.request_form.form_id,
+          requestData.request_id
+        ]
+      );
     }
 
     const form = {
-      form_id: requestData.form_id,
-      form_name: requestData.form_name,
-      form_description: requestData.form_description,
-      form_is_formsly_form: requestData.form_is_formsly_form,
-      form_section: formSection,
-      form_type: requestData.form_type,
-      form_sub_type: requestData.form_sub_type
+      ...requestData.request_form,
+      form_section: formSection[0].jsonb_agg,
     };
 
     returnData = {
-      request_id: requestData.request_id,
-      request_formsly_id: requestData.request_formsly_id,
-      request_date_created: requestData.request_date_created,
-      request_status: requestData.request_status,
-      request_is_disabled: requestData.request_is_disabled,
-      request_team_member_id: requestData.request_team_member_id,
-      request_form_id: requestData.request_form_id,
-      request_project_id: requestData.request_project_id,
-      request_jira_id: requestData.request_jira_id,
-      request_jira_link: requestData.request_jira_link,
-      request_otp_id: requestData.request_otp_id,
-      request_comment: requestCommentData.map(requestComment => {
-        return {
-          comment_id: requestComment.comment_id,
-          comment_date_created: requestComment.comment_date_created,
-          comment_content: requestComment.comment_content,
-          comment_is_edited: requestComment.comment_is_edited,
-          comment_last_updated: requestComment.comment_last_updated,
-          comment_type: requestComment.comment_type,
-          comment_team_member_id: requestComment.comment_team_member_id,
-          comment_team_member: {
-            team_member_user: {
-              user_id: requestComment.user_id,
-              user_first_name: requestComment.user_first_name,
-              user_last_name: requestComment.user_last_name,
-              user_username: requestComment.user_username,
-              user_avatar: requestComment.user_avatar
-            }
-          }
-        }
-      }),
+      ...requestData,
       request_form: form,
-      request_team_member: {
-        team_member_team_id: requestData.team_member_team_id,
+      request_team_member: requestData.request_team_member ?? {
+        team_member_id: null,
         team_member_user: {
-          user_id: requestData.user_id,
-          user_first_name: requestData.user_first_name,
-          user_last_name: requestData.user_last_name,
-          user_username: requestData.user_username,
-          user_avatar: requestData.user_avatar,
-          user_job_title: requestData.user_job_title
+          user_id: null,
+          user_first_name: null,
+          user_last_name: null,
+          user_username: null,
+          user_avatar: null,
+          user_job_title: null
         }
-      },
-      request_signer: requestSignerData.map(requestSigner => {
-        return {
-          request_signer_id: requestSigner.request_signer_id,
-          request_signer_status: requestSigner.request_signer_status,
-          request_signer_status_date_updated: requestSigner.request_signer_status_date_updated,
-          request_signer_signer: {
-            signer_id: requestSigner.signer_id,
-            signer_is_primary_signer: requestSigner.signer_is_primary_signer,
-            signer_action: requestSigner.signer_action,
-            signer_order: requestSigner.signer_order,
-            signer_form_id: requestSigner.signer_form_id,
-            signer_team_member:{
-              team_member_id: requestSigner.team_member_id,
-              team_member_user:{
-                user_id: requestSigner.user_id,
-                user_first_name: requestSigner.user_first_name,
-                user_last_name: requestSigner.user_last_name,
-                user_job_title: requestSigner.user_job_title,
-                user_signature_attachment_id: requestSigner.attachment_value
-              }
-            },
-          },
-        }
-      }),
-      request_project: {
-        team_project_name: requestData.team_project_name
+      }, 
+      request_project: requestData.request_project ?? {
+        request_project_name: null
       }
     };
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_ticket_form(
@@ -7898,7 +7801,7 @@ AS $$
           SELECT
             tmt.team_member_id,
             tmt.team_member_role,
-            json_build_object(
+            jsonb_build_object(
               'user_id', usert.user_id,
               'user_first_name', usert.user_first_name,
               'user_last_name', usert.user_last_name,
@@ -8258,10 +8161,10 @@ AS $$
 
     let approver = null
     if(ticket.ticket_approver_team_member_id !== null){
-      approver = plv8.execute(`SELECT jsonb_build_object(
+      approver = plv8.execute(`SELECT jsonb_build_object (
           'team_member_id', tm.team_member_id,
           'team_member_role', tm.team_member_role,
-          'team_member_user', jsonb_build_object(
+          'team_member_user', jsonb_build_object (
               'user_id', u.user_id,
               'user_first_name', u.user_first_name,
               'user_last_name', u.user_last_name,
@@ -8280,7 +8183,7 @@ AS $$
       `
         SELECT tmt.team_member_id,
         tmt.team_member_role,
-        json_build_object(
+        jsonb_build_object(
           'user_id', usert.user_id,
           'user_first_name', usert.user_first_name,
           'user_last_name', usert.user_last_name,
@@ -8399,7 +8302,7 @@ AS $$
       `
         SELECT tmt.team_member_id,
         tmt.team_member_role,
-        json_build_object(
+        jsonb_build_object(
           'user_id', usert.user_id,
           'user_first_name', usert.user_first_name,
           'user_last_name', usert.user_last_name,
@@ -8417,7 +8320,7 @@ AS $$
       `
         SELECT tmt.team_member_id,
         tmt.team_member_role,
-        json_build_object(
+        jsonb_build_object(
           'user_id', usert.user_id,
           'user_first_name', usert.user_first_name,
           'user_last_name', usert.user_last_name,
@@ -9501,7 +9404,7 @@ AS $$
         mst.*,
         tm.*,
         ut.*,
-        json_agg(sht.*) as signature_list
+        jsonb_agg(sht.*) as signature_list
       FROM memo_schema.memo_signer_table mst
       INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
@@ -9807,7 +9710,7 @@ AS $$
         mst.*,
         tm.*,
         ut.*,
-        json_agg(sht.*) as signature_list
+        jsonb_agg(sht.*) as signature_list
       FROM memo_schema.memo_signer_table mst
       INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
@@ -10225,7 +10128,7 @@ AS $$
       `
         SELECT tmt.team_member_id,
         tmt.team_member_role,
-        json_build_object(
+        jsonb_build_object(
           'user_id', usert.user_id,
           'user_first_name', usert.user_first_name,
           'user_last_name', usert.user_last_name,
@@ -16400,7 +16303,7 @@ AS $$
          const scheduledList = plv8.execute(`
         SELECT
           iom.interview_meeting_interview_id,
-          COALESCE(p.hr_phone_interview_id, t.trade_test_id, ti.technical_interview_id) AS pending_interview_id
+          COALESCE (p.hr_phone_interview_id, t.trade_test_id, ti.technical_interview_id) AS pending_interview_id
         FROM hr_schema.interview_online_meeting_table iom
         LEFT JOIN hr_schema.hr_phone_interview_table p
           ON p.hr_phone_interview_id = iom.interview_meeting_interview_id
@@ -16500,7 +16403,7 @@ AS $$
       `
         SELECT
           iom.interview_meeting_schedule,
-          COALESCE(
+          COALESCE (
             hpi.hr_phone_interview_team_member_id,
             ti.technical_interview_team_member_id,
             t.trade_test_team_member_id
@@ -16514,7 +16417,7 @@ AS $$
           ON iom.interview_meeting_interview_id = ti.technical_interview_id
         WHERE iom.interview_meeting_schedule::timestamp = $1::timestamp
           AND iom.interview_meeting_is_disabled = false
-          AND COALESCE(
+          AND COALESCE (
             hpi.hr_phone_interview_team_member_id,
             ti.technical_interview_team_member_id,
             t.trade_test_team_member_id
