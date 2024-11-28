@@ -11,7 +11,6 @@ import {
 import { useModuleAction } from "@/hooks/useModuleStore";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";

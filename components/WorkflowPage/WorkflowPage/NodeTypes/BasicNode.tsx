@@ -31,6 +31,7 @@ const BasicNode = ({ id, data, isConnectable, selected }: BasicNodeProps) => {
 
   return (
     <Paper
+      id={id}
       w={200}
       ref={ref}
       p="md"

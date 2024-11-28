@@ -4,7 +4,7 @@ import {
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
-import { moduleSignerValidation } from "@/backend/api/post";
+import { moduleSignerValidation, moduleUpdateSigner } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -54,7 +54,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ModuleRequestActionSection from "../RequestPage/RequestActionSectionModule";
@@ -313,7 +313,12 @@ const PEDItemRequestPage = ({
                 !signerTeamGroup?.includes(groupName)
             );
 
-          if (approverTeamGroup) {
+          const signerCount = await moduleSignerValidation(supabaseClient, {
+            requestStatus: status,
+            requestId: request.request_id,
+          });
+
+          if (approverTeamGroup && signerCount === signerCountCurrentNode) {
             notifications.show({
               message: `Someone in your team approved it already, Please refresh the page`,
               color: "orange",
@@ -321,7 +326,9 @@ const PEDItemRequestPage = ({
             return;
           }
 
-          const signerCount = await moduleSignerValidation(supabaseClient, {
+          const signerCounting = signerCount + 1;
+
+          await moduleUpdateSigner(supabaseClient, {
             requestAction: status,
             requestStatus: status,
             groupMember: teamMemberGroupList,
@@ -332,7 +339,7 @@ const PEDItemRequestPage = ({
             memberId: `${teamMember?.team_member_id}`,
           });
 
-          if (signerCount >= signerCountCurrentNode) {
+          if (signerCounting >= signerCountCurrentNode) {
             setIsSectionHidden(true);
             await updateModuleRequest(supabaseClient, {
               requestAction: status,
@@ -604,7 +611,15 @@ const PEDItemRequestPage = ({
 
   const noNodes = targetNodes?.length === 0;
 
-
+  const shouldShowCreateFormButton = useMemo(() => {
+    return (
+      !requestType &&
+      isEndNode &&
+      nextForm &&
+      !isNextFormSubmitted &&
+      isUserOwner
+    );
+  }, [requestType, isEndNode, nextForm, isNextFormSubmitted, isUserOwner]);
 
   return (
     <Container>
@@ -618,18 +633,14 @@ const PEDItemRequestPage = ({
             formName={request.request_form.form_name}
             requestId={request.request_formsly_id ?? request.request_id}
           />
-          {!requestType &&
-            isEndNode &&
-            nextForm &&
-            !isNextFormSubmitted &&
-            isUserOwner && (
-              <Button
-                leftIcon={<IconPlus size={16} />}
-                onClick={handleCreateNextForm}
-              >
-                Create {nextForm.form_name} Form
-              </Button>
-            )}
+          {shouldShowCreateFormButton && (
+            <Button
+              leftIcon={<IconPlus size={16} />}
+              onClick={handleCreateNextForm}
+            >
+              Create {nextForm?.form_name} Form
+            </Button>
+          )}
         </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">

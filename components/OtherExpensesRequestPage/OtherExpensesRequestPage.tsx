@@ -4,7 +4,7 @@ import {
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
-import { moduleSignerValidation } from "@/backend/api/post";
+import { moduleSignerValidation, moduleUpdateSigner } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -24,7 +24,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, CSI_HIDDEN_FIELDS, formatDateTime} from "@/utils/constant";
+import { BASE_URL, CSI_HIDDEN_FIELDS, formatDateTime } from "@/utils/constant";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -324,7 +324,12 @@ const OtherExpensesRequestPage = ({
                 !signerTeamGroup?.includes(groupName)
             );
 
-          if (approverTeamGroup) {
+          const signerCount = await moduleSignerValidation(supabaseClient, {
+            requestStatus: status,
+            requestId: request.request_id,
+          });
+
+          if (approverTeamGroup && signerCount === signerCountCurrentNode) {
             notifications.show({
               message: `Someone in your team approved it already, Please refresh the page`,
               color: "orange",
@@ -332,7 +337,9 @@ const OtherExpensesRequestPage = ({
             return;
           }
 
-          const signerCount = await moduleSignerValidation(supabaseClient, {
+          const signerCounting = signerCount + 1;
+
+          await moduleUpdateSigner(supabaseClient, {
             requestAction: status,
             requestStatus: status,
             groupMember: teamMemberGroupList,
@@ -342,8 +349,8 @@ const OtherExpensesRequestPage = ({
             signerTeamGroups: signerTeamGroup ?? [],
             memberId: `${teamMember?.team_member_id}`,
           });
-
-          if (signerCount >= signerCountCurrentNode) {
+          signerCount;
+          if (signerCounting >= signerCountCurrentNode) {
             setIsSectionHidden(true);
             await updateModuleRequest(supabaseClient, {
               requestAction: status,

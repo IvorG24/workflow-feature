@@ -149,10 +149,10 @@ export const useWorkflowState = ({
       duplicateNode,
     ]);
     setEdges((edges) => [...edges, ...newEdges]);
-  }, [selectedNode, nodes, edges]);
+  }, [selectedNode, nodes]);
 
   const handleAddNodeOnDrop = useCallback(
-    (parentNode: BasicNodeType | null, position: XYPosition) => {
+    (parentNode: BasicNodeType | null) => {
       if (!parentNode) return;
       const isSourceNodeOrigin = parentNode.type === "origin";
       // check if there's already an edge from the start node
@@ -179,9 +179,11 @@ export const useWorkflowState = ({
 
   const onConnect: OnConnect = useCallback(
     ({ source, target, sourceHandle, targetHandle }) => {
-      // Find the origin and end nodes
       const originNode = nodes.find((node) => node.type === "origin");
       const endNodes = nodes.filter((node) => node.type === "end");
+
+      if (!originNode) throw new Error();
+      if (target === source) return;
 
       if (endNodes.some((endNode) => source === endNode.id)) {
         notifications.show({
@@ -190,14 +192,18 @@ export const useWorkflowState = ({
           color: "orange",
         });
         return;
-      } else if (target === originNode?.id) {
+      }
+
+      if (target === originNode.id) {
         notifications.show({
           title: "Invalid Edge",
           message: "An origin node cannot be the target of an edge.",
           color: "orange",
         });
         return;
-      } else if (source === originNode?.id) {
+      }
+
+      if (source === originNode?.id) {
         const hasExistingEdge = edges.some(
           (edge) => edge.source === originNode?.id
         );
@@ -210,6 +216,38 @@ export const useWorkflowState = ({
           });
           return;
         }
+      }
+
+      // Prevent duplicate edges
+      const isDuplicateEdge = edges.some(
+        (edge) => edge.source === source && edge.target === target
+      );
+      if (isDuplicateEdge) {
+        notifications.show({
+          title: "Duplicate Edge",
+          message: "This connection already exists.",
+          color: "orange",
+        });
+        return;
+      }
+
+      const targetNode = nodes.find((node) => node.id === target);
+      if (!targetNode) {
+        notifications.show({
+          title: "Invalid Target",
+          message: "The target node does not exist.",
+          color: "red",
+        });
+        return;
+      }
+
+      if (targetNode.type !== "basic" && targetNode.type !== "end") {
+        notifications.show({
+          title: "Invalid Target",
+          message: `Edges can only connect to "basic" or "end" nodes. Target type: ${targetNode.type}`,
+          color: "red",
+        });
+        return;
       }
 
       setEdges((eds) =>
@@ -267,12 +305,6 @@ export const useWorkflowState = ({
           (node) => node.id === connectingNodeId.current
         );
         if (!parentNode) return;
-        const panePosition = screenToFlowPosition({
-          x: (event as MouseEvent).clientX,
-          y: (event as MouseEvent).clientY,
-        });
-
-        handleAddNodeOnDrop(parentNode, panePosition);
       }
     },
     [nodes, screenToFlowPosition, handleAddNodeOnDrop]

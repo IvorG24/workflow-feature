@@ -3064,13 +3064,7 @@ export const moduleSignerValidation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
-    requestSignerId: string;
     requestStatus: string;
-    groupMember: string[];
-    signerTeamGroups: string[];
-    signerFullName: string;
-    requestAction: string;
-    memberId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -3083,4 +3077,24 @@ export const moduleSignerValidation = async (
   if (error) throw error;
 
   return data as number;
+};
+
+export const moduleUpdateSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    requestStatus: string;
+    requestSignerId: string;
+    groupMember: string[];
+    signerTeamGroups: string[];
+    signerFullName: string;
+    requestAction: string;
+    memberId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("module_request_signer_update", {
+    input_data: { ...params },
+  });
+
+  if (error) throw error;
 };

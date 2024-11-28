@@ -11,14 +11,15 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 type Props = {
   selectedNode: BasicNodeType;
+  setIsDrawerOpen: Dispatch<SetStateAction<boolean>>;
 };
 
-const NodeSignerSection = ({ selectedNode }: Props) => {
+const NodeSignerSection = ({ selectedNode, setIsDrawerOpen }: Props) => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
 
@@ -69,7 +70,7 @@ const NodeSignerSection = ({ selectedNode }: Props) => {
       selectedNode.id,
       data.nodeProjectWithSignerList
     );
-
+    setIsDrawerOpen(false);
     notifications.show({
       message: "Signers updated",
       color: "green",

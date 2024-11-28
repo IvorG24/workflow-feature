@@ -7307,7 +7307,7 @@ export const getRequestId = async (
   supabaseClient: SupabaseClient<Database>,
   params: { moduleRequestId: string; nextRequest?: string }
 ) => {
-  const { moduleRequestId, nextRequest } = params;
+  const { moduleRequestId } = params;
 
   const { data, error } = await supabaseClient
     .schema("request_schema")

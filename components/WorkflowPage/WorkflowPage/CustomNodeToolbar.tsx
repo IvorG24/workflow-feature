@@ -9,9 +9,15 @@ type Props = {
   onDuplicate: () => void;
   onOpenNodeChangeStylesForm: (selectedNode: BasicNodeType) => void;
   selectedNode: BasicNodeType;
+  shouldHideToolbar: boolean;
 };
 
-const CustomNodeToolbar = ({ onDelete, onDuplicate, selectedNode }: Props) => {
+const CustomNodeToolbar = ({
+  onDelete,
+  onDuplicate,
+  selectedNode,
+  shouldHideToolbar,
+}: Props) => {
   const isEndNode = selectedNode?.type === "end";
 
   return (
@@ -34,7 +40,9 @@ const CustomNodeToolbar = ({ onDelete, onDuplicate, selectedNode }: Props) => {
             <ActionIcon onClick={onDuplicate} variant="light" color="#4DABF7">
               <IconCopy size={16} />
             </ActionIcon>
-            <NodeAdvanceSettings selectedNode={selectedNode} />
+            {!shouldHideToolbar && (
+              <NodeAdvanceSettings selectedNode={selectedNode} />
+            )}
           </>
         )}
       </Group>

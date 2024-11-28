@@ -36,7 +36,6 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -78,7 +77,6 @@ const WorkflowPage = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
-  const pathname = usePathname();
 
   const { isLoading } = useLoadingStore();
   const { setIsLoading } = useLoadingActions();
@@ -93,9 +91,7 @@ const WorkflowPage = ({
 
   const labelRef = useRef<HTMLInputElement | null>(null);
   const selectedNode = nodes.find((node) => node.selected) ?? null;
-  const pathSegments = pathname.split("/");
-  const workflowIdUpdate = pathSegments[pathSegments.length - 2];
-  const workflowIdURL = pathSegments[pathSegments.length - 1];
+  const workflowUUID = router.query.workflowId as string;
 
   const {
     handleAddNode,
@@ -118,6 +114,7 @@ const WorkflowPage = ({
     showTransitionLabel,
     selectedNode,
   });
+
   useEffect(() => {
     if (
       keyboardShortcut === "copy" &&
@@ -129,9 +126,11 @@ const WorkflowPage = ({
       handlePasteNode(copiedNode);
     }
   }, [keyboardShortcut]);
+
   const nodeChangeStylesFormMethods = useForm<NodeChangeStylesFormValues>({
     mode: "onChange",
   });
+
   const handleOpenNodeChangeStylesForm = (
     selectedNode: BasicNodeType | null
   ) => {
@@ -147,6 +146,7 @@ const WorkflowPage = ({
       );
     }
   };
+
   const handleOutsideClick = () => {
     window?.getSelection()?.removeAllRanges();
   };
@@ -160,7 +160,7 @@ const WorkflowPage = ({
       }))
     );
   };
-  
+
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
@@ -229,11 +229,16 @@ const WorkflowPage = ({
         return;
       }
 
-      const hasEmptySigner = basicNodes.some(
-        (node) =>
-          Array.isArray(node.data?.nodeProjectWithSignerList) &&
-          node.data?.nodeProjectWithSignerList.length === 0
-      );
+      const hasEmptySigner = basicNodes.some((node) => {
+        // Determine if the node's toolbar should be hidden
+        const toolbarHidden = !edges.some((edge) => edge.source === node.id);
+
+        if (toolbarHidden) {
+          return false;
+        }
+
+        return toolbarHidden;
+      });
 
       if (hasEmptySigner) {
         notifications.show({
@@ -277,7 +282,7 @@ const WorkflowPage = ({
           break;
         case "edit":
           const workflowIdNew = await updateWorkflow(supabaseClient, {
-            workflowId: workflowIdUpdate,
+            workflowId: workflowUUID,
             label,
             nodes,
             edges,
@@ -298,7 +303,7 @@ const WorkflowPage = ({
           await router.push(
             `/${formatTeamNameToUrlKey(
               activeTeam.team_name
-            )}/workflows/${workflowIdURL}/edit`
+            )}/workflows/${workflowUUID}/edit`
           );
       }
     } catch (e) {
@@ -313,26 +318,25 @@ const WorkflowPage = ({
 
   useEffect(() => {
     if (mode === "create") {
-      if (typeof window !== "undefined") {
-        setNodes([
-          {
-            id: v4(),
-            data: {
-              nodeStyle: {
-                label: "Start",
-                fontColor: "#000",
-                backgroundColor: "#fff",
-              },
-              nodeProjectWithSignerList: [],
-              onNodeStyleChange,
-              onNodeSignerChange,
+      setNodes([
+        {
+          id: v4(),
+          data: {
+            nodeStyle: {
+              label: "Start",
+              fontColor: "#000",
+              backgroundColor: "#fff",
             },
-            type: "origin",
-            position: { x: 100, y: 275 },
-            deletable: false,
+            nodeProjectWithSignerList: [],
+            onNodeStyleChange,
+            onNodeSignerChange,
           },
-        ]);
-      }
+          type: "origin",
+          position: { x: 100, y: 275 },
+          deletable: false,
+        },
+      ]);
+      setEdges([]);
     } else {
       try {
         setIsLoading(true);
@@ -407,6 +411,16 @@ const WorkflowPage = ({
     };
     fetchNodeOptions();
   }, [activeTeam.team_id]);
+
+  const shouldHideToolbar = !edges.some((edge) => {
+    if (edge.source === selectedNode?.id) {
+      const targetNode = nodes.find((node) => node.id === edge.target);
+
+      // Return false if the node exists and is not of type "end"
+      return targetNode && targetNode.type !== "end";
+    }
+    return false;
+  });
 
   return (
     <Container fluid>
@@ -493,6 +507,7 @@ const WorkflowPage = ({
               onDelete={handleDeleteNode}
               onDuplicate={handleDuplicateNode}
               onOpenNodeChangeStylesForm={handleOpenNodeChangeStylesForm}
+              shouldHideToolbar={shouldHideToolbar}
             />
           )}
         </ReactFlow>
