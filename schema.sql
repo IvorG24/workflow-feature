@@ -12207,10 +12207,14 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar,
-        user_email
+        user_email,
+        ut.user_employee_number
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         AND user_is_disabled = false
+      LEFT JOIN user_schema.user_employee_number_table ut
+          ON user_employee_number_user_id = user_id
+          AND user_employee_number_is_disabled = false
       WHERE
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
