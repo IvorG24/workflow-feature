@@ -200,7 +200,15 @@ const LiquidationReimbursementTableVersion = ({
     "Supplier Name/Payee",
     "Type of Request",
     "Invoice Amount",
+    "Cost Code",
+    "Bill of Quantity Code",
   ];
+
+  const withBoq = payeeSectionList.some((section) =>
+    section.fields.find((field) =>
+      ["Cost Code", "Bill of Quantity Code"].includes(field.label)
+    )
+  );
 
   const formatStatus = (status: string) => {
     switch (status) {
@@ -313,33 +321,47 @@ const LiquidationReimbursementTableVersion = ({
                 <View style={[styles.tableCol, styles.fullCell]}>
                   <Text style={styles.tableHeader}>Supplier Name/Payee</Text>
                 </View>
-                <View style={[styles.tableCol, styles.fullCell]}>
+                <View style={[styles.tableCol, styles.minCell]}>
                   <Text style={styles.tableHeader}>Type of Request</Text>
                 </View>
                 <View style={[styles.tableCol, styles.minCell]}>
                   <Text style={styles.tableHeader}>Invoice Amount</Text>
                 </View>
+                {withBoq ? (
+                  <>
+                    <View style={[styles.tableCol, styles.fullCell]}>
+                      <Text style={styles.tableHeader}>Cost Code</Text>
+                    </View>
+                    <View style={[styles.tableCol, styles.fullCell]}>
+                      <Text style={styles.tableHeader}>BOQ Code</Text>
+                    </View>
+                  </>
+                ) : null}
               </View>
               {payeeSectionList.map((item, index) => {
+                const payeeTableColumnFieldList = item.fields.filter(
+                  (field) =>
+                    payeeTableColumns.includes(field.label) && field.value
+                );
                 return (
                   <View key={index} style={styles.tableRow} wrap={false}>
-                    {item.fields
-                      .filter((field) =>
-                        payeeTableColumns.includes(field.label)
-                      )
-                      .map((field, i) => (
-                        <View
-                          key={i}
-                          style={[
-                            styles.tableCell,
-                            ["Invoice Amount", "Date"].includes(field.label)
-                              ? styles.minCell
-                              : styles.fullCell,
-                          ]}
-                        >
-                          <Text>{field.value}</Text>
-                        </View>
-                      ))}
+                    {payeeTableColumnFieldList.map((field, i) => (
+                      <View
+                        key={i}
+                        style={[
+                          styles.tableCell,
+                          [
+                            "Invoice Amount",
+                            "Date",
+                            "Type of Request",
+                          ].includes(field.label)
+                            ? styles.minCell
+                            : styles.fullCell,
+                        ]}
+                      >
+                        <Text>{field.value}</Text>
+                      </View>
+                    ))}
                   </View>
                 );
               })}

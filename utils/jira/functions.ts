@@ -722,3 +722,32 @@ export const formatJiraRFPPayload = ({
 
   return jiraTicketPayload;
 };
+
+export const getIssueType = (requestTypeId: string) => {
+  let issueType = "Requisition Form Process"; // default issue type
+
+  switch (requestTypeId) {
+    case "332": // IT Asset
+      issueType = "IT Requisition";
+      break;
+    case "367": // LRF ACSM
+      issueType = "Liquidation/Reimbursement";
+      break;
+    case "406": // LRF PED
+      issueType = "PED Liquidation/Reimbursement";
+      break;
+    case "407": // WAV ACSM
+      issueType = "Working Advances Voucher";
+      break;
+    case "410": // WAV PED
+      issueType = "PED Working Advance Voucher";
+      break;
+
+    //todo: add RFP
+
+    default:
+      break;
+  }
+
+  return issueType;
+};
