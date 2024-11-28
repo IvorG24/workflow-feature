@@ -242,26 +242,27 @@ const TeamPage = ({
     };
   };
 
-  const handleSearchTeamMember = (data: SearchForm) => {
+  const handleSearchTeamMember = async (data: SearchForm) => {
     try {
       setTeamMemberPage(1);
       setIsUpdatingTeamMembers(true);
 
-      const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
-        keyword: data.keyword,
-        page: 1,
-        limit: ROW_PER_PAGE,
-      });
+      setTimeout(() => {
+        const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
+          keyword: data.keyword,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        });
 
-      setFilteredTeamMemberList(teamMembers);
-      setTeamMemberCount(teamMembersCount);
+        setFilteredTeamMemberList(teamMembers);
+        setTeamMemberCount(teamMembersCount);
+        setIsUpdatingTeamMembers(false);
+      }, 500);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsUpdatingTeamMembers(false);
     }
   };
 
@@ -338,7 +339,7 @@ const TeamPage = ({
     }
   };
 
-  const handleMemberPageChange = (page: number) => {
+  const handleMemberPageChange = async (page: number) => {
     try {
       setTeamMemberPage(page);
       setIsUpdatingTeamMembers(true);
@@ -348,21 +349,24 @@ const TeamPage = ({
         .trim()
         .toLowerCase();
 
-      const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
-        keyword,
-        page,
-        limit: ROW_PER_PAGE,
-      });
+      setTimeout(() => {
+        const { teamMembers, teamMembersCount } = getFilteredTeamMembers({
+          keyword,
+          page,
+          limit: ROW_PER_PAGE,
+        });
 
-      setFilteredTeamMemberList(teamMembers);
-      setTeamMemberCount(teamMembersCount);
-    } catch (e) {
+        setFilteredTeamMemberList(teamMembers);
+        setTeamMemberCount(teamMembersCount);
+
+        setIsUpdatingTeamMembers(false);
+      }, 300);
+    } catch (error) {
+      console.error("Error during pagination:", error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsUpdatingTeamMembers(false);
     }
   };
 
