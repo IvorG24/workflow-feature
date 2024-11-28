@@ -6997,7 +6997,7 @@ AS $$
               `
                 SELECT team_project_id
                 FROM team_schema.team_project_table
-                WHERE 
+                WHERE
                     team_project_name = $1
                     AND team_project_is_disabled = false
               `, [
@@ -7014,7 +7014,7 @@ AS $$
             `
               SELECT team_project_id
               FROM team_schema.team_project_table
-              WHERE 
+              WHERE
                     team_project_name = $1
                     AND team_project_is_disabled = false
             `, [
@@ -14273,7 +14273,7 @@ AS $$
         map[response.request_response_request_id].push(response);
         return map;
     }, {});
-    
+
     const departmentCache = {};
     Object.entries(parentResponseMap).forEach(([requestId, responses]) => {
         const department = JSON.parse(
@@ -14282,8 +14282,8 @@ AS $$
 
         if (department && !departmentCache[department]) {
             const deptCodeQuery = `
-                SELECT team_department_code 
-                FROM team_schema.team_department_table 
+                SELECT team_department_code
+                FROM team_schema.team_department_table
                 WHERE team_department_name = $1
             `;
             departmentCache[department] = plv8.execute(deptCodeQuery, [department])[0]?.team_department_code;
@@ -14294,11 +14294,11 @@ AS $$
     parentRequests.forEach(parent => {
         if (!jiraProjectMap[parent.request_project_id]) {
             const jiraProjectQuery = `
-                SELECT 
-                    jpt.jira_project_jira_label 
-                FROM jira_schema.jira_formsly_project_table AS jfp 
-                INNER JOIN jira_schema.jira_project_table AS jpt 
-                ON jpt.jira_project_id = jfp.jira_project_id 
+                SELECT
+                    jpt.jira_project_jira_label
+                FROM jira_schema.jira_formsly_project_table AS jfp
+                INNER JOIN jira_schema.jira_project_table AS jpt
+                ON jpt.jira_project_id = jfp.jira_project_id
                 WHERE jfp.formsly_project_id = $1
                 LIMIT 1
             `;
@@ -14317,7 +14317,7 @@ AS $$
             rt.request_jira_id,
             rt.request_form_id AS form_id
         FROM request_schema.request_table AS rt
-        INNER JOIN request_schema.request_response_table AS rrt 
+        INNER JOIN request_schema.request_response_table AS rrt
             ON rrt.request_response_request_id = rt.request_id
             AND REPLACE(rrt.request_response, '"', '') = ANY($1)
         WHERE
@@ -15426,7 +15426,7 @@ AS $$
           ON attachment_id = job_offer_attachment_id
         LEFT JOIN hr_schema.job_offer_laptop_details_table
           ON job_offer_id = job_offer_laptop_details_job_offer_id
-        WHERE 
+        WHERE
           job_offer_request_id = $1
         ORDER BY job_offer_date_created DESC
         LIMIT 1
@@ -19582,32 +19582,22 @@ AS $$
         WHERE position_questionnaire_id = $1
     `, [questionnaireId]);
 
-     position.forEach(pos => {
-        const positionData = plv8.execute(`
-            SELECT position_id
-            FROM lookup_schema.position_table
-            WHERE position_alias = $1
-        `, [pos])[0];
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = $1
+        WHERE position_id = ANY($2)
+    `, [questionnaireId, position]);
 
-        if (positionData && positionData.position_id) {
-            plv8.execute(`
-                UPDATE lookup_schema.position_table
-                SET position_questionnaire_id = $1
-                WHERE position_id = $2
-            `, [questionnaireId, positionData.position_id]);
-        }
-    });
-
-     plv8.execute(`
+    plv8.execute(`
         UPDATE form_schema.questionnaire_table
         SET
             questionnaire_updated_by = $1,
             questionnaire_date_updated = $2
-         WHERE questionnaire_id = $3
+        WHERE questionnaire_id = $3
     `, [teamMemberId, currentDate, questionnaireId]);
-    });
+  });
 
-    return returnData
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_technical_question_option(
@@ -21084,10 +21074,13 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_hr_preferred_position_per_member_id(
   input_data JSON
 )
-RETURNS VOID
+RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData = {};
+  let returnData = {
+    positionData: [],
+    positionId: []
+  };
   plv8.subtransaction(function() {
     const { memberId } = input_data;
 
@@ -21118,10 +21111,10 @@ SET search_path TO ''
 AS $$
   let returnData = {};
   plv8.subtransaction(function() {
-    const { 
+    const {
       formId,
       jobOfferId,
-      requestId 
+      requestId
     } = input_data;
 
     const formDataResult = plv8.execute(
@@ -21152,7 +21145,7 @@ AS $$
           ON job_offer_laptop_details_project = team_project_id
         INNER JOIN hr_schema.job_offer_table
           ON job_offer_id = job_offer_laptop_details_job_offer_id
-        WHERE 
+        WHERE
           job_offer_id = $1
         ORDER BY job_offer_date_created DESC
         LIMIT 1
@@ -21163,7 +21156,7 @@ AS $$
 
     const itemData = plv8.execute(
       `
-        SELECT 
+        SELECT
           item_gl_account,
           item_unit
         FROM item_schema.item_table
@@ -21315,14 +21308,14 @@ SET search_path TO ''
 AS $$
   let returnData;
   plv8.subtransaction(function () {
-    const { 
-      teamId, 
-      formId, 
-      search, 
-      isAscendingSort, 
-      limit, 
-      page, 
-      columnAccessor 
+    const {
+      teamId,
+      formId,
+      search,
+      isAscendingSort,
+      limit,
+      page,
+      columnAccessor
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -21345,7 +21338,7 @@ AS $$
           ON request_id = request_response_request_id
           AND request_response_field_id = '85a78a9f-d0cd-45d5-b781-c909efab5769'
           AND LENGTH(request_response) = 12
-        WHERE 
+        WHERE
           request_form_id = $1
           AND request_team_member_id = 'f0ae4d53-427c-4223-84ea-c007a186ae82'
         ${searchCondition}
@@ -21367,7 +21360,7 @@ AS $$
           ON request_id = request_response_request_id
           AND request_response_field_id = '85a78a9f-d0cd-45d5-b781-c909efab5769'
           AND LENGTH(request_response) = 12
-        WHERE 
+        WHERE
           request_form_id = $1
           AND request_team_member_id = 'f0ae4d53-427c-4223-84ea-c007a186ae82'
         ${searchCondition}
@@ -21405,7 +21398,7 @@ AS $$
 
     const assigneeInformation = plv8.execute(
       `
-        SELECT 
+        SELECT
           request_response_field_id,
           REPLACE(request_response, '"', '') AS request_response
         FROM request_schema.request_response_table
@@ -21454,7 +21447,7 @@ AS $$
         UPDATE request_schema.request_response_table
         SET
           request_response = $1
-        WHERE 
+        WHERE
           request_response_field_id = '85a78a9f-d0cd-45d5-b781-c909efab5769'
           AND request_response_request_id = $2
       `, [
@@ -21470,7 +21463,7 @@ AS $$
           scic_employee_first_name = $1,
           scic_employee_middle_name = $2,
           scic_employee_last_name = $3
-        WHERE 
+        WHERE
           scic_employee_hris_id_number = $4
       `, [
         firstName,
