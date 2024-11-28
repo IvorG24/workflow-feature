@@ -1481,8 +1481,6 @@ export const updateQuestionnairePosition = async (
     teamMemberId: string;
   }
 ) => {
-  console.log(params);
-
   const { error } = await supabaseClient.rpc("update_questionnaire_position", {
     input_data: params,
   });
