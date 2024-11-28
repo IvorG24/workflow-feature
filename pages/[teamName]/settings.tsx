@@ -5,7 +5,6 @@ import { ROW_PER_PAGE } from "@/utils/constant";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   TeamGroupTableRow,
-  TeamMemberType,
   TeamProjectWithAddressType,
   TeamTableRow,
   UserValidIDTableRow,
@@ -36,10 +35,8 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   team: TeamTableRow;
-  teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
   teamProjects: TeamProjectWithAddressType[];
-  teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
   pendingValidIDList: UserValidIDTableRow[];
@@ -47,10 +44,8 @@ type Props = {
 
 const Page = ({
   team,
-  teamMembers,
   teamGroups,
   teamProjects,
-  teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
   pendingValidIDList,
@@ -60,10 +55,8 @@ const Page = ({
       <Meta description="Team Page" url="/teamName/settings" />
       <TeamPage
         team={team}
-        teamMembers={teamMembers}
         teamGroups={teamGroups}
         teamProjects={teamProjects}
-        teamMembersCount={teamMembersCount}
         teamGroupsCount={teamGroupsCount}
         teamProjectsCount={teamProjectsCount}
         pendingValidIDList={pendingValidIDList}
