@@ -344,6 +344,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
     };
     fetchOptions();
   }, [activeTeam.team_id, questionnaireId]);
+  console.log(currentPosition);
 
   useEffect(() => {
     if (positionOptions && watchedFieldResponse) {
