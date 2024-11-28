@@ -77,13 +77,13 @@ const TeamPage = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
-  const teamList = useTeamList();
-  const teamMember = useUserTeamMember();
-  const user = useUser();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
+
+  const { setTeamList, setActiveTeam } = useTeamActions();
+  const teamList = useTeamList();
 
   const teamMemberListFromStore = useTeamMemberList();
   const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>(
@@ -99,15 +99,15 @@ const TeamPage = ({
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
   const [teamMemberPage, setTeamMemberPage] = useState(1);
 
-  const { setTeamList, setActiveTeam } = useTeamActions();
+  const teamMember = useUserTeamMember();
+  const user = useUser();
+  const [userRole, setUserRole] = useState(teamMember?.team_member_role);
+  const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
+  const isOwner = userRole === "OWNER";
 
   const memberEmailList = teamMemberList.map(
     (member) => member.team_member_user.user_email
   );
-
-  const [userRole, setUserRole] = useState(teamMember?.team_member_role);
-  const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(`${userRole}`);
-  const isOwner = userRole === "OWNER";
 
   const ROLE_PRIORITY = {
     OWNER: 1,
