@@ -540,11 +540,11 @@ const SchedulingCalendar = ({
             of your interview below:
           </p>
           <p>
-            <strong>Date</strong>:{" "}
+            <strong>Date</strong>:
             <span>${moment(tempDate).format("dddd, MMMM Do YYYY")}</span>
           </p>
           <p>
-            <strong>Time</strong>:{" "}
+            <strong>Time</strong>:
             <span>${moment(tempDate).format("h:mm A")}</span>
           </p>
           ${
@@ -562,7 +562,7 @@ const SchedulingCalendar = ({
             contact us at recruitment@staclara.com.ph. We look forward to
             speaking with you.
           </p>
-      )`,
+      `,
       closingPhrase: "Best regards,",
       signature: "Sta. Clara International Corporation Recruitment Team",
     };
