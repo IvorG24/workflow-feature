@@ -24,7 +24,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { formatDateTime } from "@/utils/constant";
 import { isError, safeParse } from "@/utils/functions";
 import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey, truncate } from "@/utils/string";
@@ -83,7 +83,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
 
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   const originalSectionList = request.request_form.form_section.slice(0, 2);
   const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(

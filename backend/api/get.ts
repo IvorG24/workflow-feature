@@ -31,7 +31,8 @@ import {
     ApplicationListItemType,
     ApproverUnresolvedRequestCountType,
     AppType,
-    AttachmentBucketType,
+    AssigneeInformation,
+  AttachmentBucketType,
     AttachmentTableRow,
     BackgroundCheckFilterFormValues,
     BackgroundCheckSpreadsheetData,
@@ -45,7 +46,8 @@ import {
     CSICodeTableRow,
     DashboardRequestorAndSignerType,
     Dataset,
-    EquipmentDescriptionTableRow,
+    DeploymentRecordType,
+  EquipmentDescriptionTableRow,
     EquipmentPartTableInsert,
     EquipmentPartType,
     EquipmentTableRow,
@@ -94,7 +96,8 @@ import {
     OptionType,
     OtherExpensesTypeTableRow,
     PendingInviteType,
-    PracticalTestTableRow,
+    PositionTableRow,
+  PracticalTestTableRow,
     PracticalTestType,
     PreferredPositionType,
     QuestionnaireData,
@@ -107,13 +110,13 @@ import {
     RequestWithResponseType,
     SCICEmployeeTableRow,
     SectionWithFieldType,
-    SidebarPreference,
-    SignatureHistoryTableRow,
+      SignatureHistoryTableRow,
     SignerRequestSLA,
     SignerWithProfile,
     SSOTOnLoad,
     SSOTType,
-    TeamGroupTableRow,
+    TeamDepartmentTableRow,
+  TeamGroupTableRow,
     TeamMemberOnLoad,
     TeamMembershipRequestTableRow,
     TeamMemberTableRow,
@@ -153,24 +156,6 @@ import {
 import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
-
-export async function getUserSidebarPreference(
-  supabaseClient: SupabaseClient<Database>,
-  params: { userId: string }
-): Promise<SidebarPreference | null> {
-  const { userId } = params;
-
-  const { data, error } = await supabaseClient
-    .schema("user_schema")
-    .from("user_sidebar_preference_table")
-    .select("*")
-    .eq("user_sidebar_preference_user_id", userId)
-    .maybeSingle();
-  if (error) {
-    throw error;
-  }
-  return data;
-}
 
 export async function getFileUrl(
   supabaseClient: SupabaseClient<Database>,
@@ -4221,7 +4206,7 @@ export const getTeamDepartmentOptions = async (
     .range(index, index + limit - 1);
   if (error) throw error;
 
-  return data;
+  return data as TeamDepartmentTableRow[];
 };
 
 export const getEquipmentCodeOptions = async (
@@ -4522,22 +4507,26 @@ export const checkUserEmail = async (
 export const getLRFSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    userId: string;
+    teamId: string;
     limit: number;
     page: number;
     projectFilter?: string;
     startDate?: string;
     endDate?: string;
     sortFilter: string;
+    requestIdFilter?: string;
+    projectListOptions: OptionType[];
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {
     input_data: params,
   });
-
   if (error) throw error;
 
-  return data as { data: LRFSpreadsheetData[]; count: number };
+  return data as {
+    data: LRFSpreadsheetData[];
+    count: number;
+  };
 };
 
 export const getApplicationInformationPositionOptions = async (
@@ -6784,7 +6773,10 @@ export const getUserApplicationProgressOnLoad = async (
     technicalInterview2Data?: TechnicalInterviewTableRow | null;
     tradeTestData?: TradeTestTableRow | null;
     backgroundCheckData?: BackgroundCheckTableRow | null;
-    jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
+    jobOfferData?:
+      | (JobOfferTableRow &
+          AttachmentTableRow & { job_offer_with_laptop: boolean })
+      | null;
   };
 };
 
@@ -7474,4 +7466,85 @@ export const getModuleInformation = async (
   if (error) throw error;
 
   return data as unknown as ModuleData;
+};
+
+export const automatedLaptopItemForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    requestId: string;
+    jobOfferId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "automated_laptop_item_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as FormWithResponseType;
+};
+
+export const deploymentRecordOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    formId: string;
+    page: number;
+    limit: number;
+    isAscendingSort: boolean;
+    columnAccessor: string;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "deployment_record_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    data: DeploymentRecordType[];
+    count: 0;
+  };
+};
+
+export const fetchAssigneeinformation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_applicant_assignee_information",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as AssigneeInformation;
+};
+
+export const getPositionJobOffer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; position: string }
+) => {
+  const { teamId, position } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .ilike("position_alias", position)
+    .single();
+
+  if (error) throw error;
+
+  return data as PositionTableRow;
 };

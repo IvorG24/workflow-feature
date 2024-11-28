@@ -19,7 +19,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { formatDateTime } from "@/utils/constant";
 import { isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -93,7 +93,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
   const canSignerTakeAction =
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&

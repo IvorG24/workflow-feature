@@ -550,6 +550,17 @@ export const formatTime = (timeValue: Date) => {
   return moment(timeValue).format("LT");
 };
 
+export const formatDateTime = (dateTimeValue: string | Date | number) => {
+  const date = new Date(dateTimeValue);
+  
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date input");
+  }
+  
+  return moment(date).format("YYYY-MM-DD LT");
+};
+
+
 export const ID_OPTIONS = [
   {
     value: "Company ID",

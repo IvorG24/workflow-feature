@@ -15,6 +15,7 @@ import {
 } from "@/utils/string";
 import {
   AdOwnerRequestTableInsert,
+  AssigneeInformation,
   AttachmentBucketType,
   AttachmentTableInsert,
   BasicEdgeType,
@@ -549,6 +550,7 @@ export const createRequest = async (
       lastName: string;
       contactNumber: string;
       email: string;
+      sssNumber: string;
     };
     interviewParams?: {
       status: string;
@@ -584,6 +586,11 @@ export const createRequest = async (
       };
       tradeTestId: string;
     };
+    itAssetAutomationParams?: {
+      position: string;
+      manPowerLoadingId: string;
+      referenceId: string;
+    };
   }
 ) => {
   const {
@@ -606,6 +613,7 @@ export const createRequest = async (
     interviewParams,
     backgroundCheckParams,
     tradeTestParams,
+    itAssetAutomationParams,
   } = params;
 
   const requestId = uuidv4();
@@ -753,6 +761,7 @@ export const createRequest = async (
         rootFormslyRequestId,
         recruiter,
         applicationInformationParams,
+        itAssetAutomationParams,
         interviewParams,
         backgroundCheckParams,
         tradeTestParams,
@@ -2731,6 +2740,24 @@ export const insertUpdateHrPreferredPosition = async (
     }
   );
   if (error) throw error;
+  return data;
+};
+
+export const handleUpdateEmployeeHrisId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeData: AssigneeInformation;
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "update_hris_id_laptop_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
   return data;
 };
 

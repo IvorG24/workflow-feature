@@ -33,6 +33,7 @@ import {
   IconEdit,
   IconFileArrowRight,
   IconFolderCancel,
+  IconInfoCircle,
   IconRefresh,
   IconX,
 } from "@tabler/icons-react";
@@ -129,6 +130,7 @@ const RequestComment = ({
     "ACTION_REJECTED",
     "ACTION_CANCELED",
     "ACTION_REVERSED",
+    "ACTION_GENERAL",
   ];
 
   const actionCommentColor = (type: string, relatedNode?: TargetNode) => {
@@ -141,6 +143,8 @@ const RequestComment = ({
         return "gray";
       case "ACTION_REVERSED":
         return "orange";
+      case "ACTION_GENERAL":
+        return "blue";
       default:
         return relatedNode?.target_node_background_color;
     }
@@ -156,6 +160,8 @@ const RequestComment = ({
         return "Canceled!";
       case "ACTION_REVERSED":
         return "Reversed!";
+      case "ACTION_GENERAL":
+        return "Formsly Automation";
       default:
         return `${relatedNode?.edge_transition_label} !`;
     }
@@ -171,6 +177,8 @@ const RequestComment = ({
         return <IconFolderCancel size={16} />;
       case "ACTION_REVERSED":
         return <IconRefresh size={16} />;
+      case "ACTION_GENERAL":
+        return <IconInfoCircle size={16} />;
       default:
         return <IconFileArrowRight size={16} />;
     }

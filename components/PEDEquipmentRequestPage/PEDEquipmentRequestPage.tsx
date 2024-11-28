@@ -24,7 +24,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, formatDate } from "@/utils/constant";
+import { BASE_URL, formatDateTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -212,7 +212,7 @@ const PEDEquipmentRequestPage = ({
 
   const requestor = request.request_team_member.team_member_user;
 
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const requestDateCreated = formatDateTime(request.request_date_created);
 
   const handleUpdateRequest = async (
     status: string,
