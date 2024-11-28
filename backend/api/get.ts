@@ -1219,8 +1219,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -5810,12 +5810,12 @@ export const getPositionPerQuestionnaire = async (
   const { data, error } = await supabaseClient
     .schema("lookup_schema")
     .from("position_table")
-    .select("position_alias")
+    .select("position_id")
     .eq("position_questionnaire_id", params.questionnaireId);
 
   if (error) throw error;
 
-  const positions = data.map((item) => item.position_alias);
+  const positions = data.map((item) => item.position_id);
 
   return positions;
 };
