@@ -20977,7 +20977,7 @@ AS $$
       startDate,
       endDate,
       limit = 100,
-      offset = 0,
+      offset = 0
     } = input_data;
 
     let query = `
@@ -21007,7 +21007,6 @@ AS $$
             CONCAT(jou.user_first_name, ' ', jou.user_last_name) AS "Job Offer Assigned HR",
             request_date_created AS "Date Created"
         FROM public.request_view
-        -- CHANGES 1: use hr_schema.application_information_additional_details_table
         INNER JOIN hr_schema.application_information_additional_details_table AS noa ON noa.application_information_additional_details_request_id = request_id
         INNER JOIN request_schema.request_response_table AS salary ON salary.request_response_request_id = request_id
             AND salary.request_response_field_id = 'bcfba5e2-b9cc-4c4b-a308-174993c4564d'
