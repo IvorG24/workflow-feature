@@ -31,6 +31,7 @@ import JiraUserAccountForm from "./JiraUserAccountForm";
 type Props = {
   jiraUserAcountList: JiraUserAccountTableRow[];
   setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
+  setIsShowTable: Dispatch<SetStateAction<boolean>>;
   setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
   selectedFormslyProject: string | null;
   selectedFormslyProjectName: string;
@@ -48,6 +49,7 @@ const JiraUserAccountList = ({
   setSelectedFormslyProject,
   selectedFormslyProject,
   selectedFormslyProjectName,
+  setIsShowTable,
   jiraUserRoleList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -276,6 +278,7 @@ const JiraUserAccountList = ({
           <ActionIcon
             onClick={() => {
               setIsManagingUserAccountList(false);
+              setIsShowTable(true);
               setSelectedFormslyProject(null);
             }}
           >
