@@ -8,7 +8,7 @@ import {
   DEFAULT_REQUEST_LIST_LIMIT,
   formatDate,
 } from "@/utils/constant";
-import { getPCVClientViewStatus, safeParse } from "@/utils/functions";
+import { getRequestClientViewStatus, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   getAvatarColor,
@@ -21,6 +21,7 @@ import {
   RequestListItemType,
   RequestSignerType,
   TeamMemberWithUserType,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -68,6 +69,7 @@ type Props = {
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
   tableColumnList: { value: string; label: string }[];
+  projectList: TeamProjectTableRow[];
 };
 
 const useStyles = createStyles(() => ({
@@ -99,6 +101,7 @@ const RequestListTable = ({
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
+  projectList,
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -700,15 +703,16 @@ const RequestListTable = ({
           title: "Formsly Status",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
-          render: ({ request_status, form_name }) => {
-            let requestStatus = request_status;
+          render: ({ request_status, form_name, request_formsly_id }) => {
+            const projectMatch = projectList.find((project) =>
+              `${request_formsly_id}`.includes(project.team_project_code)
+            );
 
-            if (requestStatus === "APPROVED") {
-              requestStatus = getPCVClientViewStatus(
-                requestStatus,
-                `${form_name}`
-              );
-            }
+            const requestStatus = getRequestClientViewStatus({
+              status: `${request_status}`,
+              formName: `${form_name}`,
+              projectName: `${projectMatch?.team_project_name ?? ""}`,
+            });
 
             return (
               <Flex justify="center">

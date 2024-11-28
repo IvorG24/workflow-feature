@@ -2,7 +2,7 @@ import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
 import { formatDate, formatDateTime, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { getPCVClientViewStatus } from "@/utils/functions";
+import { getRequestClientViewStatus } from "@/utils/functions";
 import { getJiraTicketStatusColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -167,11 +167,12 @@ const RequestDetailsSection = ({
         {fieldList.map((field, index) => {
           let value = field.value;
 
-          if (field.label === "Status" && field.value === "APPROVED") {
-            value = getPCVClientViewStatus(
-              field.value,
-              request.request_form.form_name
-            );
+          if (field.label === "Status") {
+            value = getRequestClientViewStatus({
+              status: `${value}`,
+              formName: `${request.request_form.form_name}`,
+              projectName: `${request.request_project.team_project_name}`,
+            });
           }
 
           if (field.label === "Form Description") {
