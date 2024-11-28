@@ -362,7 +362,6 @@ const TeamPage = ({
         setIsUpdatingTeamMembers(false);
       }, 300);
     } catch (error) {
-      console.error("Error during pagination:", error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
