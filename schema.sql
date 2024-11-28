@@ -20965,7 +20965,7 @@ AS $$
  });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_hr_recruitment_data(
+CREATE OR REPLACE FUNCTION get_hr_recruitment_data (
   input_data JSON
 )
 RETURNS JSON
@@ -20977,14 +20977,14 @@ AS $$
       startDate,
       endDate,
       limit = 100,
-      offset = 0
+      offset = 0,
     } = input_data;
 
     let query = `
         SELECT
-            request_formsly_id AS "Applicant Ref ID",
-            REPLACE(CONCAT(first.request_response, ' ', middle.request_response, ' ', last.request_response), '"', '') AS "Name of Applicant",
-            REPLACE(position.request_response, '"', '') AS "Position",
+            request_formsly_id AS "Applicant Reference ID",
+            CONCAT(noa.application_information_additional_details_first_name, ' ', noa.application_information_additional_details_middle_name, ' ', noa.application_information_additional_details_last_name) AS "Name of Applicant",
+            noa.application_information_additional_details_position AS "Position",
             salary.request_response AS "Asking Salary",
             request_status AS "Application Information Status",
             request_status_date_updated AS "Application Information Date",
@@ -21007,14 +21007,8 @@ AS $$
             CONCAT(jou.user_first_name, ' ', jou.user_last_name) AS "Job Offer Assigned HR",
             request_date_created AS "Date Created"
         FROM public.request_view
-        INNER JOIN request_schema.request_response_table AS first ON first.request_response_request_id = request_id
-            AND first.request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
-        LEFT JOIN request_schema.request_response_table AS middle ON middle.request_response_request_id = request_id
-            AND middle.request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
-        INNER JOIN request_schema.request_response_table AS last ON last.request_response_request_id = request_id
-        AND last.request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
-        INNER JOIN request_schema.request_response_table AS position ON position.request_response_request_id = request_id
-            AND position.request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        -- CHANGES 1: use hr_schema.application_information_additional_details_table
+        INNER JOIN hr_schema.application_information_additional_details_table AS noa ON noa.application_information_additional_details_request_id = request_id
         INNER JOIN request_schema.request_response_table AS salary ON salary.request_response_request_id = request_id
             AND salary.request_response_field_id = 'bcfba5e2-b9cc-4c4b-a308-174993c4564d'
         INNER JOIN request_schema.request_signer_table ON request_signer_request_id = request_id
@@ -21036,7 +21030,7 @@ AS $$
         LEFT JOIN team_schema.team_member_table AS bctm ON bctm.team_member_id = background_check_team_member_id
         LEFT JOIN user_schema.user_table AS bcu ON bcu.user_id = bctm.team_member_user_id
         LEFT JOIN (
-        SELECT *,
+        SELECT job_offer_request_id, job_offer_date_created, job_offer_compensation, job_offer_team_member_id, job_offer_status,
             ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY job_offer_date_created DESC) AS rn
         FROM hr_schema.job_offer_table
         ) jo ON job_offer_request_id = request_id
