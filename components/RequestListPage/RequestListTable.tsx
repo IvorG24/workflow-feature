@@ -8,7 +8,7 @@ import {
   DEFAULT_REQUEST_LIST_LIMIT,
   formatDate,
 } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { getPCVClientViewStatus, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   getAvatarColor,
@@ -700,16 +700,27 @@ const RequestListTable = ({
           title: "Formsly Status",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
-          render: ({ request_status }) => (
-            <Flex justify="center">
-              <Badge
-                variant="filled"
-                color={getStatusToColor(String(request_status))}
-              >
-                {String(request_status)}
-              </Badge>
-            </Flex>
-          ),
+          render: ({ request_status, form_name }) => {
+            let requestStatus = request_status;
+
+            if (requestStatus === "APPROVED") {
+              requestStatus = getPCVClientViewStatus(
+                requestStatus,
+                `${form_name}`
+              );
+            }
+
+            return (
+              <Flex justify="center">
+                <Badge
+                  variant="filled"
+                  color={getStatusToColor(String(request_status))}
+                >
+                  {String(requestStatus)}
+                </Badge>
+              </Flex>
+            );
+          },
         },
         {
           accessor: "user_id",

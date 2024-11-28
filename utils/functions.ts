@@ -411,3 +411,23 @@ export const removeDuplicates = (
 
   return Array.from(uniqueObjects.values());
 };
+
+export const getPCVClientViewStatus = (status: string, formName: string) => {
+  let clientViewStatus = status;
+
+  if (status === "APPROVED") {
+    switch (formName) {
+      case "Petty Cash Voucher":
+        clientViewStatus = "Verified by Accounting";
+        break;
+      case "Petty Cash Voucher Balance":
+        clientViewStatus = "Approved by PM";
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  return clientViewStatus;
+};

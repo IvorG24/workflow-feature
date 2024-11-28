@@ -2,6 +2,7 @@ import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
 import { formatDate, formatDateTime, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { getPCVClientViewStatus } from "@/utils/functions";
 import { getJiraTicketStatusColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
@@ -164,12 +165,21 @@ const RequestDetailsSection = ({
       <Space h="xl" />
       <Stack spacing="xs">
         {fieldList.map((field, index) => {
+          let value = field.value;
+
+          if (field.label === "Status" && field.value === "APPROVED") {
+            value = getPCVClientViewStatus(
+              field.value,
+              request.request_form.form_name
+            );
+          }
+
           if (field.label === "Form Description") {
             return (
               <Textarea
                 key={index}
                 label={field.label}
-                value={field.value}
+                value={value}
                 readOnly
                 variant="filled"
               />
@@ -179,7 +189,7 @@ const RequestDetailsSection = ({
               <TextInput
                 key={index}
                 label={field.label}
-                value={field.value}
+                value={value}
                 readOnly
                 variant="filled"
               />
