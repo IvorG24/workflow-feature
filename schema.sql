@@ -21312,10 +21312,13 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_hr_preferred_position_per_member_id(
   input_data JSON
 )
-RETURNS VOID
+RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData = {};
+  let returnData = {
+    positionData: [],
+    positionId: []
+  };
   plv8.subtransaction(function() {
     const { memberId } = input_data;
 
