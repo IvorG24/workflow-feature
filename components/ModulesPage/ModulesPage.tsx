@@ -238,6 +238,7 @@ const ModulesPage = ({
       return updatedItems;
     });
   };
+
   const handleUpdateModule = async () => {
     try {
       setIsLoading(true);
@@ -309,6 +310,7 @@ const ModulesPage = ({
       setIsLoading(false);
     }
   };
+
   const fetchWorkflowList = async () => {
     try {
       const { data } = await supabaseClient
@@ -326,6 +328,7 @@ const ModulesPage = ({
       });
     }
   };
+
   const getInitialNodes = async () => {
     try {
       const data = await getModulePageNode(supabaseClient, {
@@ -342,6 +345,7 @@ const ModulesPage = ({
       });
     }
   };
+  
   const gotoEditHandler = async () => {
     const currentPath = router.asPath;
 

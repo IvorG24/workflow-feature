@@ -169,7 +169,7 @@ const LiquidationReimbursementRequestPage = ({
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
+    status: "APPROVED" | "REJECTED" | string,
     jiraId?: string,
     jiraLink?: string
   ) => {
@@ -211,7 +211,7 @@ const LiquidationReimbursementRequestPage = ({
           if (signer.signer_id === thisSigner.signer_id) {
             return {
               ...signer,
-              request_signer_status: status,
+              request_signer_status: status as ReceiverStatusType,
               request_signer_status_date_updated: new Date().toISOString(),
             };
           }
@@ -882,9 +882,9 @@ const LiquidationReimbursementRequestPage = ({
                 `${b.section_field[0].field_response?.request_response}`
                   ? 1
                   : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
+                      `${a.section_field[0].field_response?.request_response}`
+                    ? -1
+                    : 0
               )}
           />
         )}

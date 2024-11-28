@@ -1,7 +1,7 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { PersonalInfoForm } from "@/components/UserSettingsPage/UserSettingsPage";
-import { Database } from "@/utils/database";
+import { Database, Json } from "@/utils/database";
 import {
   escapeQuotes,
   escapeQuotesForObject,
@@ -117,7 +117,7 @@ export const updateFormVisibility = async (
 export const approveOrRejectRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    requestAction: "APPROVED" | "REJECTED";
+    requestAction: string;
     requestId: string;
     isPrimarySigner: boolean;
     requestSignerId: string;
@@ -1626,7 +1626,7 @@ export const updateWorkflow = async (
   params: createUpdateWorkflowParams
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("update_workflow", { input_data: params })
+    .rpc("update_workflow", { input_data: params as unknown as Json })
     .select("*");
 
   if (error) throw error;

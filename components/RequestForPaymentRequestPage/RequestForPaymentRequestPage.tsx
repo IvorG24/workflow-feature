@@ -229,7 +229,7 @@ const RequestForPaymentRequestPage = ({
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
+    status: "APPROVED" | "REJECTED" | string,
     jiraId?: string,
     jiraLink?: string
   ) => {
@@ -271,7 +271,7 @@ const RequestForPaymentRequestPage = ({
           if (signer.signer_id === thisSigner.signer_id) {
             return {
               ...signer,
-              request_signer_status: status,
+              request_signer_status: status as ReceiverStatusType,
               request_signer_status_date_updated: new Date().toISOString(),
             };
           }
@@ -504,11 +504,11 @@ const RequestForPaymentRequestPage = ({
       if (safeParse(`${requestPurpose}`).toLowerCase() === "ob budget") {
         obTicket = safeParse(
           formSection.length
-            ? formSection[1].section_field.find(
+            ? (formSection[1].section_field.find(
                 (field) =>
                   field.field_name ===
                   "Ticket Number of Approved Official Business"
-              )?.field_response?.request_response ?? ""
+              )?.field_response?.request_response ?? "")
             : ""
         );
       }
@@ -636,9 +636,9 @@ const RequestForPaymentRequestPage = ({
   );
   const selectedChargeTo = safeParse(
     formSection.length
-      ? formSection[1].section_field.find(
+      ? (formSection[1].section_field.find(
           (field) => field.field_name === "Charge To"
-        )?.field_response?.request_response ?? ""
+        )?.field_response?.request_response ?? "")
       : ""
   );
 

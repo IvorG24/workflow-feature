@@ -31,7 +31,7 @@ const BasicNode = ({ id, data, isConnectable, selected }: BasicNodeProps) => {
 
   return (
     <Paper
-      w={"auto"}
+      w={200}
       ref={ref}
       p="md"
       shadow="md"
@@ -44,12 +44,7 @@ const BasicNode = ({ id, data, isConnectable, selected }: BasicNodeProps) => {
       onDoubleClick={handleDoubleClick}
       pos="relative"
     >
-      <Box
-        pos="absolute"
-        h="170%"
-        w="130%"
-        sx={{ top: "-35%", left: "-15%" }}
-      />
+      <Box pos="absolute" h="170%" w="50%" sx={{ top: "-35%", left: "-15%" }} />
       {positionList.map((position, index) => (
         <Handle
           key={index}

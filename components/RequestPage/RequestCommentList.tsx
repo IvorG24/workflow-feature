@@ -11,6 +11,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentAttachmentWithPublicUrl,
   RequestCommentType,
+  TargetNode,
 } from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -31,6 +32,7 @@ type Props = {
     requestJiraId?: string | null;
   };
   requestCommentList: RequestCommentType[];
+  workflowNodeData?: TargetNode[];
   setRequestCommentList: Dispatch<SetStateAction<RequestCommentType[]>>;
 };
 
@@ -38,6 +40,7 @@ const RequestCommentList = ({
   requestData,
   requestCommentList,
   setRequestCommentList,
+  workflowNodeData,
 }: Props) => {
   const userProfile = useUserProfile();
   const router = useRouter();
@@ -48,6 +51,9 @@ const RequestCommentList = ({
   const [isLoading, setIsLoading] = useState(false);
   const [commentList, setCommentList] = useState(requestCommentList);
   const [commentAttachment, setCommentAttachment] = useState<File[]>([]);
+  const [commentsWithRelatedNodes, setCommentsWithRelatedNodes] = useState<
+    { comment: RequestCommentType; relatedNode: TargetNode | undefined }[]
+  >([]);
 
   useEffect(() => {
     const fetchCommentAttachmentList = async () => {
@@ -65,6 +71,19 @@ const RequestCommentList = ({
         })
       );
       setCommentList(commentListWithAttachmentUrl);
+
+      if (!workflowNodeData) return;
+      const updatedComments = requestCommentList.map((comment) => {
+        const relatedNode = workflowNodeData.find((node) => {
+          return (
+            node.target_node_type_label ===
+            comment.comment_type.replace("ACTION_", "")
+          );
+        });
+        return { comment, relatedNode };
+      });
+
+      setCommentsWithRelatedNodes(updatedComments);
     };
     fetchCommentAttachmentList();
   }, [requestCommentList, supabaseClient]);
@@ -108,6 +127,10 @@ const RequestCommentList = ({
       if (error) throw error;
 
       if (requestData.requestJiraId) {
+        const relatedNode = workflowNodeData?.find((node) => {
+          return node.target_node_type_label === "REQUEST_COMMENT";
+        });
+
         const newCommentWithAttachment = {
           ...newComment,
           comment_attachment: commentAttachmentList,
@@ -120,6 +143,7 @@ const RequestCommentList = ({
               user_avatar: userProfile.user_avatar,
             },
           },
+          relatedNode,
         };
 
         await handleAddCommentToJiraTicket(
@@ -294,11 +318,12 @@ const RequestCommentList = ({
           </>
         )}
 
-        {commentList.map((comment) => (
+        {commentsWithRelatedNodes.map(({ comment, relatedNode }) => (
           <RequestComment
             key={comment.comment_id}
             comment={comment}
             setCommentList={setCommentList}
+            relatedNode={relatedNode}
           />
         ))}
       </Paper>

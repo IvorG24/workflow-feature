@@ -1,5 +1,5 @@
 import { getCurrencyOptionList } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createModuleRequest, createRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -38,15 +38,21 @@ type Props = {
   form: FormType;
   formslyFormName?: string;
   requestProjectId?: string;
+  type?: "Request" | "Module Request";
 };
 
 const CreateRequestPage = ({
   form,
   formslyFormName = "",
   requestProjectId,
+  type = "Request",
 }: Props) => {
   const router = useRouter();
+  const moduleId = router.query.moduleId as string;
+  const moduleRequestId = router.query.requestId as string;
+  const nextForm = router.query.nextForm as string;
   const formId = router.query.formId as string;
+
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
@@ -92,30 +98,69 @@ const CreateRequestPage = ({
       if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
+      switch (type) {
+        case "Request":
+          const request = await createRequest(supabaseClient, {
+            requestFormValues: data,
+            formId,
+            teamMemberId: teamMember.team_member_id,
+            signers: form.form_signer,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: false,
+            projectId: requestProjectId || "",
+            teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
+          removeLocalFormState();
+          notifications.show({
+            message: "Request created.",
+            color: "green",
+          });
+          await router.push(
+            `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+              request.request_id
+            }`
+          );
+          break;
+        case "Module Request":
+          const moduleRequest = await createModuleRequest(supabaseClient, {
+            requestFormValues: data,
+            formId: form.form_id,
+            moduleId: moduleId,
+            moduleRequestId: moduleRequestId,
+            teamMemberId: teamMember.team_member_id,
+            signers: form.form_signer,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId: requestProjectId ?? "",
+            teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
 
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: form.form_signer,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: form.form_name,
-        isFormslyForm: false,
-        projectId: requestProjectId || "",
-        teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
-        userId: requestorProfile.user_id,
-      });
-      removeLocalFormState();
-      notifications.show({
-        message: "Request created.",
-        color: "green",
-      });
-      await router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
-          request.request_id
-        }`
-      );
+          notifications.show({
+            message: "Module Request created.",
+            color: "green",
+          });
+
+          if (!nextForm) {
+            await router.push(
+              `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }`
+            );
+          } else {
+            await router.push(
+              `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }?requestId=${moduleRequest.request_id}`
+            );
+          }
+          break;
+      }
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -206,7 +251,7 @@ const CreateRequestPage = ({
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        Create {type}
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
@@ -247,7 +292,7 @@ const CreateRequestPage = ({
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+            <RequestFormSigner type={type} signerList={signerList} />
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

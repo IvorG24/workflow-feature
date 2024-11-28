@@ -1,15 +1,15 @@
 import { getRequestId } from "@/backend/api/get";
+import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
+import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
-// import ModuleItAssetRequestPage from "@/components/ModuleItAssetRequestPage/ModuleItAssetRequestPage";
-// import ModuleItemRequestPage from "@/components/ModuleItemRequestPage/ModuleItemRequestPage";
-// import ModuleOtherExpensesRequestPage from "@/components/ModuleOtherExpensesRequestPage/ModuleOtherExpensesRequestPage";
-// import ModulePEDEquipmentRequestPage from "@/components/ModulePEDEquipmentRequestPage/ModulePEDEquipmentRequestPage";
-// import ModulePEDItemRequestPage from "@/components/ModulePEDItemRequestPage/ModulePEDItemRequestPage";
-// import ModulePEDPartRequestPage from "@/components/ModulePEDPartRequestPage/ModulePEDPartRequestPage";
-// import ModuleServicesRequestPage from "@/components/ModuleServicesRequestPage/ModuleServicesRequestPage";
-// import ModuleRequestPage from "@/components/ModulesRequestPage/ModuleRequestPage";
+import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
+import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
+import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
+import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
+import RequestPage from "@/components/RequestPage/RequestPage";
+import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import { RequestWithModuleResponseType } from "@/utils/types";
+import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps =
@@ -17,26 +17,11 @@ export const getServerSideProps: GetServerSideProps =
     async ({ supabaseClient, user, context }) => {
       try {
         const nextRequest = context.query.requestId as string;
-        const requestIdCollection = await getRequestId(supabaseClient, {
+
+        const requestIdToLoad = await getRequestId(supabaseClient, {
           moduleRequestId: context.query.moduleRequestId as string,
+          nextRequest,
         });
-
-        const currentRequestIndex = requestIdCollection.findIndex(
-          (req) => req.request_id === nextRequest
-        );
-
-        let requestIdToLoad;
-        if (currentRequestIndex === -1 || !nextRequest) {
-          requestIdToLoad = requestIdCollection[0].request_id;
-        } else {
-          const nextIndex = currentRequestIndex + 1;
-          if (nextIndex < requestIdCollection.length) {
-            requestIdToLoad = requestIdCollection[nextIndex].request_id;
-          } else {
-            requestIdToLoad =
-              requestIdCollection[currentRequestIndex].request_id;
-          }
-        }
 
         const { data, error } = await supabaseClient.rpc(
           "module_request_page_on_load",
@@ -66,7 +51,7 @@ export const getServerSideProps: GetServerSideProps =
   );
 
 type Props = {
-  request: RequestWithModuleResponseType;
+  request: RequestWithResponseType;
   moduleId: string;
   duplicatableSectionIdList: string[];
   sectionIdWithDuplicatableSectionIdList: {
@@ -76,73 +61,81 @@ type Props = {
 };
 
 const Page = ({ request, moduleId, duplicatableSectionIdList }: Props) => {
-  //   const formslyForm = () => {
-  //     if (request.request_form.form_name === "Item") {
-  //       return (
-  //         <ModuleItemRequestPage
-  //           moduleId={moduleId}
-  //           request={request}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "Services") {
-  //       return (
-  //         <ModuleServicesRequestPage
-  //           moduleId={moduleId}
-  //           request={request}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "Other Expenses") {
-  //       return (
-  //         <ModuleOtherExpensesRequestPage
-  //           moduleId={moduleId}
-  //           request={request}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "PED Equipment") {
-  //       return (
-  //         <ModulePEDEquipmentRequestPage
-  //           request={request}
-  //           moduleId={moduleId}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "PED Part") {
-  //       return (
-  //         <ModulePEDPartRequestPage
-  //           request={request}
-  //           moduleId={moduleId}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "PED Item") {
-  //       return (
-  //         <ModulePEDItemRequestPage
-  //           request={request}
-  //           moduleId={moduleId}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else if (request.request_form.form_name === "IT Asset") {
-  //       return (
-  //         <ModuleItAssetRequestPage
-  //           request={request}
-  //           moduleId={moduleId}
-  //           duplicatableSectionIdList={duplicatableSectionIdList}
-  //         />
-  //       );
-  //     } else {
-  //       return (
-  //         <ModuleRequestPage
-  //           moduleId={moduleId}
-  //           request={request}
-  //           isFormslyForm
-  //         />
-  //       );
-  //     }
-  //   };
+  const formslyForm = () => {
+    if (request.request_form.form_name === "Item") {
+      return (
+        <ItemRequestPage
+          type="Module Request"
+          moduleId={moduleId}
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Services") {
+      return (
+        <ServicesRequestPage
+          type="Module Request"
+          moduleId={moduleId}
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Other Expenses") {
+      return (
+        <OtherExpensesRequestPage
+          type="Module Request"
+          moduleId={moduleId}
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "PED Equipment") {
+      return (
+        <PEDEquipmentRequestPage
+          type="Module Request"
+          request={request}
+          moduleId={moduleId}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "PED Part") {
+      return (
+        <PEDPartRequestPage
+          type="Module Request"
+          request={request}
+          moduleId={moduleId}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "PED Item") {
+      return (
+        <PEDItemRequestPage
+          type="Module Request"
+          request={request}
+          moduleId={moduleId}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "IT Asset") {
+      return (
+        <ITAssetRequestPage
+          type="Module Request"
+          request={request}
+          moduleId={moduleId}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else {
+      return (
+        <RequestPage
+          type="Module Request"
+          moduleId={moduleId}
+          request={request}
+          isFormslyForm
+        />
+      );
+    }
+  };
 
   return (
     <>
@@ -151,10 +144,15 @@ const Page = ({ request, moduleId, duplicatableSectionIdList }: Props) => {
         url="/teamName/module-request/[moduleRequestId]"
       />
 
-      {/* {request.request_form.form_is_formsly_form ? formslyForm() : null}
+      {request.request_form.form_is_formsly_form ? formslyForm() : null}
       {!request.request_form.form_is_formsly_form ? (
-        <ModuleRequestPage moduleId={moduleId} request={request} />
-      ) : null} */}
+        <RequestPage
+          type="Module Request"
+          moduleId={moduleId}
+          request={request}
+          isFormslyForm
+        />
+      ) : null}
     </>
   );
 };

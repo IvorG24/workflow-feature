@@ -8,7 +8,7 @@ import {
   getFileTypeColor,
   shortenFileName,
 } from "@/utils/styling";
-import { RequestCommentType } from "@/utils/types";
+import { RequestCommentType, TargetNode } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
@@ -31,6 +31,7 @@ import {
   IconDots,
   IconDownload,
   IconEdit,
+  IconFileArrowRight,
   IconFolderCancel,
   IconRefresh,
   IconX,
@@ -44,9 +45,14 @@ import RequestCommentForm, { CommentFormProps } from "./RequestCommentForm";
 type RequestCommentProps = {
   comment: RequestCommentType;
   setCommentList: Dispatch<SetStateAction<RequestCommentType[]>>;
+  relatedNode?: TargetNode;
 };
 
-const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
+const RequestComment = ({
+  comment,
+  setCommentList,
+  relatedNode,
+}: RequestCommentProps) => {
   const supabaseClient = useSupabaseClient();
 
   const teamMember = useUserTeamMember();
@@ -125,7 +131,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     "ACTION_REVERSED",
   ];
 
-  const actionCommentColor = (type: string) => {
+  const actionCommentColor = (type: string, relatedNode?: TargetNode) => {
     switch (type) {
       case "ACTION_APPROVED":
         return "green";
@@ -135,10 +141,12 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "gray";
       case "ACTION_REVERSED":
         return "orange";
+      default:
+        return relatedNode?.target_node_background_color;
     }
   };
 
-  const actionCommentTitle = (type: string) => {
+  const actionCommentTitle = (type: string, relatedNode?: TargetNode) => {
     switch (type) {
       case "ACTION_APPROVED":
         return "Approved!";
@@ -148,6 +156,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Canceled!";
       case "ACTION_REVERSED":
         return "Reversed!";
+      default:
+        return `${relatedNode?.edge_transition_label} !`;
     }
   };
 
@@ -161,6 +171,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconFolderCancel size={16} />;
       case "ACTION_REVERSED":
         return <IconRefresh size={16} />;
+      default:
+        return <IconFileArrowRight size={16} />;
     }
   };
 
@@ -188,7 +200,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         </FormProvider>
       ) : (
         <Stack spacing={8}>
-          {actionCommentList.includes(comment.comment_type) ? (
+          {actionCommentList.includes(comment.comment_type) || relatedNode ? (
             <Flex align="center" gap="sm" mt="lg">
               <Avatar
                 size={40}
@@ -205,13 +217,16 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
 
               <Alert
                 w="100%"
-                color={actionCommentColor(comment.comment_type)}
-                title={actionCommentTitle(comment.comment_type)}
+                color={actionCommentColor(comment.comment_type, relatedNode)}
+                title={actionCommentTitle(comment.comment_type, relatedNode)}
               >
                 <Flex align="center" gap="md">
                   <ThemeIcon
                     radius="xl"
-                    color={actionCommentColor(comment.comment_type)}
+                    color={actionCommentColor(
+                      comment.comment_type,
+                      relatedNode
+                    )}
                   >
                     {actionCommentIcon(comment.comment_type)}
                   </ThemeIcon>
@@ -230,7 +245,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
             </Flex>
           ) : (
             <>
-              <Card p={0} pb="sm" sx={{ cursor: "pointer" }}>
+              <Card p={0} pb="sm" px={10} sx={{ cursor: "pointer" }}>
                 <Flex mt="lg">
                   <Avatar
                     size={40}

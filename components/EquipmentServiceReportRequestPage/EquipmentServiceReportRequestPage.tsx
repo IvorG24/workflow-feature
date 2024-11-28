@@ -193,7 +193,7 @@ const EquipmentServiceReportRequestPage = ({
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
+    status: "APPROVED" | "REJECTED" | string,
     jiraId?: string,
     jiraLink?: string
   ) => {
@@ -235,7 +235,7 @@ const EquipmentServiceReportRequestPage = ({
           if (signer.signer_id === thisSigner.signer_id) {
             return {
               ...signer,
-              request_signer_status: status,
+              request_signer_status: status as ReceiverStatusType,
               request_signer_status_date_updated: new Date().toISOString(),
             };
           }

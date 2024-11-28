@@ -8,17 +8,17 @@ import { JiraTicketData } from "@/utils/types";
 import { Button, Paper, Space, Stack, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
 import { useDisclosure } from "@mantine/hooks";
-import RequestConfirmModal from "../Modal/RequestConfirmModal";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import RequestConfirmModal from "../Modal/RequestConfirmModal";
 
 type Props = {
   handleCancelRequest: () => void;
   openPromptDeleteModal: () => void;
   handleUpdateRequest: (
-    status: "APPROVED" | "REJECTED",
+    status: "APPROVED" | "REJECTED" | string,
     jiraId?: string,
     jiraLink?: string
   ) => void;

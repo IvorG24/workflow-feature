@@ -6,7 +6,7 @@ import {
   formatDate,
   formslyPremadeFormsData,
 } from "@/utils/constant";
-import { Database } from "@/utils/database";
+import { Database, Json } from "@/utils/database";
 import { formatJiraItemUserTableData, shortId } from "@/utils/functions";
 import {
   escapeQuotes,
@@ -30,7 +30,7 @@ import {
   FieldTableInsert,
   FormTableRow,
   FormType,
-  FormWithModuleResponseType,
+  FormWithResponseType,
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InvitationTableRow,
@@ -2745,7 +2745,7 @@ export const createWorkflow = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("create_workflow", { input_data: params })
+    .rpc("create_workflow", { input_data: params as unknown as Json })
     .select("*");
 
   if (error) throw error;
@@ -2886,7 +2886,7 @@ export const createModuleRequest = async (
     moduleId: string;
     teamMemberId: string;
     moduleRequestId?: string;
-    signers: FormWithModuleResponseType["form_signer"];
+    signers: FormWithResponseType["form_signer"];
     teamId: string;
     requesterName: string;
     formName: string;
@@ -2898,14 +2898,14 @@ export const createModuleRequest = async (
 ) => {
   const {
     requestFormValues,
-    signers,
+    // signers,
     moduleRequestId,
     teamId,
-    requesterName,
+    // requesterName,
     formName,
     isFormslyForm,
     projectId,
-    teamName,
+    // teamName,
     userId,
   } = params;
 
@@ -2982,29 +2982,9 @@ export const createModuleRequest = async (
   }
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
-  const signerIdList: string[] = [];
 
   // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
-
-  signers.forEach((signer) => {
-    if (!signerIdList.includes(signer.signer_id)) {
-      requestSignerInput.push({
-        request_signer_signer_id: signer.signer_id,
-        request_signer_request_id: requestId,
-      });
-      requestSignerNotificationInput.push({
-        notification_app: "REQUEST",
-        notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/${teamName}/requests/${requestId}`,
-        notification_team_id: teamId,
-        notification_type: "REQUEST",
-        notification_user_id:
-          signer.signer_team_member.team_member_user.user_id,
-      });
-      signerIdList.push(signer.signer_id);
-    }
-  });
 
   const responseValues = requestResponseInput
     .map((response) => {

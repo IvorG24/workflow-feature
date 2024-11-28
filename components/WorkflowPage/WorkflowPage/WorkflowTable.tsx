@@ -110,33 +110,40 @@ const WorkFlowTable = () => {
     creatorList: [],
     dateRange: [],
   });
+
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
     key: "worflow-list-table-column-filter",
     defaultValue: [],
   });
+
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "workflow_date_created",
     direction: "desc",
   });
+
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       creatorList: [],
       dateRange: [],
     });
+
   const { handleSubmit, getValues, register, setValue, control } =
     useForm<FilterFormValues>({
       defaultValues: filter,
     });
+
   const memberList = creatorList.map((member) => ({
     value: member.value,
     label: `${member.label}`,
   }));
+
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
   };
+
   const handleFetchWorkflowList = async (page: number) => {
     try {
       setIsLoading(true);
@@ -175,9 +182,10 @@ const WorkFlowTable = () => {
       setIsLoading(false);
     }
   };
+
   const handlePagination = async (page: number) => {
     try {
-      await handleFetchWorkflowList(1);
+      await handleFetchWorkflowList(page);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -187,6 +195,7 @@ const WorkFlowTable = () => {
       setIsLoading(false);
     }
   };
+  
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
     value: string[] | Date[] | boolean = []
@@ -207,6 +216,7 @@ const WorkFlowTable = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     setFilter((prev) => {
@@ -217,6 +227,10 @@ const WorkFlowTable = () => {
     });
     handlePagination(activePage);
   }, [sortStatus]);
+
+  useEffect(() => {
+    handlePagination(activePage);
+  }, [activeTeam]);
 
   return (
     <Container maw={3840} h="100%">
@@ -471,7 +485,7 @@ const WorkFlowTable = () => {
                 },
               },
               {
-                accessor: "updated_id",
+                accessor: "user_id",
                 title: "Updated By",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("updated_id"),

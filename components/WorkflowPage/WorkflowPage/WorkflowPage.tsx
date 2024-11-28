@@ -42,11 +42,9 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { v4 } from "uuid";
 import CustomNodeToolbar from "./CustomNodeToolbar";
+import BasicEdge from "./EdgeTypes/BasicEdge";
 import FloatingEdge from "./EdgeTypes/FloatingEdge";
-import {
-  default as BasicEdge,
-  default as BasicNode,
-} from "./NodeTypes/BasicNode";
+import { default as BasicNode } from "./NodeTypes/BasicNode";
 import EndNode from "./NodeTypes/EndNode";
 import OriginNode from "./NodeTypes/OriginNode";
 import WorkflowMenu from "./WorkflowMenu";
@@ -152,6 +150,7 @@ const WorkflowPage = ({
   const handleOutsideClick = () => {
     window?.getSelection()?.removeAllRanges();
   };
+
   const handleShowTransitionLabel = (showTransitionLabel: boolean) => {
     setShowTransitionLabel(showTransitionLabel);
     setEdges((edges) =>
@@ -161,6 +160,7 @@ const WorkflowPage = ({
       }))
     );
   };
+  
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
@@ -310,6 +310,7 @@ const WorkflowPage = ({
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     if (mode === "create") {
       if (typeof window !== "undefined") {
@@ -480,9 +481,9 @@ const WorkflowPage = ({
           zoomOnDoubleClick={false}
           nodesConnectable={mode !== "view"}
           // figma-like controls
-          //   panOnScroll={true}
-          //   selectionOnDrag={true}
-          //   panOnDrag={[0, 2]}
+          panOnScroll={true}
+          selectionOnDrag={true}
+          panOnDrag={[0, 2]}
           //   selectionMode={SelectionMode.Partial}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} />

@@ -1501,10 +1501,10 @@ AS $$
           )
           VALUES
           (
-            'GENERAL', 
+            'GENERAL',
             'You have been invited to join ' || $1,
             '/user/invitation/' || $2,
-            'INVITE', 
+            'INVITE',
             $3
           )
         `, [
@@ -2411,7 +2411,7 @@ AS $$
               notification_redirect_url,
               notification_user_id,
               notification_team_id
-            ) 
+            )
             VALUES
             (
               $1,
@@ -3116,9 +3116,9 @@ AS $$
 
     const userData = plv8.execute(
       `
-        SELECT * 
-        FROM user_schema.user_table 
-        WHERE 
+        SELECT *
+        FROM user_schema.user_table
+        WHERE
           user_email = ANY($1)
       `, [
         emailList
@@ -3173,12 +3173,12 @@ AS $$
 
       invitation_data = plv8.execute(
         `
-          INSERT INTO user_schema.invitation_table 
+          INSERT INTO user_schema.invitation_table
           (
             invitation_id,
             invitation_to_email,
             invitation_from_team_member_id
-          ) 
+          )
           VALUES ${invitationValues}
           RETURNING *
         `
@@ -3193,14 +3193,14 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO public.notification_table 
+          INSERT INTO public.notification_table
           (
             notification_app,
             notification_content,
             notification_redirect_url,
             notification_type,
             notification_user_id
-          ) 
+          )
           VALUES ${notificationValues}
         `
       );
@@ -3219,9 +3219,9 @@ AS $$
   plv8.subtransaction(function(){
     const user_data = plv8.execute(
       `
-        SELECT * 
-        FROM user_schema.user_table 
-        WHERE user_id = $1 
+        SELECT *
+        FROM user_schema.user_table
+        WHERE user_id = $1
         LIMIT 1
       `, [
         user_id
@@ -3231,9 +3231,9 @@ AS $$
     if (!user_data.user_active_team_id) {
       const team_member = plv8.execute(
         `
-          SELECT * 
-          FROM team_schema.team_member_table 
-          WHERE 
+          SELECT *
+          FROM team_schema.team_member_table
+          WHERE
             team_member_user_id = $1
             AND team_member_is_disabled = false
           LIMIT 1
@@ -3263,9 +3263,9 @@ AS $$
   plv8.subtransaction(function(){
     const item_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM item_schema.item_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM item_schema.item_table
+        WHERE
           item_team_id = $1
           AND item_is_available = true
           AND item_is_disabled = false
@@ -3276,9 +3276,9 @@ AS $$
 
     const signer_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM form_schema.signer_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM form_schema.signer_table
+        WHERE
           signer_form_id = $1
           AND signer_is_disabled = false
           AND signer_is_primary_signer = true
@@ -3308,10 +3308,10 @@ AS $$
   plv8.subtransaction(function(){
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
-        SET 
+        UPDATE team_schema.team_member_table
+        SET
           team_member_role = 'OWNER',
-        WHERE 
+        WHERE
           team_member_id = $1
       `, [
         member_id
@@ -3319,10 +3319,10 @@ AS $$
     );
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
+        UPDATE team_schema.team_member_table
         SET
           team_member_role = 'APPROVER'
-        WHERE 
+        WHERE
           team_member_id = $1
       `, [
         owner_id
@@ -3346,8 +3346,8 @@ AS $$
       `
         SELECT EXISTS (
           SELECT 1
-          FROM team_schema.team_member_table 
-          WHERE 
+          FROM team_schema.team_member_table
+          WHERE
             team_member_team_id = $1
             AND team_member_user_id = $2
             AND team_member_is_disabled = true
@@ -3357,14 +3357,14 @@ AS $$
         user_id
       ]
     )[0].exists;
-    
+
     const userData = plv8.execute(
       `
-        SELECT 
-          user_id, 
-          user_active_team_id 
-        FROM user_schema.user_table 
-        WHERE 
+        SELECT
+          user_id,
+          user_active_team_id
+        FROM user_schema.user_table
+        WHERE
           user_id = $1
       `, [
         user_id
@@ -3374,10 +3374,10 @@ AS $$
     if (isUserPreviousMember) {
       plv8.execute(
         `
-          UPDATE team_schema.team_member_table 
-          SET 
+          UPDATE team_schema.team_member_table
+          SET
             team_member_is_disabled = false
-          WHERE 
+          WHERE
             team_member_team_id = $1
             AND team_member_user_id = $2
         `, [
@@ -3388,11 +3388,11 @@ AS $$
     } else {
       plv8.execute(
         `
-          INSERT INTO team_schema.team_member_table 
+          INSERT INTO team_schema.team_member_table
           (
             team_member_team_id,
             team_member_user_id
-          ) VALUES 
+          ) VALUES
           (
             $1,
             $2
@@ -3407,8 +3407,8 @@ AS $$
     if (!userData.user_active_team_id) {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
-          SET 
+          UPDATE user_schema.user_table
+          SET
             user_active_team_id = $1
           WHERE user_id = $2
         `, [
@@ -3420,10 +3420,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE user_schema.invitation_table 
-        SET 
+        UPDATE user_schema.invitation_table
+        SET
           invitation_status = 'ACCEPTED'
-        WHERE 
+        WHERE
           invitation_id = $1
       `, [
         invitation_id
@@ -3434,9 +3434,9 @@ AS $$
       `
         SELECT team_table.*
         FROM team_schema.team_member_table
-        INNER JOIN team_schema.team_table 
+        INNER JOIN team_schema.team_table
           ON team_id = team_member_team_id
-        WHERE 
+        WHERE
           team_member_is_disabled = false
           AND team_member_user_id = $1
         ORDER BY team_date_created DESC
@@ -3460,11 +3460,11 @@ AS $$
   plv8.subtransaction(function(){
     plv8.execute(
       `
-        UPDATE request_schema.request_table 
-        SET 
+        UPDATE request_schema.request_table
+        SET
           request_status = 'CANCELED',
           request_status_date_updated = NOW()
-        WHERE 
+        WHERE
           request_id = $1
       `, [
         request_id
@@ -3472,14 +3472,14 @@ AS $$
     );
     plv8.execute(
       `
-        INSERT INTO request_schema.comment_table 
+        INSERT INTO request_schema.comment_table
         (
           comment_request_id,
           comment_team_member_id,
           comment_type,
           comment_content
-        ) 
-        VALUES 
+        )
+        VALUES
         (
           $1,
           $2,
@@ -3521,15 +3521,15 @@ AS $$
 
     form_data = plv8.execute(
       `
-        INSERT INTO form_schema.form_table 
+        INSERT INTO form_schema.form_table
         (
           form_app,
           form_description,
           form_name,form_team_member_id,
           form_id,form_is_signature_required,
           form_is_for_every_member
-        ) 
-        VALUES 
+        )
+        VALUES
         (
           $1,
           $2,
@@ -3538,7 +3538,7 @@ AS $$
           $5,
           $6,
           $7
-        ) 
+        )
         RETURNING *
       `, [
         formType,
@@ -3602,19 +3602,19 @@ AS $$
       .join(",");
 
     const section_query = `
-      INSERT INTO form_schema.section_table 
+      INSERT INTO form_schema.section_table
       (
         section_id,
         section_form_id,
         section_is_duplicatable,
         section_name,
         section_order
-      ) 
+      )
       VALUES ${sectionValues}
     `;
 
     const field_query = `
-      INSERT INTO form_schema.field_table 
+      INSERT INTO form_schema.field_table
       (
         field_id,
         field_name,
@@ -3624,46 +3624,46 @@ AS $$
         field_order,
         field_section_id,
         field_special_field_template_id
-      ) 
+      )
       VALUES ${fieldValues}
     `;
 
     const option_query = `
-      INSERT INTO form_schema.option_table 
+      INSERT INTO form_schema.option_table
       (
         option_id,option_value,
         option_order,
         option_field_id
-      ) 
+      )
       VALUES ${optionValues}
     `;
 
     const signer_query = `
-      INSERT INTO form_schema.signer_table 
+      INSERT INTO form_schema.signer_table
       (
         signer_id,
         signer_form_id,
         signer_team_member_id,
         signer_action,
         signer_is_primary_signer,signer_order
-      ) 
+      )
       VALUES ${signerValues}
     `;
 
     const form_group_query = `
-      INSERT INTO form_schema.form_team_group_table 
+      INSERT INTO form_schema.form_team_group_table
       (
         form_id,
         team_group_id
-      ) 
+      )
       VALUES ${groupValues}
     `;
 
     const all_query = `
-      ${section_query}; 
-      ${field_query}; 
-      ${optionInput.length>0?option_query : ''}; 
-      ${signer_query}; 
+      ${section_query};
+      ${field_query};
+      ${optionInput.length>0?option_query : ''};
+      ${signer_query};
       ${groupList.length > 0 ? form_group_query : ''};
     `
     plv8.execute(all_query);
@@ -3696,18 +3696,18 @@ AS $$
 
     const notification_list = plv8.execute(
       `
-        SELECT  * FROM public.notification_table 
-        WHERE 
+        SELECT  * FROM public.notification_table
+        WHERE
           notification_user_id = $1
           AND (
             notification_app = 'GENERAL'
             OR notification_app = $2
-          ) 
+          )
           AND (
-            notification_team_id IS NULL 
+            notification_team_id IS NULL
             ${team_query}
-          ) 
-        ORDER BY notification_date_created DESC 
+          )
+        ORDER BY notification_date_created DESC
         LIMIT $3
         OFFSET $4
       `, [
@@ -3720,18 +3720,18 @@ AS $$
 
     const unread_notification_count = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM public.notification_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM public.notification_table
+        WHERE
           notification_user_id = $1
           AND (
             notification_app = 'GENERAL'
             OR notification_app = $2
-          ) 
+          )
           AND (
-            notification_team_id IS NULL 
+            notification_team_id IS NULL
             ${team_query}
-          ) 
+          )
           AND notification_is_read = false
       `, [
         userId,
@@ -3763,12 +3763,12 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE form_schema.signer_table 
-        SET 
+        UPDATE form_schema.signer_table
+        SET
           signer_is_disabled = true
-        WHERE 
+        WHERE
           signer_form_id = $1
-          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"} 
+          AND signer_team_project_id ${selectedProjectId ? `= '${selectedProjectId}'` : "IS NULL"}
           AND signer_team_department_id IS NULL
       `, [
         formId
@@ -3784,7 +3784,7 @@ AS $$
 
     signer_data = plv8.execute(
       `
-        INSERT INTO form_schema.signer_table 
+        INSERT INTO form_schema.signer_table
         (
           signer_id,
           signer_form_id,
@@ -3794,18 +3794,18 @@ AS $$
           signer_order,
           signer_is_disabled,
           signer_team_project_id
-        ) 
-        VALUES ${signerValues} 
-        ON CONFLICT 
-        ON CONSTRAINT signer_table_pkey 
-        DO UPDATE 
-        SET 
+        )
+        VALUES ${signerValues}
+        ON CONFLICT
+        ON CONSTRAINT signer_table_pkey
+        DO UPDATE
+        SET
           signer_team_member_id = excluded.signer_team_member_id,
           signer_action = excluded.signer_action,
           signer_is_primary_signer = excluded.signer_is_primary_signer,
           signer_order = excluded.signer_order,
           signer_is_disabled = excluded.signer_is_disabled,
-          signer_team_project_id = excluded.signer_team_project_id 
+          signer_team_project_id = excluded.signer_team_project_id
         RETURNING *
       `
     );
@@ -3845,24 +3845,26 @@ AS $$
     const base_request_list_query = `
       WITH request_data AS (
         SELECT
-          request_id,
-          request_formsly_id,
-          request_date_created,
-          request_status,
-          request_team_member_id,
-          request_jira_id,
-          request_jira_link,
-          request_otp_id,
-          request_form_id,
-          form_name
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON request_form_id = form_id
-          AND form_is_disabled = false
-          AND form_is_public_form = false
-        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-          AND team_member_team_id = $1
+          rv.request_id,
+          rv.request_formsly_id,
+          rv.request_date_created,
+          rv.request_status,
+          rv.request_team_member_id,
+          rv.request_jira_id,
+          rv.request_jira_link,
+          rv.request_otp_id,
+          rv.request_form_id,
+          f.form_name
+        FROM public.request_view rv
+        INNER JOIN request_schema.request_table rt ON rv.request_id = rt.request_id
+          AND rt.request_module_request_id IS NULL
+        INNER JOIN form_schema.form_table f ON rv.request_form_id = f.form_id
+          AND f.form_is_disabled = false
+          AND f.form_is_public_form = false
+        INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = rv.request_team_member_id
+          AND tm.team_member_team_id = $1
         WHERE
-          request_is_disabled = false
+          rv.request_is_disabled = false
     `;
 
     const request_signer_query = `
@@ -3888,7 +3890,7 @@ AS $$
             )
           )
           FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table 
+          INNER JOIN form_schema.signer_table
             ON request_signer_signer_id = signer_id
           WHERE request_signer_request_id = request_id
         )
@@ -3971,11 +3973,11 @@ AS $$
     const projectInitialCount = plv8.execute(
       `
         SELECT COUNT(*) FROM team_schema.team_project_table
-        WHERE 
+        WHERE
           team_project_team_id = $1
           AND team_project_code ILIKE '%' || $2 || '%'
       `, [
-        teamProjectTeamId, 
+        teamProjectTeamId,
         teamProjectInitials
       ]
     )[0].count + 1n;
@@ -4001,7 +4003,7 @@ AS $$
           $4,
           $5,
           $6
-        ) 
+        )
         RETURNING *
       `, [
         region,
@@ -4074,11 +4076,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO team_schema.team_group_member_table 
+        INSERT INTO team_schema.team_group_member_table
         (
           team_member_id,
           team_group_id
-        ) 
+        )
         VALUES ${groupInsertData}
         ON CONFLICT (
           team_member_id,
@@ -4102,11 +4104,11 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO team_schema.team_project_member_table 
+          INSERT INTO team_schema.team_project_member_table
           (
             team_member_id,
             team_project_id
-          ) 
+          )
           VALUES ${projectInsertData.join(', ')}
           ON CONFLICT (
             team_member_id,
@@ -4154,9 +4156,9 @@ AS $$
           SELECT *
           FROM batch_data
           WHERE NOT EXISTS (
-            SELECT 1 
-            FROM form_schema.signer_table 
-            WHERE 
+            SELECT 1
+            FROM form_schema.signer_table
+            WHERE
               signer_is_primary_signer = true
               AND signer_order = 1
               AND signer_action = 'Approved'
@@ -4191,11 +4193,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO team_schema.team_project_member_table 
+        INSERT INTO team_schema.team_project_member_table
         (
           team_member_id,
           team_project_id
-        ) 
+        )
         VALUES ${projectInsertData}
         ON CONFLICT (
           team_member_id,
@@ -4219,11 +4221,11 @@ AS $$
 
       plv8.execute(
         `
-          INSERT INTO team_schema.team_group_member_table 
+          INSERT INTO team_schema.team_group_member_table
           (
             team_member_id,
             team_group_id
-          ) 
+          )
           VALUES ${groupInsertData.join(', ')}
           ON CONFLICT (
             team_member_id,
@@ -4252,8 +4254,8 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE form_schema.form_table 
-        SET 
+        UPDATE form_schema.form_table
+        SET
           form_is_for_every_member = $1
           WHERE form_id = $2
       `, [
@@ -4264,7 +4266,7 @@ AS $$
 
     plv8.execute(
       `
-        DELETE FROM form_schema.form_team_group_table 
+        DELETE FROM form_schema.form_team_group_table
         WHERE form_id $1
       `, [
         formId
@@ -4275,11 +4277,11 @@ AS $$
 
     plv8.execute(
       `
-        INSERT INTO form_schema.form_team_group_table 
+        INSERT INTO form_schema.form_team_group_table
         (
           team_group_id,
           form_id
-        ) 
+        )
         VALUES ${newGroupInsertValues}
         RETURNING *
       `
@@ -4302,9 +4304,9 @@ AS $$
 
     const teamGroupMemberData = plv8.execute(
       `
-        SELECT team_member_id 
-        FROM team_schema.team_group_member_table 
-        WHERE 
+        SELECT team_member_id
+        FROM team_schema.team_group_member_table
+        WHERE
           team_group_id = $1
       `, [
         groupId
@@ -4315,8 +4317,8 @@ AS $$
 
     member_data = plv8.execute(
       `
-        SELECT 
-          team_member_id, 
+        SELECT
+          team_member_id,
           user_id,
           user_first_name,
           user_last_name,
@@ -4324,9 +4326,9 @@ AS $$
           user_email
         FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE 
+        WHERE
           team_member_team_id = $1
-          AND team_member_is_disabled = FALSE 
+          AND team_member_is_disabled = FALSE
           AND team_member_id != ALL($2)
         ORDER BY
           user_first_name ASC,
@@ -4366,9 +4368,9 @@ AS $$
 
     const teamProjectMemberData = plv8.execute(
       `
-        SELECT team_member_id 
-        FROM team_schema.team_project_member_table 
-        WHERE 
+        SELECT team_member_id
+        FROM team_schema.team_project_member_table
+        WHERE
           team_project_id = $1
       `, [
         projectId
@@ -4379,8 +4381,8 @@ AS $$
 
     member_data = plv8.execute(
       `
-        SELECT 
-          team_member_id, 
+        SELECT
+          team_member_id,
           user_id,
           user_first_name,
           user_last_name,
@@ -4388,9 +4390,9 @@ AS $$
           user_email
         FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE 
+        WHERE
           team_member_team_id = $1
-          AND team_member_is_disabled = FALSE 
+          AND team_member_is_disabled = FALSE
           AND team_member_id != ALL($2)
         ORDER BY
           user_first_name ASC,
@@ -4425,9 +4427,9 @@ AS $$
   plv8.subtransaction(function(){
     const user = plv8.execute(
       `
-        SELECT * FROM 
-        team_schema.team_member_table 
-        WHERE 
+        SELECT * FROM
+        team_schema.team_member_table
+        WHERE
           team_member_team_id = $1
           AND team_member_id = $2
           AND team_member_role = 'OWNER'
@@ -4441,10 +4443,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE team_schema.team_table 
-        SET 
+        UPDATE team_schema.team_table
+        SET
           team_is_disabled = true
-        WHERE 
+        WHERE
           team_id = $1
       `, [
         team_id
@@ -4453,10 +4455,10 @@ AS $$
 
     plv8.execute(
       `
-        UPDATE team_schema.team_member_table 
-        SET 
+        UPDATE team_schema.team_member_table
+        SET
           team_member_is_disabled = true
-        WHERE 
+        WHERE
           team_member_team_id = $1
       `, [
         team_id
@@ -4466,12 +4468,12 @@ AS $$
     plv8.execute(
       `
         UPDATE invitation_table
-        SET 
+        SET
           invitation_is_disabled = true
         FROM team_schema.team_member_table
-        WHERE 
+        WHERE
           team_member_team_id = $1
-          AND team_member_id = invitation_from_team_member_id 
+          AND team_member_id = invitation_from_team_member_id
       `, [
         team_id
       ]
@@ -4479,9 +4481,9 @@ AS $$
 
     const userTeamList = plv8.execute(
       `
-        SELECT * 
-        FROM team_schema.team_member_table 
-        WHERE 
+        SELECT *
+        FROM team_schema.team_member_table
+        WHERE
           team_member_id = $1
           AND team_member_is_disabled = false
       `, [
@@ -4492,10 +4494,10 @@ AS $$
     if (userTeamList.length > 0) {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
-          SET 
+          UPDATE user_schema.user_table
+          SET
             user_active_team_id = $1
-          WHERE 
+          WHERE
             user_id = $2
         `, [
           userTeamList[0].team_member_team_id,
@@ -4505,7 +4507,7 @@ AS $$
     } else {
       plv8.execute(
         `
-          UPDATE user_schema.user_table 
+          UPDATE user_schema.user_table
           SET user_active_team_id = NULL
           WHERE
             user_id = $1
@@ -4533,10 +4535,10 @@ AS $$
     memberList = plv8.execute(
       `
         WITH updated AS (
-          UPDATE team_schema.team_member_table 
-          SET 
+          UPDATE team_schema.team_member_table
+          SET
             team_member_role = $1
-          WHERE 
+          WHERE
             team_member_id = ANY($2)
           RETURNING *
         )
@@ -4733,7 +4735,7 @@ AS $$
             'user_employee_number', user_employee_number
           ) AS team_member_user
         FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table 
+        INNER JOIN user_schema.user_table
           ON user_id = team_member_user_id
         LEFT JOIN user_schema.user_employee_number_table
           ON user_employee_number_user_id = user_id
@@ -4746,8 +4748,8 @@ AS $$
 
     const userValidId = plv8.execute(
       `
-        SELECT * FROM user_schema.user_valid_id_table 
-        WHERE 
+        SELECT * FROM user_schema.user_valid_id_table
+        WHERE
           user_valid_id_user_id = $1
       `, [
         member.team_member_user.user_id
@@ -4756,15 +4758,15 @@ AS $$
 
     const memberGroupToSelect = plv8.execute(
       `
-        SELECT 
+        SELECT
           tgmt2.team_group_member_id,
-          tgt2.team_group_name 
-        FROM team_schema.team_group_member_table tgmt2 
-        INNER JOIN team_schema.team_group_table tgt2 
-          ON tgt2.team_group_id = tgmt2.team_group_id 
-        WHERE 
+          tgt2.team_group_name
+        FROM team_schema.team_group_member_table tgmt2
+        INNER JOIN team_schema.team_group_table tgt2
+          ON tgt2.team_group_id = tgmt2.team_group_id
+        WHERE
           tgmt2.team_member_id = $1
-        ORDER BY tgt2.team_group_name ASC 
+        ORDER BY tgt2.team_group_name ASC
         LIMIT 10
       `, [
         teamMemberId
@@ -4778,16 +4780,16 @@ AS $$
 
       groupList = plv8.execute(
         `
-          SELECT 
+          SELECT
             tgmt.team_group_member_id,
-            ( 
-              SELECT row_to_json(tgt) 
-              FROM team_schema.team_group_table tgt 
-              WHERE 
+            (
+              SELECT row_to_json(tgt)
+              FROM team_schema.team_group_table tgt
+              WHERE
                 tgt.team_group_id = tgmt.team_group_id
-            ) AS team_group 
-          FROM team_schema.team_group_member_table tgmt 
-          WHERE 
+            ) AS team_group
+          FROM team_schema.team_group_member_table tgmt
+          WHERE
             tgmt.team_member_id = $1
             AND tgmt.team_group_member_id = ANY($2)
         `, [
@@ -4798,8 +4800,8 @@ AS $$
 
       groupCount = plv8.execute(
         `
-          SELECT COUNT(*) FROM team_schema.team_group_member_table 
-          WHERE 
+          SELECT COUNT(*) FROM team_schema.team_group_member_table
+          WHERE
             team_member_id = $1
         `, [
           teamMemberId
@@ -4813,7 +4815,7 @@ AS $$
           tpmt2.team_project_member_id,
           tpt2.team_project_name
         FROM team_schema.team_project_member_table tpmt2
-        INNER JOIN team_schema.team_project_table tpt2 
+        INNER JOIN team_schema.team_project_table tpt2
           ON tpt2.team_project_id = tpmt2.team_project_id
         WHERE
           tpmt2.team_member_id = $1
@@ -4851,9 +4853,9 @@ AS $$
 
       projectCount = plv8.execute(
         `
-          SELECT COUNT(*) 
-          FROM team_schema.team_project_member_table 
-          WHERE 
+          SELECT COUNT(*)
+          FROM team_schema.team_project_member_table
+          WHERE
             team_member_id = $1
         `, [
           teamMemberId
@@ -4862,11 +4864,11 @@ AS $$
     }
 
     team_member_data = {
-      member: member, 
-      userValidId, 
-      groupList, 
-      groupCount: Number(groupCount), 
-      projectList, 
+      member: member,
+      userValidId,
+      groupList,
+      groupCount: Number(groupCount),
+      projectList,
       projectCount: Number(projectCount)
     }
   });
@@ -4890,12 +4892,12 @@ AS $$
 
     const team = plv8.execute(
       `
-        SELECT 
-          team_id, 
-          team_name, 
-          team_logo 
-        FROM team_schema.team_table 
-        WHERE 
+        SELECT
+          team_id,
+          team_name,
+          team_logo
+        FROM team_schema.team_table
+        WHERE
           team_id = $1
           AND team_is_disabled = false
       `, [
@@ -4917,9 +4919,9 @@ AS $$
             'user_employee_number', user_employee_number
           ) AS team_member_user
         FROM team_schema.team_member_table
-        JOIN user_schema.user_table 
+        JOIN user_schema.user_table
           ON team_member_user_id = user_id
-        LEFT JOIN user_schema.user_employee_number_table 
+        LEFT JOIN user_schema.user_employee_number_table
           ON user_employee_number_user_id = user_id
           AND user_employee_number_is_disabled = false
         WHERE
@@ -4946,7 +4948,7 @@ AS $$
       `
         SELECT COUNT(*)
         FROM team_schema.team_member_table
-        JOIN user_schema.user_table 
+        JOIN user_schema.user_table
           ON team_member_user_id = user_id
         WHERE
           team_member_team_id = $1
@@ -4959,14 +4961,14 @@ AS $$
 
     const teamGroups = plv8.execute(
       `
-        SELECT 
-          team_group_id, 
-          team_group_name, 
-          team_group_team_id 
-        FROM team_schema.team_group_table 
-        WHERE 
+        SELECT
+          team_group_id,
+          team_group_name,
+          team_group_team_id
+        FROM team_schema.team_group_table
+        WHERE
           team_group_team_id = $1
-          AND team_group_is_disabled = false 
+          AND team_group_is_disabled = false
         ORDER BY team_group_date_created DESC
         LIMIT 10
       `, [
@@ -4976,9 +4978,9 @@ AS $$
 
     const teamGroupsCount = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM team_schema.team_group_table 
-        WHERE 
+        SELECT COUNT(*)
+        FROM team_schema.team_group_table
+        WHERE
           team_group_team_id = $1
           AND team_group_is_disabled = false
       `, [
@@ -4994,17 +4996,17 @@ AS $$
           site_map.attachment_value AS team_project_site_map_attachment_id,
           address_table.*
         FROM team_schema.team_project_table
-        LEFT JOIN public.attachment_table boq 
+        LEFT JOIN public.attachment_table boq
           ON (
             team_project_boq_attachment_id = boq.attachment_id
             AND boq.attachment_is_disabled = false
           )
-        LEFT JOIN public.attachment_table site_map 
+        LEFT JOIN public.attachment_table site_map
           ON (
             team_project_site_map_attachment_id = site_map.attachment_id
             AND site_map.attachment_is_disabled = false
           )
-        LEFT JOIN public.address_table 
+        LEFT JOIN public.address_table
           ON (
             team_project_address_id = address_id
           )
@@ -5020,8 +5022,8 @@ AS $$
 
     const teamProjectsCount = plv8.execute(
       `
-        SELECT COUNT(*) 
-        FROM team_schema.team_project_table 
+        SELECT COUNT(*)
+        FROM team_schema.team_project_table
           WHERE team_project_team_id = $1
           AND team_project_is_disabled = false
       `, [
@@ -5104,12 +5106,12 @@ AS $$
             'user_email', user_email,
             'user_employee_number', user_employee_number
           ) AS team_member_user
-        FROM team_schema.team_member_table 
-        INNER JOIN user_schema.user_table 
+        FROM team_schema.team_member_table
+        INNER JOIN user_schema.user_table
           ON team_member_user_id = user_id
           AND user_is_disabled = false
           ${searchCondition}
-        LEFT JOIN user_schema.user_employee_number_table 
+        LEFT JOIN user_schema.user_employee_number_table
           ON user_employee_number_user_id = user_id
           AND user_employee_number_is_disabled = false
         WHERE
@@ -5136,7 +5138,7 @@ AS $$
     const teamMembersCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM team_schema.team_member_table 
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table
           ON team_member_user_id = user_id
           AND user_is_disabled = false
@@ -5149,9 +5151,9 @@ AS $$
       ]
     )[0].count;
 
-    team_data = { 
-      teamMembers, 
-      teamMembersCount: Number(teamMembersCount) 
+    team_data = {
+      teamMembers,
+      teamMembersCount: Number(teamMembersCount)
     }
   });
   return team_data;
@@ -5178,20 +5180,20 @@ AS $$
 
     const notificationList = plv8.execute(
       `
-        SELECT * 
+        SELECT *
         FROM public.notification_table
-        WHERE 
+        WHERE
           notification_user_id = $1
           AND (
-            notification_app = 'GENERAL' 
+            notification_app = 'GENERAL'
             OR notification_app = $2
-          ) 
+          )
           AND (
             notification_team_id IS NULL
             OR notification_team_id = $3
           )
           AND notification_is_read = ANY($4)
-        ORDER BY notification_date_created DESC 
+        ORDER BY notification_date_created DESC
         LIMIT $5
         OFFSET $6
       `, [
@@ -5206,20 +5208,20 @@ AS $$
 
     const totalNotificationCount = plv8.execute(
       `
-        SELECT * 
+        SELECT *
         FROM public.notification_table
-        WHERE 
+        WHERE
           notification_user_id = $1
           AND (
-            notification_app = 'GENERAL' 
+            notification_app = 'GENERAL'
             OR notification_app = $2
-          ) 
+          )
           AND (
             notification_team_id IS NULL
             OR notification_team_id = $3
           )
           AND notification_is_read = ANY($4)
-        ORDER BY notification_date_created DESC 
+        ORDER BY notification_date_created DESC
       `, [
         userId,
         app,
@@ -5229,8 +5231,8 @@ AS $$
     )[0].count;
 
     notification_data = {
-      notificationList, 
-      totalNotificationCount: Number(totalNotificationCount), 
+      notificationList,
+      totalNotificationCount: Number(totalNotificationCount),
       tab: unreadOnly ? "unread" : "all"
     }
   });
@@ -5258,10 +5260,10 @@ AS $$
     const itemList = plv8.execute(
       `
         SELECT item_general_name
-        FROM item_schema.item_table 
+        FROM item_schema.item_table
         WHERE item_team_id = $1
-          AND item_is_disabled = false 
-          AND item_is_available = true 
+          AND item_is_disabled = false
+          AND item_is_available = true
         ORDER BY item_general_name ASC
       `, [
         teamId
@@ -5271,10 +5273,10 @@ AS $$
     const projectList = plv8.execute(
       `
         SELECT team_project_name
-        FROM team_schema.team_project_table 
-        WHERE 
+        FROM team_schema.team_project_table
+        WHERE
           team_project_team_id = $1
-          AND team_project_is_disabled = false 
+          AND team_project_is_disabled = false
         ORDER BY team_project_name ASC
       `, [
         teamId
@@ -5284,9 +5286,9 @@ AS $$
     const itemNameList = itemList.map(item => item.item_general_name);
     const projectNameList = projectList.map(project => project.team_project_name);
 
-    ssot_data = { 
-      itemNameList, 
-      projectNameList 
+    ssot_data = {
+      itemNameList,
+      projectNameList
     }
   });
   return ssot_data;
@@ -5310,10 +5312,10 @@ AS $$
       `
         SELECT EXISTS (
           SELECT 1
-          FROM form_schema.form_table 
-          INNER JOIN team_schema.team_member_table 
-            ON form_team_member_id = team_member_id 
-          WHERE 
+          FROM form_schema.form_table
+          INNER JOIN team_schema.team_member_table
+            ON form_team_member_id = team_member_id
+          WHERE
             team_member_team_id = $1
             AND form_is_formsly_form = true
         )
@@ -5324,11 +5326,11 @@ AS $$
 
     const projectList = plv8.execute(
       `
-        SELECT 
-          team_project_name, 
-          team_project_code 
-        FROM team_schema.team_project_table 
-        WHERE 
+        SELECT
+          team_project_name,
+          team_project_code
+        FROM team_schema.team_project_table
+        WHERE
           team_project_is_disabled = false
           AND team_project_team_id = $1
       `, [
@@ -5369,10 +5371,10 @@ AS $$
           user_last_name,
           user_avatar
         FROM form_schema.form_table
-        INNER JOIN team_schema.team_member_table 
+        INNER JOIN team_schema.team_member_table
           ON team_member_id = form_team_member_id
           AND team_member_team_id = $1
-        INNER JOIN user_schema.user_table 
+        INNER JOIN user_schema.user_table
           ON user_id = team_member_user_id
         WHERE
           form_is_disabled = false
@@ -5388,10 +5390,10 @@ AS $$
       `
         SELECT COUNT(*)
         FROM form_schema.form_table
-        INNER JOIN team_schema.team_member_table 
+        INNER JOIN team_schema.team_member_table
           ON team_member_id = form_team_member_id
           AND team_member_team_id = $1
-        INNER JOIN user_schema.user_table 
+        INNER JOIN user_schema.user_table
           ON user_id = team_member_user_id
         WHERE
           form_is_disabled = false
@@ -5453,9 +5455,9 @@ AS $$
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
     const groupList = plv8.execute(
       `
-        SELECT * 
-        FROM team_schema.team_group_table 
-        WHERE 
+        SELECT *
+        FROM team_schema.team_group_table
+        WHERE
           team_group_team_id = $1
           AND team_group_is_disabled = false
       `, [
@@ -5489,11 +5491,11 @@ AS $$
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
     const teamGroupList = plv8.execute(
       `
-        SELECT 
+        SELECT
           team_group_id,
           team_group_name
         FROM team_schema.team_group_table
-        WHERE 
+        WHERE
           team_group_team_id = $1
           AND team_group_is_disabled = false
       `, [
@@ -5504,14 +5506,14 @@ AS $$
     if(isFormslyForm){
       const teamProjectList = plv8.execute(
         `
-          SELECT 
-            team_project_id, 
-            team_project_name 
-          FROM team_schema.team_project_table 
-          WHERE 
+          SELECT
+            team_project_id,
+            team_project_name
+          FROM team_schema.team_project_table
+          WHERE
             team_project_team_id = $1
-            AND team_project_is_disabled = false 
-          ORDER BY team_project_name ASC 
+            AND team_project_is_disabled = false
+          ORDER BY team_project_name ASC
           LIMIT $2
         `, [
           teamId,
@@ -5520,9 +5522,9 @@ AS $$
       );
       const teamProjectListCount = plv8.execute(
         `
-          SELECT COUNT(*) 
-          FROM team_schema.team_project_table 
-          WHERE 
+          SELECT COUNT(*)
+          FROM team_schema.team_project_table
+          WHERE
             team_project_team_id = $1
             AND team_project_is_disabled = false
         `, [
@@ -5563,9 +5565,9 @@ AS $$
 
     const teamMember = plv8.execute(
       `
-        SELECT * 
-        FROM team_schema.team_member_table 
-        WHERE 
+        SELECT *
+        FROM team_schema.team_member_table
+        WHERE
           team_member_user_id = $1
           AND team_member_team_id = $2
       `, [
@@ -5611,7 +5613,7 @@ AS $$
               )
             )
             FROM team_schema.team_member_table
-            WHERE 
+            WHERE
               team_member_id = form_team_member_id
           ),
           'form_signer', COALESCE(
@@ -5640,9 +5642,9 @@ AS $$
                 )
               )
               FROM form_schema.signer_table
-              INNER JOIN team_schema.team_member_table 
+              INNER JOIN team_schema.team_member_table
                 ON team_member_id = signer_team_member_id
-              INNER JOIN user_schema.user_table 
+              INNER JOIN user_schema.user_table
                 ON user_id = team_member_user_id
               WHERE
                 signer_form_id = form_id
@@ -5683,7 +5685,7 @@ AS $$
                             ORDER BY option_order ASC
                           )
                           FROM form_schema.option_table
-                          WHERE 
+                          WHERE
                             option_field_id = field_id
                         ), '[]'::jsonb
                       )
@@ -5696,8 +5698,8 @@ AS $$
                     WHERE
                       field_section_id = section_id
                     ORDER BY field_order ASC
-                    LIMIT 
-                      CASE 
+                    LIMIT
+                      CASE
                         WHEN form_name = 'Item' THEN 10
                         WHEN form_name = 'PED Item' THEN 7
                         WHEN form_name = 'IT Asset'  THEN 10
@@ -5710,7 +5712,7 @@ AS $$
               ORDER BY section_order ASC
             )
             FROM form_schema.section_table
-            WHERE 
+            WHERE
               section_form_id = form_id
           )
         )
@@ -5728,14 +5730,14 @@ AS $$
             case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
               const teamMemberList = plv8.execute(
                 `
-                  SELECT 
+                  SELECT
                     user_id,
                     user_first_name,
-                    user_last_name 
-                  FROM team_schema.team_member_table 
-                  INNER JOIN user_schema.user_table 
-                    ON user_id = team_member_user_id 
-                  WHERE 
+                    user_last_name
+                  FROM team_schema.team_member_table
+                  INNER JOIN user_schema.user_table
+                    ON user_id = team_member_user_id
+                  WHERE
                     team_member_team_id = $1
                   ORDER BY user_last_name
                 `, [
@@ -5752,10 +5754,10 @@ AS $$
             case "ff007180-4367-4cf2-b259-7804867615a7":
               const csiCodeList = plv8.execute(
                 `
-                  SELECT 
+                  SELECT
                     csi_code_id,
-                    csi_code_section 
-                  FROM lookup_schema.csi_code_table 
+                    csi_code_section
+                  FROM lookup_schema.csi_code_table
                   LIMIT 1000
                 `
               );
@@ -5767,7 +5769,7 @@ AS $$
               }));
               break;
           }
-        } 
+        }
 
         return {
           ...field,
@@ -5780,7 +5782,7 @@ AS $$
         section_field: sectionField
       }
     }
-      
+
     );
     const form = {
       ...formData,
@@ -5799,7 +5801,7 @@ AS $$
             team_project_table.team_project_id,
             team_project_table.team_project_name
           FROM team_schema.team_project_member_table
-          INNER JOIN team_schema.team_project_table 
+          INNER JOIN team_schema.team_project_table
             ON team_project_table.team_project_id = team_project_member_table.team_project_id
           WHERE
             team_member_id = $1
@@ -6515,7 +6517,7 @@ AS $$
         `
           SELECT requester_primary_signer_signer_id
           FROM form_schema.requester_primary_signer_table
-          INNER JOIN form_schema.signer_table 
+          INNER JOIN form_schema.signer_table
             ON signer_id = requester_primary_signer_signer_id
           WHERE
             requester_team_member_id = $1
@@ -6639,9 +6641,9 @@ AS $$
 
       const uomList = plv8.execute(
         `
-          SELECT * 
-          FROM unit_of_measurement_schema.item_unit_of_measurement_table 
-          WHERE 
+          SELECT *
+          FROM unit_of_measurement_schema.item_unit_of_measurement_table
+          WHERE
             item_unit_of_measurement_is_disabled = false
         `
       );
@@ -6656,9 +6658,9 @@ AS $$
 
       const equipmentCodeList = plv8.execute(
         `
-          SELECT 
-            equipment_description_id, 
-            equipment_description_property_number_with_prefix 
+          SELECT
+            equipment_description_id,
+            equipment_description_property_number_with_prefix
           FROM equipment_schema.equipment_description_view
         `
       );
@@ -6871,9 +6873,9 @@ AS $$
             user_last_name,
             user_avatar
           FROM form_schema.signer_table
-          INNER JOIN team_schema.team_member_table 
+          INNER JOIN team_schema.team_member_table
             ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema.user_table 
+          INNER JOIN user_schema.user_table
             ON user_id = team_member_user_id
           WHERE
             signer_is_disabled = false
@@ -7025,7 +7027,7 @@ AS $$
               requester_team_member_id = $1
               AND signer_form_id = $2
         `, [
-          connectedRequest.request_team_member_id, 
+          connectedRequest.request_team_member_id,
           form.form_id
         ]
       )[0];
@@ -7044,9 +7046,9 @@ AS $$
               user_last_name,
               user_avatar
             FROM form_schema.signer_table
-            INNER JOIN team_schema.team_member_table 
+            INNER JOIN team_schema.team_member_table
               ON team_member_id = signer_team_member_id
-            INNER JOIN user_schema.user_table 
+            INNER JOIN user_schema.user_table
               ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
@@ -7136,9 +7138,9 @@ AS $$
                 user_last_name,
                 user_avatar
               FROM form_schema.signer_table
-              INNER JOIN team_schema.team_member_table 
+              INNER JOIN team_schema.team_member_table
                 ON team_member_id = signer_team_member_id
-              INNER JOIN user_schema.user_table 
+              INNER JOIN user_schema.user_table
                 ON user_id = team_member_user_id
               WHERE
                 signer_is_disabled = false

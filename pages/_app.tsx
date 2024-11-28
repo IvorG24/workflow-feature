@@ -1,7 +1,6 @@
 import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
 import { RouterTransition } from "@/components/RouterTransition/RouterTransition";
 import { useIsLoading } from "@/stores/useLoadingStore";
-
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -13,9 +12,11 @@ import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import "@xyflow/react/dist/style.css";
 import { getCookie, setCookie } from "cookies-next";
 import NextApp, { AppContext } from "next/app";
 import { Suspense, useState } from "react";
+import "../styles/globals.css";
 
 export default function App(
   props: PageWithLayoutProps & { colorScheme: ColorScheme }

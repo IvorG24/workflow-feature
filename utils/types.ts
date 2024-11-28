@@ -1,6 +1,6 @@
 import { Database } from "@/utils/database";
-import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { Edge, Node } from "@xyflow/react";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 
 // Start: Database Table Types
 export type AttachmentTableRow =
@@ -751,14 +751,29 @@ export type RequestWithResponseType = RequestTableRow & {
       user_job_title: string;
     };
   };
+  request_workflow_data?: {
+    targetNode: TargetNode[];
+    workflowNodeData: TargetNode[];
+  };
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
     request_signer_status: string;
+    request_status_color?: string;
+    request_status_font_color?: string;
+    request_module_name?: string;
+    request_workflow_id?: string;
+    request_workflow_version?: string;
+    request_module_version_id?: string;
+
     request_signer_signer: {
       signer_id: string;
       signer_is_primary_signer: boolean;
       signer_action: string;
       signer_order: number;
+      signer_team_group?: {
+        team_group_name: string;
+        team_group_id: string;
+      }[];
       signer_team_member: {
         team_member_id: string;
         team_member_user: {
@@ -858,6 +873,10 @@ export type FormType = {
     signer_is_primary_signer: boolean;
     signer_action: string;
     signer_order: number;
+    signer_team_group?: {
+      team_group_id: string;
+      team_group_name: string;
+    }[];
     signer_team_member: {
       team_member_id: string;
       team_member_user: {
@@ -910,6 +929,10 @@ export type FormWithResponseType = {
     signer_is_primary_signer: boolean;
     signer_action: string;
     signer_order: number;
+    signer_team_group?: {
+      team_group_id: string;
+      team_group_name: string;
+    }[];
     signer_team_member: {
       team_member_id: string;
       team_member_user: {
@@ -2718,54 +2741,54 @@ export type ModuleListType = {
   };
 };
 
-export type FormWithModuleResponseType = {
-  form_id: string;
-  form_name: string;
-  form_description: string;
-  form_date_created: string;
-  form_is_hidden: boolean;
-  form_is_formsly_form: boolean;
-  form_is_for_every_member: boolean;
-  form_type?: string;
-  form_sub_type?: string;
-  form_team_member: {
-    team_member_id: string;
-    team_member_user: {
-      user_id: string;
-      user_username: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string;
-    };
-  };
-  form_signer: {
-    signer_team_member: any;
-    signer_id: string;
-    signer_is_primary_signer?: boolean;
-    signer_action: string;
-    signer_order?: number;
-    signer_team_group?: {
-      team_group_id: string;
-      team_group_name: string;
-    }[];
-  }[];
-  form_section: (SectionTableRow & {
-    section_field: (FieldTableRow & {
-      field_section_duplicatable_id?: string;
-    } & {
-      field_option: OptionTableRow[];
-      field_response?: unknown;
-      field_prefix?: string;
-    })[];
-  })[];
-  form_team_group: {
-    team_group: {
-      team_group_id: string;
-      team_group_is_disabled: boolean;
-      team_group_name: string;
-    };
-  }[];
-};
+// export type FormWithModuleResponseType = {
+//   form_id: string;
+//   form_name: string;
+//   form_description: string;
+//   form_date_created: string;
+//   form_is_hidden: boolean;
+//   form_is_formsly_form: boolean;
+//   form_is_for_every_member: boolean;
+//   form_type?: string;
+//   form_sub_type?: string;
+//   form_team_member: {
+//     team_member_id: string;
+//     team_member_user: {
+//       user_id: string;
+//       user_username: string;
+//       user_first_name: string;
+//       user_last_name: string;
+//       user_avatar: string;
+//     };
+//   };
+//   form_signer: {
+//     signer_team_member: any;
+//     signer_id: string;
+//     signer_is_primary_signer?: boolean;
+//     signer_action: string;
+//     signer_order?: number;
+//     signer_team_group?: {
+//       team_group_id: string;
+//       team_group_name: string;
+//     }[];
+//   }[];
+//   form_section: (SectionTableRow & {
+//     section_field: (FieldTableRow & {
+//       field_section_duplicatable_id?: string;
+//     } & {
+//       field_option: OptionTableRow[];
+//       field_response?: unknown;
+//       field_prefix?: string;
+//     })[];
+//   })[];
+//   form_team_group: {
+//     team_group: {
+//       team_group_id: string;
+//       team_group_is_disabled: boolean;
+//       team_group_name: string;
+//     };
+//   }[];
+// };
 
 export type RequestWithModuleResponseType = RequestTableRow & {
   request_formsly_id: string;
@@ -3011,6 +3034,7 @@ export type NodeData = {
   targetNode: TargetNode[];
   workflowNode: TargetNode[];
 };
+
 export type ModuleFormId = {
   module_connection_form_id: string;
 }[];

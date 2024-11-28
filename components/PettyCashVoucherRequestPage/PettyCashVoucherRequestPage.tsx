@@ -119,7 +119,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const [canCreatePCVBalance, setCanCreatePCVBalance] = useState(false);
 
   const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
+    status: "APPROVED" | "REJECTED" | string,
     jiraId?: string,
     jiraLink?: string
   ) => {
@@ -161,7 +161,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
           if (signer.signer_id === thisSigner.signer_id) {
             return {
               ...signer,
-              request_signer_status: status,
+              request_signer_status: status as ReceiverStatusType,
               request_signer_status_date_updated: new Date().toISOString(),
             };
           }

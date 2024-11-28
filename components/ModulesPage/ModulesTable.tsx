@@ -95,10 +95,12 @@ const ModuleTable = () => {
     key: "module-list-table-column-filter",
     defaultValue: [],
   });
+
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "memo_date_created",
+    columnAccessor: "module_version_date_created",
     direction: "desc",
   });
+
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterFormValues>({
       creator: [],
@@ -110,6 +112,7 @@ const ModuleTable = () => {
     useForm<FilterFormValues>({
       defaultValues: filter,
     });
+
   const handleFilterChange = async (
     key: keyof FilterFormValues,
     value: string[] | Date[] | boolean = []
@@ -145,6 +148,7 @@ const ModuleTable = () => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
   };
+
   const handleFetchModule = async (page: number) => {
     try {
       setIsLoading(true);
@@ -191,6 +195,7 @@ const ModuleTable = () => {
       setIsLoading(false);
     }
   };
+
   const handleFilterForms = async () => {
     try {
       setActivePage(1);
@@ -209,9 +214,12 @@ const ModuleTable = () => {
         isAscendingSort: sortStatus.direction === "asc" ? false : true,
       };
     });
-
     handlePagination(activePage);
   }, [sortStatus]);
+
+  useEffect(() => {
+    handlePagination(activePage);
+  }, [activeTeam]);
 
   return (
     <Container maw={3840} h="100%">

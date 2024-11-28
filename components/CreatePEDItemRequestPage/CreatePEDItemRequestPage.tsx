@@ -5,7 +5,7 @@ import {
   getProjectSignerWithTeamMember,
   getPropertyNumberOptions,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createModuleRequest, createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -52,11 +52,20 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
+  type?: "Request" | "Module Request";
 };
 
-const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
+const CreatePEDItemRequestPage = ({
+  form,
+  projectOptions,
+  type = "Request",
+}: Props) => {
   const router = useRouter();
+  const moduleId = router.query.moduleId as string;
+  const moduleRequestId = router.query.requestId as string;
+  const nextForm = router.query.nextForm as string;
   const formId = router.query.formId as string;
+
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
@@ -206,41 +215,81 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
       const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
+      switch (type) {
+        case "Request":
+          if (!signerList.length) {
+            notifications.show({
+              title: "There's no assigned signer.",
+              message: <InvalidSignerNotification />,
+              color: "orange",
+              autoClose: false,
+            });
+            return;
+          }
 
-      if (!signerList.length) {
-        notifications.show({
-          title: "There's no assigned signer.",
-          message: <InvalidSignerNotification />,
-          color: "orange",
-          autoClose: false,
-        });
-        return;
+          const request = await createRequest(supabaseClient, {
+            requestFormValues: data,
+            formId,
+            teamMemberId: teamMember.team_member_id,
+            signers: signerList,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId,
+            teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
+
+          notifications.show({
+            message: "Request created.",
+            color: "green",
+          });
+
+          await router.push(
+            `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+              request.request_formsly_id_prefix
+            }-${request.request_formsly_id_serial}`
+          );
+          break;
+
+        case "Module Request":
+          const moduleRequest = await createModuleRequest(supabaseClient, {
+            requestFormValues: data,
+            formId: form.form_id,
+            moduleId: moduleId,
+            moduleRequestId: moduleRequestId,
+            teamMemberId: teamMember.team_member_id,
+            signers: form.form_signer,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId: projectId,
+            teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
+
+          notifications.show({
+            message: "Module Request created.",
+            color: "green",
+          });
+
+          if (!nextForm) {
+            await router.push(
+              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }`
+            );
+          } else {
+            await router.push(
+              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }?requestId=${moduleRequest.request_id}`
+            );
+          }
+          break;
       }
-
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-        userId: requestorProfile.user_id,
-      });
-
-      notifications.show({
-        message: "Request created.",
-        color: "green",
-      });
-
-      await router.push(
-        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          request.request_formsly_id_prefix
-        }-${request.request_formsly_id_serial}`
-      );
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -580,7 +629,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        Create {type}
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
@@ -627,7 +676,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
             })}
             <Box pos="relative">
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
-              <RequestFormSigner signerList={signerList} />
+              <RequestFormSigner type={type} signerList={signerList} />
             </Box>
             <Button type="submit">Submit</Button>
           </Stack>

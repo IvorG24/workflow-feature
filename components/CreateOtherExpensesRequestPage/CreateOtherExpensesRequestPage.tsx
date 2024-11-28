@@ -3,11 +3,10 @@ import {
   getSupplierOptions,
   getTypeOptions,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createModuleRequest, createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
-import useSaveToLocalStorage from "@/hooks/useSavetoLocalStorage";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -29,12 +28,10 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
@@ -53,15 +50,23 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
+  type?: "Request" | "Module Request";
 };
 
-const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
+const CreateOtherExpensesRequestPage = ({
+  form,
+  projectOptions,
+  type = "Request",
+}: Props) => {
   const router = useRouter();
+  const moduleId = router.query.moduleId as string;
+  const moduleRequestId = router.query.requestId as string;
+  const nextForm = router.query.nextForm as string;
   const formId = router.query.formId as string;
+
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
-  const isSubmitting = useRef(false);
   const requestorProfile = useUserProfile();
 
   const [signerList, setSignerList] = useState(
@@ -99,41 +104,6 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
     control,
     name: "sections",
   });
-  const [localFormState, setLocalFormState, removeLocalState] =
-    useLocalStorage<FormWithResponseType | null>({
-      key: `${formId}`,
-      defaultValue: form,
-    });
-  const saveToLocalStorage = () => {
-    if (isSubmitting.current) return;
-
-    const updatedForm = {
-      ...form,
-      form_section: getValues("sections").map((section) => ({
-        ...section,
-        section_field: section.section_field.map((field) => {
-          const fieldResponse = field.field_response as string | undefined;
-          if (field.field_type === "DROPDOWN" && fieldResponse) {
-            return {
-              ...field,
-              field_option: field.field_option?.[0]
-                ? [
-                    {
-                      ...field.field_option[0],
-                      option_value: fieldResponse,
-                    },
-                  ]
-                : field.field_option,
-            };
-          }
-          return field;
-        }),
-      })),
-      form_signer: signerList,
-    };
-
-    setLocalFormState(updatedForm);
-  };
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -156,41 +126,79 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
         (option) => option.option_value === response
       )?.option_id as string;
 
-      if (!signerList.length) {
-        notifications.show({
-          title: "There's no assigned signer.",
-          message: <InvalidSignerNotification />,
-          color: "orange",
-          autoClose: false,
-        });
-        return;
+      switch (type) {
+        case "Request":
+          if (!signerList.length) {
+            notifications.show({
+              title: "There's no assigned signer.",
+              message: <InvalidSignerNotification />,
+              color: "orange",
+              autoClose: false,
+            });
+            return;
+          }
+          const request = await createRequest(supabaseClient, {
+            requestFormValues: data,
+            formId,
+            teamMemberId: teamMember.team_member_id,
+            signers: signerList,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId,
+            teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
+
+          notifications.show({
+            message: "Request created.",
+            color: "green",
+          });
+
+          await router.push(
+            `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+              request.request_formsly_id_prefix
+            }-${request.request_formsly_id_serial}`
+          );
+          break;
+        case "Module Request":
+          const moduleRequest = await createModuleRequest(supabaseClient, {
+            requestFormValues: data,
+            formId: form.form_id,
+            moduleId: moduleId,
+            moduleRequestId: moduleRequestId,
+            teamMemberId: teamMember.team_member_id,
+            signers: form.form_signer,
+            teamId: teamMember.team_member_team_id,
+            requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId: projectId,
+            teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+            userId: requestorProfile.user_id,
+          });
+          notifications.show({
+            message: "Module Request created.",
+            color: "green",
+          });
+
+          if (!nextForm) {
+            await router.push(
+              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }`
+            );
+          } else {
+            await router.push(
+              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
+                moduleRequest.request_module_request_id
+              }?requestId=${moduleRequest.request_id}`
+            );
+          }
+
+          break;
       }
-
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-        userId: requestorProfile.user_id,
-      });
-      isSubmitting.current = true;
-      removeLocalState();
-      notifications.show({
-        message: "Request created.",
-        color: "green",
-      });
-
-      await router.push(
-        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          request.request_formsly_id_prefix
-        }-${request.request_formsly_id_serial}`
-      );
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -362,31 +370,8 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
       setLoadingFieldList([]);
     }
   };
-  useEffect(() => {
-    if (localFormState) {
-      removeSection();
-      replaceSection(localFormState.form_section);
-      setSignerList(localFormState.form_signer);
-    } else {
-      replaceSection(form.form_section);
-      setSignerList(
-        form.form_signer.map((signer) => ({
-          ...signer,
-          signer_action: signer.signer_action.toUpperCase(),
-        }))
-      );
-    }
-  }, [form, localFormState, replaceSection]);
-  useEffect(() => {
-    const resetLocalStorage = async () => {
-      const {
-        data: { session },
-      } = await supabaseClient.auth.getSession();
 
-      if (!session) {
-        localStorage.clear();
-      }
-    };
+  useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
@@ -414,83 +399,19 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
         }
         setPreferredSupplierOptions(supplierOptionlist);
 
-        if (!localStorage.getItem(`${formId}`)) {
-          replaceSection([
-            form.form_section[0],
-            {
-              ...form.form_section[1],
-              section_field: [
-                ...form.form_section[1].section_field.slice(0, 5),
-                {
-                  ...form.form_section[1].section_field[9],
-                  field_option: supplierOptionlist,
-                },
-              ],
-            },
-          ]);
-        } else {
-          const newSections =
-            localFormState?.form_section.map((section, sectionIndex) => {
-              const categoryOption =
-                form.form_section[1]?.section_field[0].field_option;
-              const typeOption =
-                form.form_section[1]?.section_field[2].field_option;
-              const measurementOption =
-                form.form_section[1]?.section_field[4].field_option;
-
-              return {
-                ...section,
-                section_field: section.section_field.map(
-                  (field, fieldIndex) => {
-                    const fieldName =
-                      localFormState.form_section[sectionIndex].section_field[
-                        fieldIndex
-                      ].field_name;
-
-                    let newFieldOption = field.field_option;
-                    switch (fieldName) {
-                      case "Requesting Project":
-                        newFieldOption = projectOptions;
-                        break;
-                      case "Preferred Supplier":
-                        newFieldOption = supplierOptionlist;
-                        break;
-                      case "Category":
-                        newFieldOption = categoryOption;
-                        break;
-                      case "Type":
-                        newFieldOption = typeOption;
-                        break;
-                      case "Unit of Measurement":
-                        newFieldOption = measurementOption;
-                        break;
-                      default:
-                        break;
-                    }
-
-                    return {
-                      ...field,
-                      field_option: newFieldOption,
-                    };
-                  }
-                ),
-              };
-            }) || [];
-          const projectRequest = localFormState?.form_section[0]
-            .section_field[0].field_response as string | null;
-          handleProjectNameChange(projectRequest);
-          removeSection();
-          replaceSection(newSections);
-          localFormState?.form_section.forEach((section, index) => {
-            if (index === 0) return;
-            const categoryField = section.section_field[0];
-            const category = categoryField.field_response as string | null;
-
-            if (!category) return;
-
-            handleCategoryChange(index, category);
-          });
-        }
+        replaceSection([
+          form.form_section[0],
+          {
+            ...form.form_section[1],
+            section_field: [
+              ...form.form_section[1].section_field.slice(0, 5),
+              {
+                ...form.form_section[1].section_field[9],
+                field_option: supplierOptionlist,
+              },
+            ],
+          },
+        ]);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -500,17 +421,14 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
         setIsLoading(false);
       }
     };
-    resetLocalStorage();
-    fetchOptions();
-  }, [team, replaceSection, formId, localFormState, removeLocalState]);
 
-  useBeforeunload(() => saveToLocalStorage());
-  useSaveToLocalStorage({ saveToLocalStorage });
+    fetchOptions();
+  }, [team, replaceSection, formId]);
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        Create {type}
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
@@ -555,7 +473,7 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
             })}
             <Box pos="relative">
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
-              <RequestFormSigner signerList={signerList} />
+              <RequestFormSigner type={type} signerList={signerList} />
             </Box>
             <Button type="submit">Submit</Button>
           </Stack>

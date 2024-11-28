@@ -1,8 +1,19 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import { checkMemberTeamGroup } from "@/backend/api/get";
+import { moduleSignerValidation } from "@/backend/api/post";
+import {
+  approveOrRejectRequest,
+  cancelRequest,
+  updateModuleRequest,
+} from "@/backend/api/update";
+import useNodeAndForm from "@/hooks/reactflow/useNodeAndForm";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -14,6 +25,7 @@ import {
 } from "@/utils/types";
 import {
   Accordion,
+  Button,
   Container,
   Flex,
   Group,
@@ -25,31 +37,40 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ItemSummary from "../SummarySection/ItemSummary";
 import RequestActionSection from "./RequestActionSection";
+import ModuleRequestActionSection from "./RequestActionSectionModule";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
 import RequestSection from "./RequestSection";
 import RequestSignerSection from "./RequestSignerSection";
+import RequestSignerSectionModule from "./RequestSignerSectionModule";
 
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
   isAnon?: boolean;
+  type?: "Request" | "Module Request";
+  moduleId?: string;
 };
 
 const RequestPage = ({
   request,
   isFormslyForm = false,
   isAnon = false,
+  moduleId,
+  type = "Request",
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
 
+  const requestType = type === "Request";
+  const moduleRequestId = router.query.moduleRequestId as string;
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
       ...signer.request_signer_signer,
@@ -62,16 +83,45 @@ const RequestPage = ({
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
-
+  const [isSectionHidden, setIsSectionHidden] = useState(false);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState(
     request.request_comment
   );
+
+  const signerTeamGroup = initialRequestSignerList[0].signer_team_group?.map(
+    (group) => group.team_group_name
+  );
+
+  const isTeamGroup = initialRequestSignerList.some((signer) =>
+    signer?.signer_team_group?.some((group) =>
+      teamMemberGroupList.includes(group.team_group_name)
+    )
+  );
+
+  const {
+    nextForm,
+    targetNodes,
+    isEndNode,
+    fetchNodeAndForm,
+    handleCreateNextForm,
+    isNextFormSubmitted,
+    isHidden,
+    workflowNodeData,
+  } = useNodeAndForm({
+    request,
+    moduleId: moduleId || "",
+    userTeamGroup: teamMemberGroupList,
+    isLoading: setIsLoading,
+    moduleRequestId: moduleRequestId,
+    type,
+  });
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -82,71 +132,176 @@ const RequestPage = ({
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
-  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+  const handleUpdateRequest = async (status: string) => {
     try {
       if (!teamMember) return;
-      if (!isUserSigner) {
-        notifications.show({
-          message: "Invalid signer.",
-          color: "orange",
-        });
-        return;
-      }
       setIsLoading(true);
       const signer = isUserSigner;
-      const signerFullName = `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`;
+      const signerFullName = requestType
+        ? `${signer?.signer_team_member.team_member_user.user_first_name} ${signer?.signer_team_member.team_member_user.user_last_name}`
+        : `${user?.user_first_name} ${user?.user_last_name}`;
 
-      await approveOrRejectRequest(supabaseClient, {
-        requestAction: status,
-        requestId: request.request_id,
-        isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.request_signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: `${teamMember?.team_member_id}`,
-        teamId: request.request_team_member.team_member_team_id,
-        requestFormslyId: request.request_formsly_id,
-      });
-
-      notifications.show({
-        message: `Request ${status.toLowerCase()}.`,
-        color: "green",
-      });
-      setRequestStatus(status);
-      setSignerList((prev) =>
-        prev.map((thisSigner) => {
-          if (signer.signer_id === thisSigner.signer_id) {
-            return {
-              ...signer,
-              request_signer_status: status,
-              request_signer_status_date_updated: new Date().toISOString(),
-            };
+      switch (type) {
+        case "Request":
+          if (!signer) {
+            notifications.show({
+              message: "Invalid signer.",
+              color: "orange",
+            });
+            return;
           }
-          return thisSigner;
-        })
-      );
-      setRequestCommentList((prev) => [
-        {
-          comment_id: uuidv4(),
-          comment_date_created: new Date().toISOString(),
-          comment_content: `${signerFullName} ${status.toLowerCase()} this request`,
-          comment_is_edited: false,
-          comment_last_updated: "",
-          comment_type: `ACTION_${status.toUpperCase()}` as CommentType,
-          comment_team_member_id: signer.signer_team_member.team_member_id,
-          comment_team_member: {
-            team_member_user: {
-              ...signer.signer_team_member.team_member_user,
-              user_id: uuidv4(),
-              user_username: "",
-              user_avatar: "",
-            },
-          },
-          comment_attachment: [],
-        },
-        ...prev,
-      ]);
+          await approveOrRejectRequest(supabaseClient, {
+            requestAction: status,
+            requestId: request.request_id,
+            isPrimarySigner: signer.signer_is_primary_signer,
+            requestSignerId: signer.request_signer_id,
+            requestOwnerId:
+              request.request_team_member.team_member_user.user_id,
+            signerFullName: signerFullName,
+            formName: request.request_form.form_name,
+            memberId: teamMember.team_member_id,
+            teamId: request.request_team_member.team_member_team_id,
+
+            requestFormslyId: request.request_formsly_id,
+          });
+
+          notifications.show({
+            message: `Request ${status.toLowerCase()}.`,
+            color: "green",
+          });
+          setRequestStatus(status);
+          setSignerList((prev) =>
+            prev.map((thisSigner) => {
+              if (signer.signer_id === thisSigner.signer_id) {
+                return {
+                  ...signer,
+                  request_signer_status: status as "APPROVED" | "REJECTED",
+                  request_signer_status_date_updated: new Date().toISOString(),
+                };
+              }
+              return thisSigner;
+            })
+          );
+          break;
+
+        case "Module Request":
+          const signerCountCurrentNode =
+            request.request_signer[0].request_signer_signer.signer_order;
+
+          const teamGroup = await checkMemberTeamGroup(supabaseClient, {
+            memberId: teamMember?.team_member_id ?? "",
+            requestId: request.request_id,
+            currentStatus: status,
+            userGroupData: teamMemberGroupList,
+            signerTeamGroups: signerTeamGroup ?? [],
+          });
+
+          const approverTeamGroup =
+            teamMemberGroupList.length === 0 ||
+            teamMemberGroupList.every(
+              (groupName) =>
+                teamGroup.includes(groupName) ||
+                !signerTeamGroup?.includes(groupName)
+            );
+
+          if (approverTeamGroup) {
+            notifications.show({
+              message: `Someone in your team approved it already, Please refresh the page`,
+              color: "orange",
+            });
+            return;
+          }
+
+          const signerCount = await moduleSignerValidation(supabaseClient, {
+            requestAction: status,
+            requestStatus: status,
+            groupMember: teamMemberGroupList,
+            requestId: request.request_id,
+            requestSignerId: user?.user_id ?? "",
+            signerFullName: signerFullName,
+            signerTeamGroups: signerTeamGroup ?? [],
+            memberId: `${teamMember?.team_member_id}`,
+          });
+
+          if (signerCount >= signerCountCurrentNode) {
+            setIsSectionHidden(true);
+            await updateModuleRequest(supabaseClient, {
+              requestAction: status,
+              signerTeamGroup: signerTeamGroup ?? [],
+              moduleRequestId: moduleRequestId,
+              requestStatus: status,
+              requestId: request.request_id,
+              requestSignerId: user?.user_id ?? "",
+              requestOwnerId:
+                request.request_team_member.team_member_user.user_id,
+              signerFullName: signerFullName,
+              formName: request.request_form.form_name,
+              memberId: `${teamMember?.team_member_id}`,
+              teamId: request.request_team_member.team_member_team_id,
+
+              requestFormslyId: request.request_formsly_id,
+            });
+            setRequestStatus(status);
+            setRequestCommentList((prev) => [
+              {
+                comment_id: uuidv4(),
+                comment_date_created: new Date().toISOString(),
+                comment_content: `${signerFullName} ${status} this module request!`,
+                comment_is_edited: false,
+                comment_last_updated: "",
+                comment_type: `ACTION_${status}` as CommentType,
+                comment_team_member_id: teamMember.team_member_id,
+                comment_team_member: {
+                  team_member_user: {
+                    user_first_name: user?.user_first_name ?? "",
+                    user_last_name: user?.user_last_name ?? "",
+                    user_id: uuidv4(),
+                    user_username: "",
+                    user_avatar: "",
+                  },
+                },
+                comment_attachment: [],
+              },
+              ...prev,
+            ]);
+
+            fetchNodeAndForm();
+            notifications.show({
+              message: `Module Request updated to ${status.toLowerCase()}.`,
+              color: "green",
+            });
+            router.reload();
+          } else {
+            setIsSectionHidden(true);
+            setRequestCommentList((prev) => [
+              {
+                comment_id: uuidv4(),
+                comment_date_created: new Date().toISOString(),
+                comment_content: `${signerFullName} ${status} this module request!`,
+                comment_is_edited: false,
+                comment_last_updated: "",
+                comment_type: `ACTION_${status}` as CommentType,
+                comment_team_member_id: teamMember.team_member_id,
+                comment_team_member: {
+                  team_member_user: {
+                    user_first_name: user?.user_first_name ?? "",
+                    user_last_name: user?.user_last_name ?? "",
+                    user_id: uuidv4(),
+                    user_username: "",
+                    user_avatar: "",
+                  },
+                },
+                comment_attachment: [],
+              },
+              ...prev,
+            ]);
+            notifications.show({
+              message: `Request ${status.toLowerCase()}.`,
+              color: "green",
+            });
+          }
+          break;
+      }
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -240,31 +395,42 @@ const RequestPage = ({
     });
 
   const isUserOwner = requestor.user_id === user?.user_id;
-  const isUserSigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id
-  );
-  const canSignerTakeAction =
-    isUserSigner &&
-    isUserSigner.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
-  const isEditable =
-    signerList
-      .map((signer) => signer.request_signer_status)
-      .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
-  const isCancelable = isUserOwner && requestStatus === "PENDING";
-  const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const isUserSigner = requestType
+    ? signerList.find(
+        (signer) =>
+          signer.signer_team_member.team_member_id ===
+          teamMember?.team_member_id
+      )
+    : undefined;
 
-  const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable;
+  const canSignerTakeAction = requestType
+    ? isUserSigner &&
+      isUserSigner.request_signer_status === "PENDING" &&
+      requestStatus !== "CANCELED"
+    : isTeamGroup && !isUserOwner;
+
+  const isEditable =
+    initialRequestSignerList.every(
+      (signer) => signer.request_signer_status === "PENDING"
+    ) &&
+    Boolean(isUserOwner) &&
+    requestStatus === "PENDING";
+
+  const isCancelable = Boolean(isUserOwner) && requestStatus === "PENDING";
+  const isDeletable = Boolean(isUserOwner) && requestStatus === "CANCELED";
+  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+
+  const isRequestActionSectionVisible = requestType
+    ? canSignerTakeAction || isEditable || isDeletable || isUserRequester
+    : canSignerTakeAction || isEditable || isDeletable;
+
+  const noNodes = targetNodes?.length === 0;
 
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
-          Request
+          {type}
         </Title>
         <Group>
           <ExportToPdfMenu
@@ -272,6 +438,18 @@ const RequestPage = ({
             formName={request.request_form.form_name}
             requestId={request.request_formsly_id ?? request.request_id}
           />
+          {!requestType &&
+            isEndNode &&
+            nextForm &&
+            !isNextFormSubmitted &&
+            isUserOwner && (
+              <Button
+                leftIcon={<IconPlus size={16} />}
+                onClick={handleCreateNextForm}
+              >
+                Create {nextForm.form_name} Form
+              </Button>
+            )}
         </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
@@ -350,22 +528,61 @@ const RequestPage = ({
           <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
-        {isRequestActionSectionVisible && (
+        {isRequestActionSectionVisible && requestType && (
           <RequestActionSection
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            requestId={request.request_id}
+            isUserPrimarySigner={
+              isUserSigner
+                ? Boolean(isUserSigner.signer_is_primary_signer)
+                : false
+            }
             isEditable={isEditable}
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
-            requestSignerId={isUserSigner?.request_signer_id}
+            isUserRequester={isUserRequester}
+            requestId={request.request_id}
+            isItemForm
+            requestSignerId={isUserSigner?.signer_team_member.team_member_id}
             status={request.request_status}
           />
         )}
-
-        <RequestSignerSection signerList={signerList} />
+        {!requestType &&
+          isRequestActionSectionVisible &&
+          !isEndNode &&
+          !noNodes &&
+          !isHidden && (
+            <ModuleRequestActionSection
+              handleCancelRequest={handleCancelRequest}
+              openPromptDeleteModal={openPromptDeleteModal}
+              handleUpdateRequest={handleUpdateRequest}
+              isItemForm
+              isSectionHidden={isSectionHidden}
+              isEditable={isEditable}
+              isCancelable={isCancelable}
+              canSignerTakeAction={canSignerTakeAction}
+              isDeletable={isDeletable}
+              requestId={request.request_id}
+              requestSignerId={request.request_signer[0].request_signer_id}
+              targetNodes={targetNodes ?? []}
+            />
+          )}
+        {requestType ? (
+          <RequestSignerSection signerList={signerList} />
+        ) : (
+          <>
+            {!isEndNode && !noNodes && (
+              <RequestSignerSectionModule
+                signerList={initialRequestSignerList.map((signer) => ({
+                  ...signer,
+                  request_signer_status_date_updated: null,
+                }))}
+              />
+            )}
+          </>
+        )}
       </Stack>
 
       <RequestCommentList
@@ -374,6 +591,7 @@ const RequestPage = ({
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
         }}
+        workflowNodeData={workflowNodeData ?? []}
         requestCommentList={requestCommentList}
         setRequestCommentList={setRequestCommentList}
       />

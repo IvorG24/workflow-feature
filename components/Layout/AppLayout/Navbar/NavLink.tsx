@@ -812,6 +812,17 @@ const ReviewAppNavLink = () => {
       ),
       href: `/${activeTeamNameToUrl}/memo/create`,
     },
+    {
+      label: "Create Module Reueqest",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileDescription {...defaultIconProps} />
+        </Box>
+      ),
+      href: itemForm
+        ? `/${activeTeamNameToUrl}/forms/${itemForm.form_id}/create`
+        : "",
+    },
   ];
 
   const listSection = [

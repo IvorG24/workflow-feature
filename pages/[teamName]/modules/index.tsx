@@ -1,7 +1,6 @@
 import Meta from "@/components/Meta/Meta";
 import ModuleTable from "@/components/ModulesPage/ModulesTable";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
-import { TeamMemberType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
@@ -20,9 +19,6 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
     }
   }
 );
-type Props = {
-  teamMemberList: TeamMemberType[];
-};
 
 const Page = () => {
   return (

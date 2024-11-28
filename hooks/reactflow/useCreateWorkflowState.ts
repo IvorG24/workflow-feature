@@ -47,9 +47,9 @@ export const useWorkflowState = ({
       position?: XYPosition,
       label?: string,
       type: "basic" | "end" | "origin" = "basic",
-      presetLabel: string = "[empty]",
-      presetBackgroundColor: string = "#ffffff",
-      presetTextColor: string = "#000000"
+      presetLabel = "[empty]",
+      presetBackgroundColor = "#ffffff",
+      presetTextColor = "#000000"
     ) => {
       const nodeLabel = label || presetLabel;
       const newNode = {
