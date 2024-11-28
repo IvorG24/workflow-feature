@@ -2441,6 +2441,8 @@ export type JobOfferFormType = {
   projectLatitude?: string;
   manpowerLoadingId: string;
   manpowerLoadingReferenceCreatedBy: string;
+  requestingProject?: string;
+  requestingDepartment?: string;
   compensation: string;
   attachment: File | null;
 };
@@ -2672,4 +2674,19 @@ export type SidebarStorePreference = {
   form: boolean;
   team: boolean;
   jira: boolean;
+};
+
+export type DeploymentRecordType = {
+  request_id: string;
+  request_formsly_id: string;
+  request_date_created: string;
+};
+
+export type AssigneeInformation = {
+  position: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  email: string;
+  contactNumber: string;
 };

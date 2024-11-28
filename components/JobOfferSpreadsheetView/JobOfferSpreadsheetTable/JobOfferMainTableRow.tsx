@@ -1,7 +1,8 @@
-import { getJobHistory } from "@/backend/api/get";
+import { getJobHistory, getPositionJobOffer } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   formatDate,
   formatTime,
@@ -23,8 +24,11 @@ import {
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
   OptionType,
+  PositionTableRow,
+  TeamDepartmentTableRow,
   TeamMemberTableRow,
   TeamMemberType,
+  TeamProjectTableRow,
   TeamTableRow,
   UserTableRow,
 } from "@/utils/types";
@@ -35,6 +39,7 @@ import {
   Button,
   Center,
   createStyles,
+  Divider,
   FileInput,
   Flex,
   Group,
@@ -42,6 +47,7 @@ import {
   Modal,
   ScrollArea,
   Select,
+  Space,
   Stack,
   Text,
   TextInput,
@@ -87,6 +93,8 @@ type Props = {
   teamMemberGroupList: string[];
   teamMemberOptions: TeamMemberType[];
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
+  teamProjects: TeamProjectTableRow[];
+  teamDepartment: TeamDepartmentTableRow[];
 };
 
 const JobOfferMainTableRow = ({
@@ -102,10 +110,12 @@ const JobOfferMainTableRow = ({
   teamMemberGroupList,
   teamMemberOptions,
   handleOverride,
+  teamProjects,
+  teamDepartment,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const activeTeam = useActiveTeam();
   const { setIsLoading } = useLoadingActions();
 
   const [
@@ -119,6 +129,8 @@ const JobOfferMainTableRow = ({
   const [isScheduling, setIsScheduling] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
+  const [position, setPosition] = useState<PositionTableRow | null>(null);
+  const [isFetchingPosition, setIsFetchingPosition] = useState(false);
 
   const {
     handleSubmit,
@@ -152,6 +164,8 @@ const JobOfferMainTableRow = ({
       setValue("attachment", null);
       setValue("projectLatitude", undefined);
       setValue("projectLongitude", undefined);
+      setValue("requestingProject", "");
+      setValue("requestingDepartment", "");
       clearErrors();
     }
   }, [jobOfferModalIsOpen]);
@@ -340,6 +354,16 @@ const JobOfferMainTableRow = ({
       onConfirm: async () => handleUpdateJobOffer(),
     });
 
+  const teamProjectOptions = teamProjects.map((project) => ({
+    label: project.team_project_name,
+    value: project.team_project_id,
+  }));
+
+  const teamDepartmentOptions = teamDepartment.map((department) => ({
+    label: department.team_department_name,
+    value: department.team_department_id,
+  }));
+
   const isForPooling = ![
     "ACCEPTED",
     "PENDING",
@@ -353,6 +377,25 @@ const JobOfferMainTableRow = ({
   ].includes(item.job_offer_status);
 
   if (!team.team_name) return null;
+
+  const handleFetchJobPosition = async (value: string | null) => {
+    try {
+      setIsFetchingPosition(true);
+      const positionData = await getPositionJobOffer(supabaseClient, {
+        teamId: activeTeam.team_id,
+        position: value ?? "",
+      });
+      setPosition(positionData);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingPosition(false);
+    }
+  };
+
   return (
     <tr className={classes.row}>
       <Modal
@@ -365,208 +408,286 @@ const JobOfferMainTableRow = ({
         withCloseButton={false}
         trapFocus={false}
       >
-        <Stack spacing="xl">
-          <Text color="dimmed" size={14}>
-            Job Offer for <b>{item.application_information_full_name}</b>{" "}
-            applying for <b>{item.position.replaceAll('"', "")}</b> position.
-          </Text>
+        <ScrollArea.Autosize
+          mah={700}
+          mx="auto"
+          scrollbarSize={10}
+          offsetScrollbars
+        >
+          <Stack spacing="xl">
+            <Text color="dimmed" size={14}>
+              Job Offer for <b>{item.application_information_full_name}</b>{" "}
+              applying for <b>{item.position.replaceAll('"', "")}</b> position.
+            </Text>
 
-          <form
-            id="offer"
-            onSubmit={handleSubmit(async (data) => {
-              await handleAddOffer(data);
-              closeJobOfferModal();
-            })}
-          >
-            <Stack spacing="xs">
-              <Controller
-                control={control}
-                name="title"
-                render={({ field: { value, onChange } }) => {
-                  return (
-                    <Select
-                      label="Job Title"
-                      clearable
-                      value={value}
-                      required
-                      searchable
-                      onChange={onChange}
-                      error={errors.title?.message}
-                      data={positionOptionList}
-                      withinPortal
-                      autoFocus={false}
-                    />
-                  );
-                }}
-                rules={{
-                  required: "Job title is required.",
-                }}
-              />
-              <Controller
-                control={control}
-                name="projectAssignment"
-                render={({ field: { value, onChange } }) => {
-                  return (
-                    <Select
-                      label="Project Assignment"
-                      clearable
-                      value={value}
-                      required
-                      searchable
-                      onChange={(value) => {
-                        const projectAddress = projectOptions.find(
-                          (project) => project.hr_project_name === value
-                        )?.hr_project_address;
+            <form
+              id="offer"
+              onSubmit={handleSubmit(async (data) => {
+                await handleAddOffer(data);
+                closeJobOfferModal();
+              })}
+            >
+              <Stack spacing="xs">
+                <Controller
+                  control={control}
+                  name="title"
+                  render={({ field: { value, onChange } }) => {
+                    return (
+                      <Select
+                        label="Job Title"
+                        clearable
+                        value={value}
+                        required
+                        searchable
+                        onChange={(value) => {
+                          if (value) {
+                            handleFetchJobPosition(value);
+                          } else {
+                            setPosition(null);
+                          }
+                          onChange(value);
+                        }}
+                        error={errors.title?.message}
+                        data={positionOptionList}
+                        withinPortal
+                        autoFocus={false}
+                      />
+                    );
+                  }}
+                  rules={{
+                    required: "Job title is required.",
+                  }}
+                />
+                <Controller
+                  control={control}
+                  name="projectAssignment"
+                  render={({ field: { value, onChange } }) => {
+                    return (
+                      <Select
+                        label="Project Assignment"
+                        clearable
+                        value={value}
+                        required
+                        searchable
+                        onChange={(value) => {
+                          const projectAddress = projectOptions.find(
+                            (project) => project.hr_project_name === value
+                          )?.hr_project_address;
 
-                        setValue(
-                          "projectLatitude",
-                          projectAddress && projectAddress?.address_latitude
-                            ? projectAddress.address_latitude
-                            : undefined
-                        );
-                        setValue(
-                          "projectLongitude",
-                          projectAddress && projectAddress?.address_longitude
-                            ? projectAddress.address_longitude
-                            : undefined
-                        );
-                        setValue(
-                          "projectAddress",
-                          [
-                            projectAddress?.address_region,
-                            projectAddress?.address_province,
-                            projectAddress?.address_city,
-                            projectAddress?.address_barangay,
-                            projectAddress?.address_street,
-                            projectAddress?.address_zip_code,
-                          ].join(", ")
-                        );
-                        onChange(value);
-                      }}
-                      error={errors.projectAssignment?.message}
-                      data={projectOptions.map((project) => {
-                        return {
-                          label: project.hr_project_name,
-                          value: project.hr_project_name,
-                        };
-                      })}
-                      withinPortal
-                      autoFocus={false}
-                    />
-                  );
-                }}
-                rules={{
-                  required: "Project assignment is required.",
-                }}
-              />
-              <TextInput
-                label="Project Address"
-                {...register("projectAddress", {
-                  required: "Project address is required.",
-                })}
-                required
-                error={errors.projectAddress?.message}
-                readOnly
-                variant="filled"
-              />
-              <TextInput
-                label="Manpower Loading ID"
-                {...register("manpowerLoadingId", {
-                  required: "Manpower loading ID is required.",
-                })}
-                required
-                error={errors.manpowerLoadingId?.message}
-              />
-              <Controller
-                control={control}
-                name="manpowerLoadingReferenceCreatedBy"
-                render={({ field: { value, onChange } }) => {
-                  return (
-                    <Select
-                      label="Manpower Loading Reference Created By"
-                      clearable
-                      value={value}
-                      required
-                      searchable
-                      onChange={onChange}
-                      error={errors.projectAssignment?.message}
-                      data={teamMemberOptions
-                        .filter(
-                          (item, index, array) =>
-                            array.findIndex(
-                              (obj) =>
-                                `${obj.team_member_user.user_first_name} ${obj.team_member_user.user_last_name}` ===
-                                `${item.team_member_user.user_first_name} ${item.team_member_user.user_last_name}`
-                            ) === index
-                        )
-                        .map((teamMember) => {
+                          setValue(
+                            "projectLatitude",
+                            projectAddress && projectAddress?.address_latitude
+                              ? projectAddress.address_latitude
+                              : undefined
+                          );
+                          setValue(
+                            "projectLongitude",
+                            projectAddress && projectAddress?.address_longitude
+                              ? projectAddress.address_longitude
+                              : undefined
+                          );
+                          setValue(
+                            "projectAddress",
+                            [
+                              projectAddress?.address_region,
+                              projectAddress?.address_province,
+                              projectAddress?.address_city,
+                              projectAddress?.address_barangay,
+                              projectAddress?.address_street,
+                              projectAddress?.address_zip_code,
+                            ].join(", ")
+                          );
+                          onChange(value);
+                        }}
+                        error={errors.projectAssignment?.message}
+                        data={projectOptions.map((project) => {
                           return {
-                            label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-                            value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                            label: project.hr_project_name,
+                            value: project.hr_project_name,
                           };
                         })}
-                      withinPortal
-                      autoFocus={false}
-                    />
-                  );
-                }}
-                rules={{
-                  required: "Project assignment is required.",
-                }}
-              />
-              <TextInput
-                label="Compensation"
-                {...register("compensation", {
-                  required: "Compensation is required.",
-                })}
-                required
-                error={errors.compensation?.message}
-              />
-              <Controller
-                control={control}
-                name="attachment"
-                render={({ field: { value, onChange } }) => {
-                  return (
-                    <FileInput
-                      label="Attachment"
-                      clearable
-                      value={value}
-                      required
-                      onChange={onChange}
-                      error={errors.attachment?.message}
-                      multiple={false}
-                    />
-                  );
-                }}
-                rules={{
-                  required: "Attachment is required.",
-                  validate: {
-                    fileSize: (value) => {
-                      if (!value) return true;
-                      const formattedValue = value as File;
-                      return formattedValue.size <= MAX_FILE_SIZE
-                        ? true
-                        : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
-                    },
-                  },
-                }}
-              />
-            </Stack>
-          </form>
+                        withinPortal
+                        autoFocus={false}
+                      />
+                    );
+                  }}
+                  rules={{
+                    required: "Project assignment is required.",
+                  }}
+                />
 
-          <Group spacing="xs" position="right">
-            <Button
-              variant="outline"
-              onClick={closeJobOfferModal}
-              disabled={isScheduling}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" form="offer" loading={isScheduling}>
-              Confirm
-            </Button>
-          </Group>
-        </Stack>
+                <TextInput
+                  label="Project Address"
+                  {...register("projectAddress", {
+                    required: "Project address is required.",
+                  })}
+                  required
+                  error={errors.projectAddress?.message}
+                  readOnly
+                  variant="filled"
+                />
+                <TextInput
+                  label="Manpower Loading ID"
+                  {...register("manpowerLoadingId", {
+                    required: "Manpower loading ID is required.",
+                  })}
+                  required
+                  error={errors.manpowerLoadingId?.message}
+                />
+                <Controller
+                  control={control}
+                  name="manpowerLoadingReferenceCreatedBy"
+                  render={({ field: { value, onChange } }) => {
+                    return (
+                      <Select
+                        label="Manpower Loading Reference Created By"
+                        clearable
+                        value={value}
+                        required
+                        searchable
+                        onChange={onChange}
+                        error={errors.projectAssignment?.message}
+                        data={teamMemberOptions
+                          .filter(
+                            (item, index, array) =>
+                              array.findIndex(
+                                (obj) =>
+                                  `${obj.team_member_user.user_first_name} ${obj.team_member_user.user_last_name}` ===
+                                  `${item.team_member_user.user_first_name} ${item.team_member_user.user_last_name}`
+                              ) === index
+                          )
+                          .map((teamMember) => {
+                            return {
+                              label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                              value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                            };
+                          })}
+                        withinPortal
+                        autoFocus={false}
+                      />
+                    );
+                  }}
+                  rules={{
+                    required: "Project assignment is required.",
+                  }}
+                />
+                <TextInput
+                  label="Compensation"
+                  {...register("compensation", {
+                    required: "Compensation is required.",
+                  })}
+                  required
+                  error={errors.compensation?.message}
+                />
+                <Controller
+                  control={control}
+                  name="attachment"
+                  render={({ field: { value, onChange } }) => {
+                    return (
+                      <FileInput
+                        label="Attachment"
+                        clearable
+                        value={value}
+                        required
+                        onChange={onChange}
+                        error={errors.attachment?.message}
+                        multiple={false}
+                      />
+                    );
+                  }}
+                  rules={{
+                    required: "Attachment is required.",
+                    validate: {
+                      fileSize: (value) => {
+                        if (!value) return true;
+                        const formattedValue = value as File;
+                        return formattedValue.size <= MAX_FILE_SIZE
+                          ? true
+                          : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                      },
+                    },
+                  }}
+                />
+                <Space />
+                {position && position.position_is_with_laptop && (
+                  <Stack>
+                    <Divider label={"Position With Laptop"} />
+                    <Controller
+                      control={control}
+                      name="requestingProject"
+                      render={({ field: { value, onChange } }) => {
+                        return (
+                          <Select
+                            label="Requesting Project"
+                            clearable
+                            value={value}
+                            required
+                            searchable
+                            onChange={(value) => {
+                              onChange(value);
+                            }}
+                            error={errors.requestingProject?.message}
+                            data={teamProjectOptions}
+                            withinPortal
+                          />
+                        );
+                      }}
+                      rules={{
+                        required: "Rquesting Project is required.",
+                      }}
+                    />
+                    <Controller
+                      control={control}
+                      name="requestingDepartment"
+                      render={({ field: { value, onChange } }) => {
+                        return (
+                          <Select
+                            label="Requesting Department"
+                            clearable
+                            value={value}
+                            required
+                            searchable
+                            onChange={(value) => {
+                              onChange(value);
+                            }}
+                            error={errors.requestingDepartment?.message}
+                            data={teamDepartmentOptions}
+                            withinPortal
+                            autoFocus={false}
+                          />
+                        );
+                      }}
+                      rules={{
+                        required: "Project assignment is required.",
+                      }}
+                    />
+                  </Stack>
+                )}
+              </Stack>
+            </form>
+
+            <Group spacing="xs" position="right">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  closeJobOfferModal();
+                  setPosition(null);
+                }}
+                disabled={isScheduling}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="offer"
+                loading={isScheduling}
+                disabled={isFetchingPosition}
+              >
+                Confirm
+              </Button>
+            </Group>
+          </Stack>
+        </ScrollArea.Autosize>
       </Modal>
 
       <Modal

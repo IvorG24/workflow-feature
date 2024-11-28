@@ -105,7 +105,7 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
         setPositionOptions(positionOptions);
       } catch (e) {
         notifications.show({
-          message: "Something went wrong",
+          message: "Something went wrong. Please try again later.",
           color: "red",
         });
       }
@@ -176,7 +176,7 @@ const PreferredPositionPage = ({ groupMembers, totalCount }: Props) => {
       modals.close(`addPosition-${memberId}`);
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {

@@ -208,7 +208,7 @@ const LRFMainTableRow = ({ item, index }: Props) => {
       }
       return acc;
     }, {} as { [key: string]: LRFSpreadsheetData["request_response_list"] });
-    // console.log(reducedGroupedResponses);
+
     const defaultRows = Object.values(reducedGroupedResponses).map(
       (responses, index) => {
         return <tr key={index}>{renderCells(responses)}</tr>;
