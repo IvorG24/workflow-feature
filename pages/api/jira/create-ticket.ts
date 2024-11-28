@@ -1,6 +1,9 @@
 import { insertError } from "@/backend/api/post";
 import { isError } from "@/utils/functions";
-import { createJiraCommentRequestBody } from "@/utils/jira/functions";
+import {
+  createJiraCommentRequestBody,
+  getIssueType,
+} from "@/utils/jira/functions";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -23,15 +26,18 @@ export default async function handler(
     if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
       return res.status(405).json({ error: "Jira env variables undefined" });
     }
+
     const wavFormslyIdCustomField = "10458";
     const defaultFormslyIdCustomField = "10297";
     const requestType = req.body.requestType;
+    const requestTypeId = req.body.ticketPayload.requestTypeId;
+    const issueType = getIssueType(requestTypeId);
 
     // Check for duplicate ticket
     const duplicateResponse = await fetch(
       `${
         jiraConfig.api_url
-      }/search?maxResults=1&jql=cf[10010]["requestType"]="${requestType}"+and+cf[${
+      }/search?maxResults=1&jql=issuetype="${issueType}"+and+cf[${
         requestType === "Petty Cash Voucher"
           ? wavFormslyIdCustomField
           : defaultFormslyIdCustomField

@@ -10,7 +10,11 @@ import ExportToPdf from "@/components/ExportToPDF/ExportToPdf";
 import Meta from "@/components/Meta/Meta";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
-import { ApproverDetailsType, RequestWithResponseType } from "@/utils/types";
+import {
+  ApproverDetailsType,
+  DuplicateSectionType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { notifications } from "@mantine/notifications";
 import {
   createPagesBrowserClient,
@@ -44,6 +48,14 @@ type Props = {
   request: RequestWithResponseType;
 };
 
+const comparisonFieldname = [
+  "Supplier Name/Payee",
+  "Type of Request",
+  "Invoice Amount",
+  "VAT",
+  "Cost",
+];
+
 const Page = ({ request }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
@@ -51,6 +63,20 @@ const Page = ({ request }: Props) => {
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
+    generateSectionWithDuplicateList(request.request_form.form_section)
+  );
+
+  const getLRFComparisonFieldList = (section: DuplicateSectionType) => {
+    const sectionComparisonFieldList = section.section_field
+      .filter((field) => comparisonFieldname.includes(field.field_name))
+      .map((field) => ({
+        field_name: field.field_name,
+        field_response: field.field_response?.request_response,
+      }));
+
+    return sectionComparisonFieldList;
+  };
 
   useEffect(() => {
     try {
@@ -71,6 +97,48 @@ const Page = ({ request }: Props) => {
               request_id: boqRequest.request_id as string,
             });
 
+            const boqRequestDuplicateSectionList =
+              generateSectionWithDuplicateList(
+                boqRequestData.request_form.form_section
+              );
+            const currentSectionWithDuplicateList =
+              sectionWithDuplicateList.map((section) => {
+                if (section.section_name === "Payee") {
+                  const sectionComparisonFieldList =
+                    getLRFComparisonFieldList(section);
+                  const boqMatch = boqRequestDuplicateSectionList.find(
+                    (boqSection) => {
+                      const boqSectionComparisonFieldList =
+                        getLRFComparisonFieldList(boqSection);
+
+                      return (
+                        JSON.stringify(boqSectionComparisonFieldList) ===
+                        JSON.stringify(sectionComparisonFieldList)
+                      );
+                    }
+                  );
+
+                  if (boqMatch) {
+                    const boqAndCostFieldList = boqMatch.section_field.filter(
+                      (field) =>
+                        ["Cost Code", "Bill of Quantity Code"].includes(
+                          field.field_name
+                        )
+                    );
+
+                    return {
+                      ...section,
+                      section_field: [
+                        ...section.section_field,
+                        ...boqAndCostFieldList,
+                      ],
+                    };
+                  }
+                }
+
+                return section;
+              });
+            setSectionWithDuplicateList(currentSectionWithDuplicateList);
             signerList = boqRequestData.request_signer;
           }
         }
@@ -156,11 +224,7 @@ const Page = ({ request }: Props) => {
     } finally {
       setIsFetchingApprover(false);
     }
-  }, [request, supabaseClient]);
-
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
+  }, [request, sectionWithDuplicateList, supabaseClient]);
 
   return (
     <>
