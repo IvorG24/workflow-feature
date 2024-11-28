@@ -81,11 +81,11 @@ const TeamPage = ({
   const teamMember = useUserTeamMember();
   const user = useUser();
 
-  const teamMemberListFromStore = useTeamMemberList();
-
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const [teamLogo, setTeamLogo] = useState<File | null>(null);
 
+  const teamMemberListFromStore = useTeamMemberList();
   const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>(
     teamMemberListFromStore
   );
@@ -97,11 +97,9 @@ const TeamPage = ({
   >(teamMemberListFromStore);
 
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
-
-  const { setTeamList, setActiveTeam } = useTeamActions();
   const [teamMemberPage, setTeamMemberPage] = useState(1);
 
-  const [teamLogo, setTeamLogo] = useState<File | null>(null);
+  const { setTeamList, setActiveTeam } = useTeamActions();
 
   const memberEmailList = teamMemberList.map(
     (member) => member.team_member_user.user_email
