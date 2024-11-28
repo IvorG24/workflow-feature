@@ -65,7 +65,10 @@ type Props = {
   technicalInterview2Data?: TechnicalInterviewTableRow | null;
   tradeTestData?: TradeTestTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
-  jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
+  jobOfferData?:
+    | (JobOfferTableRow &
+        AttachmentTableRow & { job_offer_with_laptop: boolean })
+    | null;
 };
 
 const Page = ({
