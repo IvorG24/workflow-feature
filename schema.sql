@@ -4650,7 +4650,8 @@ AS $$
 
     if (!request.form_is_formsly_form || (
         request.form_is_formsly_form && [
-            'Subcon', 'Request For Payment v1',
+            'Subcon',
+            'Request For Payment v1',
             'Petty Cash Voucher',
             'Petty Cash Voucher Balance',
             'Application Information v1',
