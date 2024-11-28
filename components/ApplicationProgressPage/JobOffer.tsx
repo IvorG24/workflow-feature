@@ -1,4 +1,9 @@
-import { createAttachment, insertError } from "@/backend/api/post";
+import { automatedLaptopItemForm } from "@/backend/api/get";
+import {
+  createAttachment,
+  createRequest,
+  insertError,
+} from "@/backend/api/post";
 import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import {
@@ -9,6 +14,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
 import { AttachmentTableRow, JobOfferTableRow } from "@/utils/types";
 import {
@@ -33,7 +39,8 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 type Props = {
-  jobOfferData: JobOfferTableRow & AttachmentTableRow;
+  jobOfferData: JobOfferTableRow &
+    AttachmentTableRow & { job_offer_with_laptop: boolean };
   jobOfferStatus: string;
   setJobOfferStatus: Dispatch<SetStateAction<string>>;
   applicationInformationFormslyId: string | null;
@@ -48,6 +55,7 @@ const JobOffer = ({
   const router = useRouter();
   const user = useUser();
   const session = useSession();
+
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const { setIsLoading } = useLoadingActions();
 
@@ -136,7 +144,68 @@ const JobOffer = ({
             token: `Bearer ${session?.access_token}`,
           }),
         };
-        await fetch(`${BASE_URL}/api/formsly/accept-job-offer`, requestOptions);
+        const response = await fetch(
+          `${BASE_URL}/api/formsly/accept-job-offer`,
+          requestOptions
+        );
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          throw new Error(
+            errorMessage || `HTTP error! Status: ${response.status}`
+          );
+        }
+
+        if (jobOfferData.job_offer_with_laptop) {
+          const form = await automatedLaptopItemForm(supabaseClient, {
+            formId: "5ff4a1ad-bee6-4bb8-a94b-cb65cdff8355",
+            jobOfferId: jobOfferData.job_offer_id,
+            requestId: jobOfferData.job_offer_request_id,
+          });
+
+          const projectId =
+            form.form_section[0].section_field[0].field_option.find(
+              (option) =>
+                option.option_value ===
+                form.form_section[0].section_field[0].field_response
+            )?.option_id as string;
+
+          const positionData = form.form_section[2].section_field[1]
+            .field_response as string;
+
+          const signerList = form.form_signer.map((signer) => ({
+            ...signer,
+            signer_action: signer.signer_action.toUpperCase(),
+          }));
+
+          const newData = {
+            sections: form.form_section,
+          };
+
+          const itAssetAutomationParams = {
+            position: positionData,
+            manPowerLoadingId: jobOfferData.job_offer_manpower_loading_id ?? "",
+            referenceId: jobOfferData.job_offer_request_id,
+          };
+          const teamName =
+            process.env.NODE_ENV === "production"
+              ? formatTeamNameToUrlKey("SCIC")
+              : formatTeamNameToUrlKey("Sta Clara");
+
+          await createRequest(supabaseClient, {
+            requestFormValues: newData,
+            formId: form.form_id,
+            teamMemberId: "f0ae4d53-427c-4223-84ea-c007a186ae82",
+            signers: [...signerList],
+            requesterName: "Formsly Automation",
+            formName: form.form_name,
+            isFormslyForm: true,
+            projectId,
+            userId: "4d9978f1-65e0-4922-9c94-710fff2c63d6",
+            teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
+            teamName: formatTeamNameToUrlKey(teamName),
+            itAssetAutomationParams,
+          });
+        }
       }
 
       setJobOfferStatus(newStatus);
@@ -150,6 +219,7 @@ const JobOffer = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+
       if (isError(e)) {
         await insertError(supabaseClient, {
           errorTableRow: {

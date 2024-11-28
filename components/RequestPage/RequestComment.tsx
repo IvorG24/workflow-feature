@@ -32,6 +32,7 @@ import {
   IconDownload,
   IconEdit,
   IconFolderCancel,
+  IconInfoCircle,
   IconRefresh,
   IconX,
 } from "@tabler/icons-react";
@@ -123,6 +124,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     "ACTION_REJECTED",
     "ACTION_CANCELED",
     "ACTION_REVERSED",
+    "ACTION_GENERAL",
   ];
 
   const actionCommentColor = (type: string) => {
@@ -135,6 +137,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "gray";
       case "ACTION_REVERSED":
         return "orange";
+      case "ACTION_GENERAL":
+        return "blue";
     }
   };
 
@@ -148,6 +152,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Canceled!";
       case "ACTION_REVERSED":
         return "Reversed!";
+      case "ACTION_GENERAL":
+        return "Formsly Automation";
     }
   };
 
@@ -161,6 +167,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconFolderCancel size={16} />;
       case "ACTION_REVERSED":
         return <IconRefresh size={16} />;
+      case "ACTION_GENERAL":
+        return <IconInfoCircle size={16} />;
     }
   };
 
