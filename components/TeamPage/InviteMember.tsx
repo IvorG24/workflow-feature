@@ -31,7 +31,6 @@ import validator from "validator";
 type Props = {
   memberEmailList: string[];
   isOwnerOrAdmin: boolean;
-  // teamMemberList: TeamMemberType[];
 };
 
 type EmailListData = { value: string; label: string }[];

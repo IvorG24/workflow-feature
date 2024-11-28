@@ -48,7 +48,7 @@ const ApproverGroup = ({ teamId }: Props) => {
           setIsAddingApprover={setIsAddingApprover}
           approverListCount={approverListCount}
           setApproverListCount={setApproverListCount}
-          teamMemberList={teamMemberList} // Pass the fetched team members
+          teamMemberList={teamMemberList}
         />
       ) : null}
       {isAddingApprover ? (
