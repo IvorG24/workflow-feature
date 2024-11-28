@@ -225,7 +225,9 @@ const TeamPage = ({
     const filteredMembers = teamMemberList.filter((member) => {
       const fullName =
         `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`.toLowerCase();
-      return fullName.includes(searchKeyword);
+      const email = member.team_member_user.user_email.toLowerCase();
+
+      return fullName.includes(searchKeyword) || email.includes(searchKeyword);
     });
 
     const startIndex = (page - 1) * limit;

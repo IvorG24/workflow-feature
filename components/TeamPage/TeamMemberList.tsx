@@ -33,7 +33,6 @@ type Props = {
   handlePageChange: (page: number) => void;
   teamMemberCount: number;
 };
-
 const TeamMemberList = ({
   teamMemberList,
   isUpdatingTeamMembers,
@@ -45,7 +44,7 @@ const TeamMemberList = ({
   handlePageChange,
   teamMemberCount,
 }: Props) => {
-  const { register, handleSubmit, setValue } = useFormContext<SearchForm>();
+  const { register, handleSubmit } = useFormContext<SearchForm>();
 
   const rows = teamMemberList.map((member) => {
     const { team_member_role: role, team_member_user: user } = member;
@@ -84,15 +83,6 @@ const TeamMemberList = ({
     );
   });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const keyword = e.target.value.trim();
-    setValue("keyword", keyword);
-    if (keyword === "") {
-      handlePageChange(1);
-      onSearchTeamMember({ keyword: "" });
-    }
-  };
-
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -118,7 +108,6 @@ const TeamMemberList = ({
               maw={350}
               mt="xs"
               {...register("keyword")}
-              onChange={handleSearchChange}
             />
           </form>
 
