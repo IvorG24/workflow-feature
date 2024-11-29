@@ -1,7 +1,8 @@
-import { getItem } from "@/backend/api/get";
+import { getAllOptionsPerBatch, getItem } from "@/backend/api/get";
 import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -343,9 +344,90 @@ const TicketRequestItemOptionForm = ({
     }
   };
 
+  const fetchOptions = async () => {
+    let index = 0;
+    const itemOptions: string[] = [];
+    while (1) {
+      const data = (await getAllOptionsPerBatch(supabaseClient, {
+        schema: "item",
+        table: "item",
+        select: "item_general_name",
+        teamId: activeTeam.team_id,
+        index,
+        limit: FETCH_OPTION_LIMIT,
+        order: "item_general_name",
+      })) as unknown as { item_general_name: string }[];
+
+      const options = data.map((value) => value.item_general_name);
+      itemOptions.push(...options);
+      if (data.length < FETCH_OPTION_LIMIT) break;
+      index += FETCH_OPTION_LIMIT;
+    }
+    index = 0;
+    const uomOptions: string[] = [];
+    while (1) {
+      const data = (await getAllOptionsPerBatch(supabaseClient, {
+        schema: "unit_of_measurement",
+        table: "item_unit_of_measurement",
+        select: "item_unit_of_measurement",
+        teamId: activeTeam.team_id,
+        index,
+        limit: FETCH_OPTION_LIMIT,
+        order: "item_unit_of_measurement",
+      })) as unknown as { item_unit_of_measurement: string }[];
+
+      const options = data.map((value) => value.item_unit_of_measurement);
+      uomOptions.push(...options);
+      if (data.length < FETCH_OPTION_LIMIT) break;
+      index += FETCH_OPTION_LIMIT;
+    }
+
+    return { itemOptions, uomOptions };
+  };
+
+  const fetchCreateData = async (ticketForm: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+      const { itemOptions, uomOptions } = await fetchOptions();
+
+      replaceSection([
+        {
+          ...ticketForm.ticket_sections[0],
+          ticket_section_fields: [
+            {
+              ...ticketForm.ticket_sections[0].ticket_section_fields[0],
+              ticket_field_option: itemOptions,
+            },
+            ...ticketForm.ticket_sections[0].ticket_section_fields.slice(1),
+          ],
+        },
+        {
+          ...ticketForm.ticket_sections[1],
+          ticket_section_fields: [
+            ticketForm.ticket_sections[1].ticket_section_fields[0],
+            {
+              ...ticketForm.ticket_sections[1].ticket_section_fields[1],
+              ticket_field_option: uomOptions,
+            },
+            ...ticketForm.ticket_sections[0].ticket_section_fields.slice(2),
+          ],
+        },
+        ...ticketForm.ticket_sections.slice(2),
+      ]);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchEditData = async () => {
       if (!ticketForm) return;
+      const { itemOptions, uomOptions } = await fetchOptions();
 
       const itemName =
         ticketForm.ticket_sections[0].ticket_section_fields[0]
@@ -353,19 +435,35 @@ const TicketRequestItemOptionForm = ({
       const itemDescriptionResponse =
         ticketForm.ticket_sections[0].ticket_section_fields[1]
           .ticket_field_response;
-      const newTicketFormSections = ticketForm.ticket_sections
-        .slice(1)
-        .map((section) => ({
-          ...section,
-          ticket_section_fields: section.ticket_section_fields.map((field) => ({
-            ...field,
-            ticket_field_hidden: !Boolean(
-              `${section.ticket_section_fields[1].ticket_field_response}`
-            ),
-          })),
-        }));
 
-      replaceSection([ticketForm.ticket_sections[0], ...newTicketFormSections]);
+      replaceSection([
+        {
+          ...ticketForm.ticket_sections[0],
+          ticket_section_fields: [
+            {
+              ...ticketForm.ticket_sections[0].ticket_section_fields[0],
+              ticket_field_option: itemOptions,
+            },
+            ...ticketForm.ticket_sections[0].ticket_section_fields.slice(1),
+          ],
+        },
+        ...ticketForm.ticket_sections.slice(1).map((section) => {
+          return {
+            ...section,
+            ticket_section_fields: [
+              section.ticket_section_fields[0],
+              {
+                ...section.ticket_section_fields[1],
+                ticket_field_option: uomOptions,
+                ticket_field_hidden: !Boolean(
+                  section.ticket_section_fields[1].ticket_field_response
+                ),
+              },
+              ...section.ticket_section_fields.slice(2),
+            ],
+          };
+        }),
+      ]);
 
       const item = await getItem(supabaseClient, {
         teamId: activeTeam.team_id,
@@ -388,10 +486,11 @@ const TicketRequestItemOptionForm = ({
       if (isEdit) {
         fetchEditData();
       } else {
-        replaceSection(ticketForm.ticket_sections);
+        fetchCreateData(ticketForm);
       }
     }
   }, []);
+
   return (
     <>
       <FormProvider {...createTicketFormMethods}>

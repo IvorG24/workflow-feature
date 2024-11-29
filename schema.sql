@@ -398,7 +398,7 @@ CREATE TABLE form_schema.requester_primary_signer_table (
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
-  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))),
+  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('request_schema.formsly_id_seq'))),
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
@@ -7649,321 +7649,74 @@ AS $$
   plv8.subtransaction(function(){
     const {
       category,
-      teamId,
+      teamId
     } = input_data;
 
-    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category = '${category}' LIMIT 1`)[0];
+    const sectionList = plv8.execute(
+      `
+        WITH category_data as (
+          SELECT ticket_section_table.* 
+          FROM ticket_schema.ticket_category_table
+          INNER JOIN ticket_schema.ticket_section_table
+            ON ticket_section_category_id = ticket_category_id
+          WHERE ticket_category = $1
+        )
+        SELECT (
+          jsonb_agg (
+            jsonb_build_object (
+              'ticket_section_id', ticket_section_id,
+              'ticket_section_name', ticket_section_name,
+              'ticket_section_is_duplicatable', ticket_section_is_duplicatable,
+              'ticket_section_category_id', ticket_section_category_id,
+              'ticket_section_fields', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'ticket_field_id', ticket_field_id,
+                    'ticket_field_name', ticket_field_name,
+                    'ticket_field_type', ticket_field_type,
+                    'ticket_field_is_required', ticket_field_is_required,
+                    'ticket_field_is_read_only', ticket_field_is_read_only,
+                    'ticket_field_order', ticket_field_order,
+                    'ticket_field_section_id', ticket_field_section_id,
+                    'ticket_field_option', COALESCE (
+                      (
+                        SELECT jsonb_agg (
+                          jsonb_build_object (
+                            'ticket_option_id', ticket_option_id,
+                            'ticket_option_value', ticket_option_value,
+                            'ticket_option_order', ticket_option_order,
+                            'ticket_option_field_id', ticket_option_field_id
+                          )
+                        )
+                        FROM (
+                          SELECT *
+                          FROM ticket_schema.ticket_option_table
+                          WHERE ticket_option_field_id = ticket_field_id
+                          ORDER BY ticket_option_order ASC
+                        ) ordered_options
+                      ), '[]'::jsonb
+                    ),
+                    'ticket_field_response', ''
+                  )
+                )
+                FROM (
+                  SELECT *
+                  FROM ticket_schema.ticket_field_table
+                  WHERE ticket_field_section_id = ticket_section_id
+                  ORDER BY ticket_field_order ASC
+                ) ordered_fields
+              )
+            )
+          )
+        ) FROM category_data
+      `, [
+        category
+      ]
+    )[0].jsonb_agg;
 
-    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id = '${categoryData.ticket_category_id}'`);
-
-    const sectionList = sectionData.map(section => {
-      const fieldData = plv8.execute(
-        `
-          SELECT *
-          FROM ticket_schema.ticket_field_table
-          WHERE ticket_field_section_id = '${section.ticket_section_id}'
-          ORDER BY ticket_field_order ASC
-        `
-      );
-      const fieldWithOption = fieldData.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM ticket_schema.ticket_option_table
-            WHERE ticket_option_field_id = '${field.ticket_field_id}'
-            ORDER BY ticket_option_order ASC
-          `
-        );
-        const optionList = optionData.map((option)=> option.ticket_option_value);
-
-        return {
-          ...field,
-          ticket_field_option: optionList,
-          ticket_field_response: ""
-        };
-      });
-
-      return {
-        ...section,
-        ticket_section_fields: fieldWithOption,
-      }
-    });
-
-    if(category === "Request Custom CSI"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_schema.item_table
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const ticket_sections = sectionList.map(section => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          return {
-            ...field,
-            ticket_field_option: fieldIdx === 0 ? itemOptions : [],
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else if (category === "Request Item CSI"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_schema.item_table
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const csiCodeDescriptionList = plv8.execute(`
-        SELECT * FROM lookup_schema.csi_code_table
-        ORDER BY csi_code_level_three_description ASC;
-      `);
-      const csiCodeDescriptionOptions = csiCodeDescriptionList.map((option)=> option.csi_code_level_three_description);
-
-      const ticket_sections = sectionList.map(section => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(fieldIdx === 0){
-            fieldOptions = itemOptions
-          }else if(fieldIdx === 1){
-            fieldOptions = csiCodeDescriptionOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else if (category === "Request Item Option"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_schema.item_table
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const uomList = plv8.execute(`
-        SELECT item_unit_of_measurement
-        FROM unit_of_measurement_schema.item_unit_of_measurement_table
-        WHERE
-          item_unit_of_measurement_is_available=true
-          AND item_unit_of_measurement_is_disabled=false
-          AND item_unit_of_measurement_team_id='${teamId}'
-          ORDER BY item_unit_of_measurement ASC;
-      `);
-      const uomOptions = uomList.map((option)=> option.item_unit_of_measurement);
-
-
-      const ticket_sections = sectionList.map((section, sectionIdx) => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(sectionIdx===0 && fieldIdx === 0){
-            fieldOptions = itemOptions
-          }else if(sectionIdx===1 && fieldIdx === 1){
-            fieldOptions = uomOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else if (category === "Incident Report for Employees"){
-        const memberList = plv8.execute(`
-          SELECT
-            tmt.team_member_id,
-            tmt.team_member_role,
-            jsonb_build_object(
-              'user_id', usert.user_id,
-              'user_first_name', usert.user_first_name,
-              'user_last_name', usert.user_last_name,
-              'user_avatar', usert.user_avatar,
-              'user_email', usert.user_email
-            ) AS team_member_user
-          FROM team_schema.team_member_table tmt
-            JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
-          WHERE
-            tmt.team_member_team_id = '${teamId}'
-            AND tmt.team_member_is_disabled = false;
-        `);
-        const memberOptions = memberList.map((option)=> ({label: `${option.team_member_user.user_first_name} ${option.team_member_user.user_last_name}`, value:option.team_member_id}));
-
-        const ticket_sections = sectionList.map(section => {
-          const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(fieldIdx === 0){
-            fieldOptions = memberOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else if (category === "Request PED Equipment Part"){
-      const equipmentNameList = plv8.execute(
-        `
-          SELECT equipment_name
-          FROM equipment_schema.equipment_table
-          WHERE
-            equipment_is_disabled = false
-            AND equipment_is_available = true
-            AND equipment_team_id = '${teamId}'
-          ORDER BY equipment_name
-        `
-      );
-      const equipmentNameOptions = equipmentNameList.map((option)=> option.equipment_name);
-
-      const allEquipmentPartNameList = [];
-      const equipmentGeneralNameCount = plv8.execute(
-        `
-          SELECT COUNT(*)
-          FROM equipment_schema.equipment_general_name_table
-          WHERE equipment_general_name_team_id = '${teamId}'
-        `
-      )[0].count;
-      let index = 0;
-      while (index < equipmentGeneralNameCount) {
-        const nameList = plv8.execute(
-          `
-            SELECT equipment_general_name
-            FROM equipment_schema.equipment_general_name_table
-            WHERE
-              equipment_general_name_team_id = '${teamId}'
-              AND equipment_general_name_is_disabled = false
-              AND equipment_general_name_is_available = true
-            ORDER BY equipment_general_name
-            LIMIT 1000
-            OFFSET ${index}
-          `
-        );
-        allEquipmentPartNameList.push(...nameList);
-        index += 1000;
-      }
-      const equipmentPartNameOptions = allEquipmentPartNameList.map((option)=> option.equipment_general_name);
-
-      const brandList = plv8.execute(
-        `
-          SELECT equipment_brand
-          FROM equipment_schema.equipment_brand_table
-          WHERE
-            equipment_brand_is_disabled = false
-            AND equipment_brand_is_available = true
-            AND equipment_brand_team_id = '${teamId}'
-          ORDER BY equipment_brand
-        `
-      );
-      const brandOptions = brandList.map((option)=> option.equipment_brand);
-
-      const modelList = plv8.execute(
-        `
-          SELECT equipment_model
-          FROM equipment_schema.equipment_model_table
-          WHERE
-            equipment_model_is_disabled = false
-            AND equipment_model_is_available = true
-            AND equipment_model_team_id = '${teamId}'
-          ORDER BY equipment_model
-        `
-      );
-      const modelOptions = modelList.map((option)=> option.equipment_model);
-
-      const uomList = plv8.execute(
-        `
-          SELECT equipment_unit_of_measurement
-          FROM unit_of_measurement_schema.equipment_unit_of_measurement_table
-          WHERE
-            equipment_unit_of_measurement_is_disabled = false
-            AND equipment_unit_of_measurement_is_available = true
-            AND equipment_unit_of_measurement_team_id = '${teamId}'
-          ORDER BY equipment_unit_of_measurement
-        `
-      );
-      const uomOptions = uomList.map((option)=> option.equipment_unit_of_measurement);
-
-      const categoryList = plv8.execute(
-        `
-          SELECT equipment_component_category
-          FROM equipment_schema.equipment_component_category_table
-          WHERE
-            equipment_component_category_is_disabled = false
-            AND equipment_component_category_is_available = true
-            AND equipment_component_category_team_id = '${teamId}'
-          ORDER BY equipment_component_category
-        `
-      );
-      const categoryOptions = categoryList.map((option)=> option.equipment_component_category);
-
-      const ticket_sections = sectionList.map(section => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(fieldIdx === 0){
-            fieldOptions = equipmentNameOptions
-          }else if(fieldIdx === 1){
-            fieldOptions = equipmentPartNameOptions
-          }else if(fieldIdx === 3){
-            fieldOptions = brandOptions
-          }else if(fieldIdx === 4){
-            fieldOptions = modelOptions
-          }else if(fieldIdx === 5){
-            fieldOptions = uomOptions
-          }else if(fieldIdx === 6){
-            fieldOptions = categoryOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else {
-      returnData = { ticket_sections: sectionList }
-    }
- });
- return returnData;
+    returnData = { ticket_sections: sectionList }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_custom_csi_validity(
@@ -26026,7 +25779,7 @@ GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO POSTGRES;
 GRANT ALL ON SCHEMA request_schema TO postgres;
 GRANT ALL ON SCHEMA request_schema TO public;
-GRANT USAGE, SELECT ON SEQUENCE formsly_id_seq TO PUBLIC, POSTGRES;
+GRANT USAGE, SELECT ON SEQUENCE request_schema.formsly_id_seq TO PUBLIC, POSTGRES;
 
 GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO POSTGRES;
