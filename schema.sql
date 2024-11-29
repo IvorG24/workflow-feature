@@ -7682,48 +7682,78 @@ AS $$
     const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
     const csi_code_level_three_id = csiCodeArray[2];
 
-    const csiCodeDivisionIdExists = plv8.execute(`
-      SELECT *
-      FROM lookup_schema.csi_code_table
-      WHERE
-        csi_code_division_id = '${csi_code_division_id}';
-    `)[0];
+    const csiCodeDivisionIdExists = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM lookup_schema.csi_code_table
+          WHERE
+            csi_code_division_id = $1
+          )
+      `, [
+        csi_code_division_id
+      ]
+    )[0].exists;
 
-    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
-      SELECT *
-      FROM lookup_schema.csi_code_table
-      WHERE
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
-    `)[0];
+    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM lookup_schema.csi_code_table
+          WHERE
+            csi_code_division_id = $1
+            AND csi_code_level_two_major_group_id = $2
+        )
+      `, [
+        csi_code_division_id,
+        csi_code_level_two_major_group_id
+      ]
+    )[0].exists;
 
-    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
-      SELECT *
-      FROM lookup_schema.csi_code_table
-      WHERE
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
-        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
-    `)[0];
+    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM lookup_schema.csi_code_table
+          WHERE
+            csi_code_division_id = $1
+            AND csi_code_level_two_major_group_id = $2
+            AND csi_code_level_two_minor_group_id = $3
+        )
+      `, [
+        csi_code_division_id,
+        csi_code_level_two_major_group_id,
+        csi_code_level_two_minor_group_id
+      ]
+    )[0].exists;
 
-    const csiCodeLevelThreeIdExists = plv8.execute(`
-      SELECT *
-      FROM lookup_schema.csi_code_table
-      WHERE
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
-        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}'
-        AND csi_code_level_three_id = '${csi_code_level_three_id}';
-    `)[0];
+    const csiCodeLevelThreeIdExists = plv8.execute(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM lookup_schema.csi_code_table
+          WHERE
+            csi_code_division_id = $1
+            AND csi_code_level_two_major_group_id = $2
+            AND csi_code_level_two_minor_group_id = $3
+            AND csi_code_level_three_id = $4
+        )
+      `, [
+        csi_code_division_id,
+        csi_code_level_two_major_group_id,
+        csi_code_level_two_minor_group_id,
+        csi_code_level_three_id
+      ]
+    )[0].exists;
 
     returnData = {
-      csiCodeDivisionIdExists: Boolean(csiCodeDivisionIdExists),
-      csiCodeLevelTwoMajorGroupIdExists: Boolean(csiCodeLevelTwoMajorGroupIdExists),
-      csiCodeLevelTwoMinorGroupIdExists: Boolean(csiCodeLevelTwoMinorGroupIdExists),
-      csiCodeLevelThreeIdExists: Boolean(csiCodeLevelThreeIdExists),
+      csiCodeDivisionIdExists: csiCodeDivisionIdExists,
+      csiCodeLevelTwoMajorGroupIdExists: csiCodeLevelTwoMajorGroupIdExists,
+      csiCodeLevelTwoMinorGroupIdExists: csiCodeLevelTwoMinorGroupIdExists,
+      csiCodeLevelThreeIdExists: csiCodeLevelThreeIdExists
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_ticket_on_load(
