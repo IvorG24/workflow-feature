@@ -5175,7 +5175,7 @@ AS $$
 
     const totalNotificationCount = plv8.execute(
       `
-        SELECT *
+        SELECT COUNT(*)
         FROM public.notification_table
         WHERE
           notification_user_id = $1
@@ -5188,7 +5188,6 @@ AS $$
             OR notification_team_id = $3
           )
           AND notification_is_read = ANY($4)
-        ORDER BY notification_date_created DESC
       `, [
         userId,
         app,

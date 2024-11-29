@@ -2690,3 +2690,7 @@ export type AssigneeInformation = {
   email: string;
   contactNumber: string;
 };
+
+export type UpdateSignerFormValues = {
+  signerList: RequestSignerType[];
+};
