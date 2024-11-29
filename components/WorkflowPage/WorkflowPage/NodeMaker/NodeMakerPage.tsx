@@ -1,115 +1,94 @@
 import { deleteNodeType } from "@/backend/api/delete";
+import { getNodeTypesOption } from "@/backend/api/get";
 import {
   checkIfLabelIsBeingUsed,
   checkUniqueLabelNodeType,
   createNodeStyle,
 } from "@/backend/api/post";
-import { useLoadingActions, useLoadingStore } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { NodeOption, NodeTypeData } from "@/utils/types";
 import {
   ActionIcon,
+  Alert,
   Box,
   Button,
+  Center,
   Container,
-  Flex,
   Group,
   List,
-  LoadingOverlay,
-  Menu,
   Paper,
+  ScrollArea,
+  Stack,
   Text,
   TextInput,
   Title,
-  Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import {
-  IconDotsVertical,
-  IconMoodSad,
-  IconSearch,
-  IconTrash,
-} from "@tabler/icons-react";
-import { useState } from "react";
+import { IconAlertCircle, IconSearch } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import NodeForm from "./NodeForm";
+import NodeTableView from "./NodeTableView";
 
-type Props = {
-  nodeTypes: NodeOption[];
-};
-const NodeMaker = ({ nodeTypes: initialList }: Props) => {
-  const { isLoading } = useLoadingStore();
-  const { setIsLoading } = useLoadingActions();
+const NodeMaker = () => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const [nodeTypesList, setNodeTypesList] = useState<NodeOption[]>(initialList);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const methods = useForm<NodeTypeData>({
+  const [nodeTypesList, setNodeTypesList] = useState<NodeOption[]>([]);
+  const [nodeCount, setNodeCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [limit, setLimit] = useState(DEFAULT_REQUEST_LIST_LIMIT);
+
+  const methods = useForm<NodeTypeData & { searchTerm: string }>({
     defaultValues: {
       presetLabel: "",
       presetBackgroundColor: "",
       presetTextColor: "",
+      searchTerm: "",
     },
   });
-  const filteredNodeTypesList = nodeTypesList.filter((node) =>
-    node.presetLabel.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
-  const listItems = filteredNodeTypesList.map((nodes) => (
-    <List
-      key={nodes.value}
-      style={{
-        padding: "10px 0",
-        borderBottom: "1px solid #ddd",
-        listStyleType: "none",
-      }}
-    >
-      <Flex align="end" justify="space-between">
-        <Tooltip label={`${nodes.presetLabel}`}>
-          <Text weight={500} style={{ marginRight: "16px", minWidth: "100px" }}>
-            {nodes.presetLabel.length > 10
-              ? `${nodes.presetLabel.slice(0, 10)}...`
-              : nodes.presetLabel}
-          </Text>
-        </Tooltip>
+  const { register, getValues, reset } = methods;
 
-        <Flex align="center" style={{ marginRight: "16px" }}>
-          <Tooltip label={`Preview of ${nodes.presetLabel}`}>
-            <Button
-              fullWidth
-              style={{
-                width: "150px",
-                height: "40px",
-                backgroundColor: nodes.presetBackgroundColor,
-                color: nodes.presetTextColor,
-                border: "1px solid #ddd",
-              }}
-            >
-              {nodes.presetLabel.length > 10
-                ? `${nodes.presetLabel.slice(0, 10)}...`
-                : nodes.presetLabel}
-            </Button>
-          </Tooltip>
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <ActionIcon size={18}>
-                <IconDotsVertical />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                icon={<IconTrash size={16} color="red" />}
-                onClick={async () => await handleDeleteNode(nodes.value)}
-              >
-                Delete node
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Flex>
-      </Flex>
-    </List>
-  ));
+  const fetchNodeOptios = async (limit: number) => {
+    try {
+      if (!activeTeam.team_id) return;
+      setIsLoading(true);
+      const { searchTerm } = getValues();
+      const { nodeData, count } = await getNodeTypesOption(supabaseClient, {
+        activeTeam: activeTeam.team_id,
+        limit: limit,
+        page: 1,
+        search: searchTerm,
+      });
+
+      setNodeCount(count);
+      setNodeTypesList(nodeData);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePagination = async (limit: number) => {
+    try {
+      await fetchNodeOptios(limit);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
+  useEffect(() => {
+    handlePagination(limit);
+  }, [activeTeam, limit]);
 
   const handleDeleteNode = async (nodeId: string) => {
     try {
@@ -137,6 +116,7 @@ const NodeMaker = ({ nodeTypes: initialList }: Props) => {
       });
     }
   };
+
   const onSubmit = async (data: NodeTypeData) => {
     setIsLoading(true);
     try {
@@ -175,7 +155,7 @@ const NodeMaker = ({ nodeTypes: initialList }: Props) => {
         message: "Node created successfully",
         color: "green",
       });
-      methods.reset();
+      reset();
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -188,78 +168,66 @@ const NodeMaker = ({ nodeTypes: initialList }: Props) => {
   return (
     <>
       <Container size={"xl"}>
-        <LoadingOverlay
-          visible={isLoading}
-          overlayBlur={2}
-          sx={{ position: "fixed" }}
-        />
         <Group pb="sm">
           <Box>
-            <Title order={4}>Create node page</Title>
+            <Title order={3}>Create Node Page</Title>
             <Text>Manage your nodes here.</Text>
           </Box>
         </Group>
-        <Paper
-          withBorder
-          h={780}
-          pos="relative"
-          sx={{ overflow: "hidden", padding: "20px" }}
-        >
-          <Flex align={"flex-start"} justify={"space-between"} wrap="wrap">
-            <Box sx={{ flex: "1 1 300px", maxWidth: "45%", minWidth: "300px" }}>
+        <Paper p="xl">
+          <Stack>
+            <Box>
               <FormProvider {...methods}>
                 <NodeForm onSubmit={onSubmit} />
               </FormProvider>
             </Box>
-            <Box
-              sx={{
-                flex: "1 1 300px",
-                maxWidth: "50%",
-                minWidth: "300px",
-                height: "450px",
-                maxHeight: "430px",
-                overflowY: "auto",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-              }}
-            >
-              <Flex justify={"space-between"} align={"center"} pb={10}>
-                <Title color="blue" order={4}>
-                  List of nodes
-                </Title>
-                <TextInput
-                  rightSection={<IconSearch size={12} />}
-                  placeholder="Search node"
-                  size="xs"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.currentTarget.value)}
-                />
-              </Flex>
-              <List
-                style={{
-                  listStyleType: "none",
-                  padding: 0,
-                  ...(filteredNodeTypesList.length === 0
-                    ? {
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }
-                    : {}),
-                }}
-              >
-                {filteredNodeTypesList.length === 0 ? (
-                  <Flex direction={"column"} align={"center"}>
-                    <Text color="gray">No Nodes Found</Text>
-                    <IconMoodSad stroke={".7px"} color="gray" size={40} />
-                  </Flex>
-                ) : (
-                  listItems // Render listItems directly here
-                )}
-              </List>
-            </Box>
-          </Flex>
+            <Paper withBorder p="xl">
+              <Stack>
+                <Group position="right">
+                  <TextInput
+                    {...register("searchTerm")}
+                    rightSection={
+                      <ActionIcon onClick={() => handlePagination(limit)}>
+                        <IconSearch size={16} />
+                      </ActionIcon>
+                    }
+                    placeholder="Search node"
+                  />
+                </Group>
+                <List>
+                  {nodeTypesList.length === 0 ? (
+                    <Alert
+                      variant="light"
+                      color="blue"
+                      title="No Records"
+                      icon={<IconAlertCircle size={16} />}
+                    >
+                      There is no available node in the system
+                    </Alert>
+                  ) : (
+                    <ScrollArea h={700}>
+                      <NodeTableView
+                        isLoading={isLoading}
+                        nodeTypesList={nodeTypesList}
+                        handleDeleteNode={handleDeleteNode}
+                      />
+                      <Center>
+                        {nodeCount >= limit && (
+                          <Button
+                            variant="light"
+                            onClick={() => setLimit((prev) => prev + 10)}
+                            w={120}
+                          >
+                            Load More
+                          </Button>
+                        )}
+                      </Center>
+                    </ScrollArea>
+                  )}
+                </List>
+              </Stack>
+            </Paper>
+          </Stack>
         </Paper>
       </Container>
     </>

@@ -218,10 +218,11 @@ export const useWorkflowState = ({
         }
       }
 
-      // Prevent duplicate edges
       const isDuplicateEdge = edges.some(
         (edge) => edge.source === source && edge.target === target
       );
+      console.log(edges);
+
       if (isDuplicateEdge) {
         notifications.show({
           title: "Duplicate Edge",
@@ -294,21 +295,19 @@ export const useWorkflowState = ({
     connectionFromHandleType.current = params.handleType;
   }, []);
 
-  const onConnectEnd: OnConnectEnd = useCallback(
-    (event) => {
-      const targetIsPane = (event.target as Element).classList.contains(
-        "react-flow__pane"
+  const onConnectEnd: OnConnectEnd = useCallback(() => {
+    //   const targetIsPane = (event.target as Element).classList.contains(
+    //     "react-flow__pane"
+    //   );
+    console.log(connectingNodeId.current);
+    if (connectingNodeId.current) {
+      const parentNode = nodes.find(
+        (node) => node.id === connectingNodeId.current
       );
 
-      if (targetIsPane && connectingNodeId.current) {
-        const parentNode = nodes.find(
-          (node) => node.id === connectingNodeId.current
-        );
-        if (!parentNode) return;
-      }
-    },
-    [nodes, screenToFlowPosition, handleAddNodeOnDrop]
-  );
+      if (!parentNode) return;
+    }
+  }, [nodes, screenToFlowPosition, handleAddNodeOnDrop]);
 
   const onNodeStyleChange = (
     nodeId: string,

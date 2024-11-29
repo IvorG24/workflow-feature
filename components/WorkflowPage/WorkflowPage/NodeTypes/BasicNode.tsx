@@ -35,8 +35,9 @@ const BasicNode = ({ id, data, isConnectable, selected }: BasicNodeProps) => {
       w={200}
       ref={ref}
       p="md"
+      color="blue"
       shadow="md"
-      style={{
+      sx={{
         backgroundColor: data.nodeStyle.backgroundColor,
         borderColor: selected ? "#339af0" : "#A6A7AB",
         cursor: "pointer",
@@ -45,7 +46,13 @@ const BasicNode = ({ id, data, isConnectable, selected }: BasicNodeProps) => {
       onDoubleClick={handleDoubleClick}
       pos="relative"
     >
-      <Box pos="absolute" h="170%" w="50%" sx={{ top: "-35%", left: "-15%" }} />
+      <Box
+        color="red"
+        pos="absolute"
+        h="170%"
+        w="50%"
+        sx={{ top: "-35%", left: "-15%" }}
+      />
       {positionList.map((position, index) => (
         <Handle
           key={index}

@@ -552,14 +552,13 @@ export const formatTime = (timeValue: Date) => {
 
 export const formatDateTime = (dateTimeValue: string | Date | number) => {
   const date = new Date(dateTimeValue);
-  
+
   if (isNaN(date.getTime())) {
     throw new Error("Invalid date input");
   }
-  
+
   return moment(date).format("YYYY-MM-DD LT");
 };
-
 
 export const ID_OPTIONS = [
   {
@@ -762,22 +761,22 @@ export const CREATE_NODE_OPTION: NodeOption = {
   presetTextColor: "",
 };
 
-export const COLOR_SET_OPTIONS = [
-  { value: "#000000", label: "Black" },
-  { value: "#ffffff", label: "White" },
-  { value: "#f03e3e", label: "Red" },
-  { value: "#f06595", label: "Pink" },
-  { value: "#7048e8", label: "Violet" },
-  { value: "#9c36b5", label: "Grape" },
-  { value: "#339af0", label: "Blue" },
-  { value: "#4263eb", label: "Indigo" },
-  { value: "#1098ad", label: "Cyan" },
-  { value: "#099268", label: "Teal" },
-  { value: "#2f9e44", label: "Green" },
-  { value: "#74b816", label: "Lime" },
-  { value: "#ffd43b", label: "Yellow" },
-  { value: "#ff922b", label: "Orange" },
-];
+export const COLOR_SET_OPTIONS = {
+  "#25262b": "dark",
+  "#f8f9fa": "white",
+  "#f03e3e": "red",
+  "#e64980": "pink",
+  "#be4bdb": "violet",
+  "#9c36b5": "grape",
+  "#1c7ed6": "blue",
+  "#4c6ef5": "indigo",
+  "#15aabf": "cyan",
+  "#12b886": "teal",
+  "#40c057": "green",
+  "#82c91e": "lime",
+  "#fab005": "yellow",
+  "#fd7e14": "orange",
+};
 
 export const REQUEST_LIST_HIDDEN_FORMS = [
   "Quotation",

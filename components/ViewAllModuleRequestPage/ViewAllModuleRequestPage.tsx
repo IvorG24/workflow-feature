@@ -11,6 +11,7 @@ import {
   Container,
   Group,
   LoadingOverlay,
+  Paper,
   Space,
   Title,
 } from "@mantine/core";
@@ -80,6 +81,7 @@ const ViewAllModuleRequestPage = ({ moduleRequestId, moduleData }: Props) => {
 
   const handleOnClick = async (requestId: string) => {
     setIsLoading(true);
+    if (formDetails[requestId]) return;
     try {
       const { data, error } = await supabaseClient.rpc(
         "module_request_page_on_load",
@@ -110,7 +112,7 @@ const ViewAllModuleRequestPage = ({ moduleRequestId, moduleData }: Props) => {
     if (openedItems.length === 0) {
     }
   };
-  //   moduleId, duplicatableSectionIdList
+
   const renderRequestForm = (requestData: Request, index: number) => {
     if (!requestData) return <p>Error loading form data.</p>;
     const { request, moduleId, duplicatableSectionIdList } = requestData;
@@ -199,32 +201,38 @@ const ViewAllModuleRequestPage = ({ moduleRequestId, moduleData }: Props) => {
         moduleRequestId={moduleRequestId}
         formCollection={formCollection}
       />
-      <Title order={4} color="" style={{ marginTop: "20px" }}>
-        <Group>
-          <IconClipboardList size={24} />
-          List of All Forms
-        </Group>
-      </Title>
-      <Space h="xl" />
+      <Paper mt="xl" p="xl" shadow="xs">
+        <Title order={4} color="" style={{ marginTop: "20px" }}>
+          <Group>
+            <IconClipboardList size={24} />
+            List of All Forms
+          </Group>
+        </Title>
+        <Space h="xl" />
 
-      <Accordion variant="contained" multiple onChange={handleAccordionChange}>
-        {formCollection.map((form, index) => (
-          <Accordion.Item value={`item-${index}`} key={form.form_id}>
-            <Accordion.Control onClick={() => handleOnClick(form.request_id)}>
-              {form.form_name}
-            </Accordion.Control>
-            <Accordion.Panel>
-              {formDetails[form.request_id] ? (
-                renderRequestForm(formDetails[form.request_id]!, index)
-              ) : formDetails[form.form_id] === null ? (
-                <p>Error loading form data.</p>
-              ) : (
-                <LoadingOverlay visible={isloading} />
-              )}
-            </Accordion.Panel>
-          </Accordion.Item>
-        ))}
-      </Accordion>
+        <Accordion
+          variant="contained"
+          multiple
+          onChange={handleAccordionChange}
+        >
+          {formCollection.map((form, index) => (
+            <Accordion.Item value={`item-${index}`} key={form.form_id}>
+              <Accordion.Control onClick={() => handleOnClick(form.request_id)}>
+                {form.form_name}
+              </Accordion.Control>
+              <Accordion.Panel>
+                {formDetails[form.request_id] ? (
+                  renderRequestForm(formDetails[form.request_id]!, index)
+                ) : formDetails[form.form_id] === null ? (
+                  <p>Error loading form data.</p>
+                ) : (
+                  <LoadingOverlay visible={isloading} />
+                )}
+              </Accordion.Panel>
+            </Accordion.Item>
+          ))}
+        </Accordion>
+      </Paper>
     </Container>
   );
 };

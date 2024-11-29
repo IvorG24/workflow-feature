@@ -5,153 +5,152 @@ import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEd
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import {
-    APP_SOURCE_ID,
-    DEFAULT_NUMBER_HR_SSOT_ROWS,
-    FETCH_OPTION_LIMIT,
-    formatDate,
-    IT_ASSET_FIELD_ID_LIST,
-    ITEM_FIELD_ID_LIST,
-    PED_ITEM_FIELD_ID_LIST,
-    PRACTICAL_TEST_FIELD_LIST,
-    ROW_PER_PAGE,
-    TECHNICAL_ASSESSMENT_FIELD_LIST,
+  APP_SOURCE_ID,
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+  PRACTICAL_TEST_FIELD_LIST,
+  ROW_PER_PAGE,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
-    addAmpersandBetweenWords,
-    escapeQuotes,
-    escapeQuotesForObject,
-    parseJSONIfValid,
+  addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
+  parseJSONIfValid,
 } from "@/utils/string";
 import {
-    AddressTableRow,
-    ApplicationInformationFilterFormValues,
-    ApplicationInformationSpreadsheetData,
-    ApplicationListItemType,
-    ApproverUnresolvedRequestCountType,
-    AppType,
-    AssigneeInformation,
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
+  ApplicationListItemType,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AssigneeInformation,
   AttachmentBucketType,
-    AttachmentTableRow,
-    BackgroundCheckFilterFormValues,
-    BackgroundCheckSpreadsheetData,
-    BackgroundCheckTableRow,
-    BasicEdgeType,
-    BasicNodeType,
-    ConnectedRequestFormProps,
-    CreatePracticalTestFormType,
-    CreateTicketFormValues,
-    CreateTicketPageOnLoad,
-    CSICodeTableRow,
-    DashboardRequestorAndSignerType,
-    Dataset,
-    DeploymentRecordType,
+  AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
+  BackgroundCheckTableRow,
+  BasicEdgeType,
+  BasicNodeType,
+  ConnectedRequestFormProps,
+  CreatePracticalTestFormType,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  DashboardRequestorAndSignerType,
+  Dataset,
+  DeploymentRecordType,
   EquipmentDescriptionTableRow,
-    EquipmentPartTableInsert,
-    EquipmentPartType,
-    EquipmentTableRow,
-    FetchRequestListParams,
-    FetchUserRequestListParams,
-    FieldTableRow,
-    FormTableRow,
-    FormType,
-    FormWithOwnerType,
-    FormWithResponseType,
-    HRAnalyticsData,
-    HRPhoneInterviewFilterFormValues,
-    HRPhoneInterviewSpreadsheetData,
-    HRPhoneInterviewTableRow,
-    HRProjectType,
-    HRRecruitmentData,
-    InitialFormType,
-    InterviewOnlineMeetingTableRow,
-    ItemCategoryWithSigner,
-    ItemDescriptionFieldWithUoM,
-    ItemDescriptionTableRow,
-    ItemWithDescriptionAndField,
-    ItemWithDescriptionType,
-    JiraFormslyItemCategoryWithUserDataType,
-    JiraFormslyProjectType,
-    JiraItemCategoryDataType,
-    JiraOrganizationTableRow,
-    JiraProjectDataType,
-    JobOfferFilterFormValues,
-    JobOfferHistoryType,
-    JobOfferSpreadsheetData,
-    JobOfferTableRow,
-    LRFSpreadsheetData,
-    MemoListItemType,
-    MemoType,
-    ModuleData,
-    ModuleFormItem,
-    ModuleFormList,
-    ModuleListType,
-    ModuleRequestList,
-    NodeData,
-    NodeOption,
-    NotificationOnLoad,
-    NotificationTableRow,
-    OptionTableRow,
-    OptionType,
-    OtherExpensesTypeTableRow,
-    PendingInviteType,
-    PositionTableRow,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
+  FetchRequestListParams,
+  FetchUserRequestListParams,
+  FieldTableRow,
+  FormTableRow,
+  FormType,
+  FormWithOwnerType,
+  FormWithResponseType,
+  HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRPhoneInterviewTableRow,
+  HRProjectType,
+  HRRecruitmentData,
+  InitialFormType,
+  InterviewOnlineMeetingTableRow,
+  ItemCategoryWithSigner,
+  ItemDescriptionFieldWithUoM,
+  ItemDescriptionTableRow,
+  ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
+  JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
+  JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  JobOfferTableRow,
+  LRFSpreadsheetData,
+  MemoListItemType,
+  MemoType,
+  ModuleData,
+  ModuleFormItem,
+  ModuleFormList,
+  ModuleListType,
+  ModuleRequestList,
+  NodeData,
+  NotificationOnLoad,
+  NotificationTableRow,
+  OptionTableRow,
+  OptionType,
+  OtherExpensesTypeTableRow,
+  PendingInviteType,
+  PositionTableRow,
   PracticalTestTableRow,
-    PracticalTestType,
-    PreferredPositionType,
-    QuestionnaireData,
-    ReferenceMemoType,
-    RequesterPrimarySignerType,
-    RequestListItemType,
-    RequestListOnLoad,
-    RequestTableRow,
-    RequestViewRow,
-    RequestWithResponseType,
-    SCICEmployeeTableRow,
-    SectionWithFieldType,
-      SignatureHistoryTableRow,
-    SignerRequestSLA,
-    SignerWithProfile,
-    SSOTOnLoad,
-    SSOTType,
-    TeamDepartmentTableRow,
+  PracticalTestType,
+  PreferredPositionType,
+  QuestionnaireData,
+  ReferenceMemoType,
+  RequesterPrimarySignerType,
+  RequestListItemType,
+  RequestListOnLoad,
+  RequestTableRow,
+  RequestViewRow,
+  RequestWithResponseType,
+  SCICEmployeeTableRow,
+  SectionWithFieldType,
+  SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
+  SSOTOnLoad,
+  SSOTType,
+  TeamDepartmentTableRow,
   TeamGroupTableRow,
-    TeamMemberOnLoad,
-    TeamMembershipRequestTableRow,
-    TeamMemberTableRow,
-    TeamMemberType,
-    TeamMemberWithUser,
-    TeamMemberWithUserDetails,
-    TeamOnLoad,
-    TeamProjectTableRow,
-    TeamTableRow,
-    TeamTeamMembershipRequest,
-    TechnicalAssessmentTableRow,
-    TechnicalInterviewFilterFormValues,
-    TechnicalInterviewSpreadsheetData,
-    TechnicalInterviewTableRow,
-    TicketListOnLoad,
-    TicketListType,
-    TicketPageOnLoad,
-    TicketStatusType,
-    TradeTestFilterFormValues,
-    TradeTestSpreadsheetData,
-    TradeTestTableRow,
-    TransactionTableRow,
-    UnformattedRequestListItemRequestSigner,
-    UserIssuedItem,
-    WorkflowTableParams,
+  TeamMemberOnLoad,
+  TeamMembershipRequestTableRow,
+  TeamMemberTableRow,
+  TeamMemberType,
+  TeamMemberWithUser,
+  TeamMemberWithUserDetails,
+  TeamOnLoad,
+  TeamProjectTableRow,
+  TeamTableRow,
+  TeamTeamMembershipRequest,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
+  TechnicalInterviewTableRow,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
+  TradeTestTableRow,
+  TransactionTableRow,
+  UnformattedRequestListItemRequestSigner,
+  UserIssuedItem,
+  WorkflowTableParams,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -7038,38 +7037,46 @@ export const getWorkFlowTableOnLoad = async (
 
 export const getNodeTypesOption = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { activeTeam: string }
-): Promise<NodeOption[]> => {
-  const { activeTeam } = params;
+  params: { activeTeam: string; search?: string; limit: number; page: number }
+) => {
+  const { activeTeam, search, limit, page } = params;
 
-  const { data, error } = await supabaseClient
+  const offset = (page - 1) * limit;
+
+  let query = supabaseClient
     .schema("workflow_schema")
     .from("node_type_table")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("node_type_is_disabled", false)
+    .eq("node_type_variant", "basic")
     .eq("node_type_team_id", activeTeam)
-    .order("node_type_date_created", { ascending: false });
+    .order("node_type_date_created", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (search) {
+    query = query.ilike("node_type_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
 
   if (error) {
     throw error;
   }
 
-  const formattedData = data
-    ?.filter(
-      (node) =>
-        node.node_type_variant !== "origin" && node.node_type_variant !== "end"
-    )
-    .map((node) => ({
-      value: node.node_type_id,
-      label: node.node_type_label,
-      type: node.node_type_variant as "basic",
-      presetLabel: node.node_type_label,
-      presetBackgroundColor: node.node_type_background_color,
-      presetTextColor: node.node_type_font_color,
-      dateCreated: node.node_type_date_created,
-    }));
+  const formattedData = data.map((node) => ({
+    value: node.node_type_id,
+    label: node.node_type_label,
+    type: node.node_type_variant as "basic",
+    presetLabel: node.node_type_label,
+    presetBackgroundColor: node.node_type_background_color,
+    presetTextColor: node.node_type_font_color,
+    dateCreated: node.node_type_date_created,
+  }));
 
-  return formattedData || [];
+  return {
+    nodeData: formattedData,
+    count: count || 0,
+  };
 };
 
 export const getModuleRequestList = async (
@@ -7270,7 +7277,6 @@ export const getFormid = async (
   }
 ) => {
   const { moduleId, moduleVersionId } = params;
-
 
   const { data, error } = await supabaseClient.rpc("get_module_form_on_load", {
     input_data: {

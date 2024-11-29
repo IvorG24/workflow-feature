@@ -307,6 +307,8 @@ const WorkflowPage = ({
           );
       }
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -404,11 +406,30 @@ const WorkflowPage = ({
       if (!activeTeam.team_id) {
         return;
       }
-      const NodeTypeOptions = await getNodeTypesOption(supabaseClient, {
-        activeTeam: activeTeam.team_id,
-      });
-      setNodeOptions(NodeTypeOptions);
+
+      let currentPage = 1;
+      const limit = 500;
+      const allNodeOptions = [];
+
+      while (1) {
+        const { nodeData } = await getNodeTypesOption(supabaseClient, {
+          activeTeam: activeTeam.team_id,
+          limit,
+          page: currentPage,
+        });
+
+        allNodeOptions.push(...nodeData);
+
+        if (nodeData.length < limit) {
+          break;
+        }
+
+        currentPage++;
+      }
+
+      setNodeOptions(allNodeOptions);
     };
+
     fetchNodeOptions();
   }, [activeTeam.team_id]);
 
@@ -477,6 +498,7 @@ const WorkflowPage = ({
           onSubmit={handleSubmit}
           options={nodeOptions}
         />
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -494,11 +516,6 @@ const WorkflowPage = ({
           onPaneClick={handleOutsideClick}
           zoomOnDoubleClick={false}
           nodesConnectable={mode !== "view"}
-          // figma-like controls
-          panOnScroll={true}
-          selectionOnDrag={true}
-          panOnDrag={[0, 2]}
-          //   selectionMode={SelectionMode.Partial}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} />
           {selectedNode && (

@@ -55,6 +55,7 @@ const useNodeAndForm = ({
       );
     }
   };
+  console.log(request);
 
   const isTeamIdInApproverGroup = (
     approverGroup: string[],
@@ -80,6 +81,7 @@ const useNodeAndForm = ({
           formData: formIdData,
         }
       );
+
       setFormExist(formExist);
 
       const endNodeFound =
@@ -89,10 +91,13 @@ const useNodeAndForm = ({
       setIsEndNode(endNodeFound);
       setIsEndNode(endNodeFound);
       setisEmptyNode(endNodeFound);
+      console.log(targetNodes);
+
       if (endNodeFound) {
         const currentFormIndex = formIdData.findIndex(
           (form) => form.form_id === request.request_form.form_id
         );
+
         setNextForm(
           currentFormIndex !== -1 && currentFormIndex < formIdData.length - 1
             ? formIdData[currentFormIndex + 1]
