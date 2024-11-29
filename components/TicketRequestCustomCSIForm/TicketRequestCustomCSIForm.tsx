@@ -1,10 +1,12 @@
 import {
   checkCSICodeDescriptionExists,
   checkCustomCSICodeValidity,
+  getAllOptionsPerBatch,
 } from "@/backend/api/get";
 import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
@@ -184,9 +186,54 @@ const TicketRequestCustomCSIForm = ({
     return !Boolean(error);
   };
 
+  const fetchOptions = async (ticketForm: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+      let index = 0;
+      const itemOptions: string[] = [];
+      while (1) {
+        const data = (await getAllOptionsPerBatch(supabaseClient, {
+          schema: "item",
+          table: "item",
+          select: "item_general_name",
+          teamId: activeTeam.team_id,
+          index,
+          limit: FETCH_OPTION_LIMIT,
+          order: "item_general_name",
+        })) as unknown as { item_general_name: string }[];
+
+        const options = data.map((value) => value.item_general_name);
+        itemOptions.push(...options);
+        if (data.length < FETCH_OPTION_LIMIT) break;
+        index += FETCH_OPTION_LIMIT;
+      }
+
+      replaceSection([
+        {
+          ...ticketForm.ticket_sections[0],
+          ticket_section_fields: [
+            {
+              ...ticketForm.ticket_sections[0].ticket_section_fields[0],
+              ticket_field_option: itemOptions,
+            },
+            ...ticketForm.ticket_sections[0].ticket_section_fields.slice(1),
+          ],
+        },
+        ...ticketForm.ticket_sections.slice(1),
+      ]);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (ticketForm) {
-      replaceSection(ticketForm.ticket_sections);
+      fetchOptions(ticketForm);
     }
   }, []);
 

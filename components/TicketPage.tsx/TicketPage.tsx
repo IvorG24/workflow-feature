@@ -1,6 +1,7 @@
 import { getTicketOnLoad } from "@/backend/api/get";
 import { createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
@@ -44,6 +45,8 @@ const TicketPage = ({
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const currentUser = useUserProfile();
+  const { setIsLoading } = useLoadingActions();
+
   const [ticket, setTicket] = useState(initialTicket);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
   const [ticketForm, setTicketForm] =
@@ -90,6 +93,7 @@ const TicketPage = ({
 
   const handleAssignTicketToUser = async () => {
     if (!teamMember) return;
+    setIsLoading(true);
     try {
       const currentUserFullName = `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`;
       const updatedTicket = await assignTicket(supabaseClient, {
@@ -154,6 +158,8 @@ const TicketPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
