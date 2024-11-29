@@ -4,7 +4,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { sendEmailTeamInvite } from "@/utils/functions";
-import { PendingInviteType, TeamMemberType } from "@/utils/types";
+import { PendingInviteType } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -31,7 +31,6 @@ import validator from "validator";
 type Props = {
   memberEmailList: string[];
   isOwnerOrAdmin: boolean;
-  teamMemberList: TeamMemberType[];
 };
 
 type EmailListData = { value: string; label: string }[];

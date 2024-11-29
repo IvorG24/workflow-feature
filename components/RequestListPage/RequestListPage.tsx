@@ -257,6 +257,7 @@ const RequestListPage = ({ projectList }: Props) => {
             listTableColumnFilter={listTableColumnFilter}
             setListTableColumnFilter={setListTableColumnFilter}
             tableColumnList={tableColumnList}
+            projectList={projectList}
           />
         </Box>
       </Paper>

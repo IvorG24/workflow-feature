@@ -4927,60 +4927,6 @@ AS $$
       ]
     )[0];
 
-    const teamMembers = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          jsonb_build_object(
-            'user_id', user_id,
-            'user_first_name', user_first_name,
-            'user_last_name', user_last_name,
-            'user_avatar', user_avatar,
-            'user_email', user_email,
-            'user_employee_number', user_employee_number
-          ) AS team_member_user
-        FROM team_schema.team_member_table
-        JOIN user_schema.user_table
-          ON team_member_user_id = user_id
-        LEFT JOIN user_schema.user_employee_number_table
-          ON user_employee_number_user_id = user_id
-          AND user_employee_number_is_disabled = false
-        WHERE
-          team_member_team_id = $1
-          AND team_member_is_disabled = false
-          AND user_is_disabled = false
-        ORDER BY
-          CASE team_member_role
-            WHEN 'OWNER' THEN 1
-            WHEN 'ADMIN' THEN 2
-            WHEN 'APPROVER' THEN 3
-            WHEN 'MEMBER' THEN 4
-          END ASC,
-          user_first_name ASC,
-          user_last_name ASC
-        LIMIT $2
-      `, [
-        teamId ,
-        teamMemberLimit
-      ]
-    );
-
-    const teamMembersCount = plv8.execute(
-      `
-        SELECT COUNT(*)
-        FROM team_schema.team_member_table
-        JOIN user_schema.user_table
-          ON team_member_user_id = user_id
-        WHERE
-          team_member_team_id = $1
-          AND team_member_is_disabled = false
-          AND user_is_disabled = false
-      `, [
-        teamId
-      ]
-    )[0].count;
-
     const teamGroups = plv8.execute(
       `
         SELECT
@@ -5055,7 +5001,6 @@ AS $$
 
     team_data = {
       team,
-      teamMembers,
       teamGroups,
       teamGroupsCount: Number(teamGroupsCount),
       teamProjects: teamProjects.map(project => {
@@ -5085,12 +5030,12 @@ AS $$
         }
       }),
       teamProjectsCount: Number(teamProjectsCount),
-      teamMembersCount: Number(teamMembersCount),
       pendingValidIDList: []
     }
   });
   return team_data;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
   input_data JSON
@@ -12015,10 +11960,14 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar,
-        user_email
+        user_email,
+        ut.user_employee_number
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         AND user_is_disabled = false
+      LEFT JOIN user_schema.user_employee_number_table ut
+          ON user_employee_number_user_id = user_id
+          AND user_employee_number_is_disabled = false
       WHERE
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false

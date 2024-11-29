@@ -1033,10 +1033,10 @@ const EditLiquidationReimbursementRequestPage = ({
       };
 
       // Handle "Formsly ID" field based on value
-      if (value === "Other Expenses" && !formslyIdFieldExists) {
+      if (value !== "Services" && !formslyIdFieldExists) {
         const formslyIdField = getInitialField("Formsly ID");
         if (formslyIdField) addField(formslyIdField);
-      } else if (value !== "Other Expenses" && formslyIdFieldExists) {
+      } else if (value === "Services" && formslyIdFieldExists) {
         removeFieldByName("Formsly ID");
       }
 

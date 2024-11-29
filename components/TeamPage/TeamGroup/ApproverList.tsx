@@ -68,7 +68,7 @@ const ApproverList = ({
   }, []);
 
   useEffect(() => {
-    const updatedApproverList = teamMemberList.filter(
+    const updatedApproverList = (teamMemberList || []).filter(
       (member) => member.team_member_role === "APPROVER"
     );
 
