@@ -60,6 +60,7 @@ import {
   IconTools,
   IconUsersGroup,
 } from "@tabler/icons-react";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import NavLinkSection from "./NavLinkSection";
@@ -100,6 +101,7 @@ const NavigationLink = ({ idx, link, onClick, active }: NavigationLinkType) => {
 
 const ReviewAppNavLink = () => {
   const router = useRouter();
+  const pathName = usePathname();
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
@@ -132,11 +134,12 @@ const ReviewAppNavLink = () => {
   );
   const teamMemberGroup = useUserTeamMemberGroupList();
   const teamMemberGroups = useUserTeamMemberGroupList();
-  const { preferences, initializePreferences, updatePreference } = useSidebarStore((state) => ({
-    preferences: state.preferences,
-    initializePreferences: state.initializePreferences,
-    updatePreference: state.setUpdatedPreference,
-  }));
+  const { preferences, initializePreferences, updatePreference } =
+    useSidebarStore((state) => ({
+      preferences: state.preferences,
+      initializePreferences: state.initializePreferences,
+      updatePreference: state.setUpdatedPreference,
+    }));
 
   useEffect(() => {
     initializePreferences();
@@ -280,8 +283,8 @@ const ReviewAppNavLink = () => {
                           return null;
                         }}
                         active={
-                          router.pathname.includes("forms") &&
-                          router.pathname.includes("create")
+                          pathName.includes("forms") &&
+                          pathName.includes("create")
                         }
                       />
                     </Box>
@@ -303,8 +306,7 @@ const ReviewAppNavLink = () => {
                         )
                       }
                       active={
-                        router.pathname.includes("tickets") &&
-                        router.pathname.includes("create")
+                        pathName === `/${activeTeamNameToUrl}/tickets/create`
                       }
                     />
                   </Box>
@@ -323,8 +325,7 @@ const ReviewAppNavLink = () => {
                         await router.push(`/${activeTeamNameToUrl}/memo/create`)
                       }
                       active={
-                        router.pathname.includes("memo") &&
-                        router.pathname.includes("create")
+                        pathName === `/${activeTeamNameToUrl}/memo/create`
                       }
                     />
                   </Box>
@@ -524,11 +525,7 @@ const ReviewAppNavLink = () => {
                         onClick={() => {
                           return null;
                         }}
-                        active={
-                          router.pathname.includes("forms") &&
-                          !router.pathname.includes("create") &&
-                          !router.pathname.includes("build")
-                        }
+                        active={pathName === `/${activeTeamNameToUrl}/forms`}
                       />
                     </Box>
                   </Menu.Target>
@@ -546,10 +543,7 @@ const ReviewAppNavLink = () => {
                       onClick={async () =>
                         await router.push(`/${activeTeamNameToUrl}/forms/build`)
                       }
-                      active={
-                        router.pathname.includes("forms") &&
-                        router.pathname.includes("build")
-                      }
+                      active={pathName.includes("forms/build")}
                     />
                   </Box>
                 </Stack>
@@ -710,7 +704,7 @@ const ReviewAppNavLink = () => {
                       onClick={async () =>
                         await router.push(`/${activeTeamNameToUrl}/dashboard`)
                       }
-                      active={router.pathname.includes("dashboard")}
+                      active={pathName.includes("dashboard")}
                     />
                   </Box>
                   <Menu.Target>
@@ -728,7 +722,7 @@ const ReviewAppNavLink = () => {
                         onClick={() => {
                           return null;
                         }}
-                        active={router.pathname.includes("analytics")}
+                        active={pathName.includes("analytics")}
                       />
                     </Box>
                   </Menu.Target>
@@ -746,7 +740,7 @@ const ReviewAppNavLink = () => {
                       onClick={async () =>
                         await router.push(`/${activeTeamNameToUrl}/sla`)
                       }
-                      active={router.pathname.includes("sla")}
+                      active={pathName.includes("sla")}
                     />
                   </Box>
                   <Box w="100%">
@@ -763,7 +757,7 @@ const ReviewAppNavLink = () => {
                       onClick={async () =>
                         await router.push(`/${activeTeamNameToUrl}/report`)
                       }
-                      active={router.pathname.includes("report")}
+                      active={pathName.includes("report")}
                     />
                   </Box>
                 </Stack>

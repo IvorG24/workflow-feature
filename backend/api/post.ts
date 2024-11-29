@@ -1,11 +1,6 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
-import {
-  APP_SOURCE_ID,
-  BASE_URL,
-  formatDate,
-  formslyPremadeFormsData,
-} from "@/utils/constant";
+import { APP_SOURCE_ID, BASE_URL, formatDate } from "@/utils/constant";
 import { Database, Json } from "@/utils/database";
 import { formatJiraItemUserTableData, shortId } from "@/utils/functions";
 import {
@@ -923,68 +918,6 @@ export const editRequest = async (
   if (error) throw error;
 
   return data as RequestTableRow;
-};
-
-export const createFormslyPremadeForms = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-  }
-) => {
-  const { teamMemberId } = params;
-
-  const { forms, sections, fieldWithId, fieldsWithoutId, options } =
-    formslyPremadeFormsData(teamMemberId);
-
-  const formValues = forms
-    .map(
-      (form) =>
-        `('${form.form_id}','${form.form_name}','${form.form_description}','${form.form_app}','${form.form_is_formsly_form}','${form.form_is_hidden}','${form.form_team_member_id}','${form.form_is_disabled}')`
-    )
-    .join(",");
-
-  const sectionValues = sections
-    .map(
-      (section) =>
-        `('${section.section_form_id}','${section.section_id}','${section.section_is_duplicatable}','${section.section_name}','${section.section_order}')`
-    )
-    .join(",");
-
-  const fieldWithIdValues = fieldWithId
-    .map(
-      (field) =>
-        `('${field.field_id}','${field.field_is_read_only}','${field.field_is_required}','${field.field_name}','${field.field_order}','${field.field_section_id}','${field.field_type}')`
-    )
-    .join(",");
-
-  const fieldsWithoutIdValues = fieldsWithoutId
-    .map(
-      (field) =>
-        `('${field.field_is_read_only}','${field.field_is_required}','${field.field_name}','${field.field_order}','${field.field_section_id}','${field.field_type}')`
-    )
-    .join(",");
-
-  const optionsValues = options
-    .map(
-      (option) =>
-        `('${option.option_field_id}','${option.option_order}','${option.option_value}')`
-    )
-    .join(",");
-
-  const { error } = await supabaseClient
-    .rpc("create_formsly_premade_forms", {
-      input_data: {
-        formValues,
-        sectionValues,
-        fieldWithIdValues,
-        fieldsWithoutIdValues,
-        optionsValues,
-      },
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
 };
 
 export const createTeamGroup = async (

@@ -3,6 +3,7 @@
 import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
+import { costCodeExemptionList } from "./constant";
 import { startCase } from "./string";
 import {
   JiraItemUserTableData,
@@ -410,6 +411,41 @@ export const removeDuplicates = (
   });
 
   return Array.from(uniqueObjects.values());
+};
+
+export const getRequestClientViewStatus = ({
+  status,
+  formName,
+  projectName,
+}: {
+  status: string;
+  formName: string;
+  projectName: string;
+}) => {
+  let clientViewStatus = status;
+  const isLiquidationReimbursement = formName === "Liquidation Reimbursement";
+
+  if (status === "APPROVED") {
+    const hasCostCodeExemption = costCodeExemptionList.some((exemption) =>
+      projectName.toLowerCase().includes(exemption.toLowerCase())
+    );
+
+    if (!(isLiquidationReimbursement && hasCostCodeExemption)) {
+      switch (formName) {
+        case "Petty Cash Voucher":
+          clientViewStatus = "Verified by Accounting";
+          break;
+        case "Liquidation Reimbursement":
+          clientViewStatus = "Verified by Cost Engineer";
+          break;
+
+        default:
+          break;
+      }
+    }
+  }
+
+  return clientViewStatus;
 };
 
 export const removeObjectProperty = (

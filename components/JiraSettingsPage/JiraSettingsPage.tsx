@@ -91,6 +91,7 @@ const JiraSettingsPage = ({
   const [jiraFormslyProjectCount, setJiraFormslyProjectCount] = useState(
     initialJiraFormslyProjectCount
   );
+  const [isShowTable, setIsShowTable] = useState<boolean>(true);
 
   const supabaseClient = createPagesBrowserClient<Database>();
 
@@ -163,6 +164,7 @@ const JiraSettingsPage = ({
       title: "Team Projects",
       action: () => {
         setSelectedFormslyProjectName("");
+        setIsShowTable(true);
         setSelectedFormslyProjectId(null);
       },
     },
@@ -172,6 +174,7 @@ const JiraSettingsPage = ({
     jiraSettingsItems.push({
       title: selectedFormslyProjectName,
       action: () => {
+        setIsShowTable(false);
         setIsManagingUserAccountList(true);
       },
     });
@@ -202,12 +205,14 @@ const JiraSettingsPage = ({
       {segmentedControlValue === "jira-settings" && (
         <Stack>
           <BreadcrumbWrapper breadcrumbItems={jiraSettingsItems}>
-            {!selectedFormslyProjectId && (
+            { (
               <JiraFormslyProjectList
                 jiraFormslyProjectList={jiraFormslyProjectList}
                 jiraFormslyProjectCount={jiraFormslyProjectCount}
                 jiraProjectList={jiraProjectData.data}
                 jiraOrganizationList={jiraOrganizationData.data}
+                isShowTable={isShowTable}
+                setIsShowTable={setIsShowTable}
                 setIsManagingUserAccountList={setIsManagingUserAccountList}
                 setSelectedFormslyProject={setSelectedFormslyProjectId}
                 selectedFormslyProject={selectedFormslyProjectId}
@@ -215,9 +220,10 @@ const JiraSettingsPage = ({
                 setJiraFormslyProjectCount={setJiraFormslyProjectCount}
               />
             )}
-            {isManagingUserAccountList && selectedFormslyProjectName && (
+            {isManagingUserAccountList && selectedFormslyProjectName && !isShowTable && (
               <JiraUserAccountList
                 jiraUserAcountList={jiraUserAccountData.data}
+                setIsShowTable={setIsShowTable}
                 setIsManagingUserAccountList={setIsManagingUserAccountList}
                 setSelectedFormslyProject={setSelectedFormslyProjectId}
                 selectedFormslyProject={selectedFormslyProjectId}
