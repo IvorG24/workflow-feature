@@ -63,7 +63,7 @@ const ExportToCSVModal = ({ opened, onClose }: Props) => {
 
       const recruitmentData: HRRecruitmentData[] = [];
       let offset = 0;
-      const limit = 100;
+      const limit = 500;
       let fetchRecruitmentData = true;
 
       while (fetchRecruitmentData) {
