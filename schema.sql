@@ -8844,20 +8844,74 @@ RETURNS VOID
 SET search_path TO ''
 AS $$
   plv8.subtransaction(function(){
-    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const teamMember = plv8.execute(
+      `
+        SELECT *
+        FROM team_schema.team_member_table
+        WHERE
+          team_member_team_id = $1
+          AND team_member_id = $2
+      `, [
+        team_id,
+        team_member_id
+      ]
+    )[0];
+
     const isUserOwner = teamMember.team_member_role === 'OWNER';
     if(isUserOwner) throw new Error('Owner cannot leave the team');
 
-    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`);
+    plv8.execute(
+      `
+        UPDATE team_schema.team_member_table
+        SET
+          team_member_is_disabled = true
+        WHERE 
+          team_member_team_id = $1 
+          AND team_member_id = $2
+      `, [
+        team_id,
+        team_member_id
+      ]
+    );
 
-    const userTeamList = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id='${teamMember.team_member_user_id}' AND team_member_is_disabled=FALSE`);
+    const userTeamList = plv8.execute(
+      `
+        SELECT *
+        FROM team_schema.team_member_table
+        WHERE
+          team_member_user_id = $1
+          AND team_member_is_disabled = false
+      `, [
+        teamMember.team_member_user_id
+      ]
+    );
 
     if (userTeamList.length > 0) {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${teamMember.team_member_user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table
+          SET
+            user_active_team_id = $1
+          WHERE user_id = $2
+        `, [
+          userTeamList[0].team_member_team_id,
+          teamMember.team_member_user_id
+        ]
+      );
     } else {
-      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id=NULL WHERE user_id='${teamMember.team_member_user_id}'`);
+      plv8.execute(
+        `
+          UPDATE user_schema.user_table
+          SET
+            user_active_team_id = null
+          WHERE
+            user_id = $1
+        `, [
+          teamMember.team_member_user_id
+        ]
+      );
     }
- });
+  });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION redirect_to_new_team(
