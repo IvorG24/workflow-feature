@@ -1,4 +1,5 @@
 import { getTicketForm } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -38,6 +39,8 @@ type Props = {
 const CreateTicketPage = ({ member, categorylist }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+  const teamMemberList = useTeamMemberList();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingForm, setIsFetchingForm] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
@@ -57,7 +60,35 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
         category,
         teamId: activeTeam.team_id,
       });
-      setTicketForm(ticketFormData);
+
+      if (category === "Incident Report for Employees") {
+        const teamMemberOptions = teamMemberList.map((teamMember) => {
+          return {
+            label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+            value: teamMember.team_member_id,
+          };
+        });
+        setTicketForm({
+          ...ticketFormData,
+          ticket_sections: [
+            {
+              ...ticketFormData.ticket_sections[0],
+              ticket_section_fields: [
+                {
+                  ...ticketFormData.ticket_sections[0].ticket_section_fields[0],
+                  ticket_field_option: teamMemberOptions,
+                },
+                ...ticketFormData.ticket_sections[0].ticket_section_fields.slice(
+                  1
+                ),
+              ],
+            },
+            ...ticketFormData.ticket_sections.slice(1),
+          ],
+        });
+      } else {
+        setTicketForm(ticketFormData);
+      }
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -191,9 +222,9 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
                 setCategory(value);
                 if (value) handleCategoryChange(value);
               }}
-              data={categoryOptions.sort((a, b) =>
-                a < b ? -1 : a > b ? 1 : 0
-              )}
+              data={categoryOptions
+                .filter((value) => !/v\d+/.test(value))
+                .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))}
               required={true}
               readOnly={isLoading}
               searchable

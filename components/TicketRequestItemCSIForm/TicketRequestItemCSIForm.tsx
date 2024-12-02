@@ -1,7 +1,14 @@
-import { checkCSICodeItemExists, getCSICode, getItem } from "@/backend/api/get";
+import {
+  checkCSICodeItemExists,
+  getAllOptionsPerBatch,
+  getCSICode,
+  getDistinctCSIDescription,
+  getItem,
+} from "@/backend/api/get";
 import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
@@ -205,9 +212,71 @@ const TicketRequestItemCSIForm = ({
     }
   };
 
+  const fetchOptions = async (ticketForm: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+      let index = 0;
+      const itemOptions: string[] = [];
+      while (1) {
+        const data = (await getAllOptionsPerBatch(supabaseClient, {
+          schema: "item",
+          table: "item",
+          select: "item_general_name",
+          teamId: activeTeam.team_id,
+          index,
+          limit: FETCH_OPTION_LIMIT,
+          order: "item_general_name",
+        })) as unknown as { item_general_name: string }[];
+
+        const options = data.map((value) => value.item_general_name);
+        itemOptions.push(...options);
+        if (data.length < FETCH_OPTION_LIMIT) break;
+        index += FETCH_OPTION_LIMIT;
+      }
+      index = 0;
+      const csiCodeDescriptionOptions: string[] = [];
+      while (1) {
+        const data = await getDistinctCSIDescription(supabaseClient, {
+          index,
+          limit: FETCH_OPTION_LIMIT,
+          order: "csi_code_level_three_description",
+        });
+
+        csiCodeDescriptionOptions.push(...data);
+        if (data.length < FETCH_OPTION_LIMIT) break;
+        index += FETCH_OPTION_LIMIT;
+      }
+
+      replaceSection([
+        {
+          ...ticketForm.ticket_sections[0],
+          ticket_section_fields: [
+            {
+              ...ticketForm.ticket_sections[0].ticket_section_fields[0],
+              ticket_field_option: itemOptions,
+            },
+            {
+              ...ticketForm.ticket_sections[0].ticket_section_fields[1],
+              ticket_field_option: csiCodeDescriptionOptions,
+            },
+            ...ticketForm.ticket_sections[0].ticket_section_fields.slice(2),
+          ],
+        },
+        ...ticketForm.ticket_sections.slice(1),
+      ]);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (ticketForm) {
-      replaceSection(ticketForm.ticket_sections);
+      fetchOptions(ticketForm);
     }
   }, []);
 
