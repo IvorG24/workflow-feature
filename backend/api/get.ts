@@ -1799,7 +1799,7 @@ export const getTicketList = async (
       columnAccessor,
     },
   });
-  console.log(error);
+
   if (error) throw error;
   const dataFormat = data as unknown as {
     data: TicketListType;
@@ -6634,7 +6634,7 @@ export const getDashboardTopRequestor = async (
       input_data: params,
     }
   );
-  console.log(error);
+
   if (error) throw error;
 
   return data as DashboardRequestorAndSignerType[];
