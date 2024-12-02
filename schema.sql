@@ -6575,7 +6575,18 @@ AS $$
       };
       return;
     } else if (form.form_name === "Petty Cash Voucher") {
-      const projects = getProjectOptions(teamMember.team_member_id);
+      const projects = plv8.execute(
+        `
+          SELECT
+            team_project_table.team_project_id,
+            team_project_table.team_project_name
+          FROM team_schema.team_project_member_table
+          INNER JOIN team_schema.team_project_table
+            ON team_project_table.team_project_id = team_project_member_table.team_project_id
+          WHERE
+            AND team_project_is_disabled = false
+          ORDER BY team_project_name
+        `);
       const projectOptions = projects.map((project, index) => {
         return {
           option_field_id: form.form_section[1].section_field[0].field_id,
@@ -12458,6 +12469,8 @@ function fetchSignerData(condition, params = []) {
             signer_order,
             signer_is_disabled,
             signer_team_project_id,
+            signer_team_department_id,
+            signer_is_requester_signer,
             team_member_id,
             user_id,
             user_first_name,
@@ -21563,6 +21576,78 @@ AS $$
     );
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_request_signer_list(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      formId,
+      requestId,
+      projectId,
+      departmentId,
+      signerList,
+      commentContent
+    } = input_data;
+
+    signerList.forEach((signer) => {
+        const isExisting = plv8.execute(`
+            SELECT
+                signer_id
+            FROM
+                form_schema.signer_table
+            WHERE
+                signer_form_id = $1
+                AND signer_team_member_id = $2
+                AND signer_team_project_id = $3
+                AND signer_is_disabled = FALSE
+            LIMIT 1
+        `, [formId, signer.signer_team_member_id, projectId])[0];
+
+        if (isExisting) {
+            plv8.execute(`
+                UPDATE 
+                    request_schema.request_signer_table
+                SET 
+                    request_signer_signer_id = $1
+                WHERE
+                    request_signer_id = $2
+            `, [isExisting.signer_id, signer.request_signer_id]);
+        } else {
+            let selectedDepartmentId = departmentId ?? null;
+
+            const newFormSigner = plv8.execute(`
+                INSERT INTO
+                    form_schema.signer_table (signer_action, signer_order, signer_form_id, signer_team_member_id, signer_team_project_id, signer_team_department_id, signer_is_requester_signer, signer_is_primary_signer)
+                VALUES
+                    ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING signer_id;
+            `, ['APPROVED', signer.signer_order, formId, signer.signer_team_member_id, projectId, signer.signer_team_department_id, signer.signer_is_requester_signer, signer.signer_is_primary_signer])[0];
+
+            if (!newFormSigner) throw Error('Error creating new signer');
+
+            plv8.execute(`
+                UPDATE 
+                    request_schema.request_signer_table
+                SET 
+                    request_signer_signer_id = $1
+                WHERE
+                    request_signer_id = $2
+            `, [newFormSigner.signer_id, signer.request_signer_id]);
+        }
+    });
+
+    plv8.execute(`
+        INSERT INTO
+            request_schema.comment_table (comment_request_id, comment_team_member_id, comment_type, comment_content)
+        VALUES ($1, $2, $3, $4)
+    `, [requestId, commentContent.team_member_id, 'REQUEST_ACTIVITY', commentContent.content]);
+
+  });
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

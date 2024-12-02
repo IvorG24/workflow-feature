@@ -768,6 +768,8 @@ export type RequestWithResponseType = RequestTableRow & {
           user_signature_attachment_id: string | null;
         };
       };
+      signer_is_requester_signer: boolean;
+      signer_team_department_id: string | null;
     };
   })[];
   request_comment: {
@@ -2689,8 +2691,4 @@ export type AssigneeInformation = {
   lastName: string;
   email: string;
   contactNumber: string;
-};
-
-export type UpdateSignerFormValues = {
-  signerList: RequestSignerType[];
 };

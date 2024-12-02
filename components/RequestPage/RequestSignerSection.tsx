@@ -17,8 +17,7 @@ import {
   IconCircleDashed,
   IconCircleX,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { Dispatch, SetStateAction, useState } from "react";
 import RequestUpdateSignerModal from "./RequestUpdateSignerModal";
 
 export type RequestSignerType =
@@ -30,9 +29,21 @@ export type RequestSignerType =
 
 type Props = {
   signerList: RequestSignerType[];
+  setSignerList?: Dispatch<SetStateAction<RequestSignerType[]>>;
+  projectId?: string;
+  formId?: string;
+  requestId?: string;
+  requestStatus?: string;
 };
 
-const RequestSignerSection = ({ signerList }: Props) => {
+const RequestSignerSection = ({
+  signerList,
+  setSignerList,
+  projectId,
+  formId,
+  requestId,
+  requestStatus,
+}: Props) => {
   const allowedRoles = ["OWNER", "ADMIN"];
   const teamMember = useUserTeamMember();
   const isOwnerOrAdmin = allowedRoles.includes(
@@ -40,7 +51,6 @@ const RequestSignerSection = ({ signerList }: Props) => {
   );
   const [openUpdateSignerModal, setOpenUpdateSignerModal] = useState(false);
 
-  const updateSignerFormMethods = useForm();
   const editableSigners = signerList.filter(
     (signer) => signer.request_signer_status === "PENDING"
   );
@@ -96,7 +106,7 @@ const RequestSignerSection = ({ signerList }: Props) => {
         <Title order={4} color="dimmed">
           Signers
         </Title>
-        {isOwnerOrAdmin ? (
+        {isOwnerOrAdmin && requestStatus === "PENDING" ? (
           <Button
             variant="light"
             onClick={() => setOpenUpdateSignerModal(true)}
@@ -137,13 +147,17 @@ const RequestSignerSection = ({ signerList }: Props) => {
           );
         })}
       </Stack>
-      <FormProvider {...updateSignerFormMethods}>
+      {setSignerList && (
         <RequestUpdateSignerModal
           opened={openUpdateSignerModal}
           onClose={handleCloseUpdateSignerModal}
           initialSignerList={editableSigners}
+          formId={`${formId}`}
+          projectId={`${projectId}`}
+          requestId={`${requestId}`}
+          setSignerList={setSignerList}
         />
-      </FormProvider>
+      )}
     </Paper>
   );
 };
