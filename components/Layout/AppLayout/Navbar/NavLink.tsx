@@ -284,7 +284,8 @@ const ReviewAppNavLink = () => {
                         }}
                         active={
                           pathName.includes("forms") &&
-                          pathName.includes("create")
+                          pathName.includes("create") &&
+                          !pathName.includes("module-forms")
                         }
                       />
                     </Box>
@@ -439,13 +440,24 @@ const ReviewAppNavLink = () => {
                   userTeamMemberData?.team_member_role === "OWNER") && (
                   <Stack align="start" {...defaultNavLinkContainerProps}>
                     <Menu.Target>
-                      <Button
-                        fw={400}
-                        leftIcon={<IconFileStack {...defaultIconProps} />}
-                        variant="transparent"
-                      >
-                        Create Module Request
-                      </Button>
+                      <NavigationLink
+                        idx={0}
+                        link={{
+                          label: "Create Module Request",
+                          icon: (
+                            <Box ml="sm" {...defaultNavLinkContainerProps}>
+                              <IconFileStack {...defaultIconProps} />
+                            </Box>
+                          ),
+                        }}
+                        onClick={() => {
+                          return null;
+                        }}
+                        active={
+                          pathName.includes("module-forms") &&
+                          pathName.includes("create")
+                        }
+                      />
                     </Menu.Target>
                     <Portal>
                       <Menu.Dropdown>
@@ -813,7 +825,7 @@ const ReviewAppNavLink = () => {
       href: `/${activeTeamNameToUrl}/memo/create`,
     },
     {
-      label: "Create Module Reueqest",
+      label: "Create Module Request",
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconFileDescription {...defaultIconProps} />

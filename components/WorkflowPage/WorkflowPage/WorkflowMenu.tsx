@@ -51,7 +51,9 @@ const WorkflowMenu = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const newOptions = [...options, CREATE_NODE_OPTION];
-  const [selectedNodeOption, setSelectedNodeOption] = useState<NodeOption>();
+  const [selectedNodeOption, setSelectedNodeOption] = useState<NodeOption>(
+    newOptions[0]
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const buttonText = () => {
@@ -149,11 +151,7 @@ const WorkflowMenu = ({
               icon:
                 option.value === "12038a33-aad2-47f8-8742-fd86defb2a85" ? (
                   <>
-                    <IconSquareRoundedPlusFilled
-                      enableBackground={"blue"}
-                      color="blue"
-                      size={18}
-                    />
+                    <IconSquareRoundedPlusFilled color="blue" size={18} />
                   </>
                 ) : undefined,
             }))}
@@ -171,11 +169,7 @@ const WorkflowMenu = ({
                     );
                   }}
                   leftIcon={
-                    <IconSquareRoundedPlusFilled
-                      enableBackground={"blue"}
-                      color="blue"
-                      size={18}
-                    />
+                    <IconSquareRoundedPlusFilled color="blue" size={18} />
                   }
                 >
                   Add New Node

@@ -15,6 +15,7 @@ import {
   Button,
   Center,
   Container,
+  Flex,
   Group,
   List,
   Paper,
@@ -24,6 +25,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconSearch } from "@tabler/icons-react";
@@ -90,6 +92,39 @@ const NodeMaker = () => {
     handlePagination(limit);
   }, [activeTeam, limit]);
 
+  const handleAction = (nodeId: string, nodeLabel: string) => {
+    modals.open({
+      modalId: "deleteNode",
+      title: <Text>Please confirm your action.</Text>,
+      children: (
+        <>
+          <Text size={14}>Are you sure you want to DELETE {nodeLabel} ?</Text>
+          <Flex mt="md" align="center" justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              color="dimmed"
+              onClick={() => {
+                modals.close("deleteNode");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              color="red"
+              onClick={async () => {
+                handleDeleteNode(nodeId);
+              }}
+            >
+              Delete
+            </Button>
+          </Flex>
+        </>
+      ),
+      centered: true,
+    });
+  };
+
   const handleDeleteNode = async (nodeId: string) => {
     try {
       const isNodeBeingUsed = await checkIfLabelIsBeingUsed(supabaseClient, {
@@ -100,6 +135,7 @@ const NodeMaker = () => {
           message: "Node exist in a workflow, cannot be deleted",
           color: "orange",
         });
+
         return;
       }
 
@@ -109,6 +145,7 @@ const NodeMaker = () => {
         message: "Node deleted successfully",
         color: "green",
       });
+      modals.close("deleteNode");
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -155,6 +192,7 @@ const NodeMaker = () => {
         message: "Node created successfully",
         color: "green",
       });
+
       reset();
     } catch (e) {
       notifications.show({
@@ -209,7 +247,7 @@ const NodeMaker = () => {
                       <NodeTableView
                         isLoading={isLoading}
                         nodeTypesList={nodeTypesList}
-                        handleDeleteNode={handleDeleteNode}
+                        handleAction={handleAction}
                       />
                       <Center>
                         {nodeCount >= limit && (

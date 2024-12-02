@@ -3928,14 +3928,19 @@ AS $$
 
     const base_request_count_query = `
       SELECT COUNT(*)
-      FROM public.request_view
-      INNER JOIN form_schema.form_table ON request_form_id = form_id
-        AND form_is_disabled = false
-        AND form_is_public_form = false
-      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        AND team_member_team_id = $1
+      FROM public.request_view rv
+      INNER JOIN form_schema.form_table ft
+        ON rv.request_form_id = ft.form_id
+        AND ft.form_is_disabled = false
+        AND ft.form_is_public_form = false
+      INNER JOIN team_schema.team_member_table tm
+        ON tm.team_member_id = rv.request_team_member_id
+        AND tm.team_member_team_id = $1
+      INNER JOIN request_schema.request_table rt
+        ON rt.request_id = rv.request_id
+        AND rt.request_module_request_id IS NULL
       WHERE
-        request_is_disabled = false
+        rv.request_is_disabled = false
     `;
 
     if (isApproversView) {
@@ -7238,13 +7243,13 @@ AS $$
             request_view.*,
             form_table.*
           FROM public.request_view
-          INNER JOIN form_schema.form_table 
+          INNER JOIN form_schema.form_table
             ON form_id = request_form_id
           WHERE
             ${idCondition}
             AND request_is_disabled = false
           LIMIT 1
-        ) 
+        )
         SELECT jsonb_build_object (
           'request_id', request_id,
           'request_formsly_id', request_formsly_id,
@@ -7328,7 +7333,7 @@ AS $$
                 ON user_id = team_member_user_id
               LEFT JOIN public.attachment_table
                 ON attachment_id = user_signature_attachment_id
-              WHERE 
+              WHERE
                 request_signer_request_id = request_id
             ), '[]'::jsonb
           ),
@@ -7448,12 +7453,12 @@ AS $$
                   )
                 )
                 FROM (
-                  SELECT 
+                  SELECT
                     DISTINCT(field_table.*),
-                    item_description_order 
+                    item_description_order
                   FROM form_schema.field_table
                   LEFT JOIN item_schema.item_description_table
-                    ON item_description_field_id  = field_id 
+                    ON item_description_field_id  = field_id
                   WHERE field_section_id = section_id
                   AND EXISTS (
                     SELECT 1
@@ -7462,12 +7467,12 @@ AS $$
                       AND request_response_request_id = $2
                       AND request_response IS NOT NULL
                   )
-                  ORDER BY 
+                  ORDER BY
                     field_order ASC,
                     item_description_order ASC
                 ) filtered_field
               )
-            ) 
+            )
           ) FROM section_data
         `, [
           requestData.request_form.form_id,
@@ -7550,7 +7555,7 @@ AS $$
                   ORDER BY field_order ASC
                 ) filtered_field
               )
-            ) 
+            )
           ) FROM section_data
         `, [
           requestData.request_form.form_id,
@@ -7577,7 +7582,7 @@ AS $$
           user_avatar: null,
           user_job_title: null
         }
-      }, 
+      },
       request_project: requestData.request_project ?? {
         request_project_name: null
       }
@@ -7602,7 +7607,7 @@ AS $$
     const sectionList = plv8.execute(
       `
         WITH category_data as (
-          SELECT ticket_section_table.* 
+          SELECT ticket_section_table.*
           FROM ticket_schema.ticket_category_table
           INNER JOIN ticket_schema.ticket_section_table
             ON ticket_section_category_id = ticket_category_id

@@ -173,9 +173,7 @@ const WorkflowPage = ({
         return;
       }
 
-      if (!teamMember?.team_member_id) {
-        throw new Error();
-      }
+      if (!teamMember?.team_member_id) return;
 
       const hasEndNode = nodes.some((node) => node.type === "end");
       if (!hasEndNode) {
@@ -231,23 +229,33 @@ const WorkflowPage = ({
       }
 
       const hasEmptySigner = basicNodes.some((node) => {
-        const toolbarHidden = !edges.some((edge) => edge.source === node.id);
+        const isToolbarHidden = !edges.some((edge) => {
+          if (edge.source === node.id) {
+            const targetNode = nodes.find(
+              (targetNode) => targetNode.id === edge.target
+            );
+            return targetNode && targetNode.type !== "end";
+          }
+          return false;
+        });
 
-        if (toolbarHidden) {
+        if (isToolbarHidden) {
           return false;
         }
 
-        return toolbarHidden;
+        const signerList = node.data.nodeProjectWithSignerList;
+        return !signerList || signerList.length === 0;
       });
 
       if (hasEmptySigner) {
         notifications.show({
           title: "Invalid Submission",
-          message: "All nodes must have a signer.",
+          message: "All visible nodes must have a signer.",
           color: "orange",
         });
         return;
       }
+
       switch (mode) {
         case "create":
           const labelExists = await checkWorkflowLabelExists(

@@ -13,15 +13,11 @@ import { IconTrash } from "@tabler/icons-react";
 
 type Props = {
   nodeTypesList: NodeOption[];
-  handleDeleteNode: (nodeId: string) => void;
+  handleAction: (nodeId: string, nodeLabel: string) => void;
   isLoading: boolean;
 };
 
-const NodeTableView = ({
-  nodeTypesList,
-  handleDeleteNode,
-  isLoading,
-}: Props) => {
+const NodeTableView = ({ nodeTypesList, handleAction, isLoading }: Props) => {
   return (
     <Table highlightOnHover>
       <LoadingOverlay visible={isLoading} />
@@ -52,7 +48,7 @@ const NodeTableView = ({
                 </Tooltip>
                 <ActionIcon
                   color="red"
-                  onClick={async () => handleDeleteNode(nodes.value)}
+                  onClick={async () => handleAction(nodes.value, nodes.label)}
                 >
                   <IconTrash size={16} />
                 </ActionIcon>
