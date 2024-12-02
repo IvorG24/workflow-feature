@@ -7,11 +7,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  TicketType,
-} from "@/utils/types";
+import { CreateTicketFormValues, TicketType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -32,14 +28,12 @@ import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
   ticket: TicketType;
-  user: CreateTicketPageOnLoad["member"];
   ticketForm: CreateTicketFormValues;
 };
 
 const TicketPage = ({
   ticket: initialTicket,
   ticketForm: initialTicketForm,
-  user,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -58,7 +52,7 @@ const TicketPage = ({
   const ticketStatus = ticket.ticket_status;
 
   const canUserEditResponse =
-    ticket.ticket_approver_team_member_id === user.team_member_id &&
+    ticket.ticket_approver_team_member_id === teamMember?.team_member_id &&
     !READ_ONLY_TICKET_CATEGORY_LIST.includes(ticket.ticket_category);
 
   const isTicketPendingOrUnderReview = ["PENDING", "UNDER REVIEW"].includes(
@@ -67,8 +61,10 @@ const TicketPage = ({
   const isNotApproverOrCreator = ![
     ticket.ticket_approver_team_member_id,
     ticket.ticket_requester_team_member_id,
-  ].includes(user.team_member_id);
-  const isUserAdminOrOwner = ["ADMIN", "OWNER"].includes(user.team_member_role);
+  ].includes(teamMember?.team_member_id ?? "");
+  const isUserAdminOrOwner = ["ADMIN", "OWNER"].includes(
+    teamMember?.team_member_role ?? ""
+  );
 
   const canAssignTicket =
     isTicketPendingOrUnderReview &&
@@ -79,7 +75,6 @@ const TicketPage = ({
     try {
       const newTicket = await getTicketOnLoad(supabaseClient, {
         ticketId: ticket.ticket_id,
-        userId: user.team_member_user.user_id,
       });
 
       setTicketForm(newTicket.ticketForm);
@@ -92,12 +87,12 @@ const TicketPage = ({
   };
 
   const handleAssignTicketToUser = async () => {
-    if (!teamMember) return;
+    if (!teamMember || !currentUser) return;
     setIsLoading(true);
     try {
-      const currentUserFullName = `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`;
+      const currentUserFullName = `${currentUser.user_first_name} ${currentUser.user_last_name}`;
       const updatedTicket = await assignTicket(supabaseClient, {
-        teamMemberId: user.team_member_id,
+        teamMemberId: teamMember.team_member_id,
         ticketId: ticket.ticket_id,
         currentTicketStatus: ticketStatus,
       });
@@ -119,14 +114,14 @@ const TicketPage = ({
           ticket_comment_id: newCommentId,
           ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
           ticket_comment_type: "ACTION_UNDER_REVIEW",
-          ticket_comment_team_member_id: user.team_member_id,
+          ticket_comment_team_member_id: teamMember.team_member_id,
           ticket_comment_ticket_id: ticket.ticket_id,
         },
         notificationInput: [
           {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
-            notification_content: `An approver, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
+            notification_content: `An approver, ${currentUser.user_first_name} ${currentUser.user_last_name}, has self-assigned as the ticket approver`,
             notification_redirect_url: `/${formatTeamNameToUrlKey(
               activeTeam.team_name ?? ""
             )}/tickets/${ticket.ticket_id}`,
@@ -203,7 +198,8 @@ const TicketPage = ({
 
           {ticketStatus === "UNDER REVIEW" &&
             !isEditingResponse &&
-            ticket.ticket_requester_team_member_id !== user.team_member_id &&
+            ticket.ticket_requester_team_member_id !==
+              teamMember?.team_member_id &&
             !canAssignTicket && (
               <>
                 <Divider mt="md" />
@@ -211,7 +207,6 @@ const TicketPage = ({
                   ticket={ticket}
                   ticketForm={ticketForm}
                   setTicket={setTicket}
-                  user={user}
                   setRequestCommentList={setRequestCommentList}
                 />
                 <Divider mt="xl" />

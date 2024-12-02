@@ -7765,49 +7765,147 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      ticketId,
-      userId
+      ticketId
     } = input_data;
 
     const ticket = plv8.execute(
       `
-        SELECT
-          tt.*,
-          tct.ticket_category
-        FROM ticket_schema.ticket_table tt
-        INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-        WHERE ticket_id = '${ticketId}'
+        WITH ticket_data AS (
+          SELECT
+            tt.*,
+            ticket_category
+          FROM ticket_schema.ticket_table AS tt
+          INNER JOIN ticket_schema.ticket_category_table AS tct
+            ON tct.ticket_category_id = tt.ticket_category_id
+          WHERE ticket_id = $1
+        )
+        SELECT (
+          jsonb_build_object (
+            'ticket_id', ticket_id,
+            'ticket_status', ticket_status,
+            'ticket_date_created', ticket_date_created,
+            'ticket_status_date_updated', ticket_status_date_updated,
+            'ticket_is_disabled', ticket_is_disabled,
+            'ticket_category_id', ticket_category_id,
+            'ticket_requester_team_member_id', ticket_requester_team_member_id,
+            'ticket_approver_team_member_id', ticket_approver_team_member_id,
+            'ticket_category', ticket_category,
+            'ticket_requester', (
+              SELECT jsonb_build_object (
+                'team_member_id', team_member_id,
+                'team_member_team_id', team_member_team_id,
+                'team_member_role', team_member_role,
+                'team_member_user', (
+                  jsonb_build_object (
+                    'user_id', user_id,
+                    'user_first_name', user_first_name,
+                    'user_last_name', user_last_name,
+                    'user_email', user_email,
+                    'user_avatar', user_avatar
+                  )
+                )
+              )
+              FROM team_schema.team_member_table
+              JOIN user_schema.user_table 
+                ON team_member_user_id = user_id
+              WHERE team_member_id = ticket_requester_team_member_id
+            ),
+            'ticket_approver', (
+              SELECT jsonb_build_object (
+                'team_member_id', team_member_id,
+                'team_member_role', team_member_role,
+                'team_member_user', jsonb_build_object (
+                  'user_id', user_id,
+                  'user_first_name', user_first_name,
+                  'user_last_name', user_last_name,
+                  'user_email', user_email,
+                  'user_avatar', user_avatar
+                )
+              )
+              FROM team_schema.team_member_table
+              JOIN user_schema.user_table 
+                ON team_member_user_id = user_id
+              WHERE 
+                team_member_id = ticket_approver_team_member_id
+            ),
+            'ticket_comment', COALESCE (
+              (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'ticket_comment_id', ticket_comment_id,
+                    'ticket_comment_content', ticket_comment_content,
+                    'ticket_comment_is_disabled', ticket_comment_is_disabled,
+                    'ticket_comment_is_edited', ticket_comment_is_edited,
+                    'ticket_comment_type', ticket_comment_type,
+                    'ticket_comment_date_created', ticket_comment_date_created,
+                    'ticket_comment_last_updated', ticket_comment_last_updated,
+                    'ticket_comment_ticket_id', ticket_comment_ticket_id,
+                    'ticket_comment_team_member_id', ticket_comment_team_member_id,
+                    'ticket_comment_attachment', '[]'::jsonb,
+                    'ticket_comment_team_member', (
+                      jsonb_build_object (
+                        'team_member_user', (
+                          jsonb_build_object (
+                            'user_id', user_id,
+                            'user_first_name', user_first_name,
+                            'user_last_name', user_last_name,
+                            'user_username', user_username,
+                            'user_avatar', user_avatar
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+                FROM (
+                  SELECT *
+                  FROM ticket_schema.ticket_comment_table
+                  INNER JOIN team_schema.team_member_table 
+                    ON team_member_id = ticket_comment_team_member_id
+                  INNER JOIN user_schema.user_table 
+                    ON user_id = team_member_user_id
+                  WHERE
+                    ticket_comment_ticket_id = ticket_id
+                  ORDER BY ticket_comment_date_created DESC
+                ) AS ordered_comment
+              ), '[]'::jsonb
+            )
+          )
+        ) FROM ticket_data
+      `, [
+        ticketId
+      ]
+    )[0].jsonb_build_object;
+
+    const ticketForm = plv8.execute(
       `
-    )[0];
+        SELECT public.get_ticket_form($1)
+      `, [
+        {
+          category: ticket.ticket_category, 
+          teamId: ticket.ticket_requester.team_member_team_id
+        }
+      ]
+    )[0].get_ticket_form;
 
-    const requester = plv8.execute(
+    const responseData = plv8.execute(
       `
-        SELECT
-          team_member_id,
-          team_member_team_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_email,
-          user_avatar
-        FROM team_schema.team_member_table
-        JOIN user_schema.user_table ON team_member_user_id = user_id
-        WHERE team_member_id = '${ticket.ticket_requester_team_member_id}'
-      `
-    )[0];
+        SELECT * 
+        FROM ticket_schema.ticket_response_table 
+        WHERE 
+          ticket_response_ticket_id = $1
+      `, [
+        ticketId
+      ]
+    );
 
-    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.team_member_team_id}"}')`)[0].get_ticket_form;
-
-    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}'`);
-
-    const originalTicketSections = ticketForm.ticket_sections.map(section=>({
+    const originalTicketSections = ticketForm.ticket_sections.map(section => ({
       ...section,
       field_section_duplicatable_id: null,
-      ticket_section_fields: section.ticket_section_fields.map(field=>{
+      ticket_section_fields: section.ticket_section_fields.map(field => {
         return {
           ...field,
-          ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
+          ticket_field_response: responseData.filter(response => response.ticket_response_field_id === field.ticket_field_id)
         }
       })
     }));
@@ -7857,23 +7955,39 @@ AS $$
     });
 
     const ticketFormWithResponse = {
-      ticket_sections: sectionWithDuplicateList.map((section, sectionIdx)=>({
+      ticket_sections: sectionWithDuplicateList.map((section, sectionIdx) => ({
         ...section,
-        ticket_section_fields: section.ticket_section_fields.map((field,fieldIdx)=>{
+        ticket_section_fields: section.ticket_section_fields.map((field, fieldIdx) => {
           const responseArray = field.ticket_field_response
           let response = ""
           let responseId = ""
-          if(responseArray.length>0){
+          if(responseArray.length > 0){
             response = field.ticket_field_response[0]?.ticket_response_value || ""
             responseId = field.ticket_field_response[0]?.ticket_response_id || ""
           }
 
           let fieldOptions = field.ticket_field_option
-          if(ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1){
+          if (ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1) {
             const itemName = JSON.parse(sectionWithDuplicateList[0].ticket_section_fields[0].ticket_field_response[0]?.ticket_response_value)
-            const item = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_general_name = '${itemName}';`)[0];
-            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_schema.item_description_table WHERE item_description_item_id = '${item.item_id}';`);
-            fieldOptions = itemDescriptionList.map((description)=>description.item_description_label)
+            const item = plv8.execute(
+              `
+                SELECT * 
+                FROM item_schema.item_table 
+                WHERE item_general_name = $1
+              `, [
+                itemName
+              ]
+            )[0];
+            const itemDescriptionList = plv8.execute(
+              `
+                SELECT item_description_label 
+                FROM item_schema.item_description_table 
+                WHERE item_description_item_id = $1
+              `, [
+                item.item_id
+              ]
+            );
+            fieldOptions = itemDescriptionList.map((description) => description.item_description_label);
           }
 
           return {
@@ -7887,117 +8001,12 @@ AS $$
       }))
     }
 
-    let approver = null
-    if(ticket.ticket_approver_team_member_id !== null){
-      approver = plv8.execute(`SELECT jsonb_build_object (
-          'team_member_id', tm.team_member_id,
-          'team_member_role', tm.team_member_role,
-          'team_member_user', jsonb_build_object (
-              'user_id', u.user_id,
-              'user_first_name', u.user_first_name,
-              'user_last_name', u.user_last_name,
-              'user_email', u.user_email,
-              'user_avatar', u.user_avatar
-          )
-      ) AS member
-      FROM team_schema.team_member_table tm
-      JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
-    }
-
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
-
-    const member = plv8.execute(
-      `
-        SELECT tmt.team_member_id,
-        tmt.team_member_role,
-        jsonb_build_object(
-          'user_id', usert.user_id,
-          'user_first_name', usert.user_first_name,
-          'user_last_name', usert.user_last_name,
-          'user_avatar', usert.user_avatar,
-          'user_email', usert.user_email
-        ) AS team_member_user
-        FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
-        WHERE
-          tmt.team_member_team_id='${teamId}'
-          AND tmt.team_member_is_disabled=false
-          AND usert.user_is_disabled=false
-          AND usert.user_id='${userId}';
-      `
-    )[0];
-
-    const ticketCommentData = plv8.execute(
-      `
-        SELECT
-          ticket_comment_id,
-          ticket_comment_content,
-          ticket_comment_is_disabled,
-          ticket_comment_is_edited,
-          ticket_comment_type,
-          ticket_comment_date_created,
-          ticket_comment_last_updated,
-          ticket_comment_ticket_id,
-          ticket_comment_team_member_id,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_username,
-          user_avatar
-        FROM ticket_schema.ticket_comment_table
-        INNER JOIN team_schema.team_member_table ON team_member_id = ticket_comment_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          ticket_comment_ticket_id = '${ticketId}'
-        ORDER BY ticket_comment_date_created DESC
-      `
-    );
-
     returnData = {
-      ticket: {
-        ...ticket,
-        ticket_requester: {
-          team_member_id: requester.team_member_id,
-          team_member_role: requester.team_member_role,
-          team_member_user: {
-            user_id: requester.user_id,
-            user_first_name: requester.user_first_name,
-            user_last_name: requester.user_last_name,
-            user_avatar: requester.user_avatar,
-            user_email: requester.user_email
-          }
-        },
-        ticket_approver: approver ? approver.member : null,
-        ticket_comment: ticketCommentData.map(ticketComment => {
-          return {
-            ticket_comment_id: ticketComment.ticket_comment_id,
-            ticket_comment_content: ticketComment.ticket_comment_content,
-            ticket_comment_is_disabled: ticketComment.ticket_comment_is_disabled,
-            ticket_comment_is_edited: ticketComment.ticket_comment_is_edited,
-            ticket_comment_type: ticketComment.ticket_comment_type,
-            ticket_comment_date_created: ticketComment.ticket_comment_date_created,
-            ticket_comment_last_updated: ticketComment.ticket_comment_last_updated,
-            ticket_comment_ticket_id: ticketComment.ticket_comment_ticket_id,
-            ticket_comment_team_member_id: ticketComment.ticket_comment_team_member_id,
-            ticket_comment_attachment: [],
-            ticket_comment_team_member: {
-              team_member_user: {
-                user_id: ticketComment.user_id,
-                user_first_name: ticketComment.user_first_name,
-                user_last_name: ticketComment.user_last_name,
-                user_username: ticketComment.user_username,
-                user_avatar: ticketComment.user_avatar
-              }
-            }
-          }
-        }
-      )},
-      user: member,
+      ticket,
       ticketForm: ticketFormWithResponse,
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION assign_ticket(
