@@ -729,7 +729,9 @@ const RequestFormFields = ({
                   )
                     return true;
 
-                  const pattern = /^[A-Z0-9]+-[A-Z0-9]{4}$/;
+                  // prev regex: require serial to have 4 characters
+                  // /^[A-Z0-9]+-[A-Z0-9]{4}$/
+                  const pattern = /^[A-Z0-9]+-[A-Z0-9]+$/;
 
                   return (
                     pattern.test(`${value}`.trim()) ||
