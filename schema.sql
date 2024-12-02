@@ -8137,10 +8137,20 @@ AS $$
      rejectionMessage
     } = input_data;
 
-    returnData = plv8.execute(`UPDATE ticket_schema.ticket_table SET ticket_status='${status.toUpperCase()}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
-
- });
- return returnData;
+    returnData = plv8.execute(
+      `
+        UPDATE ticket_schema.ticket_table
+        SET
+          ticket_status = $1
+        WHERE ticket_id = $2
+        RETURNING *
+      `, [
+        status.toUpperCase(),
+        ticketId
+      ]
+    )[0];
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_ticket_list(
