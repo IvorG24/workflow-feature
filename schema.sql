@@ -8022,58 +8022,105 @@ AS $$
       teamMemberId
     } = input_data;
 
-    const member = plv8.execute(`SELECT *  FROM team_schema.team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
+    const member = plv8.execute(
+      `
+        SELECT *  
+        FROM team_schema.team_member_table WHERE team_member_id = $1
+      `, [
+        teamMemberId
+      ]
+    )[0];
 
     const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
 
-    plv8.execute(`UPDATE ticket_schema.ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
-
-    const updatedTicket = plv8.execute(`SELECT tt.*, tct.ticket_category
-      FROM ticket_schema.ticket_table tt
-      INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-      WHERE ticket_id='${ticketId}';
-    `)[0];
-
-    const requester = plv8.execute(
+    plv8.execute(
       `
-        SELECT tmt.team_member_id,
-        tmt.team_member_role,
-        jsonb_build_object(
-          'user_id', usert.user_id,
-          'user_first_name', usert.user_first_name,
-          'user_last_name', usert.user_last_name,
-          'user_avatar', usert.user_avatar,
-          'user_email', usert.user_email
-        ) AS team_member_user
-        FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
+        UPDATE ticket_schema.ticket_table 
+        SET
+          ticket_status = 'UNDER REVIEW',
+          ticket_status_date_updated = NOW(),
+          ticket_approver_team_member_id = $1
         WHERE
-          tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}'
-      `
+          ticket_id = $2
+      `, [
+        teamMemberId,
+        ticketId
+      ]
     )[0];
 
-    const approver = plv8.execute(
+    const updatedTicket = plv8.execute(
       `
-        SELECT tmt.team_member_id,
-        tmt.team_member_role,
-        jsonb_build_object(
-          'user_id', usert.user_id,
-          'user_first_name', usert.user_first_name,
-          'user_last_name', usert.user_last_name,
-          'user_avatar', usert.user_avatar,
-          'user_email', usert.user_email
-        ) AS team_member_user
-        FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
-        WHERE
-          tmt.team_member_id='${teamMemberId}'
-      `
-    )[0];
+        WITH ticket_data AS (
+          SELECT
+            tt.*,
+            tct.ticket_category
+          FROM ticket_schema.ticket_table tt
+          INNER JOIN ticket_schema.ticket_category_table tct
+            ON tct.ticket_category_id = tt.ticket_category_id
+          WHERE
+            ticket_id = $1
+          LIMIT 1
+        )
+        SELECT jsonb_build_object (
+          'ticket_id', ticket_id,
+          'ticket_status', ticket_status,
+          'ticket_date_created', ticket_date_created,
+          'ticket_status_date_updated', ticket_status_date_updated,
+          'ticket_is_disabled', ticket_is_disabled,
+          'ticket_category_id', ticket_category_id,
+          'ticket_requester_team_member_id', ticket_requester_team_member_id,
+          'ticket_approver_team_member_id', ticket_approver_team_member_id,
+          'ticket_category', ticket_category,
+          'ticket_requester', (
+            SELECT jsonb_build_object (
+              'team_member_id', team_member_id,
+              'team_member_role', team_member_role,
+              'team_member_user', (
+                jsonb_build_object (
+                  'user_id', user_id,
+                  'user_first_name', user_first_name,
+                  'user_last_name', user_last_name,
+                  'user_avatar', user_avatar,
+                  'user_email', user_email
+                )
+              )
+            )
+            FROM team_schema.team_member_table
+            INNER JOIN user_schema.user_table
+              ON team_member_user_id = user_id
+            WHERE
+              team_member_id = ticket_requester_team_member_id
+          ),
+          'ticket_approver', (
+            SELECT jsonb_build_object (
+              'team_member_id', team_member_id,
+              'team_member_role', team_member_role,
+              'team_member_user', (
+                jsonb_build_object (
+                  'user_id', user_id,
+                  'user_first_name', user_first_name,
+                  'user_last_name', user_last_name,
+                  'user_avatar', user_avatar,
+                  'user_email', user_email
+                )
+              )
+            )
+            FROM team_schema.team_member_table
+            INNER JOIN user_schema.user_table
+              ON team_member_user_id = user_id
+            WHERE
+              team_member_id = ticket_approver_team_member_id
+          )
+        ) FROM ticket_data
+      `, [
+        ticketId
+      ]
+    )[0].jsonb_build_object;
 
-    returnData = {...updatedTicket, ticket_requester: requester, ticket_approver: approver}
- });
- return returnData;
+    returnData = updatedTicket;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_ticket_status(

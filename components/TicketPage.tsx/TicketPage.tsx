@@ -96,7 +96,6 @@ const TicketPage = ({
         ticketId: ticket.ticket_id,
         currentTicketStatus: ticketStatus,
       });
-
       if (!updatedTicket) {
         notifications.show({
           message:
