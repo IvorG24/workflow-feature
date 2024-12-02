@@ -6599,7 +6599,10 @@ export const analyzeItem = async (
       },
     });
     if (error) throw error;
-    itemList.push(...(data as ResultType[]));
+    const formattedData = data as ResultType[];
+
+    itemList.push(...formattedData);
+    if (formattedData.length < 5) break;
   }
 
   const { count, error: countError } = await supabaseClient

@@ -424,7 +424,6 @@ CREATE TABLE request_schema.request_response_table (
   request_response VARCHAR(4000) NOT NULL,
   request_response_duplicatable_section_id UUID,
   request_response_prefix VARCHAR(4000),
-
   request_response_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   request_response_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL
 );
@@ -8281,100 +8280,126 @@ CREATE OR REPLACE FUNCTION analyze_item(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-let returnData;
-plv8.subtransaction(function(){
-  const {
-    itemName,
-    teamId,
-    page,
-    limit
-  } = input_data;
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      itemName,
+      teamId,
+      page,
+      limit
+    } = input_data;
 
-  const start = (page - 1) * limit;
+    const start = (page - 1) * limit;
 
-  const skippedField = [
-    "General Name",
-    "GL Account",
-    "CSI Code",
-    "Division Description",
-    "Level 2 Major Group Description",
-    "Level 2 Minor Group Description",
-    "Preferred Supplier",
-    "Requesting Project",
-    "Type",
-    "Date Needed",
-    "Purpose"
-  ]
+    const skippedField = [
+      "General Name",
+      "GL Account",
+      "CSI Code",
+      "Division Description",
+      "Level 2 Major Group Description",
+      "Level 2 Minor Group Description",
+      "Preferred Supplier",
+      "Requesting Project",
+      "Type",
+      "Date Needed",
+      "Purpose"
+    ]
 
-  const itemGeneralNameList = plv8.execute(
-    `
-      SELECT
-        request_response_table.*,
-        request_status,
-        request_formsly_id,
-        request_id
-      FROM request_schema.request_response_table
-      INNER JOIN public.request_view ON request_id = request_response_request_id
-        AND request_is_disabled = false
-      WHERE
-        request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
-        AND request_response = '"${itemName}"'
-      ORDER BY request_date_created DESC
-      LIMIT '${limit}'
-      OFFSET '${start}'
-    `
-  );
-
-  returnData = itemGeneralNameList.map((item) => {
-    const itemDescription = [];
-    let csiCodeDescription = "";
-    let quantity = 0;
-    let uom = "";
-
-    const itemDescriptionList = plv8.execute(
+    const itemGeneralNameList = plv8.execute(
       `
-        SELECT
-          request_response_table.*,
-          field_name
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE
-          request_response_request_id = '${item.request_response_request_id}' AND
-          request_response_duplicatable_section_id ${
-            item.request_response_duplicatable_section_id !== null ?
-              ` = '${item.request_response_duplicatable_section_id}'` :
-              "IS NULL"
-          }
-      `
-    );
+        WITH item_data AS (
+          SELECT
+            request_response,
+            request_status,
+            request_formsly_id,
+            request_id,
+            request_response_duplicatable_section_id
+          FROM request_schema.request_response_table
+          INNER JOIN public.request_view ON request_id = request_response_request_id
+            AND request_is_disabled = false
+          WHERE
+            request_response_field_id = 'b2c899e8-4ac7-4019-819e-d6ebcae71f41'
+            AND request_response = $1
+          ORDER BY request_date_created DESC
+          LIMIT $2
+          OFFSET $3
+        )
+        SELECT (
+          jsonb_agg (
+            jsonb_build_object (
+              'request_id', request_id,
+              'request_formsly_id', request_formsly_id,
+              'request_status', request_status,
+              'item_description', (
+                SELECT jsonb_agg (
+                  jsonb_build_object (
+                    'request_response_id', request_response_id,
+                    'request_response', request_response,
+                    'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                    'request_response_prefix', request_response_prefix,
+                    'request_response_request_id', request_response_request_id,
+                    'request_response_field_id', request_response_field_id,
+                    'field_name', field_name
+                  )
+                )
+                FROM request_schema.request_response_table
+                INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+                  AND field_name <> ALL($4)
+                WHERE
+                  request_response_request_id = request_id
+                  AND (
+                    (item_data.request_response_duplicatable_section_id IS NULL AND request_response_duplicatable_section_id IS NULL)
+                    OR
+                    (item_data.request_response_duplicatable_section_id = request_response_duplicatable_section_id)
+                  )
+              )
+            )
+          )
+        ) FROM item_data
+      `, [
+        `"${itemName}"`,
+        limit,
+        start,
+        skippedField
+      ]
+    )[0].jsonb_agg;
 
-    itemDescriptionList.forEach((description) => {
-      if(skippedField.includes(description.field_name)) return;
-
-      switch(description.field_name){
-        case "Base Unit of Measurement": uom = description.request_response; break;
-        case "Quantity": quantity = description.request_response; break;
-        case "CSI Code Description": csiCodeDescription = description.request_response; break;
-        default:
-          itemDescription.push({
-            field_name: description.field_name,
-            request_response: description.request_response
-          });
-      }
-    })
-
-    return {
-      request_id: item.request_id,
-      request_formsly_id: item.request_formsly_id,
-      item_description: itemDescription,
-      csi_code_description: csiCodeDescription,
-      quantity: quantity,
-      unit_of_measurement: uom,
-      request_status: item.request_status
+    if (!itemGeneralNameList) {
+      returnData = [];
+      return;
     }
+
+    returnData = itemGeneralNameList.map((item) => {
+      const itemDescription = [];
+      let csiCodeDescription = "";
+      let quantity = 0;
+      let uom = "";
+
+      item.item_description.forEach((description) => {
+        switch(description.field_name){
+          case "Base Unit of Measurement": uom = description.request_response; break;
+          case "Quantity": quantity = description.request_response; break;
+          case "CSI Code Description": csiCodeDescription = description.request_response; break;
+          default:
+            itemDescription.push({
+              field_name: description.field_name,
+              request_response: description.request_response
+            });
+        }
+      })
+
+      return {
+        request_id: item.request_id,
+        request_formsly_id: item.request_formsly_id,
+        item_description: itemDescription,
+        csi_code_description: csiCodeDescription,
+        quantity: quantity,
+        unit_of_measurement: uom,
+        request_status: item.request_status
+      }
+    });
   });
-});
-return returnData;
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_edit_request_on_load(
