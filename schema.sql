@@ -8178,88 +8178,98 @@ AS $$
 
     const ticket_list = plv8.execute(
       `
-        SELECT DISTINCT
-          ticket_table.*,
-          ticket_category_table.ticket_category,
-          user_table.user_id,
-          user_table.user_first_name,
-          user_table.user_last_name,
-          user_table.user_username,
-          user_table.user_avatar
-        FROM ticket_schema.ticket_table
-        INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_table.team_member_id
-        INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id
-        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        ${requester}
-        ${approver}
-        ${status}
-        ${category}
-        ${search}
-        ORDER BY ${columnAccessor} ${sort}
-        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-      `
-    );
+        WITH ticket_data AS (
+          SELECT DISTINCT
+            tt.*,
+            ticket_category,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_username,
+            user_avatar
+          FROM ticket_schema.ticket_table AS tt
+          INNER JOIN team_schema.team_member_table
+            ON ticket_requester_team_member_id = team_member_id
+          INNER JOIN ticket_schema.ticket_category_table AS tct
+            ON tct.ticket_category_id = tt.ticket_category_id
+          INNER JOIN user_schema.user_table
+            ON team_member_user_id = user_id
+          WHERE
+            team_member_team_id = $1
+            ${requester}
+            ${approver}
+            ${status}
+            ${category}
+            ${search}
+          ORDER BY ${columnAccessor} ${sort}
+          OFFSET $2 ROWS
+          FETCH FIRST $3 ROWS ONLY
+        )
+        SELECT (
+          jsonb_agg (
+            jsonb_build_object (
+              'ticket_approver_team_member_id', ticket_approver_team_member_id,
+              'ticket_category', ticket_category,
+              'ticket_category_id', ticket_category_id,
+              'ticket_date_created', ticket_date_created,
+              'ticket_id', ticket_id,
+              'ticket_is_disabled', ticket_is_disabled,
+              'ticket_requester_team_member_id', ticket_requester_team_member_id,
+              'ticket_status', ticket_status,
+              'ticket_status_date_updated', ticket_status_date_updated,
+              'ticket_requester_user', (
+                jsonb_build_object (
+                  'user_avatar', user_avatar,
+                  'user_first_name', user_first_name,
+                  'user_id', user_id,
+                  'user_last_name', user_last_name,
+                  'user_username', user_username
+                )
+              ),
+              'ticket_approver_user', (
+                SELECT jsonb_build_object (
+                  'user_avatar', user_avatar,
+                  'user_first_name', user_first_name,
+                  'user_id', user_id,
+                  'user_last_name', user_last_name,
+                  'user_username', user_username
+                )
+                FROM team_schema.team_member_table
+                INNER JOIN user_schema.user_table
+                  ON team_member_user_id = user_id
+                WHERE ticket_approver_team_member_id = team_member_id
+              )
+            )
+          )
+        ) FROM ticket_data
+      `, [
+        teamId,
+        start,
+        limit
+      ]
+    )[0].jsonb_agg;
 
     const ticket_count = plv8.execute(
       `
         SELECT DISTINCT COUNT(*)
         FROM ticket_schema.ticket_table
-        INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        ${requester}
-        ${approver}
-        ${status}
-        ${category}
-        ${search}
-      `
-    )[0];
-
-    const ticket_data = ticket_list.map(ticket => {
-      const approver_list = plv8.execute(
-        `
-        SELECT
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_username,
-        user_avatar
-        FROM ticket_schema.ticket_table
-        LEFT JOIN team_schema.team_member_table ON ticket_approver_team_member_id = team_member_id
-        LEFT JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-        WHERE ticket_id = '${ticket.ticket_id}'
-        `
-      )[0];
-      return {
-          ticket_approver_team_member_id: ticket.ticket_approver_team_member_id,
-          ticket_category: ticket.ticket_category,
-          ticket_category_id: ticket.ticket_category_id,
-          ticket_date_created: ticket.ticket_date_created,
-          ticket_id: ticket.ticket_id,
-          ticket_is_disabled: ticket.ticket_is_disabled,
-          ticket_requester_team_member_id: ticket.ticket_requester_team_member_id,
-          ticket_requester_user: {
-            user_avatar: ticket.user_avatar,
-            user_first_name: ticket.user_first_name,
-            user_id: ticket.user_id,
-            user_last_name: ticket.user_last_name,
-            user_username: ticket.user_username
-          },
-          ticket_approver_user: {
-            user_avatar: approver_list.user_avatar,
-            user_first_name: approver_list.user_first_name,
-            user_id: approver_list.user_id,
-            user_last_name: approver_list.user_last_name,
-            user_username: approver_list.user_username
-          },
-          ticket_status: ticket.ticket_status,
-          ticket_status_date_updated: ticket.ticket_status_date_updated
-        }
-    });
+        INNER JOIN team_schema.team_member_table
+          ON ticket_requester_team_member_id = team_member_id
+        WHERE
+          team_member_team_id = $1
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
+      `, [
+        teamId
+      ]
+    )[0].count
 
     returnData = {
-      data: ticket_data,
-      count: Number(ticket_count.count)
+      data: ticket_list,
+      count: Number(ticket_count)
     };
   });
   return returnData

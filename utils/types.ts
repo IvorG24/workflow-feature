@@ -1382,7 +1382,7 @@ export type TicketListType = ({
   ticket_approver_team_member_id: string;
   ticket_category: string;
   ticket_requester_user: TicketRequesterUserType;
-  ticket_approver_user: TicketApproverUserType;
+  ticket_approver_user: TicketApproverUserType | null;
 } & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
