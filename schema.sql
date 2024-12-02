@@ -8511,27 +8511,35 @@ AS $$
 
     const start = (page - 1) * limit;
 
-    const topRequestorList = plv8.execute(`
+    const topRequestorList = plv8.execute(
+      `
         WITH requestor_counts AS (
-            SELECT
-                request_team_member_id,
-                COUNT(*) AS requestor_count,
-                COUNT(*) FILTER (WHERE request_status = 'PENDING') AS pending_count,
-                COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
-                COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
-            FROM request_schema.request_table
-            WHERE
-                request_is_disabled = false
-                AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
-                AND request_form_id = '${formId}'
-            GROUP BY request_team_member_id
+          SELECT
+            request_team_member_id,
+            COUNT(*) AS requestor_count,
+            COUNT(*) FILTER (WHERE request_status = 'PENDING') AS pending_count,
+            COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
+            COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
+          FROM request_schema.request_table
+          WHERE
+            request_is_disabled = false
+            AND request_date_created BETWEEN $1 AND $2
+            AND request_form_id = $3
+          GROUP BY request_team_member_id
         )
         SELECT *
         FROM requestor_counts
         ORDER BY requestor_count DESC
-        LIMIT ${limit}
-        OFFSET ${start}
-    `);
+        LIMIT $4
+        OFFSET $5
+      `, [
+        startDate,
+        endDate,
+        formId,
+        limit,
+        start
+      ]
+    );
 
     const teamMemberList = topRequestorList.map(requestor => {
       return {
@@ -8546,8 +8554,8 @@ AS $$
     });
 
     returnData = teamMemberList;
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_equipment_part_list(
