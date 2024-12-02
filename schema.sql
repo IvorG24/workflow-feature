@@ -8714,38 +8714,48 @@ AS $$
             ${model ? "equipment_part_number, " : ""}
             ROW_NUMBER() OVER (PARTITION BY ${order}) AS row_number
           FROM equipment_schema.equipment_part_table
-          INNER JOIN equipment_schema.equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
-          INNER JOIN equipment_schema.equipment_table ON equipment_id = equipment_part_equipment_id
-          INNER JOIN equipment_schema.equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id
-          INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_part_brand_id
-          INNER JOIN equipment_schema.equipment_model_table ON equipment_model_id = equipment_part_model_id
-          INNER JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
-          WHERE
-            equipment_part_is_disabled = false
-            AND equipment_part_is_available = true
+          INNER JOIN equipment_schema.equipment_general_name_table
+            ON equipment_general_name_id = equipment_part_general_name_id
             AND equipment_general_name_is_disabled = false
             AND equipment_general_name_is_available = true
-            ${equipmentId ? `AND equipment_part_equipment_id = '${equipmentId}'` : ""}
+            ${generalName ? `AND equipment_general_name = '${generalName}'` : ""}
+          INNER JOIN equipment_schema.equipment_table
+            ON equipment_id = equipment_part_equipment_id
             AND equipment_is_disabled = false
             AND equipment_is_available = true
-            ${generalName ? `AND equipment_general_name = '${generalName}'` : ""}
+            ${equipmentId ? `AND equipment_part_equipment_id = '${equipmentId}'` : ""}
+          INNER JOIN equipment_schema.equipment_component_category_table
+            ON equipment_component_category_id = equipment_part_component_category_id
             AND equipment_component_category_is_disabled = false
             AND equipment_component_category_is_available = true
             ${componentCategory ? `AND equipment_component_category = '${componentCategory}'` : ""}
+          INNER JOIN equipment_schema.equipment_brand_table
+            ON equipment_brand_id = equipment_part_brand_id
             AND equipment_brand_is_disabled = false
             AND equipment_brand_is_available = true
             ${brand ? `AND equipment_brand = '${brand}'` : ""}
+          INNER JOIN equipment_schema.equipment_model_table
+            ON equipment_model_id = equipment_part_model_id
             AND equipment_model_is_disabled = false
             AND equipment_model_is_available = true
             ${model ? `AND equipment_model = '${model}'` : ""}
+          INNER JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table
+            ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
             AND equipment_unit_of_measurement_is_disabled = false
             AND equipment_unit_of_measurement_is_available = true
+          WHERE
+            equipment_part_is_disabled = false
+            AND equipment_part_is_available = true
         ) AS subquery
         WHERE row_number = 1
-        ORDER BY ${order}
-        LIMIT ${limit}
-        OFFSET ${index}
-      `
+        ORDER BY $1
+        LIMIT $2
+        OFFSET $3
+      `, [
+        order,
+        limit,
+        index
+      ]
     );
 
     returnData = data.map(value => {
