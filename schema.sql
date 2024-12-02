@@ -8601,7 +8601,7 @@ AS $$
           ON equipment_part_component_category_id = equipment_component_category_id
           AND equipment_component_category_is_disabled = false
         WHERE
-          equipment_part_equipment_id = '${equipmentId}'
+          equipment_part_equipment_id = $1
           AND equipment_part_is_disabled = false
           ${
             search &&
@@ -8613,14 +8613,20 @@ AS $$
             `
           }
         ORDER BY equipment_general_name
-        LIMIT ${limit}
-        OFFSET '${start}'
-      `
+        LIMIT $2
+        OFFSET $3
+      `, [
+        equipmentId,
+        limit,
+        start
+      ]
     );
 
     const count = plv8.execute(
       `
-        SELECT COUNT(equipment_part_id) FROM equipment_schema.equipment_part_table
+        SELECT 
+          COUNT(equipment_part_id) 
+        FROM equipment_schema.equipment_part_table
         LEFT JOIN equipment_schema.equipment_general_name_table
           ON equipment_part_general_name_id = equipment_general_name_id
           AND equipment_general_name_is_disabled = false
@@ -8637,7 +8643,7 @@ AS $$
           ON equipment_part_component_category_id = equipment_component_category_id
           AND equipment_component_category_is_disabled = false
         WHERE
-          equipment_part_equipment_id = '${equipmentId}'
+          equipment_part_equipment_id = $1
           AND equipment_part_is_disabled = false
           ${
             search &&
@@ -8648,15 +8654,17 @@ AS $$
               )
             `
           }
-      `
+      `, [
+        equipmentId
+      ]
     )[0].count;
 
     returnData = {
       data,
       count: Number(count)
     };
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_item_section_choices(

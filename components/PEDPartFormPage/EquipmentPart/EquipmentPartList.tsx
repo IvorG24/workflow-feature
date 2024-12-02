@@ -87,7 +87,7 @@ const EquipmentPartList = ({
 
       setEquipmentPartList(data);
       setEquipmentPartCount(Number(count));
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Error on fetching equipment part list",
         color: "red",
