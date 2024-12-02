@@ -1228,8 +1228,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-          ? 1
-          : 0
+        ? 1
+        : 0
     ),
     count: formattedData.projectCount,
   };
@@ -7578,4 +7578,55 @@ export const getPositionJobOffer = async (
   if (error) throw error;
 
   return data as PositionTableRow;
+};
+
+export const getAllOptionsPerBatch = async (
+  supabaseClient: SupabaseClient,
+  params: {
+    schema: string;
+    table: string;
+    select: string;
+    teamId: string;
+    index: number;
+    limit: number;
+    order: string;
+  }
+) => {
+  const { schema, table, select, teamId, index, limit, order } = params;
+  const { data, error } = await supabaseClient
+    .schema(`${schema}_schema`)
+    .from(`${table}_table`)
+    .select(select)
+    .eq(`${table}_team_id`, teamId)
+    .eq(`${table}_is_disabled`, false)
+    .eq(`${table}_is_available`, true)
+    .limit(limit)
+    .range(index, index + limit - 1)
+    .order(order);
+  if (error) throw error;
+
+  return data;
+};
+
+export const getDistinctCSIDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+    order: string;
+  }
+) => {
+  const { index, limit, order } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("csi_code_table")
+    .select("csi_code_level_three_description")
+    .limit(limit)
+    .range(index, index + limit - 1)
+    .order(order);
+  if (error) throw error;
+
+  return [
+    ...new Set(data.map((value) => value.csi_code_level_three_description)),
+  ];
 };

@@ -94,15 +94,19 @@ const TicketItemRequestForm = ({
             };
           });
 
-          const divisionResponse =
-            `${ticketForm.ticket_sections[0].ticket_section_fields[3].ticket_field_response}`
-              .split(",")
-              .map((division) => {
+          const initialDivisionResponse = ticketForm.ticket_sections[0]
+            .ticket_section_fields[3].ticket_field_response as
+            | string
+            | undefined;
+
+          const divisionResponse = initialDivisionResponse
+            ? initialDivisionResponse.split(",").map((division) => {
                 const response = divisionOption.find(
                   (option) => option.value === division
                 );
                 return response?.value;
-              });
+              })
+            : undefined;
 
           let divisionDescriptionOption: { label: string; value: string }[] =
             [];
@@ -141,7 +145,7 @@ const TicketItemRequestForm = ({
                 },
                 {
                   ...ticketForm.ticket_sections[0].ticket_section_fields[4],
-                  ticket_field_is_read_only: false,
+                  ticket_field_is_read_only: !Boolean(divisionResponse),
                   ticket_field_option: divisionDescriptionOption,
                 },
                 ...ticketForm.ticket_sections[0].ticket_section_fields.slice(5),
@@ -188,7 +192,6 @@ const TicketItemRequestForm = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -283,7 +286,7 @@ const TicketItemRequestForm = ({
           "ticket_sections.0.ticket_section_fields.0.ticket_field_response"
         );
       }
-    } catch {
+    } catch (e) {
       setValue(
         "ticket_sections.0.ticket_section_fields.0.ticket_field_response",
         ""
@@ -438,7 +441,12 @@ const TicketItemRequestForm = ({
               </Flex>
             );
           })}
-          <Button type="submit" mt="lg" fullWidth>
+          <Button
+            type="submit"
+            mt="lg"
+            fullWidth
+            disabled={Boolean(loadingFieldList.length)}
+          >
             {isEdit ? "Save Changes" : "Submit"}
           </Button>
         </form>
