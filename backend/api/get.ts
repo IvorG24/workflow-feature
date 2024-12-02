@@ -1726,7 +1726,6 @@ export const getTicketOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     ticketId: string;
-    userId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -1769,15 +1768,13 @@ export const getTicketList = async (
   } = params;
 
   const requesterCondition = requester
-    ?.map(
-      (value) => `ticket_table.ticket_requester_team_member_id = '${value}'`
-    )
+    ?.map((value) => `ticket_requester_team_member_id = '${value}'`)
     .join(" OR ");
   const approverCondition = approver
-    ?.map((value) => `ticket_table.ticket_approver_team_member_id = '${value}'`)
+    ?.map((value) => `ticket_approver_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
-    ?.map((value) => `ticket_table.ticket_status = '${value}'`)
+    ?.map((value) => `ticket_status = '${value}'`)
     .join(" OR ");
   const categoryCondition = category
     ?.map((value) => `ticket_table.ticket_category_id = '${value}'`)
@@ -1785,8 +1782,8 @@ export const getTicketList = async (
 
   const searchCondition =
     search && search?.length > 0 && validate(search)
-      ? `ticket_table.ticket_id = '${search}'`
-      : `ticket_table.ticket_id::text LIKE '${search}%'`;
+      ? `ticket_id = '${search}'`
+      : "";
 
   const { data, error } = await supabaseClient.rpc("fetch_ticket_list", {
     input_data: {
@@ -6600,7 +6597,10 @@ export const analyzeItem = async (
       },
     });
     if (error) throw error;
-    itemList.push(...(data as ResultType[]));
+    const formattedData = data as ResultType[];
+
+    itemList.push(...formattedData);
+    if (formattedData.length < 5) break;
   }
 
   const { count, error: countError } = await supabaseClient
@@ -6634,6 +6634,7 @@ export const getDashboardTopRequestor = async (
       input_data: params,
     }
   );
+
   if (error) throw error;
 
   return data as DashboardRequestorAndSignerType[];

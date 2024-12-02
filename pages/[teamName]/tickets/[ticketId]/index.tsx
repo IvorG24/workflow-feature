@@ -2,49 +2,41 @@ import { getTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import {
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  TicketType,
-} from "@/utils/types";
+import { CreateTicketFormValues, TicketType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(
-    async ({ context, supabaseClient, user }) => {
-      try {
-        const data = await getTicketOnLoad(supabaseClient, {
-          ticketId: `${context.query.ticketId}`,
-          userId: user.id,
-        });
+  withAuthAndOnboardingRequestPage(async ({ context, supabaseClient }) => {
+    try {
+      const data = await getTicketOnLoad(supabaseClient, {
+        ticketId: `${context.query.ticketId}`,
+      });
 
-        return {
-          props: {
-            ...data,
-          },
-        };
-      } catch (e) {
-        return {
-          redirect: {
-            destination: "/500",
-            permanent: false,
-          },
-        };
-      }
+      return {
+        props: {
+          ...data,
+        },
+      };
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
     }
-  );
+  });
 
 type Props = {
   ticket: TicketType;
-  user: CreateTicketPageOnLoad["member"];
   ticketForm: CreateTicketFormValues;
 };
 
-const Page = ({ ticket, user, ticketForm }: Props) => {
+const Page = ({ ticket, ticketForm }: Props) => {
   return (
     <>
       <Meta description="Ticket Page" url="/<teamName>/tickets/[ticketId]" />
-      <TicketPage ticket={ticket} user={user} ticketForm={ticketForm} />
+      <TicketPage ticket={ticket} ticketForm={ticketForm} />
     </>
   );
 };
