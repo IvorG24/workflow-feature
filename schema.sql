@@ -8784,33 +8784,41 @@ AS $$
 
     const start = (page - 1) * limit;
 
-    const topSignerList = plv8.execute(`
-      WITH signer_counts AS (
-        SELECT
-          signer_team_member_id,
-          COUNT(*) AS signer_count,
-          COUNT(*) FILTER (WHERE request_status = 'PENDING') AS pending_count,
-          COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
-          COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
-        FROM request_schema.request_signer_table
-        INNER JOIN form_schema.signer_table
-          ON signer_id = request_signer_signer_id
-          AND signer_is_disabled = false
-        INNER JOIN request_schema.request_table
-          ON request_id = request_signer_request_id
-          AND request_is_disabled = false
-          AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
-          AND request_form_id = '${formId}'
-        WHERE
-          request_status != 'CANCELED'
-        GROUP BY signer_team_member_id
-      )
-      SELECT *
-      FROM signer_counts
-      ORDER BY signer_count DESC
-      LIMIT ${limit}
-      OFFSET ${start}
-    `);
+    const topSignerList = plv8.execute(
+      `
+        WITH signer_counts AS (
+          SELECT
+            signer_team_member_id,
+            COUNT(*) AS signer_count,
+            COUNT(*) FILTER (WHERE request_status = 'PENDING') AS pending_count,
+            COUNT(*) FILTER (WHERE request_status = 'APPROVED') AS approved_count,
+            COUNT(*) FILTER (WHERE request_status = 'REJECTED') AS rejected_count
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table
+            ON signer_id = request_signer_signer_id
+            AND signer_is_disabled = false
+          INNER JOIN request_schema.request_table
+            ON request_id = request_signer_request_id
+            AND request_is_disabled = false
+            AND request_date_created BETWEEN $1 AND $2
+            AND request_form_id = $3
+          WHERE
+            request_status != 'CANCELED'
+          GROUP BY signer_team_member_id
+        )
+        SELECT *
+        FROM signer_counts
+        ORDER BY signer_count DESC
+        LIMIT $4
+        OFFSET $5
+      `, [
+        startDate,
+        endDate,
+        formId,
+        limit,
+        start
+      ]
+    );
 
     const teamMemberList = topSignerList.map(signer => {
       return {
@@ -8823,12 +8831,10 @@ AS $$
         team_member_id: signer.signer_team_member_id
       }
     });
-
     returnData = teamMemberList;
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION leave_team(
   team_id TEXT,
