@@ -8408,67 +8408,89 @@ CREATE OR REPLACE FUNCTION get_edit_request_on_load(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-let returnData;
-plv8.subtransaction(function(){
-  const {
-    userId,
-    requestId: initialRequestId,
-    referenceOnly
-  } = input_data;
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      requestId: initialRequestId,
+      referenceOnly
+    } = input_data;
 
-  const teamId = plv8.execute(`SELECT public.get_user_active_team_id($1)`, [userId])[0].get_user_active_team_id;
-  if (!teamId) throw new Error("No team found");
+    const isUUID = (str) => {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidPattern.test(str);
+    }
 
-  const isUUID = (str) => {
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidPattern.test(str);
-  }
+    let requestId = initialRequestId;
+    if(!isUUID(requestId)){
+      requestId = plv8.execute(
+        `
+          SELECT request_id
+          FROM public.request_view
+          WHERE
+            request_formsly_id = $1
+        `, [
+          initialRequestId
+        ]
+      )[0].request_id;
+    }
 
-  let requestId = initialRequestId;
-  if(!isUUID(requestId)){
-    requestId = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${initialRequestId}'`)[0].request_id;
-  }
+    const requestData = plv8.execute(
+      `
+        SELECT
+          request_form_id,
+          request_status,
+          user_id
+        FROM request_schema.request_table
+        INNER JOIN team_schema.team_member_table
+          ON team_member_id = request_team_member_id
+        INNER JOIN user_schema.user_table
+          ON user_id = team_member_user_id
+        WHERE
+          request_id = $1
+          AND request_is_disabled = false
+      `, [
+        requestId
+      ]
+    )[0];
 
-  const requestData = plv8.execute(
-    `
-      SELECT
-        request_form_id,
-        request_status,
-        user_id
-      FROM request_schema.request_table
-      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        request_id = '${requestId}'
-        AND request_is_disabled = false
-    `
-  )[0];
+    if (!referenceOnly) {
+      const isNotLRF = requestData.request_form_id !== '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a';
+      if (requestData.request_status !== 'PENDING' && isNotLRF) throw new Error("Request can't be edited")
+      if (!userId === requestData.user_id && isNotLRF) throw new Error("Requests can only be edited by the request creator")
+    }
 
-  if(!referenceOnly){
-    const isNotLRF = requestData.request_form_id !== '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a';
-    if (requestData.request_status !== 'PENDING' && isNotLRF) throw new Error("Request can't be edited")
-    if (!userId === requestData.user_id && isNotLRF) throw new Error("Requests can only be edited by the request creator")
-  }
+    const duplicatableSectionIdList = plv8.execute(
+      `
+        SELECT DISTINCT(request_response_duplicatable_section_id)
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = $1
+          AND request_response_duplicatable_section_id IS NOT NULL
+      `, [
+        requestId
+      ]
+    ).map(response => response.request_response_duplicatable_section_id);
 
-  const duplicatableSectionIdList = plv8.execute(
-    `
-      SELECT DISTINCT(request_response_duplicatable_section_id)
-      FROM request_schema.request_response_table
-      WHERE
-        request_response_request_id = '${requestId}'
-        AND request_response_duplicatable_section_id IS NOT NULL
-    `
-  ).map(response => response.request_response_duplicatable_section_id);
+    formData = plv8.execute(
+      `
+        SELECT public.create_request_page_on_load($1)
+      `, [
+        {
+          formId: requestData.request_form_id,
+          userId: userId,
+          connectedRequestFormslyId: initialRequestId
+        }
+      ]
+    )[0].create_request_page_on_load;
 
-  formData = plv8.execute(`SELECT public.create_request_page_on_load('{ "formId": "${requestData.request_form_id}", "userId": "${userId}", "connectedRequestFormslyId": "${initialRequestId}" }')`)[0].create_request_page_on_load;
-
-  returnData = {
-    ...formData,
-    duplicatableSectionIdList,
-    requestId
-  }
-});
-return returnData;
+    returnData = {
+      ...formData,
+      duplicatableSectionIdList,
+      requestId
+    }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_requestor(
