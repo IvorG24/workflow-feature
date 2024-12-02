@@ -83,9 +83,9 @@ const NodeSignerSection = ({ selectedNode, setIsDrawerOpen }: Props) => {
 
   return (
     <form onSubmit={handleSubmit(handleApplyChanges)}>
-      <Stack spacing="xs" pos="relative">
+      <Stack pos="relative">
         <LoadingOverlay visible={isFetchingOptions} overlayBlur={2} />
-        <Stack spacing="xs" mt="xs">
+        <Stack spacing="xs">
           <Flex align="center" key={`divider-${selectedNode.id}-0`}></Flex>
 
           <Controller

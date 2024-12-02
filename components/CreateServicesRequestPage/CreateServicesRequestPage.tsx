@@ -61,8 +61,7 @@ const CreateServicesRequestPage = ({
 
   const formId = router.query.formId as string;
   const moduleId = router.query.moduleId as string;
-  const nextForm = router.query.nextForm as string;
-  const moduleRequestId = router.query.requestId as string;
+  const moduleRequestId = router.query.moduleRequestId as string;
 
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -89,6 +88,7 @@ const CreateServicesRequestPage = ({
     form_team_member: form.form_team_member,
     form_type: form.form_type,
     form_sub_type: form.form_sub_type,
+    form_module_name: form.form_module_name,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -177,6 +177,7 @@ const CreateServicesRequestPage = ({
             projectId: projectId || "",
             teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
             userId: requestorProfile.user_id,
+            moduleVersion: form.form_module_version ?? "",
           });
 
           notifications.show({
@@ -184,19 +185,9 @@ const CreateServicesRequestPage = ({
             color: "green",
           });
 
-          if (!nextForm) {
-            await router.push(
-              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
-                moduleRequest.request_module_request_id
-              }`
-            );
-          } else {
-            await router.push(
-              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
-                moduleRequest.request_module_request_id
-              }?requestId=${moduleRequest.request_id}`
-            );
-          }
+          await router.push(
+            `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${moduleRequest.module_request_formsly_id_prefix}-${moduleRequest.module_request_formsly_id_serial}/view`
+          );
       }
     } catch (e) {
       notifications.show({

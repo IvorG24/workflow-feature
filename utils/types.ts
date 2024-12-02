@@ -613,6 +613,8 @@ export type PracticalTestQuestionTableInsert =
 export type PracticalTestQuestionTableUpdate =
   Database["hr_schema"]["Tables"]["practical_test_question_table"]["Update"];
 
+export type ModuleRequestTableRow =
+  Database["module_request_schema"]["Tables"]["module_request_table"]["Row"];
 // End: Database Table Types
 
 // Start: Database Enums
@@ -755,6 +757,10 @@ export type RequestWithResponseType = RequestTableRow & {
     targetNode: TargetNode[];
     workflowNodeData: TargetNode[];
   };
+  request_next_form?: {
+    request_next_form_name: string;
+    request_next_form_id: string;
+  };
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
     request_signer_status: string;
@@ -855,6 +861,8 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_module_name?: string;
+  form_module_version?: string;
   form_type?: string;
   form_sub_type?: string;
   form_team_member: {
@@ -911,6 +919,7 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_module_name?: string;
   form_type?: string;
   form_sub_type?: string;
   form_team_member: {
@@ -2958,6 +2967,7 @@ export type FilterFormValues = {
 
 export type WorkflowTableParams = {
   isAscendingSort: boolean;
+  columnAccessor: string;
   page: number;
   limit: number;
   search?: string;
@@ -2994,6 +3004,8 @@ export type ModuleRequestList = {
   request_id: string;
   module_request_id: string;
   module_name: string;
+  module_request_list_prefix: string;
+  module_request_list_serial: string;
   module_connection_module_version_id: string;
   date_created: string;
   form_name: string;

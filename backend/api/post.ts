@@ -46,6 +46,7 @@ import {
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
+  ModuleRequestTableRow,
   ModuleType,
   NotificationTableInsert,
   OtherExpensesTypeTableInsert,
@@ -2808,7 +2809,6 @@ export const createModule = async (
     moduleItems: ModuleType[];
     teamId: string;
     teamMemberId: string;
-    currentDate: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -2846,6 +2846,7 @@ export const createModuleRequest = async (
     moduleId: string;
     teamMemberId: string;
     moduleRequestId?: string;
+    moduleVersion: string;
     signers: FormWithResponseType["form_signer"];
     teamId: string;
     requesterName: string;
@@ -2858,14 +2859,13 @@ export const createModuleRequest = async (
 ) => {
   const {
     requestFormValues,
-    // signers,
     moduleRequestId,
     teamId,
-    // requesterName,
+    moduleVersion,
     formName,
     isFormslyForm,
     projectId,
-    // teamName,
+    signers,
     userId,
   } = params;
 
@@ -2940,8 +2940,6 @@ export const createModuleRequest = async (
       }
     }
   }
-  // get request signers
-  const requestSignerInput: RequestSignerTableInsert[] = [];
 
   // get signer notification
   const requestSignerNotificationInput: NotificationTableInsert[] = [];
@@ -2963,13 +2961,6 @@ export const createModuleRequest = async (
     })
     .join(",");
 
-  const signerValues = requestSignerInput
-    .map(
-      (signer) =>
-        `('${signer.request_signer_signer_id}','${signer.request_signer_request_id}')`
-    )
-    .join(",");
-
   const { data, error } = await supabaseClient
     .rpc("create_module_request", {
       input_data: {
@@ -2978,8 +2969,9 @@ export const createModuleRequest = async (
         moduleId: params.moduleId,
         teamMemberId: params.teamMemberId,
         moduleRequestId: moduleRequestId,
+        moduleVersion,
         responseValues,
-        signerValues,
+        signers,
         requestSignerNotificationInput,
         formName,
         isFormslyForm,
@@ -2990,7 +2982,8 @@ export const createModuleRequest = async (
     .select()
     .single();
   if (error) throw error;
-  return data as RequestTableRow;
+
+  return data as ModuleRequestTableRow;
 };
 
 export const moduleSignerValidation = async (

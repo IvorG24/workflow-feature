@@ -60,8 +60,8 @@ const CreateOtherExpensesRequestPage = ({
 }: Props) => {
   const router = useRouter();
   const moduleId = router.query.moduleId as string;
-  const moduleRequestId = router.query.requestId as string;
-  const nextForm = router.query.nextForm as string;
+  const moduleRequestId = router.query.moduleRequestId as string;
+
   const formId = router.query.formId as string;
 
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -90,6 +90,7 @@ const CreateOtherExpensesRequestPage = ({
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_module_name: form.form_module_name,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -177,25 +178,16 @@ const CreateOtherExpensesRequestPage = ({
             projectId: projectId,
             teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
             userId: requestorProfile.user_id,
+            moduleVersion: form.form_module_version ?? "",
           });
           notifications.show({
             message: "Module Request created.",
             color: "green",
           });
 
-          if (!nextForm) {
-            await router.push(
-              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
-                moduleRequest.request_module_request_id
-              }`
-            );
-          } else {
-            await router.push(
-              `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${
-                moduleRequest.request_module_request_id
-              }?requestId=${moduleRequest.request_id}`
-            );
-          }
+          await router.push(
+            `/${formatTeamNameToUrlKey(team.team_name ?? "")}/module-request/${moduleRequest.module_request_formsly_id_prefix}-${moduleRequest.module_request_formsly_id_serial}/view`
+          );
 
           break;
       }

@@ -127,7 +127,6 @@ const OtherExpensesRequestPage = ({
     isEndNode,
     fetchNodeAndForm,
     handleCreateNextForm,
-    isNextFormSubmitted,
     isHidden,
     workflowNodeData,
   } = useNodeAndForm({
@@ -626,11 +625,10 @@ const OtherExpensesRequestPage = ({
     return (
       !requestType &&
       isEndNode &&
-      nextForm &&
-      !isNextFormSubmitted &&
+      nextForm?.request_next_form_name &&
       isUserOwner
     );
-  }, [requestType, isEndNode, nextForm, isNextFormSubmitted, isUserOwner]);
+  }, [requestType, isEndNode, nextForm, isUserOwner]);
 
   return (
     <Container>
@@ -649,7 +647,7 @@ const OtherExpensesRequestPage = ({
               leftIcon={<IconPlus size={16} />}
               onClick={handleCreateNextForm}
             >
-              Create {nextForm?.form_name} Form
+              Create {nextForm?.request_next_form_name} Form
             </Button>
           )}
         </Group>

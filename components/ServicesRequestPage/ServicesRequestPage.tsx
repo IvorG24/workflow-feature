@@ -124,7 +124,6 @@ const ServicesRequestPage = ({
     isEndNode,
     fetchNodeAndForm,
     handleCreateNextForm,
-    isNextFormSubmitted,
     isHidden,
     workflowNodeData,
   } = useNodeAndForm({
@@ -600,12 +599,11 @@ const ServicesRequestPage = ({
     return (
       !requestType &&
       isEndNode &&
-      nextForm &&
-      !isNextFormSubmitted &&
+      nextForm?.request_next_form_name &&
       isUserOwner
     );
-  }, [requestType, isEndNode, nextForm, isNextFormSubmitted, isUserOwner]);
-  
+  }, [requestType, isEndNode, nextForm, isUserOwner]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -624,7 +622,7 @@ const ServicesRequestPage = ({
               leftIcon={<IconPlus size={16} />}
               onClick={handleCreateNextForm}
             >
-              Create {nextForm?.form_name} Form
+              Create {nextForm?.request_next_form_name} Form
             </Button>
           )}
         </Group>
@@ -736,14 +734,12 @@ const ServicesRequestPage = ({
           <RequestSignerSection signerList={signerList} />
         ) : (
           <>
-            {!isEndNode && !noNodes && (
-              <RequestSignerSectionModule
-                signerList={initialRequestSignerList.map((signer) => ({
-                  ...signer,
-                  request_signer_status_date_updated: null,
-                }))}
-              />
-            )}
+            <RequestSignerSectionModule
+              signerList={initialRequestSignerList.map((signer) => ({
+                ...signer,
+                request_signer_status_date_updated: null,
+              }))}
+            />
           </>
         )}
       </Stack>

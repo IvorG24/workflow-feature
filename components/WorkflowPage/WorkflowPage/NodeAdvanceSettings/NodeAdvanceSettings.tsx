@@ -37,7 +37,10 @@ const NodeAdvanceSettings = ({ selectedNode }: Props) => {
         sx={{ marginTop: "50" }}
       >
         <Box>
-          <NodeSignerSection setIsDrawerOpen={setIsDrawerOpen} selectedNode={selectedNode} />
+          <NodeSignerSection
+            setIsDrawerOpen={setIsDrawerOpen}
+            selectedNode={selectedNode}
+          />
         </Box>
       </Drawer>
     </>

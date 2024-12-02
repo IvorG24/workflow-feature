@@ -1,8 +1,4 @@
-import {
-  RequestListFilterValues,
-  TeamMemberWithUserType,
-  TeamProjectTableRow,
-} from "@/utils/types";
+import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -35,6 +31,7 @@ type FilterSelectedValuesType = {
   approver: string[];
   search: string;
   isAscendingSort: boolean;
+  isApprover: boolean;
 };
 
 const ModuleRequestListFilter = ({
@@ -65,6 +62,7 @@ const ModuleRequestListFilter = ({
       approver: [],
       search: "",
       isAscendingSort: false,
+      isApprover: false,
     });
   const [isFilter, setIsfilter] = useState(false);
 
@@ -75,7 +73,8 @@ const ModuleRequestListFilter = ({
     },
     { label: "Owner", value: "OWNER" },
   ];
-  const { register, control } = useFormContext<RequestListFilterValues>();
+  const { register, control, setValue, watch } =
+    useFormContext<FilterSelectedValuesType>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
@@ -133,6 +132,20 @@ const ModuleRequestListFilter = ({
             offLabel={"OFF"}
             checked={isFilter}
             onChange={(event) => setIsfilter(event.currentTarget.checked)}
+          />
+        </Flex>
+
+        <Flex gap="sm" wrap="wrap" align="center">
+          <p>Approvers View</p>
+          <Switch
+            {...register("isApprover")}
+            onLabel={"ON"}
+            offLabel={"OFF"}
+            checked={watch("isApprover")}
+            onChange={(event) => {
+              setValue("isApprover", event.currentTarget.checked);
+              handleFilterForms();
+            }}
           />
         </Flex>
       </Flex>

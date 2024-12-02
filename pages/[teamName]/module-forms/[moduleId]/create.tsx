@@ -1,4 +1,4 @@
-import { getFormid } from "@/backend/api/get";
+import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
@@ -18,20 +18,14 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const { moduleId, nextForm } = context.query;
-
-      const formIdData = await getFormid(supabaseClient, {
-        moduleId: moduleId as string,
-      });
-
-      const formId = nextForm ?? formIdData[0].form_id;
+      const { moduleId, moduleRequestId } = context.query;
 
       const { data, error } = await supabaseClient.rpc(
         "create_module_request_page_on_load",
         {
           input_data: {
             moduleId: moduleId as string,
-            formId: formId,
+            moduleRequestId: moduleRequestId as string,
             userId: user.id,
           },
         }
@@ -123,7 +117,7 @@ const Page = ({ form, projectOptions, categoryOptions }: Props) => {
         );
       case "IT Asset":
         return (
-          <CreateItemRequestPage
+          <CreateITAssetRequestPage
             type="Module Request"
             projectOptions={projectOptions}
             form={form}

@@ -201,6 +201,7 @@ const WorkflowPage = ({
         });
         return;
       }
+
       const hasUntargetedNode =
         basicNodes.some(
           (node) => !edges.some((edge) => edge.target === node.id)
@@ -230,7 +231,6 @@ const WorkflowPage = ({
       }
 
       const hasEmptySigner = basicNodes.some((node) => {
-        // Determine if the node's toolbar should be hidden
         const toolbarHidden = !edges.some((edge) => edge.source === node.id);
 
         if (toolbarHidden) {
@@ -281,7 +281,7 @@ const WorkflowPage = ({
 
           break;
         case "edit":
-          const workflowIdNew = await updateWorkflow(supabaseClient, {
+          await updateWorkflow(supabaseClient, {
             workflowId: workflowUUID,
             label,
             nodes,
@@ -296,7 +296,7 @@ const WorkflowPage = ({
           await router.push(
             `/${formatTeamNameToUrlKey(
               activeTeam.team_name
-            )}/workflows/${workflowIdNew}`
+            )}/workflows/${workflowUUID}`
           );
           break;
         case "view":
@@ -307,8 +307,6 @@ const WorkflowPage = ({
           );
       }
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -437,7 +435,6 @@ const WorkflowPage = ({
     if (edge.source === selectedNode?.id) {
       const targetNode = nodes.find((node) => node.id === edge.target);
 
-      // Return false if the node exists and is not of type "end"
       return targetNode && targetNode.type !== "end";
     }
     return false;

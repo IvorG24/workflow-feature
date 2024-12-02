@@ -1,5 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { CREATE_NODE_OPTION, END_NODE_OPTION } from "@/utils/constant";
+import { CREATE_NODE_OPTION } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { BasicNodeType, NodeOption } from "@/utils/types";
 import {
@@ -50,10 +50,8 @@ const WorkflowMenu = ({
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
-  const newOptions = [...options, END_NODE_OPTION, CREATE_NODE_OPTION];
-  const [selectedNodeOption, setSelectedNodeOption] = useState<NodeOption>(
-    newOptions[0]
-  );
+  const newOptions = [...options, CREATE_NODE_OPTION];
+  const [selectedNodeOption, setSelectedNodeOption] = useState<NodeOption>();
   const [isLoading, setIsLoading] = useState(false);
 
   const buttonText = () => {
@@ -107,6 +105,9 @@ const WorkflowMenu = ({
     );
   };
 
+  const handleAddNextNode = () => {
+    onAddNode("end", "End", "#FFE4E1", "#FFFFFF");
+  };
   return (
     <Flex
       sx={{
@@ -189,10 +190,18 @@ const WorkflowMenu = ({
           />
           <Button
             variant="default"
-            leftIcon={<IconPlus size={14} stroke={5} color="#141517" />}
+            leftIcon={<IconPlus size={16} stroke={5} color="#141517" />}
             onClick={handleAddNodeClick}
           >
             Add Node
+          </Button>
+
+          <Button
+            variant="default"
+            leftIcon={<IconPlus size={16} stroke={5} color="#141517" />}
+            onClick={handleAddNextNode}
+          >
+            Add Next Node
           </Button>
         </Flex>
       )}

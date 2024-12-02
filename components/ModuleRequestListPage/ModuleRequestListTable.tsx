@@ -1,16 +1,13 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   BASE_URL,
+  COLOR_SET_OPTIONS,
   DEFAULT_REQUEST_LIST_LIMIT,
   formatDate,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import {
-  ModuleRequestList,
-  RequestListFilterValues,
-  TeamMemberWithUserType,
-} from "@/utils/types";
+import { ModuleRequestList, TeamMemberWithUserType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -29,6 +26,7 @@ import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
+import { FilterSelectedValuesType } from "./ModuleRequestListPage";
 
 type Props = {
   moduleRequestList: ModuleRequestList[];
@@ -40,7 +38,7 @@ type Props = {
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  setValue: UseFormSetValue<RequestListFilterValues>;
+  setValue: UseFormSetValue<FilterSelectedValuesType>;
   checkIfColumnIsHidden: (column: string) => boolean;
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
@@ -107,23 +105,29 @@ const ModuleRequestListTable = ({
           title: "Module Request ID",
           width: 180,
           hidden: checkIfColumnIsHidden("request_id"),
-          render: ({ request_id, module_request_id }) => {
+          render: ({
+            request_id,
+            module_request_formsly_id_prefix,
+            module_request_formsly_id_serial,
+          }) => {
             return (
               <Flex key={String(request_id)} justify="space-between">
                 <Text truncate maw={150}>
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/module-request/${module_request_id}?requestId=${request_id}`}
+                    )}/module-request/${module_request_formsly_id_prefix}-${module_request_formsly_id_serial}/view`}
                     target="_blank"
                   >
-                    {String(module_request_id)}
+                    {String(
+                      `${module_request_formsly_id_prefix}-${module_request_formsly_id_serial}`
+                    )}
                   </Anchor>
                 </Text>
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/module-request/${request_id}`}
+                  )}/module-request/${module_request_formsly_id_prefix}-${module_request_formsly_id_serial}/view`}
                 >
                   {({ copied, copy }) => (
                     <Tooltip
@@ -158,8 +162,10 @@ const ModuleRequestListTable = ({
           title: "Date Created",
           hidden: checkIfColumnIsHidden("date_created"),
           sortable: true,
-          render: ({ date_created }) => (
-            <Text>{formatDate(new Date(String(date_created)))}</Text>
+          render: ({ module_request_date_created }) => (
+            <Text>
+              {formatDate(new Date(String(module_request_date_created)))}
+            </Text>
           ),
         },
         {
@@ -167,10 +173,12 @@ const ModuleRequestListTable = ({
           title: "Form Name",
           sortable: true,
           hidden: checkIfColumnIsHidden("form_name"),
-          render: ({ form_name }) => {
+          render: (record) => {
+            const { module_request_latest_form_name } = record;
+
             return (
               <Text truncate maw={150}>
-                {String(form_name)}
+                {String(module_request_latest_form_name)}
               </Text>
             );
           },
@@ -181,20 +189,28 @@ const ModuleRequestListTable = ({
           sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
           render: (record) => {
-            const { request_status, status_color, status_font_color } = record;
+            const {
+              module_request_latest_status,
+              node_type_font_color,
+              node_type_background_color,
+            } = record;
 
             return (
               <Flex>
                 <Badge
                   variant="filled"
-                  styles={{
+                  color={
+                    COLOR_SET_OPTIONS[
+                      node_type_background_color as keyof typeof COLOR_SET_OPTIONS
+                    ]
+                  }
+                  sx={{
                     root: {
-                      background: status_color as string,
-                      color: status_font_color as string,
+                      color: node_type_font_color as string,
                     },
                   }}
                 >
-                  {String(request_status)}
+                  {String(module_request_latest_status)}
                 </Badge>
               </Flex>
             );
@@ -211,7 +227,7 @@ const ModuleRequestListTable = ({
               user_first_name,
               user_last_name,
               request_team_member_id,
-            } = request.created_by as {
+            } = request as {
               user_id: string;
               user_first_name: string;
               user_last_name: string;
@@ -247,9 +263,10 @@ const ModuleRequestListTable = ({
           sortable: true,
           hidden: checkIfColumnIsHidden("approved_by"),
           render: (record) => {
+            const { module_request_latest_approver } = record;
             return (
               <Flex px={0} gap={8} align="center">
-                <Text>{String(record.approver)}</Text>
+                <Text>{String(module_request_latest_approver)}</Text>
               </Flex>
             );
           },
@@ -259,7 +276,10 @@ const ModuleRequestListTable = ({
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
           textAlignment: "center",
-          render: ({ module_request_id }) => {
+          render: ({
+            module_request_formsly_id_prefix,
+            module_request_formsly_id_serial,
+          }) => {
             return (
               <Flex justify="center">
                 <ActionIcon
@@ -268,7 +288,7 @@ const ModuleRequestListTable = ({
                     router.push(
                       `/${formatTeamNameToUrlKey(
                         activeTeam.team_name ?? ""
-                      )}/module-request/${module_request_id}/view`
+                      )}/module-request/${module_request_formsly_id_prefix}-${module_request_formsly_id_serial}/view`
                     );
                   }}
                 >

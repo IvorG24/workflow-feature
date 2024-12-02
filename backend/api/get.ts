@@ -6984,31 +6984,33 @@ export const getWorkFlowTableOnLoad = async (
     isAscendingSort,
     creatorList,
     dateRange,
+    columnAccessor,
     teamId,
   } = params;
 
   const creatorListArray = Array.isArray(creatorList)
     ? creatorList
     : [creatorList];
+
   const searchCondition =
     search && validate(search)
-      ? `wt.workflow_id = '${search}'`
-      : `wt.workflow_label::text ILIKE '%' || '${search}' || '%'`;
+      ? `workflow_id = '${search}'`
+      : `workflow_label::text ILIKE '%' || '${search}' || '%'`;
 
   const creatorCondition =
     creatorListArray.length > 0
       ? creatorListArray
-          .map((value) => `tmt.team_member_role = '${value}'`)
+          .map((value) => `team_member_table.team_member_role = '${value}'`)
           .join(" OR ")
       : "";
 
   const dateRangeCondition =
     dateRange.length === 2 && dateRange[0] && dateRange[1]
-      ? `(wt.workflow_date_created BETWEEN '${new Date(
+      ? `(workflow_date_created BETWEEN '${new Date(
           dateRange[0]
         ).toISOString()}' AND '${new Date(dateRange[1]).toISOString()}')`
       : dateRange.length === 1 && dateRange[0]
-        ? `wt.workflow_date_created = '${new Date(dateRange[0]).toISOString()}'`
+        ? `workflow_date_created = '${new Date(dateRange[0]).toISOString()}'`
         : "";
 
   const input = {
@@ -7019,6 +7021,7 @@ export const getWorkFlowTableOnLoad = async (
     creatorList: creatorCondition ? `AND (${creatorCondition})` : "",
     dateRange: dateRangeCondition ? `AND (${dateRangeCondition})` : "",
     teamId: teamId,
+    columnAccessor,
   };
 
   const { data, error } = await supabaseClient.rpc("workflow_table_on_load", {
@@ -7090,6 +7093,10 @@ export const getModuleRequestList = async (
     approver?: string[];
     form?: string[];
     teamId: string;
+    columnAccessor: string;
+    isApprover?: boolean;
+    teamGroup: string[];
+    teamMemberId: string;
   }
 ) => {
   const {
@@ -7098,9 +7105,13 @@ export const getModuleRequestList = async (
     isAscendingSort,
     search,
     requestor,
+    columnAccessor,
     approver,
     teamId,
     form,
+    isApprover,
+    teamGroup,
+    teamMemberId,
   } = params;
 
   const creatorListArray = Array.isArray(requestor) ? requestor : [requestor];
@@ -7109,20 +7120,23 @@ export const getModuleRequestList = async (
 
   const searchCondition =
     search && validate(search)
-      ? `mr.module_request_id = '${search}'`
-      : `mr.module_request_id::text ILIKE '%' || '${search}' || '%'`;
+      ? `module_request_table.module_request_id = '${search}'`
+      : "";
 
   const formListCondition =
     formListArray.length > 0
       ? formListArray
-          .map((value) => `mr.module_request_latest_form_name = '${value}'`)
+          .map(
+            (value) =>
+              `module_request_table.module_request_latest_form_name = '${value}'`
+          )
           .join(" OR ")
       : "";
 
   const creatorCondition =
     creatorListArray.length > 0
       ? creatorListArray
-          .map((value) => `tm.team_member_role = '${value}'`)
+          .map((value) => `user_table.team_member_role = '${value}'`)
           .join(" OR ")
       : "";
 
@@ -7131,7 +7145,7 @@ export const getModuleRequestList = async (
       ? approverListArray
           .map(
             (value) =>
-              `mr.module_request_latest_approver ILIKE '%' || '${value}' || '%'`
+              `module_request_table.module_request_latest_approver ILIKE '%' || '${value}' || '%'`
           )
           .join(" OR ")
       : "";
@@ -7145,6 +7159,10 @@ export const getModuleRequestList = async (
     creator: creatorCondition ? `AND (${creatorCondition})` : "",
     approver: approverCondition ? `AND (${approverCondition})` : "",
     teamId: teamId,
+    teamMemberId,
+    columnAccessor,
+    isApprover,
+    teamGroup,
   };
 
   const { data, error } = await supabaseClient.rpc(
@@ -7154,9 +7172,7 @@ export const getModuleRequestList = async (
     }
   );
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
   return data as {
     ModuleRequestList: ModuleRequestList[];
@@ -7204,30 +7220,38 @@ export const getModuleList = async (
     dateRange: Date[];
     sort?: boolean;
     searchFilter?: string;
-    columnAccessor?: string;
+    columnAccessor: string;
   }
 ) => {
-  const { teamId, creator, dateRange, page, limit, sort, searchFilter } =
-    params;
+  const {
+    teamId,
+    creator,
+    dateRange,
+    page,
+    limit,
+    sort,
+    searchFilter,
+    columnAccessor,
+  } = params;
   const searchCondition =
     searchFilter && validate(searchFilter)
-      ? `module_id = '${searchFilter}'`
-      : `module_id::text ILIKE '%' || '${searchFilter}' || '%'`;
+      ? `AND module_table.module_id = '${searchFilter}'`
+      : "";
 
   const creatorCondition =
     creator.length > 0
       ? creator
-          .map((value) => `tmtc.team_member_role = '${value}'`)
+          .map((value) => `created_team_member.team_member_role = '${value}'`)
           .join(" OR ")
       : "";
 
   const dateRangeCondition =
     dateRange.length === 2 && dateRange[0] && dateRange[1]
-      ? `(module_version_date_created BETWEEN '${new Date(
+      ? `(module_version_table.module_version_date_created BETWEEN '${new Date(
           dateRange[0]
         ).toISOString()}' AND '${new Date(dateRange[1]).toISOString()}')`
       : dateRange.length === 1 && dateRange[0]
-        ? `module_version_date_created = '${new Date(dateRange[0]).toISOString()}'`
+        ? `module_version_table.module_version_date_created = '${new Date(dateRange[0]).toISOString()}'`
         : "";
 
   const { data, error } = await supabaseClient.rpc("get_module_list", {
@@ -7239,6 +7263,7 @@ export const getModuleList = async (
       searchFilter: searchCondition,
       creator: creatorCondition ? `AND (${creatorCondition})` : "",
       dateRange: dateRangeCondition ? `AND (${dateRangeCondition})` : "",
+      columnAccessor: columnAccessor,
     },
   });
 

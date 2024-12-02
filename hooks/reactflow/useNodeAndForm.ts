@@ -1,12 +1,8 @@
-import {
-  checkApproverGroup,
-  checkFormIfExist,
-  getFormid,
-} from "@/backend/api/get";
+import { checkApproverGroup } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { ModuleFormItem, RequestWithResponseType } from "@/utils/types";
+import { RequestWithResponseType } from "@/utils/types";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
@@ -38,24 +34,20 @@ const useNodeAndForm = ({
   const [approverGroup, setApproverGroup] = useState<string[]>([]);
   const [isEndNode, setIsEndNode] = useState(false);
   const [isEmptyNode, setisEmptyNode] = useState(false);
-  const [formExist, setFormExist] = useState<ModuleFormItem[]>([]);
-  const [isNextFormSubmitted, setIsNextFormSubmitted] = useState<
-    boolean | null
-  >(false);
+
   const [isHidden, setIsHidden] = useState<boolean>(false);
   const [nextForm, setNextForm] = useState<{
-    form_id: string;
-    form_name: string;
+    request_next_form_id: string;
+    request_next_form_name: string;
   } | null>(null);
 
   const handleCreateNextForm = async () => {
     if (nextForm) {
       router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/module-forms/${moduleId}/create?nextForm=${nextForm.form_id}&requestId=${moduleRequestId}`
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/module-forms/${moduleId}/create?moduleRequestId=${moduleRequestId}`
       );
     }
   };
-  console.log(request);
 
   const isTeamIdInApproverGroup = (
     approverGroup: string[],
@@ -69,43 +61,14 @@ const useNodeAndForm = ({
 
     isLoading(true);
     try {
-      const formIdData = await getFormid(supabaseClient, {
-        moduleId: moduleId,
-        moduleVersionId: request.request_signer[0].request_module_version_id,
-      });
-
-      const formExist: ModuleFormItem[] = await checkFormIfExist(
-        supabaseClient,
-        {
-          moduleRequestId: moduleRequestId,
-          formData: formIdData,
-        }
-      );
-
-      setFormExist(formExist);
-
       const endNodeFound =
         targetNodes?.some((node) => node.target_node_type_label === "End") ||
         false;
 
       setIsEndNode(endNodeFound);
-      setIsEndNode(endNodeFound);
       setisEmptyNode(endNodeFound);
-      console.log(targetNodes);
 
-      if (endNodeFound) {
-        const currentFormIndex = formIdData.findIndex(
-          (form) => form.form_id === request.request_form.form_id
-        );
-
-        setNextForm(
-          currentFormIndex !== -1 && currentFormIndex < formIdData.length - 1
-            ? formIdData[currentFormIndex + 1]
-            : null
-        );
-      } else {
-        setNextForm(null); // Avoid setting multiple states in separate calls if they're related.
-      }
+      setNextForm(request.request_next_form ?? null);
     } catch (error) {
     } finally {
       isLoading(false);
@@ -126,12 +89,7 @@ const useNodeAndForm = ({
   useEffect(() => {
     const fetchApprover = async () => {
       if (!teamId || type === "Request") return;
-      if (formExist.length > 0) {
-        const isFormSubmitted = formExist.some(
-          (form: ModuleFormItem) => form.form_id === nextForm?.form_id
-        );
-        setIsNextFormSubmitted(isFormSubmitted);
-      }
+
       const checkApprover = await checkApproverGroup(supabaseClient, {
         requestId: request.request_id,
         requestStatus:
@@ -141,7 +99,7 @@ const useNodeAndForm = ({
     };
 
     fetchApprover();
-  }, [userTeamGroup, formExist, targetNodes, request, teamId]);
+  }, [userTeamGroup, targetNodes, request, teamId]);
 
   useEffect(() => {
     if (!teamId) return;
@@ -158,7 +116,6 @@ const useNodeAndForm = ({
 
   return {
     fetchNodeAndForm,
-    isNextFormSubmitted,
     workflowNodeData,
     targetNodes,
     isHidden,

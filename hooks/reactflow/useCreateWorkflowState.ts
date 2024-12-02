@@ -221,7 +221,6 @@ export const useWorkflowState = ({
       const isDuplicateEdge = edges.some(
         (edge) => edge.source === source && edge.target === target
       );
-      console.log(edges);
 
       if (isDuplicateEdge) {
         notifications.show({
@@ -299,7 +298,7 @@ export const useWorkflowState = ({
     //   const targetIsPane = (event.target as Element).classList.contains(
     //     "react-flow__pane"
     //   );
-    console.log(connectingNodeId.current);
+
     if (connectingNodeId.current) {
       const parentNode = nodes.find(
         (node) => node.id === connectingNodeId.current

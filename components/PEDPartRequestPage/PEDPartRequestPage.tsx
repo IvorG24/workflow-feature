@@ -126,7 +126,6 @@ const PEDPartRequestPage = ({
     isEndNode,
     fetchNodeAndForm,
     handleCreateNextForm,
-    isNextFormSubmitted,
     workflowNodeData,
     isHidden,
   } = useNodeAndForm({
@@ -385,6 +384,7 @@ const PEDPartRequestPage = ({
               message: `Module Request updated to ${status.toLowerCase()}.`,
               color: "green",
             });
+            router.reload();
           } else {
             setIsSectionHidden(true);
             setRequestCommentList((prev) => [
@@ -409,6 +409,7 @@ const PEDPartRequestPage = ({
               },
               ...prev,
             ]);
+
             notifications.show({
               message: `Request ${status.toLowerCase()}.`,
               color: "green",
@@ -614,11 +615,10 @@ const PEDPartRequestPage = ({
     return (
       !requestType &&
       isEndNode &&
-      nextForm &&
-      !isNextFormSubmitted &&
+      nextForm?.request_next_form_name &&
       isUserOwner
     );
-  }, [requestType, isEndNode, nextForm, isNextFormSubmitted, isUserOwner]);
+  }, [requestType, isEndNode, nextForm, isUserOwner]);
 
   return (
     <Container>
@@ -637,7 +637,7 @@ const PEDPartRequestPage = ({
               leftIcon={<IconPlus size={16} />}
               onClick={handleCreateNextForm}
             >
-              Create {nextForm?.form_name} Form
+              Create {nextForm?.request_next_form_name} Form
             </Button>
           )}
         </Group>

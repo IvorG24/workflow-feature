@@ -443,6 +443,7 @@ export const END_NODE_OPTION: NodeOption = {
   presetBackgroundColor: "FFE4E1",
   presetTextColor: "#FFFFFF",
 };
+
 export const CREATE_NODE_OPTION: NodeOption = {
   value: "12038a33-aad2-47f8-8742-fd86defb2a85",
   label: "Add New Node",

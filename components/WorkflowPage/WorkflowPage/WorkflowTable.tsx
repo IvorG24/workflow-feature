@@ -73,12 +73,11 @@ const dateFilterProps = {
 const tableColumnList = [
   { value: "workflow_id", label: "Workflow ID" },
   { value: "workflow_label", label: "Label" },
-  { value: "workflow_date_created", label: "Date Created" },
+  { value: "workflow_version_date_created", label: "Date Created" },
   { value: "workflow_date_updated", label: "Date Updated" },
-  { value: "created_by", label: "Created By" },
-  { value: "updated_by", label: "Updated By" },
+  { value: "user_first_name", label: "Created By" },
+  { value: "updated_user_first_name", label: "Updated By" },
   { value: "workflow_version_label", label: "Workflow Version" },
-  { value: "view", label: "View" },
 ];
 
 const creatorList = [
@@ -119,7 +118,7 @@ const WorkFlowTable = () => {
   });
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "workflow_date_created",
+    columnAccessor: "workflow_version_date_created",
     direction: "desc",
   });
 
@@ -156,19 +155,19 @@ const WorkFlowTable = () => {
       const { searchFilter, isAscendingSort, creatorList, dateRange } =
         getValues();
 
-      const params = {
-        isAscendingSort: isAscendingSort,
-        page: page,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        search: searchFilter || "",
-        creatorList: creatorList || [],
-        dateRange: dateRange.map((date) => (date ? new Date(date) : "")) || [],
-        teamId: activeTeam.team_id,
-      };
-
       const { workFlowData, count } = await getWorkFlowTableOnLoad(
         supabaseClient,
-        params
+        {
+          isAscendingSort: isAscendingSort,
+          columnAccessor: sortStatus.columnAccessor,
+          page: page,
+          limit: DEFAULT_REQUEST_LIST_LIMIT,
+          search: searchFilter || "",
+          creatorList: creatorList || [],
+          dateRange:
+            dateRange.map((date) => (date ? new Date(date) : "")) || [],
+          teamId: activeTeam.team_id,
+        }
       );
 
       setWorkFlowList(workFlowData);
@@ -195,7 +194,7 @@ const WorkFlowTable = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
     value: string[] | Date[] | boolean = []
@@ -441,16 +440,15 @@ const WorkFlowTable = () => {
                 },
               },
               {
-                accessor: "user_id",
+                accessor: "user_first_name",
                 title: "Created By",
                 sortable: true,
-                hidden: checkIfColumnIsHidden("user_id"),
+                hidden: checkIfColumnIsHidden("user_first_name"),
                 render: (workflow) => {
                   if (!workflow) {
                     console.error("No data for created_by");
                     return null;
                   }
-
                   const {
                     user_id: user_id,
                     user_first_name: user_first_name,
@@ -485,10 +483,10 @@ const WorkFlowTable = () => {
                 },
               },
               {
-                accessor: "user_id",
+                accessor: "updated_user_first_name",
                 title: "Updated By",
                 sortable: true,
-                hidden: checkIfColumnIsHidden("updated_id"),
+                hidden: checkIfColumnIsHidden("updated_user_first_name"),
                 render: (workflow) => {
                   if (!workflow.updated_by) {
                     return null;
@@ -527,10 +525,10 @@ const WorkFlowTable = () => {
                 },
               },
               {
-                accessor: "workflow_date_created",
+                accessor: "workflow_version_date_created",
                 title: "Date Created",
                 sortable: true,
-                hidden: checkIfColumnIsHidden("workflow_date_created"),
+                hidden: checkIfColumnIsHidden("workflow_version_date_created"),
                 render: ({ workflow_date_created }) => {
                   if (!workflow_date_created) {
                     return null;

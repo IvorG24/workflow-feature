@@ -1,17 +1,20 @@
 import { getAllGroups, getModuleRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 import {
-  RequestListFilterValues,
+  ModuleRequestList,
+  OptionType,
   TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
-import { ModuleRequestList, OptionType } from "@/utils/types";
 import {
   Box,
   Container,
@@ -27,26 +30,29 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import RequestListFilter from "./ModuleRequestListFilter";
-import RequestListTable from "./ModuleRequestListTable";
+import ModuleRequestListFilter from "./ModuleRequestListFilter";
+import ModuleRequestListTable from "./ModuleRequestListTable";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
 };
-type FilterSelectedValuesType = {
+export type FilterSelectedValuesType = {
   form: string[];
   requestor: string[];
   approver: string[];
   search: string;
   isAscendingSort: boolean;
+  isApprover: boolean;
 };
 const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
+  const userTeamGroup = useUserTeamMemberGroupList();
+
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [groupOptions, setGroupOptions] = useState<OptionType[]>([]);
@@ -58,10 +64,11 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
     approver: [],
     form: [],
     isAscendingSort: false,
+    isApprover: false,
   });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
-  const filterFormMethods = useForm<RequestListFilterValues>({
+  const filterFormMethods = useForm<FilterSelectedValuesType>({
     defaultValues: localFilter,
     mode: "onChange",
   });
@@ -76,7 +83,7 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
   const selectedFormFilter = useWatch({ name: "form", control });
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "request_date_created",
+    columnAccessor: "module_request_date_created",
     direction: "desc",
   });
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
@@ -116,17 +123,22 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
         );
         return;
       }
-      const { search, requestor, approver, form, isAscendingSort } =
+      const { search, requestor, approver, form, isAscendingSort, isApprover } =
         getValues();
+
       const params = {
         page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         search: search,
         requestor: requestor,
         approver: approver,
+        columnAccessor: sortStatus.columnAccessor,
         form: form,
         isAscendingSort: isAscendingSort,
         teamId: activeTeam.team_id,
+        teamGroup: userTeamGroup,
+        teamMemberId: teamMember.team_member_id,
+        isApprover,
       };
 
       const { ModuleRequestList, count } = await getModuleRequestList(
@@ -165,14 +177,17 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
       setIsFetchingRequestList(false);
     }
   };
+
   useEffect(() => {
     if (!activeTeam.team_id) return;
     const fetchOptions = async () => {
       try {
         setIsFetchingRequestList(true);
+
         const groups = await getAllGroups(supabaseClient, {
           teamId: activeTeam.team_id,
         });
+
         const groupOptions = groups.map((group) => ({
           label: group.team_group_name,
           value: group.team_group_name,
@@ -210,7 +225,7 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <RequestListFilter
+            <ModuleRequestListFilter
               groupOptions={groupOptions}
               teamMemberList={teamMemberList}
               handleFilterForms={handleFilterForms}
@@ -224,7 +239,7 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <RequestListTable
+          <ModuleRequestListTable
             moduleRequestList={requestList}
             requestListCount={requestListCount}
             teamMemberList={teamMemberList}
@@ -233,8 +248,8 @@ const ModuleRequestListPage = ({ teamMemberList, projectList }: Props) => {
             handlePagination={handlePagination}
             selectedFormFilter={selectedFormFilter}
             sortStatus={sortStatus}
-            setSortStatus={setSortStatus}
             setValue={setValue}
+            setSortStatus={setSortStatus}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}

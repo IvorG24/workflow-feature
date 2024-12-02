@@ -171,13 +171,15 @@ const ModulesPage = ({
         moduleItems: updatedModuleItems,
         teamId: activeTeam.team_id,
         teamMemberId: teamMember.team_member_id,
-        currentDate: getCurrentDate(),
       });
+
       const newModule = {
         module_id: moduleflowId,
         module_name: label,
       };
+
       addModule(newModule);
+      
       notifications.show({
         message: "Module created.",
         color: "green",
@@ -345,7 +347,7 @@ const ModulesPage = ({
       });
     }
   };
-  
+
   const gotoEditHandler = async () => {
     const currentPath = router.asPath;
 

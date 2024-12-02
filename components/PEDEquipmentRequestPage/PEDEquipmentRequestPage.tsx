@@ -125,7 +125,6 @@ const PEDEquipmentRequestPage = ({
     isEndNode,
     fetchNodeAndForm,
     handleCreateNextForm,
-    isNextFormSubmitted,
     isHidden,
     workflowNodeData,
   } = useNodeAndForm({
@@ -317,7 +316,6 @@ const PEDEquipmentRequestPage = ({
             requestStatus: status,
             requestId: request.request_id,
           });
-
 
           if (approverTeamGroup && signerCount === signerCountCurrentNode) {
             notifications.show({
@@ -628,11 +626,10 @@ const PEDEquipmentRequestPage = ({
     return (
       !requestType &&
       isEndNode &&
-      nextForm &&
-      !isNextFormSubmitted &&
+      nextForm?.request_next_form_name &&
       isUserOwner
     );
-  }, [requestType, isEndNode, nextForm, isNextFormSubmitted, isUserOwner]);
+  }, [requestType, isEndNode, nextForm, isUserOwner]);
 
   return (
     <Container>
@@ -652,7 +649,7 @@ const PEDEquipmentRequestPage = ({
               leftIcon={<IconPlus size={16} />}
               onClick={handleCreateNextForm}
             >
-              Create {nextForm?.form_name} Form
+              Create {nextForm?.request_next_form_name} Form
             </Button>
           )}
         </Group>

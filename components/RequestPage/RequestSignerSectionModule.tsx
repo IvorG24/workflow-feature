@@ -57,7 +57,8 @@ const RequestSignerSectionModule = ({ signerList }: Props) => {
           <Flex gap={8} key={`${signer.signer_id}-group`} align={"center"}>
             {getSignerStatusIcon()}
             <Text size="sm">
-              To be APPROVED by the members of Group{" "}
+              To be {signerList.map((signer) => signer.signer_action)} by the
+              members of Group{" "}
               {signer?.signer_team_group
                 ?.map((group) => group.team_group_name)
                 .join(", ")}

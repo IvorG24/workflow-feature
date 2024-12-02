@@ -141,7 +141,6 @@ const ModuleTable = () => {
       value: "module_version_updated_by_team_member_id",
       label: "Module Updated By",
     },
-    { value: "view", label: "View" },
   ];
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -464,6 +463,7 @@ const ModuleTable = () => {
               {
                 accessor: "module_version_created_by_team_member_id",
                 title: "Created By",
+                sortable: true,
                 hidden: checkIfColumnIsHidden(
                   "module_version_created_by_team_member_id"
                 ),
@@ -506,6 +506,7 @@ const ModuleTable = () => {
               {
                 accessor: "module_version_updated_by_team_member_id",
                 title: "Updated By",
+                sortable: true,
                 hidden: checkIfColumnIsHidden(
                   "module_version_updated_by_team_member_id"
                 ),
