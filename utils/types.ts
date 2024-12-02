@@ -768,6 +768,8 @@ export type RequestWithResponseType = RequestTableRow & {
           user_signature_attachment_id: string | null;
         };
       };
+      signer_is_requester_signer: boolean;
+      signer_team_department_id: string | null;
     };
   })[];
   request_comment: {

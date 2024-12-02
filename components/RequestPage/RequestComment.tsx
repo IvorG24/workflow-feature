@@ -31,6 +31,7 @@ import {
   IconDots,
   IconDownload,
   IconEdit,
+  IconFilePencil,
   IconFolderCancel,
   IconInfoCircle,
   IconRefresh,
@@ -125,6 +126,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
     "ACTION_CANCELED",
     "ACTION_REVERSED",
     "ACTION_GENERAL",
+    "REQUEST_ACTIVITY",
   ];
 
   const actionCommentColor = (type: string) => {
@@ -139,6 +141,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "orange";
       case "ACTION_GENERAL":
         return "blue";
+      case "REQUEST_ACTIVITY":
+        return "gray";
     }
   };
 
@@ -154,6 +158,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return "Reversed!";
       case "ACTION_GENERAL":
         return "Formsly Automation";
+      case "REQUEST_ACTIVITY":
+        return "Signers Updated!";
     }
   };
 
@@ -169,6 +175,8 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
         return <IconRefresh size={16} />;
       case "ACTION_GENERAL":
         return <IconInfoCircle size={16} />;
+      case "REQUEST_ACTIVITY":
+        return <IconFilePencil size={16} />;
     }
   };
 
