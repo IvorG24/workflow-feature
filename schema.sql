@@ -8178,19 +8178,19 @@ AS $$
     const ticket_list = plv8.execute(
       `
         WITH ticket_data AS (
-          SELECT DISTINCT
-            tt.*,
+          SELECT
+            ticket_table.*,
             ticket_category,
             user_id,
             user_first_name,
             user_last_name,
             user_username,
             user_avatar
-          FROM ticket_schema.ticket_table AS tt
+          FROM ticket_schema.ticket_table
           INNER JOIN team_schema.team_member_table
             ON ticket_requester_team_member_id = team_member_id
-          INNER JOIN ticket_schema.ticket_category_table AS tct
-            ON tct.ticket_category_id = tt.ticket_category_id
+          INNER JOIN ticket_schema.ticket_category_table
+            ON ticket_table.ticket_category_id = ticket_category_table.ticket_category_id  
           INNER JOIN user_schema.user_table
             ON team_member_user_id = user_id
           WHERE
@@ -8198,8 +8198,8 @@ AS $$
             ${requester}
             ${approver}
             ${status}
-            ${category}
             ${search}
+            ${category}
           ORDER BY ${columnAccessor} ${sort}
           OFFSET $2 ROWS
           FETCH FIRST $3 ROWS ONLY
@@ -8250,7 +8250,7 @@ AS $$
 
     const ticket_count = plv8.execute(
       `
-        SELECT DISTINCT COUNT(*)
+        SELECT COUNT(*)
         FROM ticket_schema.ticket_table
         INNER JOIN team_schema.team_member_table
           ON ticket_requester_team_member_id = team_member_id

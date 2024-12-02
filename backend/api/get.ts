@@ -1768,15 +1768,13 @@ export const getTicketList = async (
   } = params;
 
   const requesterCondition = requester
-    ?.map(
-      (value) => `ticket_table.ticket_requester_team_member_id = '${value}'`
-    )
+    ?.map((value) => `ticket_requester_team_member_id = '${value}'`)
     .join(" OR ");
   const approverCondition = approver
-    ?.map((value) => `ticket_table.ticket_approver_team_member_id = '${value}'`)
+    ?.map((value) => `ticket_approver_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
-    ?.map((value) => `ticket_table.ticket_status = '${value}'`)
+    ?.map((value) => `ticket_status = '${value}'`)
     .join(" OR ");
   const categoryCondition = category
     ?.map((value) => `ticket_table.ticket_category_id = '${value}'`)
@@ -1784,8 +1782,8 @@ export const getTicketList = async (
 
   const searchCondition =
     search && search?.length > 0 && validate(search)
-      ? `ticket_table.ticket_id = '${search}'`
-      : `ticket_table.ticket_id::text LIKE '${search}%'`;
+      ? `ticket_id = '${search}'`
+      : "";
 
   const { data, error } = await supabaseClient.rpc("fetch_ticket_list", {
     input_data: {
@@ -1801,7 +1799,7 @@ export const getTicketList = async (
       columnAccessor,
     },
   });
-
+  console.log(error);
   if (error) throw error;
   const dataFormat = data as unknown as {
     data: TicketListType;
@@ -6636,6 +6634,7 @@ export const getDashboardTopRequestor = async (
       input_data: params,
     }
   );
+  console.log(error);
   if (error) throw error;
 
   return data as DashboardRequestorAndSignerType[];
