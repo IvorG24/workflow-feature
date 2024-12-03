@@ -237,7 +237,7 @@ export const formatTime = (timeValue: Date) => {
 };
 
 export const formatDateTime = (dateTimeValue: string | Date | number) => {
-  return moment(dateTimeValue).format("YYYY-MM-DD LT");
+  return moment(new Date(dateTimeValue)).format("YYYY-MM-DD LT");
 };
 
 export const ID_OPTIONS = [
