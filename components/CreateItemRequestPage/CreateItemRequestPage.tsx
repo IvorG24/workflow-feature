@@ -48,7 +48,11 @@ export type RequestFormValues = {
 };
 
 export type FieldWithResponseArray = Field & {
-  field_response: RequestResponseTableRow[] | string;
+  field_response: RequestResponseTableRow[]
+};
+
+export type FieldWithResponseString = Field & {
+  field_response: string;
 };
 
 type Props = {
@@ -396,7 +400,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
         });
 
         let csiCodeDetails: CSICodeTableRow[] = [];
-        let csiFields: FieldWithResponseArray[] = [];
+        let csiFields: FieldWithResponseString[] = [];
         const hasCsiCodeSection =
           item.item_level_three_description_csi_code_section;
         if (hasCsiCodeSection) {

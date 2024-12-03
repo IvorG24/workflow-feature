@@ -6561,10 +6561,7 @@ export const getCreateRequestPageOnLoad = async (
       input_data: params,
     }
   );
-  if (error) {
-    console.error(error);
-    throw error;
-  }
+  if (error) throw error;
 
   return data as {
     form: FormWithResponseType;
