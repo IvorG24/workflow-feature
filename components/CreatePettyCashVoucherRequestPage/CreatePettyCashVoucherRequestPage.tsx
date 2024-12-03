@@ -1,5 +1,4 @@
 import {
-  getAllTeamProjects,
   getEmployeeName,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
@@ -73,9 +72,6 @@ const CreatePettyCashVoucherRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-  const [allTeamProjectOptions, setAllTeamProjectOptions] = useState<
-    OptionTableRow[]
-  >([]);
 
   const requestorProfile = useUserProfile();
 
@@ -518,7 +514,7 @@ const CreatePettyCashVoucherRequestPage = ({
           section_field: [
             {
               ...chargeToProjectSection.section_field[0],
-              field_option: allTeamProjectOptions,
+              field_option: projectOptions,
             },
             ...chargeToProjectSection.section_field.slice(1, 3),
           ],
@@ -803,41 +799,11 @@ const CreatePettyCashVoucherRequestPage = ({
     }
   };
 
-  const fetchMemberTeamProjectList = async () => {
-    try {
-      setIsLoading(true);
-      if (!teamMember) return;
-      const data = await getAllTeamProjects(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-
-      const allTeamMemberProjectOptions = data.map((project, index) => {
-        return {
-          option_field_id: form.form_section[1].section_field[0].field_id,
-          option_id: project.team_project_id,
-          option_order: index,
-          option_value: project.team_project_name,
-        };
-      });
-
-      setAllTeamProjectOptions(allTeamMemberProjectOptions);
-    } catch (e) {
-      notifications.show({
-        message:
-          "Failed to fetch your team projects. Please contact the IT team.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!activeTeam.team_id) return;
-        await fetchMemberTeamProjectList();
         replaceSection([form.form_section[0]]);
       } catch (e) {
         notifications.show({

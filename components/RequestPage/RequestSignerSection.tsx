@@ -1,7 +1,10 @@
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
 import {
+  Button,
   Chip,
+  Flex,
   Group,
   Paper,
   Stack,
@@ -14,6 +17,8 @@ import {
   IconCircleDashed,
   IconCircleX,
 } from "@tabler/icons-react";
+import { Dispatch, SetStateAction, useState } from "react";
+import RequestUpdateSignerModal from "./RequestUpdateSignerModal";
 
 export type RequestSignerType =
   RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
@@ -24,9 +29,32 @@ export type RequestSignerType =
 
 type Props = {
   signerList: RequestSignerType[];
+  setSignerList?: Dispatch<SetStateAction<RequestSignerType[]>>;
+  projectId?: string;
+  formId?: string;
+  requestId?: string;
+  requestStatus?: string;
 };
 
-const RequestSignerSection = ({ signerList }: Props) => {
+const RequestSignerSection = ({
+  signerList,
+  setSignerList,
+  projectId,
+  formId,
+  requestId,
+  requestStatus,
+}: Props) => {
+  const allowedRoles = ["OWNER", "ADMIN"];
+  const teamMember = useUserTeamMember();
+  const isOwnerOrAdmin = allowedRoles.includes(
+    `${teamMember?.team_member_role}`
+  );
+  const [openUpdateSignerModal, setOpenUpdateSignerModal] = useState(false);
+
+  const editableSigners = signerList.filter(
+    (signer) => signer.request_signer_status === "PENDING"
+  );
+
   const signerStatusIcon = (status: ReceiverStatusType) => {
     switch (status) {
       case "APPROVED":
@@ -68,11 +96,25 @@ const RequestSignerSection = ({ signerList }: Props) => {
     }
   };
 
+  const handleCloseUpdateSignerModal = () => {
+    setOpenUpdateSignerModal(false);
+  };
+
   return (
     <Paper p="xl" shadow="xs">
-      <Title order={4} color="dimmed">
-        Signers
-      </Title>
+      <Flex gap="md" align="center">
+        <Title order={4} color="dimmed">
+          Signers
+        </Title>
+        {isOwnerOrAdmin && requestStatus === "PENDING" ? (
+          <Button
+            variant="light"
+            onClick={() => setOpenUpdateSignerModal(true)}
+          >
+            Update Signers
+          </Button>
+        ) : null}
+      </Flex>
       <Stack mt="xl" spacing={0}>
         {signerList.map((signer) => {
           return (
@@ -105,6 +147,17 @@ const RequestSignerSection = ({ signerList }: Props) => {
           );
         })}
       </Stack>
+      {setSignerList && (
+        <RequestUpdateSignerModal
+          opened={openUpdateSignerModal}
+          onClose={handleCloseUpdateSignerModal}
+          initialSignerList={editableSigners}
+          formId={`${formId}`}
+          projectId={`${projectId}`}
+          requestId={`${requestId}`}
+          setSignerList={setSignerList}
+        />
+      )}
     </Paper>
   );
 };
