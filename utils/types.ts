@@ -1010,6 +1010,8 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
+  item_level_three_description_csi_code_section: string;
+} & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: (ItemDescriptionFieldTableRow & {
       item_description_field_uom: {
@@ -1189,6 +1191,21 @@ export type DuplicateSectionType = SectionTableRow & {
     field_section_duplicatable_id?: string;
   })[];
 };
+
+export type Field = {
+  field_id: string;
+  field_name: string;
+  field_is_required: boolean;
+  field_order: number;
+  field_type: string;
+  field_response: string | undefined | null;
+  field_is_positive_metric: boolean;
+  field_is_read_only: boolean;
+  field_section_id: string;
+  field_special_field_template_id: string | null;
+  field_option?: OptionTableRow[];
+  field_weight?: number;
+}
 
 export type RequestProjectSignerStatusType = {
   signer_project_name: string;

@@ -137,14 +137,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             ...request.request_form.form_section[1],
             section_field: combinedFieldList,
           },
-        ]).map((section) => {
-          return {
-            ...section,
-            section_field: section.section_field.filter(
-              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
-            ),
-          };
-        });
+        ])
         const newFormSection = [...formSection, ...newSection];
 
         setFormSection(newFormSection);

@@ -1,4 +1,5 @@
 import {
+  getCSIDetailsByCodeSection,
   getItem,
   getItemOptions,
   getProjectSignerWithTeamMember,
@@ -15,6 +16,7 @@ import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CSICodeTableRow,
   FormType,
   FormWithResponseType,
   ItemCategoryType,
@@ -46,7 +48,7 @@ export type RequestFormValues = {
 };
 
 export type FieldWithResponseArray = Field & {
-  field_response: RequestResponseTableRow[];
+  field_response: RequestResponseTableRow[] | string;
 };
 
 type Props = {
@@ -162,7 +164,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
                 ...form.form_section[1].section_field[0],
                 field_option: itemOptionList,
               },
-              ...form.form_section[1].section_field.slice(1, 4),
+              ...form.form_section[1].section_field.slice(1, 9),
               {
                 ...form.form_section[1].section_field[9],
                 field_option: supplierOptionlist,
@@ -343,7 +345,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
       const newSection = {
         ...sectionMatch,
         section_field: [
-          ...duplicatedFieldsWithDuplicatableId.slice(0, 4),
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 9),
           duplicatedFieldsWithDuplicatableId[9],
         ],
       };
@@ -372,12 +374,16 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
     value: string | null
   ) => {
     const newSection = getValues(`sections.${index}`);
-
     try {
       if (value) {
         setLoadingFieldList([
           { sectionIndex: index, fieldIndex: 1 },
           { sectionIndex: index, fieldIndex: 3 },
+          { sectionIndex: index, fieldIndex: 4 },
+          { sectionIndex: index, fieldIndex: 5 },
+          { sectionIndex: index, fieldIndex: 6 },
+          { sectionIndex: index, fieldIndex: 7 },
+          { sectionIndex: index, fieldIndex: 8 },
         ]);
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
@@ -389,24 +395,66 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
           return prev;
         });
 
+        let csiCodeDetails: CSICodeTableRow[] = [];
+        let csiFields: FieldWithResponseArray[] = [];
+        const hasCsiCodeSection =
+          item.item_level_three_description_csi_code_section;
+        if (hasCsiCodeSection) {
+          csiCodeDetails = await getCSIDetailsByCodeSection(supabaseClient, {
+            csiCodeSection: item.item_level_three_description_csi_code_section,
+          });
+        } else {
+          notifications.show({
+            message: `No CSI Code found for ${item.item_general_name}
+              . The IT team has not yet assigned a CSI Code.`,
+            color: "orange",
+            autoClose: false,
+          });
+          return;
+        }
+
+        const hasCsiCodeDetails = csiCodeDetails.length !== 0;
+        if (hasCsiCodeDetails) {
+          csiFields = [
+            {
+              ...newSection.section_field[4],
+              field_response:
+                csiCodeDetails[0]?.csi_code_level_three_description,
+            },
+            {
+              ...newSection.section_field[5],
+              field_response: csiCodeDetails[0]?.csi_code_section,
+            },
+            {
+              ...newSection.section_field[6],
+              field_response: csiCodeDetails[0]?.csi_code_division_description,
+            },
+            {
+              ...newSection.section_field[7],
+              field_response:
+                csiCodeDetails[0]?.csi_code_level_two_major_group_description,
+            },
+            {
+              ...newSection.section_field[8],
+              field_response:
+                csiCodeDetails[0]?.csi_code_level_two_minor_group_description,
+            },
+          ];
+        }
+
         const generalField = [
-          {
-            ...newSection.section_field[0],
-          },
+          newSection.section_field[0],
           {
             ...newSection.section_field[1],
             field_response: item.item_unit,
           },
-          {
-            ...newSection.section_field[2],
-          },
+          newSection.section_field[2],
           {
             ...newSection.section_field[3],
             field_response: item.item_gl_account,
           },
-          {
-            ...newSection.section_field[4],
-          },
+          ...csiFields,
+          newSection.section_field[9],
         ];
         const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
@@ -458,16 +506,13 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
       } else {
         const generalField = [
           newSection.section_field[0],
-          {
-            ...newSection.section_field[1],
-            field_response: "",
-          },
-          newSection.section_field[2],
-          {
-            ...newSection.section_field[3],
-            field_response: "",
-          },
-          newSection.section_field[4],
+          ...newSection.section_field.slice(1, 9).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+            };
+          }),
+          newSection.section_field[9],
         ];
         setItemCategoryList((prev) => {
           prev[index] = null;
