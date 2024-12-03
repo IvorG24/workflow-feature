@@ -1,6 +1,8 @@
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { ApplicationListFilterValues } from "@/utils/types";
 import { ActionIcon, Button, Divider, Flex, TextInput } from "@mantine/core";
-import { IconReload, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconReload, IconSearch } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useFormContext } from "react-hook-form";
 
 type Props = {
@@ -8,11 +10,12 @@ type Props = {
   isFetchingApplicationList: boolean;
 };
 
-const UserApplicationListFilter = ({
+const HRApplicationListFilter = ({
   handleFilterForms,
-
   isFetchingApplicationList,
 }: Props) => {
+  const router = useRouter();
+  const teamMember = useUserTeamMember();
   const { register } = useFormContext<ApplicationListFilterValues>();
 
   return (
@@ -44,10 +47,23 @@ const UserApplicationListFilter = ({
         >
           Refresh
         </Button>
+        <Button
+          leftIcon={<IconPlus size={16} />}
+          onClick={async () => {
+            if (!teamMember) return;
+            await router.push({
+              pathname: `/public-form/16ae1f62-c553-4b0e-909a-003d92828036/create`,
+              query: { hrTeamMemberId: teamMember.team_member_id },
+            });
+          }}
+          ml="auto"
+        >
+          Create Application
+        </Button>
       </Flex>
       <Divider my="md" />
     </>
   );
 };
 
-export default UserApplicationListFilter;
+export default HRApplicationListFilter;

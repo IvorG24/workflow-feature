@@ -11,10 +11,20 @@ import {
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Space,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
+import { IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -110,7 +120,7 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
       setIsLoading(true);
 
       let requestScore = 0;
-      let status = "REJECTED";
+      let status = form.form_section.length < 3 ? "APPROVED" : "REJECTED";
       data.sections.forEach((section) => {
         section.section_field.forEach((field) => {
           if (
@@ -263,6 +273,15 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
               );
             })}
             {/* <RequestFormSigner signerList={signerList} /> */}
+            {form.form_section.length < 3 && (
+              <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+                <Text>
+                  The position you&apos;re applying for doesn&apos;t have a
+                  general assessment, just click the submit button to proceed to
+                  the next step.
+                </Text>
+              </Alert>
+            )}
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

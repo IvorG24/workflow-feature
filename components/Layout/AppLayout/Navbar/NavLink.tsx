@@ -54,6 +54,7 @@ import {
   IconTerminal,
   IconTicket,
   IconTools,
+  IconUserCircle,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
@@ -237,8 +238,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-                ? ["create"]
-                : []
+              ? ["create"]
+              : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -443,8 +444,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-                ? ["form"]
-                : []
+              ? ["form"]
+              : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));
@@ -917,6 +918,16 @@ const ReviewAppNavLink = () => {
             href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
             withIndicator: Boolean(hrIndicatorCount.jobOffer),
             indicatorLabel: `${hrIndicatorCount.jobOffer}`,
+          },
+          {
+            label: `Representing Application`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconUserCircle {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/hr/application-information`,
+            indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
           },
         ]
       : []),

@@ -1215,6 +1215,7 @@ CREATE TABLE lookup_schema.position_table (
   position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
   position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
 
+  position_is_with_assessment BOOLEAN DEFAULT true NOT NULL,
   position_is_with_technical_interview_1 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_2 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
@@ -1283,7 +1284,8 @@ CREATE TABLE hr_schema.application_information_additional_details_table (
   application_information_additional_details_email VARCHAR(4000) NOT NULL,
   application_information_additional_details_sss_number VARCHAR(4000) NOT NULL,
 
-  application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+  application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  application_information_additional_details_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
 ----- END: TABLES
@@ -2160,7 +2162,8 @@ AS $$
             application_information_additional_details_contact_number,
             application_information_additional_details_email,
             application_information_additional_details_sss_number,
-            application_information_additional_details_request_id
+            application_information_additional_details_request_id,
+            application_information_additional_details_team_member_id
           )
           VALUES
           (
@@ -2171,7 +2174,8 @@ AS $$
             $5,
             $6,
             $7,
-            $8
+            $8,
+            $9
           )
         `, [
           applicationInformationParams.position,
@@ -2181,7 +2185,8 @@ AS $$
           applicationInformationParams.contactNumber,
           applicationInformationParams.email,
           applicationInformationParams.sssNumber,
-          requestId
+          requestId,
+          applicationInformationParams.hrTeamMemberId || null,
         ]
       );
     } else if (itAssetAutomationParams){
@@ -7386,7 +7391,7 @@ AS $$
 
     let formSection = [];
     // Conditional and all required fields
-    if (requestData.request_form.form_is_formsly_form && (["Item", "IT Asset", "PED Item", "Subcon", "Technical Assessment"].includes(requestData.request_form.form_name))) {
+    if (requestData.request_form.form_is_formsly_form && (["Item", "IT Asset", "PED Item", "Subcon", "General Assessment", "Technical Assessment"].includes(requestData.request_form.form_name))) {
       formSection = plv8.execute(
         `
           WITH section_data AS (
@@ -7403,76 +7408,78 @@ AS $$
               'section_order', section_order,
               'section_is_duplicatable', section_is_duplicatable,
               'section_form_id', section_form_id,
-              'section_field', (
-                SELECT jsonb_agg (
-                  jsonb_build_object (
-                    'field_id', field_id,
-                    'field_name', field_name,
-                    'field_is_required', field_is_required,
-                    'field_type', field_type,
-                    'field_order', field_order,
-                    'field_is_positive_metric', field_is_positive_metric,
-                    'field_is_read_only', field_is_read_only,
-                    'field_section_id', field_section_id,
-                    'field_special_field_template_id', field_special_field_template_id,
-                    'field_option', COALESCE (
-                      (
+              'section_field', COALESCE (
+                (
+                  SELECT jsonb_agg (
+                    jsonb_build_object (
+                      'field_id', field_id,
+                      'field_name', field_name,
+                      'field_is_required', field_is_required,
+                      'field_type', field_type,
+                      'field_order', field_order,
+                      'field_is_positive_metric', field_is_positive_metric,
+                      'field_is_read_only', field_is_read_only,
+                      'field_section_id', field_section_id,
+                      'field_special_field_template_id', field_special_field_template_id,
+                      'field_option', COALESCE (
+                        (
+                          SELECT jsonb_agg (
+                            jsonb_build_object (
+                              'option_id', option_id,
+                              'option_value', option_value,
+                              'option_order', option_order,
+                              'option_field_id', option_field_id
+                            )
+                          )
+                          FROM (
+                            SELECT *
+                            FROM form_schema.option_table
+                            WHERE option_field_id = field_id
+                            ORDER BY option_order ASC
+                          ) ordered_option
+                        ), '[]'::jsonb
+                      ),
+                      'field_response', (
                         SELECT jsonb_agg (
                           jsonb_build_object (
-                            'option_id', option_id,
-                            'option_value', option_value,
-                            'option_order', option_order,
-                            'option_field_id', option_field_id
+                            'request_response_id', request_response_id,
+                            'request_response', request_response,
+                            'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
+                            'request_response_prefix', request_response_prefix,
+                            'request_response_request_id', request_response_request_id,
+                            'request_response_field_id', request_response_field_id
                           )
                         )
                         FROM (
                           SELECT *
-                          FROM form_schema.option_table
-                          WHERE option_field_id = field_id
-                          ORDER BY option_order ASC
-                        ) ordered_option
-                      ), '[]'::jsonb
-                    ),
-                    'field_response', (
-                      SELECT jsonb_agg (
-                        jsonb_build_object (
-                          'request_response_id', request_response_id,
-                          'request_response', request_response,
-                          'request_response_duplicatable_section_id', request_response_duplicatable_section_id,
-                          'request_response_prefix', request_response_prefix,
-                          'request_response_request_id', request_response_request_id,
-                          'request_response_field_id', request_response_field_id
-                        )
+                          FROM request_schema.request_response_table
+                          WHERE request_response_field_id = field_id
+                            AND request_response_request_id = $2
+                            AND request_response IS NOT NULL
+                        ) response_data
                       )
-                      FROM (
-                        SELECT *
-                        FROM request_schema.request_response_table
-                        WHERE request_response_field_id = field_id
-                          AND request_response_request_id = $2
-                          AND request_response IS NOT NULL
-                      ) response_data
                     )
                   )
-                )
-                FROM (
-                  SELECT 
-                    DISTINCT(field_table.*),
-                    item_description_order 
-                  FROM form_schema.field_table
-                  LEFT JOIN item_schema.item_description_table
-                    ON item_description_field_id  = field_id 
-                  WHERE field_section_id = section_id
-                  AND EXISTS (
-                    SELECT 1
-                    FROM request_schema.request_response_table
-                    WHERE request_response_field_id = field_id
-                      AND request_response_request_id = $2
-                      AND request_response IS NOT NULL
-                  )
-                  ORDER BY 
-                    field_order ASC,
-                    item_description_order ASC
-                ) filtered_field
+                  FROM (
+                    SELECT 
+                      DISTINCT(field_table.*),
+                      item_description_order 
+                    FROM form_schema.field_table
+                    LEFT JOIN item_schema.item_description_table
+                      ON item_description_field_id  = field_id 
+                    WHERE field_section_id = section_id
+                    AND EXISTS (
+                      SELECT 1
+                      FROM request_schema.request_response_table
+                      WHERE request_response_field_id = field_id
+                        AND request_response_request_id = $2
+                        AND request_response IS NOT NULL
+                    )
+                    ORDER BY 
+                      field_order ASC,
+                      item_description_order ASC
+                  ) filtered_field
+                ), '[]'::jsonb
               )
             ) 
           ) FROM section_data
@@ -14703,22 +14710,27 @@ plv8.subtransaction(function(){
 
         const applicantData = plv8.execute(
           `
-            SELECT
-              request_response,
-              field_id
-            FROM request_schema.request_response_table
-            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-              AND field_id IN (
-                '56438f2d-da70-4fa4-ade6-855f2f29823b',
-                'e48e7297-c250-4595-ba61-2945bf559a25',
-                '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-                '9322b870-a0a1-4788-93f0-2895be713f9c'
-              )
+            SELECT *
+            FROM hr_schema.application_information_additional_details_table
             WHERE
-              request_response_request_id = '${requestId}'
-            ORDER BY field_order
+              application_information_additional_details_request_id = $1
+            LIMIT 1
+          `, [
+            requestId
+          ]
+        )[0];
+
+        const positionData = plv8.execute(
           `
-        );
+            SELECT position_is_with_assessment 
+            FROM lookup_schema.position_table
+            WHERE
+              position_alias = $1
+            LIMIT 1
+          `, [
+            applicantData.application_information_additional_details_position
+          ]
+        )[0];
 
         returnData = {
           form: {
@@ -14739,106 +14751,95 @@ plv8.subtransaction(function(){
                 section_field: [
                   {
                     ...form.form_section[1].section_field[0],
-                    field_response: safeParse(applicantData[applicantData.length-1].request_response)
+                    field_response: applicantData.application_information_additional_details_email
                   },
                   {
                     ...form.form_section[1].section_field[1],
-                    field_response: safeParse(applicantData[0].request_response)
+                    field_response: applicantData.application_information_additional_details_first_name
                   },
                   {
                     ...form.form_section[1].section_field[2],
-                    field_response: applicantData[1].field_id === '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' ? safeParse(applicantData[1].request_response) : ""
+                    field_response: applicantData.application_information_additional_details_middle_name ?? ""
                   },
                   {
                     ...form.form_section[1].section_field[3],
-                    field_response: safeParse(applicantData[applicantData.length-2].request_response)
+                    field_response: applicantData.application_information_additional_details_last_name
                   },
                 ]
               },
-              ...form.form_section.slice(2)
+              ...(positionData.position_is_with_assessment ? form.form_section.slice(2): [])
             ]
           }
         }
         return;
       } else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
-        const requestData = plv8.execute(`
-          SELECT request_id
-          FROM public.request_view
-          WHERE request_formsly_id = '${generalAssessmentId}'
-        `);
-
+        const requestData = plv8.execute(
+          `
+            SELECT request_id
+            FROM public.request_view
+            WHERE request_formsly_id = $1
+          `, [
+            generalAssessmentId
+          ]
+        );
         if(!requestData.length) throw new Error('Request not found');
-         const requestId = requestData[0].request_id;
+        const requestId = requestData[0].request_id;
 
-        const applicantData = plv8.execute(`
-          SELECT
-            request_response,
-            field_id
-          FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND field_id IN (
-              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
-              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
-              '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
-              '69a2664f-c34d-4381-b19c-749c4a9a012b',
-              '8abe5d1a-8370-4472-b88e-3580f724d12d',
-              'be0e130b-455b-47e0-a804-f90943f7bc07',
-              '5c5284cd-7647-4307-b558-40b9076d9f7f',
-              'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-              'd209aed6-e560-49a8-aa77-66c9cada168d',
-              'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
-            )
-          WHERE
-            request_response_request_id = '${requestId}'
-          ORDER BY field_order
-        `);
+        const applicantData = plv8.execute(
+          `
+            SELECT 
+              application_information_additional_details_table.*,
+              request_formsly_id AS application_information_formsly_id
+            FROM hr_schema.request_connection_table
+            INNER JOIN hr_schema.application_information_additional_details_table
+              ON application_information_additional_details_request_id = request_connection_application_information_request_id
+            INNER JOIN public.request_view
+              ON request_id = request_connection_application_information_request_id
+            WHERE
+              request_connection_general_assessment_request_id = $1
+            LIMIT 1
+          `, [
+            requestId
+          ]
+        )[0];
 
-        const requestApplicationData = plv8.execute(`
-          SELECT request_id
-          FROM public.request_view
-          WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
-        `);
-
-        const positionData = plv8.execute(`
-          SELECT
-            request_response,
-            field_id
-          FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-          WHERE
-            request_response_request_id = '${requestApplicationData[0].request_id}'
-          ORDER BY field_order
-        `);
-
-        const position_type = safeParse(positionData[0].request_response);
-
-        const fieldData = plv8.execute(`
-          SELECT f.*, qq.questionnaire_question_id
-          FROM form_schema.questionnaire_table q
-          JOIN form_schema.questionnaire_question_table qq
-          ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
-          JOIN form_schema.field_table f
-          ON f.field_id = qq.questionnaire_question_field_id
-          JOIN lookup_schema.position_table p
-          ON p.position_questionnaire_id  = q.questionnaire_id
-          WHERE
-            p.position_alias ='${position_type}'
-            AND qq.questionnaire_question_is_disabled = FALSE
-          ORDER BY RANDOM()
-          LIMIT 5;
-        `);
+        const fieldData = plv8.execute(
+          `
+            SELECT 
+              field_table.*,
+              questionnaire_question_id
+            FROM form_schema.questionnaire_table
+            INNER JOIN form_schema.questionnaire_question_table
+              ON questionnaire_question_questionnaire_id = questionnaire_id
+            INNER JOIN form_schema.field_table
+              ON field_id = questionnaire_question_field_id
+            INNER JOIN lookup_schema.position_table
+              ON position_questionnaire_id = questionnaire_id
+              AND position_is_with_assessment = true
+            WHERE
+              position_alias = $1
+              AND questionnaire_question_is_disabled = FALSE
+            ORDER BY RANDOM()
+            LIMIT 5
+          `, [
+            applicantData.application_information_additional_details_position
+          ]
+        );
 
         let sectionFieldsWithOptions = [];
 
         if (fieldData.length > 0) {
           sectionFieldsWithOptions = fieldData.map((field) => {
-            const optionData = plv8.execute(`
-              SELECT *
-              FROM form_schema.question_option_table
-              WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-              ORDER BY question_option_order ASC
-            `);
+            const optionData = plv8.execute(
+              `
+                SELECT *
+                FROM form_schema.question_option_table
+                WHERE question_option_questionnaire_question_id = $1
+                ORDER BY question_option_order ASC
+              `, [
+                field.questionnaire_question_id
+              ]
+            );
 
             const optionFormattedData = optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
                 option_id: option.question_option_id,
@@ -14847,11 +14848,15 @@ plv8.subtransaction(function(){
                 option_field_id: field.field_id,
              }));
 
-            const correctResponseData = plv8.execute(`
-              SELECT *
-              FROM form_schema.correct_response_table
-              WHERE correct_response_field_id = '${field.field_id}'
-            `);
+            const correctResponseData = plv8.execute(
+              `
+                SELECT *
+                FROM form_schema.correct_response_table
+                WHERE correct_response_field_id = $1
+              `, [
+                field.field_id
+              ]
+            );
 
             return {
               ...field,
@@ -14862,6 +14867,7 @@ plv8.subtransaction(function(){
             };
           });
         }
+
         returnData = {
           form: {
             ...form,
@@ -14871,7 +14877,7 @@ plv8.subtransaction(function(){
               section_field: [
                 {
                   ...form.form_section[0].section_field[0],
-                  field_response: safeParse(applicantData[0].request_response),
+                  field_response: applicantData.application_information_formsly_id,
                 },
                 {
                   ...form.form_section[0].section_field[1],
@@ -14885,29 +14891,23 @@ plv8.subtransaction(function(){
               section_field: [
                 {
                   ...form.form_section[1].section_field[0],
-                  field_response: safeParse(applicantData[0].request_response),
+                  field_response: applicantData.application_information_additional_details_position
                 },
                 {
                   ...form.form_section[1].section_field[1],
-                  field_response: safeParse(applicantData[1].request_response),
+                  field_response: applicantData.application_information_additional_details_email
                 },
                 {
                   ...form.form_section[1].section_field[2],
-                  field_response: safeParse(applicantData[2].request_response),
+                  field_response: applicantData.application_information_additional_details_first_name
                 },
                 {
                   ...form.form_section[1].section_field[3],
-                  field_response:
-                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
-                  ? safeParse(applicantData[3].request_response)
-                  : '',
+                  field_response: applicantData.application_information_additional_details_middle_name ?? ''
                 },
                 {
                   ...form.form_section[1].section_field[4],
-                  field_response:
-                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
-                  ? safeParse(applicantData[4].request_response)
-                  : safeParse(applicantData[3].request_response),
+                  field_response: applicantData.application_information_additional_details_last_name
                 },
               ],
             },
@@ -15079,10 +15079,15 @@ AS $$
       email,
       search,
       columnAccessor,
-      sort
+      sort,
+      teamMemberId
     } = input_data;
 
     const offset = (page - 1) * limit;
+
+    const additionalDetailsFilter = teamMemberId ? 
+      `AND application_information_additional_details_team_member_id = '${teamMemberId}'` 
+      : `AND application_information_additional_details_email = '${email}'`;
 
     const request_list = plv8.execute(
       `
@@ -15091,12 +15096,16 @@ AS $$
           request_formsly_id,
           request_date_created,
           request_status,
-          request_response AS request_application_information_position
+          application_information_additional_details_position AS request_application_information_position,
+          CONCAT(
+            application_information_additional_details_first_name, ' ',
+            COALESCE(application_information_additional_details_middle_name || ' ', ''),
+            application_information_additional_details_last_name
+          ) AS request_application_applicant_name
         FROM public.request_view
-        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
-          AND application_information_additional_details_email = '${email}'
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
-          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        INNER JOIN hr_schema.application_information_additional_details_table
+          ON request_id = application_information_additional_details_request_id
+          ${additionalDetailsFilter}
         WHERE
           request_is_disabled = false
           ${search}
@@ -15110,8 +15119,9 @@ AS $$
       `
         SELECT COUNT(*)
         FROM public.request_view
-        INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
-          AND application_information_additional_details_email = '${email}'
+        INNER JOIN hr_schema.application_information_additional_details_table
+          ON request_id = application_information_additional_details_request_id
+          ${additionalDetailsFilter}
         WHERE
           request_is_disabled = false
           ${search}
@@ -15340,8 +15350,19 @@ AS $$
         LIMIT 1
       `
     )[0];
+    const teamMemberId = plv8.execute(
+      `
+        SELECT team_member_id
+        FROM user_schema.user_table
+        INNER JOIN team_schema.team_member_table
+          ON team_member_user_id = user_id
+        WHERE
+          user_email = '${userEmail}'
+        LIMIT 1
+      `
+    )[0].team_member_id;
 
-    if (userEmail !== applicantData.application_information_additional_details_email) throw new Error('403')
+    if (userEmail !== applicantData.application_information_additional_details_email && teamMemberId !== applicantData.application_information_additional_details_team_member_id) throw new Error('403')
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${applicantData.application_information_additional_details_position}' LIMIT 1`)[0];
 
     if (positionData.position_is_with_technical_interview_1) {
@@ -15945,7 +15966,7 @@ AS $$
     );
 
     const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length) {
+    if (userId.length) {
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -16183,7 +16204,7 @@ AS $$
     );
 
     const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length){
+    if (userId.length) {
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -16835,7 +16856,7 @@ AS $$
     );
 
     const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length){
+    if (userId.length) {
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -17067,7 +17088,7 @@ AS $$
         LIMIT 1
       `
     );
-    if(userData.length){
+    if (userData.length) {
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -17326,7 +17347,8 @@ AS $$
         RETURNING job_offer_id
       `
     )[0].job_offer_id;
-    if(requestingProject && requestingDepartment){
+
+    if (requestingProject && requestingDepartment) {
       plv8.execute(
         `
           INSERT INTO hr_schema.job_offer_laptop_details_table
@@ -17348,26 +17370,28 @@ AS $$
         ]
       );
     }
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          'REQUEST',
-          'You have a new job offer (${title}).',
-          '/user/application-progress/${applicationInformationFormslyId}',
-          '${userId}'
-        )
-      `
-    );
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`);
+    if (userId.length) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES
+          (
+            'REQUEST',
+            'REQUEST',
+            'You have a new job offer (${title}).',
+            '/user/application-progress/${applicationInformationFormslyId}',
+            '${userId[0].user_id}'
+          )
+        `
+      );
+    }
   });
   return returnData;
 $$ LANGUAGE plv8;

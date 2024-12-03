@@ -2265,6 +2265,7 @@ export type FetchUserRequestListParams = {
   isAscendingSort: boolean;
   email: string;
   form?: string[];
+  teamMemberId?: string;
 };
 
 export type HRSpreadsheetGeneralData = {
@@ -2640,6 +2641,7 @@ export type ApplicationListItemType = {
   request_date_created: string;
   request_is_with_progress_indicator: boolean;
   request_application_information_position: string;
+  request_application_applicant_name: string;
 };
 
 export type ApplicationListFilterValues = {
