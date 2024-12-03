@@ -12051,10 +12051,12 @@ plv8.subtransaction(function() {
         user_id,
         user_first_name,
         user_last_name,
-        user_avatar
+        user_avatar,
+        iltd.item_level_three_description_csi_code_section
       FROM item_schema.item_table AS it
       LEFT JOIN item_schema.item_category_table AS ict ON ict.item_category_id = it.item_category_id
         AND item_category_is_disabled = false
+      LEFT JOIN item_schema.item_level_three_description_table AS iltd ON iltd.item_level_three_description_item_id = it.item_id
       LEFT JOIN form_schema.signer_table ON signer_id = ict.item_category_signer_id
       LEFT JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
@@ -12147,6 +12149,7 @@ plv8.subtransaction(function() {
   returnData = {
     item_category_id: itemData.item_category_id,
     item_date_created: itemData.item_date_created,
+    item_level_three_description_csi_code_section: itemData.item_level_three_description_csi_code_section,
     item_general_name: itemData.item_general_name,
     item_gl_account: itemData.item_gl_account,
     item_id: itemData.item_id,
