@@ -7,15 +7,6 @@ type Props = {
 };
 
 const ItemSummary = ({ summaryData }: Props) => {
-  const isWithPreferredSupplier = summaryData
-    .map((data) => {
-      return data.section_field.findIndex(
-        (data) =>
-          data.field_name === "Preferred Supplier" &&
-          data.field_response?.request_response.length
-      );
-    })
-    .some((index) => index !== -1);
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -54,16 +45,24 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[0].field_response?.request_response}`
               );
 
+              const tableHeaders = [
+                "General Name",
+                "GL Account",
+                "Quantity",
+                "Base Unit of Measurement",
+                "Preferred Supplier",
+              ]
+
               let description = "";
-              summary.section_field
-                .slice(isWithPreferredSupplier ? 5 : 4)
-                .forEach((field) => {
-                  if (field.field_response) {
-                    description += `${field.field_name}: ${JSON.parse(
-                      field.field_response.request_response
-                    )}\n`;
-                  }
-                });
+              summary.section_field 
+              .filter((field) => !tableHeaders.includes(field.field_name))
+              .forEach((field) => {
+                if (field.field_response) {
+                  description += `${field.field_name.toUpperCase()}: ${JSON.parse(
+                    field.field_response.request_response
+                  )}\n`;
+                }
+              });
 
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
@@ -75,7 +74,7 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[1].field_response?.request_response}`
               );
               const supplier =
-                summary.section_field[4].field_name === "Preferred Supplier" &&
+                summary.section_field[9].field_name === "Preferred Supplier" &&
                 summary.section_field[4].field_response?.request_response
                   ? JSON.parse(
                       `${summary.section_field[4].field_response?.request_response}`

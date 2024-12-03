@@ -13,7 +13,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, CSI_HIDDEN_FIELDS, formatDateTime } from "@/utils/constant";
+import { BASE_URL, formatDateTime } from "@/utils/constant";
 import { mostOccurringElement } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -111,10 +111,8 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           });
           newFields.push(...data);
           index += 5;
-
           if (index > duplicatableSectionIdList.length) break;
         }
-
         const uniqueFieldIdList: string[] = [];
         const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
@@ -137,7 +135,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             ...request.request_form.form_section[1],
             section_field: combinedFieldList,
           },
-        ])
+        ]);
         const newFormSection = [...formSection, ...newSection];
 
         setFormSection(newFormSection);
