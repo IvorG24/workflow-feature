@@ -9010,9 +9010,9 @@ CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
 RETURNS TEXT
 SET search_path TO ''
 AS $$
-BEGIN
-  RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
-END;
+  BEGIN
+    RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
+  END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION analyze_user_issued_item(
@@ -9029,60 +9029,67 @@ AS $$
       endDate
     } = input_data;
 
+    const requestListData = plv8.execute(
+      `
+        SELECT request_id
+        FROM request_schema.request_table
+        WHERE
+          request_team_member_id = $1
+          AND request_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          AND request_status = 'APPROVED'
+          AND request_date_created BETWEEN $2 AND $3
+        ORDER BY request_date_created DESC
+      `, [
+        teamMemberId,
+        startDate,
+        endDate
+      ]
+    );
 
-    const requestListData = plv8.execute(`
-      SELECT request_id
-      FROM request_schema.request_table
-      WHERE request_team_member_id='${teamMemberId}'
-      AND request_form_id='d13b3b0f-14df-4277-b6c1-7c80f7e7a829'
-      AND request_status='APPROVED'
-      AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
-      ORDER BY request_date_created DESC;
-    `);
-
-    if(requestListData.length<=0) {
+    if (requestListData.length <= 0) {
       returnData = { data: [] }
       return;
     }
 
-    const requestListQuery = requestListData.map(request=>`'${request.request_id}'`).join(",");
-
-    const skippedField = [
-      "GL Account",
-      "CSI Code Description",
-      "CSI Code",
-      "Division Description",
-      "Level 2 Major Group Description",
-      "Level 2 Minor Group Description",
-      "Preferred Supplier",
-      "Requesting Project",
-      "Type",
-      "Date Needed",
-      "Purpose"
-    ]
-
-    const skippedFieldQuery = skippedField.map(field=>`'${field}'`).join(",");
-
-    const responseListData = plv8.execute(`
-      SELECT
-        rrt.*,
-        ft.field_name,
-        ft.field_section_id
-      FROM request_schema.request_response_table rrt
-      INNER JOIN form_schema.field_table ft ON rrt.request_response_field_id = ft.field_id
-      WHERE rrt.request_response_request_id IN (${requestListQuery})
-      AND ft.field_name NOT IN (${skippedFieldQuery});
-    `);
+    const requestListQuery = requestListData.map(request => request.request_id);
+    const skippedFieldQuery = [
+      'GL Account',
+      'CSI Code Description',
+      'CSI Code',
+      'Division Description',
+      'Level 2 Major Group Description',
+      'Level 2 Minor Group Description',
+      'Preferred Supplier',
+      'Requesting Project',
+      'Type',
+      'Date Needed',
+      'Purpose'
+    ];
+    
+    const responseListData = plv8.execute(
+      `
+        SELECT
+          request_response_table.*,
+          field_name,
+          field_section_id
+        FROM request_schema.request_response_table
+        INNER JOIN form_schema.field_table
+          ON request_response_field_id = field_id
+        WHERE
+          request_response_request_id = ANY($1)
+          AND field_name <> ALL($2)
+      `, [
+        requestListQuery,
+        skippedFieldQuery
+      ]
+    );
 
     const itemSpecificList = {};
-
     responseListData.forEach(item => {
       const key = `${item.request_response_request_id}-${item.request_response_duplicatable_section_id || ''}`;
-
       if (!itemSpecificList[key]) {
         itemSpecificList[key] = [];
       }
-
       itemSpecificList[key].push({
         request_response_id: item.request_response_id,
         request_response: JSON.parse(item.request_response),
@@ -9095,7 +9102,6 @@ AS $$
     });
 
     const nonUniqueitemList = [];
-
     for (const key in itemSpecificList) {
       const items = itemSpecificList[key];
 
@@ -9108,8 +9114,6 @@ AS $$
             specification: []
           }]
       };
-
-
 
       items.forEach(item => {
         switch (item.field_name) {
@@ -9136,7 +9140,6 @@ AS $$
     }
 
     const mergedItems = [];
-
     Object.values(nonUniqueitemList).forEach((item) => {
       const existingItem = mergedItems.find(
         (mergedItem) =>
@@ -9163,14 +9166,13 @@ AS $$
         mergedItems.push({ ...item });
       }
     });
-
     const itemList = mergedItems.sort((a, b) => b.itemQuantity - a.itemQuantity);
 
     returnData = {
       data: itemList,
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_memo(
