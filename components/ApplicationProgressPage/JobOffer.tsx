@@ -1,4 +1,7 @@
-import { automatedLaptopItemForm } from "@/backend/api/get";
+import {
+  automatedLaptopItemForm,
+  getProjectSignerWithTeamMember,
+} from "@/backend/api/get";
 import {
   createAttachment,
   createRequest,
@@ -95,7 +98,7 @@ const JobOffer = ({
 
     try {
       if (!user?.email) throw new Error("Missing user email");
-      if (!applicationInformationFormslyId) return;
+      if (!applicationInformationFormslyId || !session) return;
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
 
@@ -141,7 +144,7 @@ const JobOffer = ({
           body: JSON.stringify({
             requestReferenceId: jobOfferData.job_offer_request_id,
             email: user.email,
-            token: `Bearer ${session?.access_token}`,
+            token: `Bearer ${session.access_token}`,
           }),
         };
         const response = await fetch(
@@ -172,7 +175,13 @@ const JobOffer = ({
           const positionData = form.form_section[2].section_field[1]
             .field_response as string;
 
-          const signerList = form.form_signer.map((signer) => ({
+          const signerList = (
+            await getProjectSignerWithTeamMember(supabaseClient, {
+              projectId,
+              formId: form.form_id,
+              requesterTeamMemberId: "f0ae4d53-427c-4223-84ea-c007a186ae82",
+            })
+          ).map((signer) => ({
             ...signer,
             signer_action: signer.signer_action.toUpperCase(),
           }));
@@ -191,20 +200,22 @@ const JobOffer = ({
               ? formatTeamNameToUrlKey("SCIC")
               : formatTeamNameToUrlKey("Sta Clara");
 
-          await createRequest(supabaseClient, {
-            requestFormValues: newData,
-            formId: form.form_id,
-            teamMemberId: "f0ae4d53-427c-4223-84ea-c007a186ae82",
-            signers: [...signerList],
-            requesterName: "Formsly Automation",
-            formName: form.form_name,
-            isFormslyForm: true,
-            projectId,
-            userId: "4d9978f1-65e0-4922-9c94-710fff2c63d6",
-            teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
-            teamName: formatTeamNameToUrlKey(teamName),
-            itAssetAutomationParams,
-          });
+          if (signerList.length) {
+            await createRequest(supabaseClient, {
+              requestFormValues: newData,
+              formId: form.form_id,
+              teamMemberId: "f0ae4d53-427c-4223-84ea-c007a186ae82",
+              signers: signerList,
+              requesterName: "Formsly Automation",
+              formName: form.form_name,
+              isFormslyForm: true,
+              projectId,
+              userId: "4d9978f1-65e0-4922-9c94-710fff2c63d6",
+              teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
+              teamName: formatTeamNameToUrlKey(teamName),
+              itAssetAutomationParams,
+            });
+          }
         }
       }
 

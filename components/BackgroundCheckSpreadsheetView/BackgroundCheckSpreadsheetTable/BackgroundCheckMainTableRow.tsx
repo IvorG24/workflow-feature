@@ -154,7 +154,8 @@ const BackgroundCheckMainTableRow = ({
       <td>
         {item.background_check_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") && (
+          (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+            teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) && (
             <Button
               w={140}
               onClick={() =>

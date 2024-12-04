@@ -768,6 +768,8 @@ export type RequestWithResponseType = RequestTableRow & {
           user_signature_attachment_id: string | null;
         };
       };
+      signer_is_requester_signer: boolean;
+      signer_team_department_id: string | null;
     };
   })[];
   request_comment: {
@@ -2263,6 +2265,7 @@ export type FetchUserRequestListParams = {
   isAscendingSort: boolean;
   email: string;
   form?: string[];
+  teamMemberId?: string;
 };
 
 export type HRSpreadsheetGeneralData = {
@@ -2638,6 +2641,7 @@ export type ApplicationListItemType = {
   request_date_created: string;
   request_is_with_progress_indicator: boolean;
   request_application_information_position: string;
+  request_application_applicant_name: string;
 };
 
 export type ApplicationListFilterValues = {

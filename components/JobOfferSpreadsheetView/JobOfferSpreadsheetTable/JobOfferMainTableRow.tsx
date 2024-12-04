@@ -970,7 +970,8 @@ const JobOfferMainTableRow = ({
       )}
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") && (
+          (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+            teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) && (
             <Stack spacing="xs">
               {(isForPooling || isForAddOffer) && (
                 <Button
