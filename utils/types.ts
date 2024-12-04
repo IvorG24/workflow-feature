@@ -1012,6 +1012,8 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
+  item_level_three_description_csi_code_section: string;
+} & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: (ItemDescriptionFieldTableRow & {
       item_description_field_uom: {

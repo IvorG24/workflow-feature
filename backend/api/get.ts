@@ -1413,6 +1413,23 @@ export const getCSICode = async (
   return data[0] as CSICodeTableRow;
 };
 
+export const getCSIDetailsByCodeSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCodeSection: string;
+  }
+) => {
+  const { csiCodeSection } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_section", csiCodeSection);
+  if (error) throw error;
+
+  return data as CSICodeTableRow[];
+};
+
 export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
