@@ -382,17 +382,12 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
     updateSection: (index: number, newSection: Section) => void
   ) => {
     const clearedFields = [
-      newSection.section_field[0],
-      ...newSection.section_field.slice(1, 9).map((field) => {
+      ...newSection.section_field.slice(0,10).map((field) => {
         return {
           ...field,
           field_response: "",
         };
       }),
-      {
-        ...newSection.section_field[9],
-        field_response: "",
-      },
     ];
 
     setItemCategoryList((prev) => {
