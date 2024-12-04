@@ -2,6 +2,7 @@ import {
   getApplicationInformationIndicator,
   getUserApplicationList,
 } from "@/backend/api/get";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_APPLICATION_LIST_LIMIT } from "@/utils/constant";
 import {
   ApplicationListItemType,
@@ -14,12 +15,13 @@ import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import UserApplicationListFilter from "./UserApplicationListFilter";
-import UserApplicationListTable from "./UserApplicationListTable";
+import HRApplicationListFilter from "./HRApplicationListFilter";
+import HRApplicationListTable from "./HRApplicationListTable";
 
-const UserApplicationListPage = () => {
+const HRApplicationListPage = () => {
   const supabaseClient = useSupabaseClient();
   const currentUser = useUser();
+  const teamMember = useUserTeamMember();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingApplicationList, setIsFetchingApplicationList] =
@@ -55,7 +57,7 @@ const UserApplicationListPage = () => {
 
   const handleFetchApplicationList = async (page: number) => {
     try {
-      if (!currentUser?.email) return;
+      if (!currentUser?.email || !teamMember) return;
       setIsFetchingApplicationList(true);
 
       const { search, isAscendingSort } = getValues();
@@ -66,6 +68,7 @@ const UserApplicationListPage = () => {
         isAscendingSort,
         email: currentUser.email,
         search,
+        teamMemberId: teamMember.team_member_id,
       };
 
       const { data, count } = await getUserApplicationList(
@@ -92,10 +95,10 @@ const UserApplicationListPage = () => {
   };
 
   useEffect(() => {
-    if (currentUser?.email) {
+    if (currentUser?.email && teamMember) {
       handlePagination(activePage);
     }
-  }, [currentUser?.email]);
+  }, [currentUser?.email, teamMember]);
 
   const handleFilterForms = async () => {
     try {
@@ -126,21 +129,21 @@ const UserApplicationListPage = () => {
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={4}>Application List Page</Title>
-          <Text>Manage your applications here.</Text>
+          <Title order={4}>Representing Application List Page</Title>
+          <Text>Manage your represented applications here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <UserApplicationListFilter
+            <HRApplicationListFilter
               handleFilterForms={handleFilterForms}
               isFetchingApplicationList={isFetchingApplicationList}
             />
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <UserApplicationListTable
+          <HRApplicationListTable
             applicationList={applicationList}
             applicationListCount={applicationListCount}
             activePage={activePage}
@@ -161,4 +164,4 @@ const UserApplicationListPage = () => {
   );
 };
 
-export default UserApplicationListPage;
+export default HRApplicationListPage;

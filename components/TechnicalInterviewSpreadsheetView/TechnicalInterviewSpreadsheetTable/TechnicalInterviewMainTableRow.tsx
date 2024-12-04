@@ -415,7 +415,8 @@ const TechnicalInterviewMainTableRow = ({
             </Anchor>
           ) : null}
           {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-            teamMemberGroupList.includes("HUMAN RESOURCES") &&
+            (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+              teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) &&
             item.technical_interview_status === "PENDING" &&
             !item.technical_interview_evaluator_team_member_id && (
               <Button
@@ -458,7 +459,8 @@ const TechnicalInterviewMainTableRow = ({
       )}
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") &&
+          (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+            teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) &&
           item.technical_interview_status === "PENDING" &&
           !item.technical_interview_evaluator_team_member_id && (
             <Button

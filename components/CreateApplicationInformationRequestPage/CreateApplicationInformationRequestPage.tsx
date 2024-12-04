@@ -281,6 +281,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           sssNumber: (
             data.sections[3].section_field[0].field_response as string
           ).replace(/\D/g, ""),
+          hrTeamMemberId: router.query.hrTeamMemberId as string | undefined,
         },
       });
 
