@@ -1,3 +1,4 @@
+import { CSI_HIDDEN_FIELDS } from "@/utils/constant";
 import { addCommaToNumber } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
 import { Paper, ScrollArea, Table, Text, Title } from "@mantine/core";
@@ -37,6 +38,7 @@ const ItemSummary = ({ summaryData }: Props) => {
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
               <th>Preferred Supplier</th>
+              <th>CSI</th>
             </tr>
           </thead>
           <tbody>
@@ -51,19 +53,33 @@ const ItemSummary = ({ summaryData }: Props) => {
                 "Quantity",
                 "Base Unit of Measurement",
                 "Preferred Supplier",
-              ]
+              ];
 
               let description = "";
-              summary.section_field 
-              .filter((field) => !tableHeaders.includes(field.field_name))
-              .forEach((field) => {
-                if (field.field_response) {
-                  description += `${field.field_name.toUpperCase()}: ${JSON.parse(
-                    field.field_response.request_response
-                  )}\n`;
-                }
-              });
+              summary.section_field
+                .filter(
+                  (field) =>
+                    !tableHeaders.includes(field.field_name) &&
+                    !CSI_HIDDEN_FIELDS.includes(field.field_name)
+                )
+                .forEach((field) => {
+                  if (field.field_response) {
+                    description += `${field.field_name.toUpperCase()}: ${JSON.parse(
+                      field.field_response.request_response
+                    )}\n`;
+                  }
+                });
 
+              let csiData = "";
+              summary.section_field
+                .filter((field) => CSI_HIDDEN_FIELDS.includes(field.field_name))
+                .forEach((field) => {
+                  if (field.field_response) {
+                    csiData += `${field.field_name.toUpperCase()}: ${JSON.parse(
+                      field.field_response.request_response
+                    )}\n`;
+                  }
+                });
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
@@ -75,9 +91,9 @@ const ItemSummary = ({ summaryData }: Props) => {
               );
               const supplier =
                 summary.section_field[9].field_name === "Preferred Supplier" &&
-                summary.section_field[4].field_response?.request_response
+                summary.section_field[9].field_response?.request_response
                   ? JSON.parse(
-                      `${summary.section_field[4].field_response?.request_response}`
+                      `${summary.section_field[9].field_response?.request_response}`
                     )
                   : "";
 
@@ -93,6 +109,11 @@ const ItemSummary = ({ summaryData }: Props) => {
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
                   <td>{supplier}</td>
+                  <td>
+                    <pre>
+                      <Text>{csiData.slice(0, -1)}</Text>
+                    </pre>
+                  </td>
                 </tr>
               );
             })}
