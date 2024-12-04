@@ -48,7 +48,7 @@ export type RequestFormValues = {
 };
 
 export type FieldWithResponseArray = Field & {
-  field_response: RequestResponseTableRow[]
+  field_response: RequestResponseTableRow[];
 };
 
 export type FieldWithResponseString = Field & {
@@ -373,6 +373,39 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
     }
   };
 
+  const clearFields = (
+    index: number,
+    newSection: Section,
+    setItemCategoryList: (
+      value: React.SetStateAction<(ItemCategoryType["item_category"] | null)[]>
+    ) => void,
+    updateSection: (index: number, newSection: Section) => void
+  ) => {
+    const clearedFields = [
+      newSection.section_field[0],
+      ...newSection.section_field.slice(1, 9).map((field) => {
+        return {
+          ...field,
+          field_response: "",
+        };
+      }),
+      {
+        ...newSection.section_field[9],
+        field_response: "",
+      },
+    ];
+
+    setItemCategoryList((prev) => {
+      prev[index] = null;
+      return prev;
+    });
+
+    updateSection(index, {
+      ...newSection,
+      section_field: clearedFields,
+    });
+  };
+
   const handleGeneralNameChange = async (
     index: number,
     value: string | null
@@ -415,8 +448,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
             autoClose: false,
           });
 
-          setValue(`sections.${index}.section_field.0.field_response`, "");
-          setValue(`sections.${index}.section_field.9.field_response`, "");
+          clearFields(index, newSection, setItemCategoryList, updateSection);
           return;
         }
 
@@ -511,25 +543,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
           ],
         });
       } else {
-        setValue(`sections.${index}.section_field.9.field_response`, "");
-        const generalField = [
-          newSection.section_field[0],
-          ...newSection.section_field.slice(1, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          newSection.section_field[9],
-        ];
-        setItemCategoryList((prev) => {
-          prev[index] = null;
-          return prev;
-        });
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
+        clearFields(index, newSection, setItemCategoryList, updateSection);
       }
     } catch (e) {
       setValue(`sections.${index}.section_field.0.field_response`, "");
