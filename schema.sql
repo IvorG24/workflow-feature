@@ -8928,24 +8928,48 @@ AS $$
       app
     } = input_data;
 
-    plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id = '${teamId}' WHERE user_id = '${userId}'`);
+    plv8.execute(
+      `
+        UPDATE user_schema.user_table
+        SET
+          user_active_team_id = $1
+        WHERE user_id = $2
+      `, [
+        teamId,
+        userId
+      ]
+    );
 
-    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+    const teamMember = plv8.execute(
+      `
+        SELECT * FROM team_schema.team_member_table
+        WHERE
+          team_member_user_id = $1
+          AND team_member_team_id = $2
+      `, [
+        userId,
+        teamId
+      ]
+    )[0];
 
     let formList = [];
 
-    if(teamMember){
+    if (teamMember) {
       const formData = plv8.execute(
         `
           SELECT *
           FROM form_schema.form_table
-          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-            AND team_member_team_id = '${teamId}'
+          INNER JOIN team_schema.team_member_table
+            ON team_member_id = form_team_member_id
+            AND team_member_team_id = $1
           WHERE
             form_is_disabled = false
-            AND form_app = '${app}'
+            AND form_app = $2
           ORDER BY form_date_created DESC
-        `
+        `, [
+          teamId,
+          app
+        ]
       );
 
       formList = formData.map(form => {
@@ -8978,8 +9002,8 @@ AS $$
       teamMember,
       formList
     }
- });
- return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
