@@ -38,7 +38,13 @@ const ItemSummary = ({ summaryData }: Props) => {
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
               <th>Preferred Supplier</th>
-              <th>CSI</th>
+              {
+                summaryData.some((summary) =>
+                  summary.section_field.some((field) =>
+                    CSI_HIDDEN_FIELDS.includes(field.field_name)
+                  )
+                ) && <th>CSI Data</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -90,12 +96,13 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[1].field_response?.request_response}`
               );
               const supplier =
-                summary.section_field[9].field_name === "Preferred Supplier" &&
-                summary.section_field[9].field_response?.request_response
-                  ? JSON.parse(
-                      `${summary.section_field[9].field_response?.request_response}`
-                    )
-                  : "";
+                summary.section_field
+                  .filter((field) => field.field_name === "Preferred Supplier")
+                  .map((field) => {
+                    return JSON.parse(
+                      `${field.field_response?.request_response}`
+                    );
+                  })[0];
 
               return (
                 <tr key={index}>
@@ -109,11 +116,13 @@ const ItemSummary = ({ summaryData }: Props) => {
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
                   <td>{supplier}</td>
-                  <td>
-                    <pre>
-                      <Text>{csiData.slice(0, -1)}</Text>
-                    </pre>
-                  </td>
+                  {
+                    csiData && <td>
+                      <pre>
+                        <Text>{csiData.slice(0, -1)}</Text>
+                      </pre>
+                    </td>
+                  }
                 </tr>
               );
             })}
