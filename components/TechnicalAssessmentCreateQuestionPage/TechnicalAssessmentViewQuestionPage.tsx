@@ -138,7 +138,11 @@ const TechnicalAssessmentCreateQuestionPage = ({
       if (!questionnaireId) return;
       if (
         !teamGroup.some((group) =>
-          ["HUMAN RESOURCES", "HUMAN RESOURCES VIEWER"].includes(group)
+          [
+            "HUMAN RESOURCES",
+            "HUMAN RESOURCES VIEWER",
+            "HUMAN RESOURCES COORDINATOR",
+          ].includes(group)
         )
       )
         return;
@@ -170,7 +174,11 @@ const TechnicalAssessmentCreateQuestionPage = ({
       if (!requestorProfile || !teamMember) return;
       if (
         !teamGroup.some((group) =>
-          ["HUMAN RESOURCES", "HUMAN RESOURCES VIEWER"].includes(group)
+          [
+            "HUMAN RESOURCES",
+            "HUMAN RESOURCES VIEWER",
+            "HUMAN RESOURCES COORDINATOR",
+          ].includes(group)
         )
       )
         return;

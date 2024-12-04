@@ -4889,6 +4889,7 @@ export const getUserApplicationList = async (
     email,
     search,
     columnAccessor = "request_date_created",
+    teamMemberId
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -4907,6 +4908,7 @@ export const getUserApplicationList = async (
         email,
         search: search ? `AND (${searchCondition})` : "",
         columnAccessor,
+        teamMemberId
       },
     });
   if (requestListError) throw requestListError;

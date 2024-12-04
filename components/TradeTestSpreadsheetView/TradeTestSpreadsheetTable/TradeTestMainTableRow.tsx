@@ -414,7 +414,8 @@ const TradeTestMainTableRow = ({
             </Anchor>
           ) : null}
           {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-            teamMemberGroupList.includes("HUMAN RESOURCES") &&
+            (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+              teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) &&
             item.trade_test_status === "PENDING" &&
             !item.trade_test_evaluator_team_member_id && (
               <Button
@@ -458,7 +459,8 @@ const TradeTestMainTableRow = ({
       <td>
         {item.trade_test_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") && (
+          (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+            teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR")) && (
             <Button
               w={140}
               onClick={() =>

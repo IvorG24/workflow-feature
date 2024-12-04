@@ -1,6 +1,5 @@
 import {
   DuplicateSectionType,
-  FormTableRow,
   RequestResponseTableRow,
   RequestWithResponseType,
   Section,
