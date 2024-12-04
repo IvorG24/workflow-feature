@@ -138,7 +138,8 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
       );
 
       itemCategoryList.forEach((itemCategory) => {
-        if (!itemCategory) return;
+        if (!itemCategory || !itemCategory.item_category_signer.signer_id)
+          return;
         if (
           alreadyAddedAdditionalSigner.includes(
             itemCategory.item_category_signer.signer_team_member.team_member_id
