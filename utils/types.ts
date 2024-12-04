@@ -790,6 +790,8 @@ export type RequestWithResponseType = RequestTableRow & {
           user_signature_attachment_id: string | null;
         };
       };
+      signer_is_requester_signer: boolean;
+      signer_team_department_id: string | null;
     };
   })[];
   request_comment: {
@@ -1043,6 +1045,8 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
+  item_level_three_description_csi_code_section: string;
+} & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: (ItemDescriptionFieldTableRow & {
       item_description_field_uom: {
@@ -1415,7 +1419,7 @@ export type TicketListType = ({
   ticket_approver_team_member_id: string;
   ticket_category: string;
   ticket_requester_user: TicketRequesterUserType;
-  ticket_approver_user: TicketApproverUserType;
+  ticket_approver_user: TicketApproverUserType | null;
 } & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
@@ -2296,6 +2300,7 @@ export type FetchUserRequestListParams = {
   isAscendingSort: boolean;
   email: string;
   form?: string[];
+  teamMemberId?: string;
 };
 
 export type HRSpreadsheetGeneralData = {
@@ -2671,6 +2676,7 @@ export type ApplicationListItemType = {
   request_date_created: string;
   request_is_with_progress_indicator: boolean;
   request_application_information_position: string;
+  request_application_applicant_name: string;
 };
 
 export type ApplicationListFilterValues = {

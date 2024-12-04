@@ -32,6 +32,7 @@ import {
   IconDownload,
   IconEdit,
   IconFileArrowRight,
+  IconFilePencil,
   IconFolderCancel,
   IconInfoCircle,
   IconRefresh,
@@ -131,6 +132,7 @@ const RequestComment = ({
     "ACTION_CANCELED",
     "ACTION_REVERSED",
     "ACTION_GENERAL",
+    "REQUEST_ACTIVITY",
   ];
 
   const actionCommentColor = (type: string, relatedNode?: TargetNode) => {
@@ -147,6 +149,8 @@ const RequestComment = ({
         return "blue";
       default:
         return relatedNode?.target_node_background_color;
+      case "REQUEST_ACTIVITY":
+        return "gray";
     }
   };
 
@@ -164,6 +168,8 @@ const RequestComment = ({
         return "Formsly Automation";
       default:
         return `${relatedNode?.edge_transition_label} !`;
+      case "REQUEST_ACTIVITY":
+        return "Signers Updated!";
     }
   };
 
@@ -181,6 +187,8 @@ const RequestComment = ({
         return <IconInfoCircle size={16} />;
       default:
         return <IconFileArrowRight size={16} />;
+      case "REQUEST_ACTIVITY":
+        return <IconFilePencil size={16} />;
     }
   };
 

@@ -58,6 +58,7 @@ import {
   IconTerminal,
   IconTicket,
   IconTools,
+  IconUserCircle,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
@@ -207,7 +208,8 @@ const ReviewAppNavLink = () => {
   const analyticsMenuOptions = ["Human Resources"];
   const isUserHR =
     teamMemberGroups.includes("HUMAN RESOURCES") ||
-    teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
+    teamMemberGroups.includes("HUMAN RESOURCES COORDINATOR");
+  const isUserHRViewer = teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
 
   const handleRedirectToAnalyticsPage = (option: string) => {
     const url = `/${activeTeamNameToUrl}/analytics/${formatTeamNameToUrlKey(
@@ -241,8 +243,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-                ? ["create"]
-                : []
+              ? ["create"]
+              : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -495,8 +497,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-                ? ["form"]
-                : []
+              ? ["form"]
+              : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));
@@ -944,7 +946,7 @@ const ReviewAppNavLink = () => {
   ];
 
   const hrSection = [
-    ...(isUserHR
+    ...(isUserHR || isUserHRViewer
       ? [
           {
             label: `Application Information`,
@@ -1023,6 +1025,20 @@ const ReviewAppNavLink = () => {
             withIndicator: Boolean(hrIndicatorCount.jobOffer),
             indicatorLabel: `${hrIndicatorCount.jobOffer}`,
           },
+          ...(isUserHR
+            ? [
+                {
+                  label: `Representing Application`,
+                  icon: (
+                    <Box ml="sm" {...defaultNavLinkContainerProps}>
+                      <IconUserCircle {...defaultIconProps} />
+                    </Box>
+                  ),
+                  href: `/${activeTeamNameToUrl}/hr/application-information`,
+                  indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
+                },
+              ]
+            : []),
         ]
       : []),
     ...(userTeamMemberData?.team_member_role === "ADMIN" && isUserHR

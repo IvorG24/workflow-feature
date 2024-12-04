@@ -31,6 +31,7 @@ export default async function handler(
     }
 
     const requestIdList = await requestIdListResponse.json();
+    if (!requestIdList.length) return res.status(200).send("Success");
 
     const updateStatusResponse = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/accept_job_offer_update_status`,
@@ -73,27 +74,26 @@ export default async function handler(
       throw new Error(await jobOfferListResponse.text());
     }
     const jobOfferList = await jobOfferListResponse.json();
+    if (!jobOfferList.length) return res.status(200).send("Success");
 
-    if (jobOfferList.length) {
-      const updateJobOfferResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/accept_job_offer_update_job_offer`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            Authorization: data.token,
+    const updateJobOfferResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/accept_job_offer_update_job_offer`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          Authorization: data.token,
+        },
+        body: JSON.stringify({
+          input_data: {
+            jobOfferList,
           },
-          body: JSON.stringify({
-            input_data: {
-              jobOfferList,
-            },
-          }),
-        }
-      );
-      if (!updateJobOfferResponse.ok) {
-        throw new Error(await updateJobOfferResponse.text());
+        }),
       }
+    );
+    if (!updateJobOfferResponse.ok) {
+      throw new Error(await updateJobOfferResponse.text());
     }
 
     return res.status(200).send("Success");

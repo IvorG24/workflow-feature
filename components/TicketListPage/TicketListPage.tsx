@@ -193,6 +193,7 @@ const TicketListPage = ({
       };
 
       const { data, count } = await getTicketList(supabaseClient, params);
+
       setTicketList(data);
       setTicketListCount(count || 0);
     } catch (e) {
@@ -210,7 +211,7 @@ const TicketListPage = ({
     return isHidden;
   };
 
-  // soroting
+  // sorting
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     setLocalFilter((prev) => {
@@ -406,20 +407,16 @@ const TicketListPage = ({
                   ticket_status,
                   ticket_approver_team_member_id,
                 }) => {
+                  if (ticket_approver_user === null || ticket_status === null) {
+                    return null;
+                  }
+
                   const {
                     user_first_name,
                     user_last_name,
                     user_id,
                     user_avatar,
                   } = ticket_approver_user as TicketApproverUserType;
-
-                  if (
-                    user_first_name === null ||
-                    user_last_name === null ||
-                    ticket_status === null
-                  ) {
-                    return null;
-                  }
 
                   return (
                     <Flex px={0} gap={8} align="center">

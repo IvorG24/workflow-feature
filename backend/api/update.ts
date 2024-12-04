@@ -1621,6 +1621,36 @@ export const updateUserUsernameOrSignature = async (
   if (error) throw error;
 };
 
+export const updateRequesterSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    requestId: string;
+    projectId: string;
+    signerList: {
+      signer_team_member_id: string;
+      request_signer_id: string;
+      signer_team_department_id: string | null;
+      signer_is_requester_signer: boolean;
+      signer_is_primary_signer: boolean;
+    }[];
+    commentContent: {
+      team_member_id: string;
+      content: string;
+    };
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "update_request_signer_list",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data;
+};
+
 export const updateWorkflow = async (
   supabaseClient: SupabaseClient<Database>,
   params: createUpdateWorkflowParams

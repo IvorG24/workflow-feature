@@ -1422,6 +1422,23 @@ export const getCSICode = async (
   return data[0] as CSICodeTableRow;
 };
 
+export const getCSIDetailsByCodeSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCodeSection: string;
+  }
+) => {
+  const { csiCodeSection } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_section", csiCodeSection);
+  if (error) throw error;
+
+  return data as CSICodeTableRow[];
+};
+
 export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -1735,7 +1752,6 @@ export const getTicketOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     ticketId: string;
-    userId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -1778,15 +1794,13 @@ export const getTicketList = async (
   } = params;
 
   const requesterCondition = requester
-    ?.map(
-      (value) => `ticket_table.ticket_requester_team_member_id = '${value}'`
-    )
+    ?.map((value) => `ticket_requester_team_member_id = '${value}'`)
     .join(" OR ");
   const approverCondition = approver
-    ?.map((value) => `ticket_table.ticket_approver_team_member_id = '${value}'`)
+    ?.map((value) => `ticket_approver_team_member_id = '${value}'`)
     .join(" OR ");
   const statusCondition = status
-    ?.map((value) => `ticket_table.ticket_status = '${value}'`)
+    ?.map((value) => `ticket_status = '${value}'`)
     .join(" OR ");
   const categoryCondition = category
     ?.map((value) => `ticket_table.ticket_category_id = '${value}'`)
@@ -1794,8 +1808,8 @@ export const getTicketList = async (
 
   const searchCondition =
     search && search?.length > 0 && validate(search)
-      ? `ticket_table.ticket_id = '${search}'`
-      : `ticket_table.ticket_id::text LIKE '${search}%'`;
+      ? `ticket_id = '${search}'`
+      : "";
 
   const { data, error } = await supabaseClient.rpc("fetch_ticket_list", {
     input_data: {
@@ -4884,6 +4898,7 @@ export const getUserApplicationList = async (
     email,
     search,
     columnAccessor = "request_date_created",
+    teamMemberId
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -4902,6 +4917,7 @@ export const getUserApplicationList = async (
         email,
         search: search ? `AND (${searchCondition})` : "",
         columnAccessor,
+        teamMemberId
       },
     });
   if (requestListError) throw requestListError;
@@ -6609,7 +6625,10 @@ export const analyzeItem = async (
       },
     });
     if (error) throw error;
-    itemList.push(...(data as ResultType[]));
+    const formattedData = data as ResultType[];
+
+    itemList.push(...formattedData);
+    if (formattedData.length < 5) break;
   }
 
   const { count, error: countError } = await supabaseClient
@@ -6643,6 +6662,7 @@ export const getDashboardTopRequestor = async (
       input_data: params,
     }
   );
+
   if (error) throw error;
 
   return data as DashboardRequestorAndSignerType[];

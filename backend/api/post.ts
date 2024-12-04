@@ -547,6 +547,7 @@ export const createRequest = async (
       contactNumber: string;
       email: string;
       sssNumber: string;
+      hrTeamMemberId?: string;
     };
     interviewParams?: {
       status: string;

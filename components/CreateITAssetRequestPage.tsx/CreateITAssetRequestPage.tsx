@@ -148,30 +148,30 @@ const CreateITAssetRequestPage = ({
             (signer) => signer.signer_team_member.team_member_id
           );
 
-          itemCategoryList.forEach((itemCategory) => {
-            if (!itemCategory) return;
-            if (
-              alreadyAddedAdditionalSigner.includes(
-                itemCategory.item_category_signer.signer_team_member
-                  .team_member_id
-              )
-            )
-              return;
-            alreadyAddedAdditionalSigner.push(
-              itemCategory.item_category_signer.signer_team_member
-                .team_member_id
-            );
-            additionalSignerList.push(itemCategory.item_category_signer);
-          });
-          if (![...signerList, ...additionalSignerList].length) {
-            notifications.show({
-              title: "There's no assigned signer.",
-              message: <InvalidSignerNotification />,
-              color: "orange",
-              autoClose: false,
-            });
-            return;
-          }
+      itemCategoryList.forEach((itemCategory) => {
+        if (!itemCategory || !itemCategory.item_category_signer.signer_id)
+          return;
+        if (
+          alreadyAddedAdditionalSigner.includes(
+            itemCategory.item_category_signer.signer_team_member.team_member_id
+          )
+        )
+          return;
+        alreadyAddedAdditionalSigner.push(
+          itemCategory.item_category_signer.signer_team_member.team_member_id
+        );
+        additionalSignerList.push(itemCategory.item_category_signer);
+      });
+
+      if (![...signerList, ...additionalSignerList].length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
           const request = await createRequest(supabaseClient, {
             requestFormValues: data,

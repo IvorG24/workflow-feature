@@ -461,7 +461,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
               );
             })
           ) : (
-            <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+            <Alert title="Note!" icon={<IconNote size={16} />}>
               <Text>
                 The position doesn&apos;t have a technical assessment yet.
               </Text>

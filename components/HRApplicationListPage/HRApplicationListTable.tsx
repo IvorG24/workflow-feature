@@ -4,6 +4,7 @@ import {
   formatDate,
 } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
+import { capitalizeEachWord } from "@/utils/string";
 import {
   ApplicationListFilterValues,
   ApplicationListItemType,
@@ -43,7 +44,7 @@ type Props = {
   setValue: UseFormSetValue<ApplicationListFilterValues>;
 };
 
-const UserApplicationListTable = ({
+const HRApplicationListTable = ({
   applicationList,
   applicationListCount,
   activePage,
@@ -111,6 +112,15 @@ const UserApplicationListTable = ({
               </Flex>
             );
           },
+        },
+        {
+          accessor: "request_application_applicant_name",
+          title: "Name",
+          render: ({ request_application_applicant_name }) => (
+            <Text>
+              {capitalizeEachWord(request_application_applicant_name as string)}
+            </Text>
+          ),
         },
         {
           accessor: "",
@@ -191,4 +201,4 @@ const UserApplicationListTable = ({
   );
 };
 
-export default UserApplicationListTable;
+export default HRApplicationListTable;

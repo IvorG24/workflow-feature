@@ -21,11 +21,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
-import {
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  TicketType,
-} from "@/utils/types";
+import { CreateTicketFormValues, TicketType } from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -38,7 +34,6 @@ type Props = {
   ticket: TicketType;
   ticketForm: CreateTicketFormValues;
   setTicket: Dispatch<SetStateAction<TicketType>>;
-  user: CreateTicketPageOnLoad["member"];
   setRequestCommentList: Dispatch<SetStateAction<TicketType["ticket_comment"]>>;
 };
 
@@ -46,7 +41,6 @@ const TicketActionSection = ({
   ticket,
   ticketForm,
   setTicket,
-  user,
   setRequestCommentList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -62,7 +56,7 @@ const TicketActionSection = ({
     status: string,
     rejectionMessage: string | null
   ) => {
-    if (!teamMember) return;
+    if (!teamMember || !currentUser) return;
     try {
       setIsLoading(true);
       const data = await updateTicketStatus(supabaseClient, {
@@ -90,16 +84,16 @@ const TicketActionSection = ({
       const commentData = await createTicketComment(supabaseClient, {
         commentInput: {
           ticket_comment_id: newCommentId,
-          ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} ${commentContent}`,
+          ticket_comment_content: `${currentUser.user_first_name} ${currentUser.user_last_name} ${commentContent}`,
           ticket_comment_type: `ACTION_${status}`,
-          ticket_comment_team_member_id: user.team_member_id,
+          ticket_comment_team_member_id: teamMember.team_member_id,
           ticket_comment_ticket_id: ticket.ticket_id,
         },
         notificationInput: [
           {
             notification_app: "REQUEST",
             notification_type: notificationType,
-            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent}`,
+            notification_content: `${`${currentUser.user_first_name} ${currentUser.user_last_name}`} ${notificationContent}`,
             notification_redirect_url: `/${formatTeamNameToUrlKey(
               activeTeam.team_name ?? ""
             )}/tickets/${ticket.ticket_id}`,

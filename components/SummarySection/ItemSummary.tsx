@@ -1,3 +1,4 @@
+import { CSI_HIDDEN_FIELDS } from "@/utils/constant";
 import { addCommaToNumber } from "@/utils/string";
 import { DuplicateSectionType } from "@/utils/types";
 import { Paper, ScrollArea, Table, Text, Title } from "@mantine/core";
@@ -7,15 +8,6 @@ type Props = {
 };
 
 const ItemSummary = ({ summaryData }: Props) => {
-  const isWithPreferredSupplier = summaryData
-    .map((data) => {
-      return data.section_field.findIndex(
-        (data) =>
-          data.field_name === "Preferred Supplier" &&
-          data.field_response?.request_response.length
-      );
-    })
-    .some((index) => index !== -1);
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -46,6 +38,13 @@ const ItemSummary = ({ summaryData }: Props) => {
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
               <th>Preferred Supplier</th>
+              {
+                summaryData.some((summary) =>
+                  summary.section_field.some((field) =>
+                    CSI_HIDDEN_FIELDS.includes(field.field_name)
+                  )
+                ) && <th>CSI</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -54,17 +53,39 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[0].field_response?.request_response}`
               );
 
+              const tableHeaders = [
+                "General Name",
+                "GL Account",
+                "Quantity",
+                "Base Unit of Measurement",
+                "Preferred Supplier",
+              ];
+
               let description = "";
               summary.section_field
-                .slice(isWithPreferredSupplier ? 5 : 4)
+                .filter(
+                  (field) =>
+                    !tableHeaders.includes(field.field_name) &&
+                    !CSI_HIDDEN_FIELDS.includes(field.field_name)
+                )
                 .forEach((field) => {
                   if (field.field_response) {
-                    description += `${field.field_name}: ${JSON.parse(
+                    description += `${field.field_name.toUpperCase()}: ${JSON.parse(
                       field.field_response.request_response
                     )}\n`;
                   }
                 });
 
+              let csiData = "";
+              summary.section_field
+                .filter((field) => CSI_HIDDEN_FIELDS.includes(field.field_name))
+                .forEach((field) => {
+                  if (field.field_response) {
+                    csiData += `${field.field_name.toUpperCase()}: ${JSON.parse(
+                      field.field_response.request_response
+                    )}\n`;
+                  }
+                });
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
@@ -75,12 +96,13 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[1].field_response?.request_response}`
               );
               const supplier =
-                summary.section_field[4].field_name === "Preferred Supplier" &&
-                summary.section_field[4].field_response?.request_response
-                  ? JSON.parse(
-                      `${summary.section_field[4].field_response?.request_response}`
-                    )
-                  : "";
+                summary.section_field
+                  .filter((field) => field.field_name === "Preferred Supplier")
+                  .map((field) => {
+                    return JSON.parse(
+                      `${field.field_response?.request_response}`
+                    );
+                  })[0];
 
               return (
                 <tr key={index}>
@@ -94,6 +116,13 @@ const ItemSummary = ({ summaryData }: Props) => {
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
                   <td>{supplier}</td>
+                  {
+                    csiData && <td>
+                      <pre>
+                        <Text>{csiData.slice(0, -1)}</Text>
+                      </pre>
+                    </td>
+                  }
                 </tr>
               );
             })}

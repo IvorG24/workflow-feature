@@ -428,7 +428,7 @@ const GeneralAssessmentRequestPage = ({ request }: Props) => {
         />
 
         <Stack spacing="xl">
-          {formSection.map((section, idx) => {
+          {formSection.slice(0, 2).map((section, idx) => {
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -440,6 +440,27 @@ const GeneralAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
+          {formSection[2].section_field.length &&
+          formSection[2].section_field.every(
+            (field) => field.field_response?.request_response
+          ) ? (
+            formSection.slice(2).map((section, idx) => {
+              return (
+                <RequestSection
+                  key={section.section_id + idx}
+                  section={section}
+                  isFormslyForm={true}
+                  isOnlyWithResponse
+                  index={idx + 1}
+                  isPublicRequest={true}
+                />
+              );
+            })
+          ) : (
+            <Alert title="Note!" icon={<IconNote size={16} />}>
+              <Text>The position doesn&apos;t have a general assessment.</Text>
+            </Alert>
+          )}
         </Stack>
 
         {isRequestActionSectionVisible && (

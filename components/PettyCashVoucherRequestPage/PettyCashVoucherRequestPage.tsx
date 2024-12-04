@@ -532,7 +532,14 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
           />
         )}
 
-        <RequestSignerSection signerList={signerList} />
+        <RequestSignerSection
+          signerList={signerList}
+          setSignerList={setSignerList}
+          formId={request.request_form_id}
+          projectId={request.request_project_id ?? undefined}
+          requestId={request.request_id}
+          requestStatus={requestStatus}
+        />
       </Stack>
 
       <RequestCommentList
