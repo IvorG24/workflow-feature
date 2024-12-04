@@ -395,6 +395,56 @@ CREATE TABLE form_schema.requester_primary_signer_table (
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
+CREATE TABLE workflow_schema.module_table (
+  module_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  module_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  module_name VARCHAR(4000) NOT NULL,
+
+  module_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.workflow_table (
+  workflow_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  workflow_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  workflow_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  workflow_label VARCHAR(4000) NOT NULL,
+
+  workflow_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.workflow_version_table (
+  workflow_version_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  workflow_version_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  workflow_version_date_updated TIMESTAMPTZ,
+  workflow_version_label INT NOT NULL,
+
+  workflow_version_workflow_id UUID REFERENCES workflow_schema.workflow_table(workflow_id) NOT NULL,
+  workflow_version_created_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  workflow_version_updated_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE workflow_schema.module_version_table (
+  module_version_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  module_version_date_created TIMESTAMPTZ NOT NULL,
+  module_version_date_updated TIMESTAMPTZ,
+  module_version_label INT NOT NULL,
+
+  module_version_module_id UUID REFERENCES workflow_schema.module_table(module_id) NOT NULL,
+  module_version_updated_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  module_version_created_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE module_request_schema.module_request_table (
+  module_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  module_request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  module_request_latest_status VARCHAR(4000),
+  module_request_latest_form_name VARCHAR(4000),
+  module_request_latest_approver VARCHAR(4000),
+
+  module_request_requested_by UUID REFERENCES team_schema.team_member_table(team_member_id)NOT NULL,
+  module_request_module_version_id UUID REFERENCES workflow_schema.module_version_table(module_version_id)NOT NULL
+);
+
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
@@ -1286,6 +1336,70 @@ CREATE TABLE hr_schema.application_information_additional_details_table (
 
   application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   application_information_additional_details_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE workflow_schema.module_connection_table (
+  module_connection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  module_connection_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  module_connection_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  module_connection_order INT NOT NULL,
+
+  module_connection_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
+  module_connection_workflow_id UUID REFERENCES workflow_schema.workflow_table(workflow_id) NOT NULL,
+  module_connection_module_version_id UUID REFERENCES workflow_schema.module_version_table(module_version_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.node_table (
+  node_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  node_x_position INT NOT NULL,
+  node_y_position INT NOT NULL,
+  node_is_deletable BOOLEAN NOT NULL,
+  node_width INT NOT NULL,
+  node_height INT NOT NULL,
+  node_signer_count_to_proceed INT NOT NULL,
+
+  node_type_node_id UUID REFERENCES workflow_schema.node_type_table(node_type_id),
+  node_workflow_version_id UUID REFERENCES workflow_schema.workflow_version_table(workflow_version_id) NOT NULL
+);
+
+CREATE TABLE module_request_schema.module_signer_table (
+  module_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  module_signer_status VARCHAR(4000) NOT NULL,
+  module_signer_status_date_updated TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+  module_signer_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  module_signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.node_type_table (
+  node_type_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  node_type_label VARCHAR(4000) NOT NULL,
+  node_type_variant VARCHAR(4000) NOT NULL,
+  node_type_background_color VARCHAR(4000) NOT NULL,
+  node_type_font_color VARCHAR(4000) NOT NULL,
+  node_type_is_disabled BOOLEAN NOT NULL,
+  node_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  node_type_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.node_signer_table (
+  node_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  node_signer_team_group_id UUID REFERENCES team_schema.team_group_table(team_group_id) NOT NULL,
+  node_signer_node_id UUID REFERENCES workflow_schema.node_table(node_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.edge_table (
+  edge_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  edge_label VARCHAR(4000) NOT NULL,
+  edge_marker_end_type VARCHAR(4000) NOT NULL,
+  edge_source_handle VARCHAR(4000) NOT NULL,
+  edge_target_handle VARCHAR(4000) NOT NULL,
+  edge_is_start_edge BOOLEAN NOT NULL,
+  edge_is_end_edge BOOLEAN NOT NULL,
+
+  edge_workflow_version_id UUID REFERENCES workflow_schema.workflow_version_table(workflow_version_id) NOT NULL,
+  edge_source_node_id UUID REFERENCES workflow_schema.node_table(node_id) NOT NULL,
+  edge_target_node_id UUID REFERENCES workflow_schema.node_table(node_id) NOT NULL
 );
 
 ----- END: TABLES
@@ -3847,7 +3961,7 @@ RETURNS JSON
 SET search_path TO ''
 AS $$
   let return_value;
-  plv8.subtransaction(function(){
+  plv8.subtransaction(function () {
     const {
       teamId,
       page,
@@ -3861,7 +3975,7 @@ AS $$
       isApproversView,
       teamMemberId,
       project,
-      columnAccessor
+      columnAccessor,
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -3869,29 +3983,32 @@ AS $$
     let request_list = [];
     let request_count = 0;
 
+    // Base query for requests
     const base_request_list_query = `
       WITH request_data AS (
         SELECT
-          rv.request_id,
-          rv.request_formsly_id,
-          rv.request_date_created,
-          rv.request_status,
-          rv.request_team_member_id,
-          rv.request_jira_id,
-          rv.request_jira_link,
-          rv.request_otp_id,
-          rv.request_form_id,
-          f.form_name
-        FROM public.request_view rv
-        INNER JOIN request_schema.request_table rt ON rv.request_id = rt.request_id
-          AND rt.request_module_request_id IS NULL
-        INNER JOIN form_schema.form_table f ON rv.request_form_id = f.form_id
-          AND f.form_is_disabled = false
-          AND f.form_is_public_form = false
-        INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = rv.request_team_member_id
-          AND tm.team_member_team_id = $1
+          request_schema.request_table.request_id,
+          CONCAT(request_schema.request_table.request_formsly_id_prefix, '-', request_schema.request_table.request_formsly_id_serial) AS request_formsly_id,
+          request_schema.request_table.request_date_created,
+          request_schema.request_table.request_status,
+          request_schema.request_table.request_team_member_id,
+          request_schema.request_table.request_jira_id,
+          request_schema.request_table.request_jira_link,
+          request_schema.request_table.request_otp_id,
+          request_schema.request_table.request_form_id,
+          form_schema.form_table.form_name
+        FROM request_schema.request_table
+        INNER JOIN form_schema.form_table
+          ON request_schema.request_table.request_form_id = form_schema.form_table.form_id
+          AND form_schema.form_table.form_is_disabled = false
+          AND form_schema.form_table.form_is_public_form = false
+          AND form_schema.form_table.form_is_hr_form = false
+        INNER JOIN team_schema.team_member_table
+          ON team_schema.team_member_table.team_member_id = request_schema.request_table.request_team_member_id
+          AND team_schema.team_member_table.team_member_team_id = $1
         WHERE
-          rv.request_is_disabled = false
+          request_schema.request_table.request_is_disabled = false
+          AND request_schema.request_table.request_module_request_id IS NULL
     `;
 
     const request_signer_query = `
@@ -3930,35 +4047,35 @@ AS $$
       OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
     `;
 
+    // Base query for request count
     const base_request_count_query = `
-      SELECT COUNT(*)
-      FROM public.request_view rv
-      INNER JOIN form_schema.form_table ft
-        ON rv.request_form_id = ft.form_id
-        AND ft.form_is_disabled = false
-        AND ft.form_is_public_form = false
-      INNER JOIN team_schema.team_member_table tm
-        ON tm.team_member_id = rv.request_team_member_id
-        AND tm.team_member_team_id = $1
-      INNER JOIN request_schema.request_table rt
-        ON rt.request_id = rv.request_id
-        AND rt.request_module_request_id IS NULL
+      SELECT COUNT(*) AS total_count
+      FROM request_schema.request_table
+      INNER JOIN form_schema.form_table
+        ON request_schema.request_table.request_form_id = form_schema.form_table.form_id
+        AND form_schema.form_table.form_is_disabled = false
+        AND form_schema.form_table.form_is_public_form = false
+        AND form_schema.form_table.form_is_hr_form = false
+      INNER JOIN team_schema.team_member_table
+        ON team_schema.team_member_table.team_member_id = request_schema.request_table.request_team_member_id
+        AND team_schema.team_member_table.team_member_team_id = $1
       WHERE
-        rv.request_is_disabled = false
+        request_schema.request_table.request_is_disabled = false
+        AND request_schema.request_table.request_module_request_id IS NULL
     `;
 
-    if (isApproversView) {
+  if (isApproversView) {
       const approver_filter_query = `
         AND EXISTS (
           SELECT 1
           FROM request_schema.request_signer_table
           INNER JOIN form_schema.signer_table signer ON signer_id = request_signer_signer_id
           WHERE
-            request_signer_request_id = request_view.request_id
+            request_signer_request_id = request_table.request_id
             AND request_signer_status = 'PENDING'
             AND signer_team_member_id = $2
         )
-        AND request_view.request_status != 'CANCELED'
+        AND request_table.request_status != 'CANCELED'
       `;
 
       request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query + request_signer_query, [teamId, teamMemberId]);
@@ -21751,6 +21868,4297 @@ AS $$
   });
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION generate_module_request_id_condition(
+  module_request_id TEXT
+)
+RETURNS TEXT
+SET search_path TO ''
+AS $$
+  let idCondition = '';
+  plv8.subtransaction(function(){
+    const isUUID = (str) => {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidPattern.test(str);
+    }
+    if(isUUID(module_request_id)){
+      idCondition = `module_request_id = '${module_request_id}'`;
+    }else{
+      const formslyId = module_request_id.split("-");
+      idCondition = `module_request_formsly_id_prefix = '${formslyId[0]}' AND module_request_formsly_id_serial = '${formslyId[1]}'`
+    }
+ });
+ return idCondition;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_workflow(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let workflowId = '';
+  plv8.subtransaction(function(){
+    const {
+      label,
+      nodes,
+      edges,
+      teamId,
+      teamMemberId
+    } = input_data;
+
+    workflowId = plv8.execute(
+      `
+        INSERT INTO workflow_schema.workflow_table
+        (workflow_label, workflow_team_id)
+        VALUES
+        ('${label}', '${teamId}')
+        RETURNING workflow_id
+      `
+    )[0].workflow_id;
+
+    const workflowVersionId = plv8.execute(
+      `
+        INSERT INTO workflow_schema.workflow_version_table
+        (workflow_version_label, workflow_version_workflow_id, workflow_version_created_by_team_member_id)
+        VALUES
+        (1, '${workflowId}', '${teamMemberId}')
+        RETURNING workflow_version_id
+      `
+    )[0].workflow_version_id;
+
+    const nodeInputData = [];
+    const nodeProjectInputData = [];
+    const nodeProjectSignerInputData = [];
+
+    nodes.forEach(node => {
+      const result = plv8.execute(
+        `
+          SELECT node_type_id
+          FROM workflow_schema.node_type_table
+          WHERE node_type_label = '${node.data.nodeStyle.label}'
+        `
+      );
+
+      if (result.length === 0) {
+        throw new Error(`Node type not found for label: ${node.data.nodeStyle.label}`);
+      }
+
+      const nodeTypeId = result[0].node_type_id;
+
+      const signerCount = node.data.nodeProjectWithSignerList.length > 0 ? node.data.nodeProjectWithSignerList[0].signerCount : 0;
+
+      nodeInputData.push(`
+        (
+          '${node.id}',
+          '${nodeTypeId}',
+          '${Math.round(node.position.x)}',
+          '${Math.round(node.position.y)}',
+          ${node.deletable},
+          '${node.measured.width}',
+          '${node.measured.height}',
+          '${signerCount}',
+          '${workflowVersionId}'
+        )
+      `);
+
+      node.data.nodeProjectWithSignerList.forEach(project => {
+        project.signerList.forEach(signer => {
+          const nodeGroupId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+          nodeProjectInputData.push(`
+            (
+              '${nodeGroupId}',
+              '${signer}',
+              '${node.id}'
+            )
+          `);
+        });
+      });
+    });
+
+    plv8.execute(`
+      INSERT INTO workflow_schema.node_table
+      (
+        node_id,
+        node_type_node_id,
+        node_x_position,
+        node_y_position,
+        node_is_deletable,
+        node_width,
+        node_height,
+        node_signer_count_to_proceed,
+        node_workflow_version_id
+      )
+      VALUES ${nodeInputData.join(", ")}
+    `);
+
+    if (nodeProjectInputData.length) {
+      plv8.execute(`
+        INSERT INTO workflow_schema.node_signer_table
+        (
+          node_signer_id,
+          node_signer_team_group_id,
+          node_signer_node_id
+        )
+        VALUES ${nodeProjectInputData.join(", ")}
+      `);
+    }
+
+    const edgeInputData = edges.map(edge => {
+      const edgeId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      return (`
+        (
+          '${edge.id}',
+          '${edge.data.label}',
+          '${edge.markerEnd.type}',
+          '${edge.sourceHandle}',
+          '${edge.targetHandle}',
+          ${edge.data.isStartEdge},
+          ${edge.data.isEndEdge},
+          '${workflowVersionId}',
+          '${edge.source}',
+          '${edge.target}'
+        )
+      `);
+    });
+
+    // Insert edges
+    plv8.execute(`
+      INSERT INTO workflow_schema.edge_table
+      (
+        edge_id,
+        edge_label,
+        edge_marker_end_type,
+        edge_source_handle,
+        edge_target_handle,
+        edge_is_start_edge,
+        edge_is_end_edge,
+        edge_workflow_version_id,
+        edge_source_node_id,
+        edge_target_node_id
+      )
+      VALUES ${edgeInputData.join(", ")}
+    `);
+
+  });
+  return workflowId;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_workflow(
+  input_data JSON
+)
+RETURNS TEXT
+SET search_path = ''
+AS $$
+  let workflowUpdatedId = '';
+  let workflowVersionId = '';
+  plv8.subtransaction(function() {
+        const {
+        workflowId,
+        label,
+        nodes,
+        edges,
+        teamId,
+        teamMemberId
+        } = input_data;
+
+        workflowUpdatedId = workflowId;
+
+        const checkIfWorkflowInUse = plv8.execute(`
+        SELECT 1
+        FROM workflow_schema.module_connection_table
+        JOIN workflow_schema.workflow_version_table
+        ON workflow_version_id = module_connection_workflow_version_id
+        WHERE workflow_version_workflow_id = $1
+        LIMIT 1
+        `, [workflowId]);
+
+        const currentVersionResult = plv8.execute(`
+        SELECT workflow_version_label AS current_version,
+                workflow_version_id AS current_version_id,
+                workflow_version_date_created,
+                workflow_version_created_by_team_member_id
+        FROM workflow_schema.workflow_version_table
+        WHERE workflow_version_workflow_id = $1
+        ORDER BY workflow_version_label DESC
+        LIMIT 1
+        `, [workflowId]);
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+        const oldDateCreated = new Date(currentVersionResult[0].workflow_version_date_created).toISOString();
+        const oldCreatedBy = currentVersionResult[0].workflow_version_created_by_team_member_id;
+        const currentVersion = currentVersionResult[0].current_version || 0;
+        const newVersion = currentVersion + 1;
+        const currentVersionId = currentVersionResult[0].current_version_id;
+        const formattedNow = plv8.execute(`
+        SELECT TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SSOF') AS formatted_now
+        `)[0].formatted_now;
+
+    if (checkIfWorkflowInUse.length > 0) {
+      workflowVersionId = plv8.execute(`
+        INSERT INTO workflow_schema.workflow_version_table
+        (
+          workflow_version_label,
+          workflow_version_workflow_id,
+          workflow_version_created_by_team_member_id,
+          workflow_version_date_created,
+          workflow_version_date_updated,
+          workflow_version_updated_by_team_member_id
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6
+        )
+        RETURNING workflow_version_id
+      `, [newVersion, workflowId, oldCreatedBy, oldDateCreated, formattedNow, teamMemberId])[0].workflow_version_id;
+
+    } else {
+       workflowVersionId = currentVersionId;
+        plv8.execute(`
+        UPDATE workflow_schema.workflow_version_table
+        SET workflow_version_date_updated = $1,
+            workflow_version_updated_by_team_member_id = $2
+        WHERE workflow_version_id = $3
+        `, [formattedNow, teamMemberId, workflowVersionId]);
+
+        plv8.execute(`
+        DELETE FROM workflow_schema.node_signer_table
+        WHERE node_signer_node_id IN (
+          SELECT node_id
+          FROM workflow_schema.node_table
+          WHERE node_workflow_version_id = $1
+        )
+        `, [workflowVersionId]);
+
+        plv8.execute(`
+        DELETE FROM workflow_schema.edge_table
+        WHERE edge_workflow_version_id = $1
+        `, [workflowVersionId]);
+
+        plv8.execute(`
+        DELETE FROM workflow_schema.node_table
+        WHERE node_workflow_version_id = $1
+        `, [workflowVersionId]);
+    }
+      const nodeInputData = [];
+      const nodeProjectInputData = [];
+      const nodeIdMap = new Map();
+
+      nodes.forEach(node => {
+      const newNodeId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      nodeIdMap.set(node.id, newNodeId);
+      const signerCount = node.data.nodeProjectWithSignerList.length > 0
+            ? node.data.nodeProjectWithSignerList[0].signerCount
+            : 0;
+
+        const result = plv8.execute(`
+            SELECT node_type_id
+            FROM workflow_schema.node_type_table
+            WHERE node_type_label = $1
+        `, [node.data.nodeStyle.label]);
+
+        if (result.length === 0) {
+            throw new Error(`Node type not found for label: ${node.data.nodeStyle.label}`);
+        }
+        const nodeTypeId = result[0].node_type_id;
+
+        nodeInputData.push(`(
+            '${newNodeId}',
+            '${nodeTypeId}',
+            '${Math.round(node.position.x)}',
+            '${Math.round(node.position.y)}',
+            ${node.deletable},
+            '${node.measured.width}',
+            '${node.measured.height}',
+            '${signerCount}',
+            '${workflowVersionId}'
+        )`);
+
+        node.data.nodeProjectWithSignerList.forEach(project => {
+            project.signerList.forEach(signer => {
+            const nodeGroupId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+            nodeProjectInputData.push(`(
+                '${nodeGroupId}',
+                '${signer}',
+                '${newNodeId}'
+            )`);
+            });
+        });
+        });
+
+        plv8.execute(`
+          INSERT INTO workflow_schema.node_table
+          (
+            node_id,
+            node_type_node_id,
+            node_x_position,
+            node_y_position,
+            node_is_deletable,
+            node_width,
+            node_height,
+            node_signer_count_to_proceed,
+            node_workflow_version_id
+          )
+          VALUES ${nodeInputData.join(", ")}
+        `);
+
+        if (nodeProjectInputData.length) {
+          plv8.execute(`
+              INSERT INTO workflow_schema.node_signer_table
+              (
+              node_signer_id,
+              node_signer_team_group_id,
+              node_signer_node_id
+              )
+              VALUES ${nodeProjectInputData.join(", ")}
+          `);
+          }
+
+        const edgeInputData = edges.map(edge => {
+        const edgeId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+        const sourceNodeId = nodeIdMap.get(edge.source);
+        const targetNodeId = nodeIdMap.get(edge.target);
+        return (`(
+            '${edgeId}',
+            '${edge.data.label}',
+            '${edge.markerEnd.type}',
+            '${edge.sourceHandle}',
+            '${edge.targetHandle}',
+             ${edge.data.isStartEdge},
+             ${edge.data.isEndEdge},
+            '${workflowVersionId}',
+            '${sourceNodeId}',
+            '${targetNodeId}'
+        )`);
+        });
+
+        plv8.execute(`
+          INSERT INTO workflow_schema.edge_table
+          (
+            edge_id,
+            edge_label,
+            edge_marker_end_type,
+            edge_source_handle,
+            edge_target_handle,
+            edge_is_start_edge,
+            edge_is_end_edge,
+            edge_workflow_version_id,
+            edge_source_node_id,
+            edge_target_node_id
+          )
+          VALUES ${edgeInputData.join(", ")}
+      `);
+
+        const moduleData = plv8.execute(`
+        WITH ranked_versions AS (
+        SELECT
+            module_version_table.module_version_module_id,
+            module_version_table.module_version_id,
+            module_version_table.module_version_label,
+            ROW_NUMBER() OVER (
+            PARTITION BY module_version_table.module_version_module_id
+            ORDER BY module_version_table.module_version_label DESC
+            ) AS rank
+        FROM workflow_schema.module_connection_table
+        JOIN workflow_schema.module_version_table
+            ON module_version_table.module_version_id = module_connection_table.module_connection_module_version_id
+        JOIN workflow_schema.workflow_version_table
+            ON workflow_version_id = module_connection_table.module_connection_workflow_version_id
+        WHERE workflow_version_table.workflow_version_workflow_id = $1
+        )
+        SELECT
+        module_version_module_id,
+        module_version_id,
+        module_version_label AS highest_version_label
+        FROM ranked_versions
+        WHERE rank = 1
+        ORDER BY highest_version_label DESC;
+    `,[workflowId])
+
+      moduleData.forEach((module)=>{
+        const version = module.highest_version_label + 1;
+        const moduleVersionId = plv8.execute(`
+            INSERT INTO workflow_schema.module_version_table
+            (module_version_label, module_version_module_id, module_version_created_by_team_member_id,module_version_date_updated)
+            VALUES
+            ($1,$2,$3,$4)
+            RETURNING module_version_id
+        `,[version,module.module_version_module_id,teamMemberId,currentDate])[0].module_version_id;
+
+        const moduleConnectionData = plv8.execute(`
+          SELECT *
+          FROM workflow_schema.module_connection_table
+          WHERE module_connection_module_version_id = $1
+        `,[module.module_version_id]);
+
+        moduleConnectionData.forEach((connection)=>{
+            plv8.execute(
+            `
+            INSERT INTO workflow_schema.module_connection_table
+            (
+                module_connection_order,
+                module_connection_form_id,
+                module_connection_module_version_id,
+                module_connection_workflow_id,
+                module_connection_workflow_version_id
+            )
+            VALUES
+            (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+            );
+            `,[connection.module_connection_order,connection.module_connection_form_id,moduleVersionId,workflowId,workflowVersionId]);
+      })
+    })
+  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION workflow_table_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    count: 0,
+    workflowData: []
+  };
+  plv8.subtransaction(() => {
+    const {
+      isAscendingSort,
+      page,
+      limit,
+      search,
+      creatorList,
+      columnAccessor,
+      dateRange,
+      teamId
+    } = input_data;
+
+    const sortOrder = isAscendingSort ? 'ASC' : 'DESC';
+    const sortCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortOrder}` : "";
+    const offset = (page - 1) * limit;
+    const teamCondition = teamId ? `workflow_team_id = '${teamId}' AND` : "TRUE";
+
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM workflow_schema.workflow_table
+      JOIN LATERAL (
+        SELECT *
+        FROM workflow_schema.workflow_version_table
+        WHERE workflow_version_workflow_id = workflow_table.workflow_id
+        ORDER BY workflow_version_label DESC
+        LIMIT 1
+      ) workflow_version_table ON true
+      JOIN team_schema.team_member_table
+        ON workflow_version_table.workflow_version_created_by_team_member_id = team_member_table.team_member_id
+      JOIN user_schema.user_table
+        ON team_member_table.team_member_user_id = user_table.user_id
+      LEFT JOIN team_schema.team_member_table AS team_member_table_updated
+        ON workflow_version_table.workflow_version_updated_by_team_member_id = team_member_table_updated.team_member_id
+      LEFT JOIN user_schema.user_table AS user_table_updated
+        ON team_member_table_updated.team_member_user_id = user_table_updated.user_id
+      WHERE workflow_table.workflow_is_disabled = FALSE
+        AND ${teamCondition}
+        ${search || ""}
+        ${creatorList || ""}
+        ${dateRange || ""};
+    `;
+
+    const countResult = plv8.execute(countQuery);
+    const totalCount = countResult[0].count;
+
+    const workflowListQuery = `
+      SELECT
+        workflow_version_table.workflow_version_date_created,
+        workflow_version_table.workflow_version_date_updated,
+        workflow_version_table.workflow_version_updated_by_team_member_id,
+        workflow_table.workflow_id,
+        workflow_table.workflow_is_disabled,
+        workflow_table.workflow_label,
+        workflow_table.workflow_team_id,
+        workflow_version_table.workflow_version_label,
+        user_table.user_first_name,
+        user_table.user_id,
+        user_table.user_last_name,
+        user_table.user_avatar,
+        team_member_table.team_member_id,
+        user_table_updated.user_first_name AS updated_user_first_name,
+        user_table_updated.user_last_name AS updated_user_last_name,
+        user_table_updated.user_avatar AS updated_user_avatar,
+        team_member_table_updated.team_member_id AS updated_team_member_id
+      FROM workflow_schema.workflow_table
+     JOIN LATERAL (
+        SELECT *
+        FROM workflow_schema.workflow_version_table
+        WHERE workflow_version_workflow_id = workflow_table.workflow_id
+        ORDER BY workflow_version_label DESC
+        LIMIT 1
+      ) workflow_version_table ON true
+      JOIN team_schema.team_member_table
+        ON workflow_version_table.workflow_version_created_by_team_member_id = team_member_table.team_member_id
+      JOIN user_schema.user_table
+        ON team_member_table.team_member_user_id = user_table.user_id
+      LEFT JOIN team_schema.team_member_table AS team_member_table_updated
+        ON workflow_version_table.workflow_version_updated_by_team_member_id = team_member_table_updated.team_member_id
+      LEFT JOIN user_schema.user_table AS user_table_updated
+        ON team_member_table_updated.team_member_user_id = user_table_updated.user_id
+      WHERE workflow_table.workflow_is_disabled = FALSE
+        AND ${teamCondition}
+        ${search || ""}
+        ${creatorList || ""}
+        ${dateRange || ""}
+        ${sortCondition}
+      LIMIT ${limit}
+      OFFSET ${offset};
+    `;
+
+    const workflowData = plv8.execute(workflowListQuery);
+
+    const workflows = workflowData.map(row => ({
+      workflow_date_created: row.workflow_version_date_created,
+      workflow_date_updated: row.workflow_version_date_updated,
+      workflow_id: row.workflow_id,
+      workflow_is_disabled: row.workflow_is_disabled,
+      workflow_label: row.workflow_label,
+      workflow_team_id: row.workflow_team_id,
+      workflow_version_label: row.workflow_version_label,
+      created_by: {
+        user_id: row.user_id,
+        user_first_name: row.user_first_name,
+        user_last_name: row.user_last_name,
+        user_avatar: row.user_avatar,
+        team_member_id: row.team_member_id
+      },
+      updated_by: row.workflow_version_updated_by_team_member_id ? {
+        user_id: row.workflow_version_updated_by_team_member_id,
+        user_first_name: row.updated_user_first_name,
+        user_last_name: row.updated_user_last_name,
+        user_avatar: row.updated_user_avatar,
+        team_member_id: row.updated_team_member_id
+      } : null
+    }));
+
+    returnData.count = Number(totalCount);
+    returnData.workflowData = workflows;
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION workflow_page_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      workflowId
+    } = input_data;
+
+    const workflowData = plv8.execute(
+      `
+        SELECT workflow_label
+        FROM workflow_schema.workflow_table
+        WHERE workflow_id = '${workflowId}'
+      `
+    )[0];
+
+    const workflowVersionData = plv8.execute(
+      `
+        SELECT workflow_version_id, workflow_version_label
+        FROM workflow_schema.workflow_version_table
+        WHERE workflow_version_workflow_id = '${workflowId}'
+        ORDER BY workflow_version_label DESC
+        LIMIT 1
+      `
+    )[0];
+
+    returnData = {
+      initialData: {
+        initialLabel: workflowData.workflow_label,
+        initialVersion: Number(workflowVersionData.workflow_version_label)
+      },
+      workflowVersionId: workflowVersionData.workflow_version_id
+    }
+ });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_module_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    moduleData: [],
+    moduleCount: 0
+  };
+  plv8.subtransaction(function(){
+    const {
+    teamId,
+    page,
+    limit,
+    sort,
+    searchFilter,
+    columnAccessor,
+    creator,
+    dateRange
+    } = input_data;
+
+    const start = (page - 1) * limit;
+    const sortOrder = sort ? 'ASC' : 'DESC';
+    const sortCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortOrder}` : "";
+    const query = `
+      SELECT
+          module_table.module_id,
+          module_table.module_name,
+          module_version_table.module_version_label,
+          module_version_table.module_version_date_created,
+          module_version_table.module_version_date_updated,
+          module_version_table.module_version_created_by_team_member_id,
+          module_version_table.module_version_updated_by_team_member_id,
+          created_user.user_first_name AS created_user_first_name,
+          created_user.user_last_name AS created_user_last_name,
+          created_user.user_id AS created_user_id,
+          created_user.user_avatar AS created_user_avatar,
+          updated_user.user_first_name AS updated_user_first_name,
+          updated_user.user_last_name AS updated_user_last_name,
+          updated_user.user_id AS updated_user_id,
+          updated_user.user_avatar AS updated_user_avatar
+        FROM workflow_schema.module_table
+        JOIN LATERAL (
+          SELECT *
+          FROM workflow_schema.module_version_table
+          WHERE module_version_table.module_version_module_id = workflow_schema.module_table.module_id
+          ORDER BY module_version_table.module_version_label DESC
+          LIMIT 1
+        ) module_version_table ON true
+        JOIN team_schema.team_member_table AS created_team_member
+          ON created_team_member.team_member_id = module_version_table.module_version_created_by_team_member_id
+        JOIN user_schema.user_table AS created_user
+          ON created_user.user_id = created_team_member.team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS updated_team_member
+          ON updated_team_member.team_member_id = module_version_table.module_version_updated_by_team_member_id
+        LEFT JOIN user_schema.user_table AS updated_user
+          ON updated_user.user_id = updated_team_member.team_member_user_id
+        WHERE workflow_schema.module_table.module_team_id = '${teamId}'
+        ${searchFilter || ''}
+        ${creator || ''}
+        ${dateRange || ''}
+        ${sortCondition}
+        LIMIT ${limit}
+        OFFSET ${start}
+    `;
+
+
+    const moduleList = plv8.execute(query);
+
+    const countQuery = plv8.execute(`
+        SELECT
+        COUNT(*)
+        FROM workflow_schema.module_table
+        JOIN LATERAL (
+          SELECT *
+          FROM workflow_schema.module_version_table
+          WHERE module_version_table.module_version_module_id = workflow_schema.module_table.module_id
+          ORDER BY module_version_table.module_version_label DESC
+          LIMIT 1
+        ) module_version_table ON true
+        JOIN team_schema.team_member_table AS created_team_member
+          ON created_team_member.team_member_id = module_version_table.module_version_created_by_team_member_id
+        JOIN user_schema.user_table AS created_user
+          ON created_user.user_id = created_team_member.team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS updated_team_member
+          ON updated_team_member.team_member_id = module_version_table.module_version_updated_by_team_member_id
+        LEFT JOIN user_schema.user_table AS updated_user
+          ON updated_user.user_id = updated_team_member.team_member_user_id
+        WHERE workflow_schema.module_table.module_team_id = '${teamId}'
+        ${searchFilter || ''}
+        ${creator || ''}
+        ${dateRange || ''}
+    `)[0].count;
+
+
+    returnData.moduleData = moduleList.map(module => ({
+    module_id: module.module_id,
+    module_name: module.module_name,
+    module_version_label: module.module_version_label,
+    module_version_date_created: module.module_version_date_created,
+    module_version_date_updated: module.module_version_date_updated,
+    module_created_by: {
+      user_id: module.created_user_id,
+      user_first_name: module.created_user_first_name,
+      user_last_name: module.created_user_last_name,
+      user_avatar: module.created_user_avatar
+    },
+    module_updated_by: {
+      user_id: module.updated_user_id,
+      user_first_name: module.updated_user_first_name,
+      user_last_name: module.updated_user_last_name,
+      user_avatar: module.updated_user_avatar
+    }
+    }));
+
+    returnData.moduleCount = Number(countQuery);
+    })
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_module(
+  input_data JSON
+)
+RETURNS TEXT
+SET search_path TO ''
+AS $$
+  let returnData = '';
+  plv8.subtransaction(function(){
+    const {
+      label,
+      moduleItems,
+      teamId,
+      teamMemberId
+    } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+    const moduleId = plv8.execute(
+      `
+        INSERT INTO workflow_schema.module_table
+        (module_name, module_team_id)
+        VALUES
+        ('${label}', '${teamId}')
+        RETURNING module_id
+      `
+    )[0].module_id;
+
+    const versionId = plv8.execute(
+      `
+        INSERT INTO workflow_schema.module_version_table
+        (module_version_label, module_version_module_id, module_version_created_by_team_member_id,module_version_date_updated)
+        VALUES
+        (1, '${moduleId}', '${teamMemberId}','${currentDate}')
+        RETURNING module_version_id
+      `
+    )[0].module_version_id;
+
+    moduleItems.forEach((item) => {
+      const workflowVersionId = plv8.execute(
+        `
+          SELECT workflow_version_id
+          FROM workflow_schema.workflow_version_table
+          WHERE workflow_version_workflow_id = '${item.module_connection_workflow_id}'
+          ORDER BY workflow_version_label DESC
+          LIMIT 1
+        `
+      )[0].workflow_version_id;
+      plv8.execute(
+        `
+          INSERT INTO workflow_schema.module_connection_table
+          (
+            module_connection_order,
+            module_connection_form_id,
+            module_connection_module_version_id,
+            module_connection_workflow_id,
+            module_connection_workflow_version_id
+          )
+          VALUES
+          (
+            '${item.module_connection_order}',
+            '${item.module_connection_form_id}',
+            '${versionId}',
+            '${item.module_connection_workflow_id}',
+            '${workflowVersionId}'
+          );
+        `
+      );
+    });
+    returnData = moduleId;
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_module_page_node(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      moduleVersionId
+    } = input_data;
+
+    const moduleData = plv8.execute(
+      `
+        SELECT
+          module_connection_table.*,
+          wt.workflow_label,
+          ft.form_name
+        FROM workflow_schema.module_connection_table
+        JOIN workflow_schema.workflow_table AS wt ON wt.workflow_id = module_connection_table.module_connection_workflow_id
+        JOIN form_schema.form_table AS ft ON ft.form_id = module_connection_table.module_connection_form_id
+        WHERE module_connection_table.module_connection_module_version_id = '${moduleVersionId}'
+      `
+    );
+
+    const formatModule = moduleData.map((item) => {
+      return {
+        module_connection_form_id: item.module_connection_form_id,
+        module_connection_workflow_id: item.module_connection_workflow_id,
+        module_temp_id: item.module_connection_order,
+        module_temp_form_name: item.form_name,
+        module_temp_workflow_name: item.workflow_label
+      }
+    })
+
+    formatModule.sort((a, b) => a.module_temp_id - b.module_temp_id);
+
+    returnData = formatModule;
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION module_page_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      moduleId
+    } = input_data;
+
+    const moduleData = plv8.execute(
+      `
+        SELECT module_name
+        FROM workflow_schema.module_table
+        WHERE module_id = '${moduleId}'
+      `
+    )[0];
+
+    const moduleVersionData = plv8.execute(
+      `
+        SELECT module_version_id, module_version_label
+        FROM workflow_schema.module_version_table
+        WHERE module_version_module_id = '${moduleId}'
+        ORDER BY module_version_label DESC
+        LIMIT 1
+      `
+    )[0];
+
+    returnData = {
+      initialData: {
+        initialLabel: moduleData.module_name,
+        initialVersion: Number(moduleVersionData.module_version_label)
+      },
+      moduleVersionId: moduleVersionData.module_version_id
+    }
+ });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_new_version_module(
+  input_data JSON
+)
+RETURNS TEXT
+SET search_path TO ''
+AS $$
+let returnData = '';
+plv8.subtransaction(function() {
+  const {
+    moduleItems,
+    teamMemberId,
+    moduleId,
+    currentDate
+  } = input_data;
+
+  const versionResult = plv8.execute(
+    `
+      SELECT *
+      FROM workflow_schema.module_version_table
+      WHERE module_version_module_id = $1
+      ORDER BY CAST(module_version_label AS INTEGER) DESC
+      LIMIT 1;
+    `,
+    [moduleId]
+  );
+
+  if (versionResult.length === 0) {
+    throw new Error('No previous version found.');
+  }
+
+  const currentMaxVersionLabel = parseInt(versionResult[0].module_version_label, 10);
+  const newVersionLabel = currentMaxVersionLabel + 1;
+  const prevModuleVersionCreated = new Date(versionResult[0].module_version_date_created).toISOString();
+  const prevModuleVersionTeamMemberId = versionResult[0].module_version_created_by_team_member_id;
+
+  const versionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+  plv8.execute(
+    `
+      INSERT INTO workflow_schema.module_version_table
+      (
+        module_version_id,
+        module_version_label,
+        module_version_module_id,
+        module_version_date_created,
+        module_version_created_by_team_member_id,
+        module_version_updated_by_team_member_id,
+        module_version_date_updated
+      )
+      VALUES
+      ($1, $2, $3, $4, $5, $6, $7);
+    `,
+    [versionId, newVersionLabel, moduleId, prevModuleVersionCreated, prevModuleVersionTeamMemberId, teamMemberId, currentDate]
+  );
+  moduleItems.forEach((item, index) => {
+    const workflowVersionId = plv8.execute(
+      `
+        SELECT workflow_version_id
+        FROM workflow_schema.workflow_version_table
+        WHERE workflow_version_workflow_id = $1
+        ORDER BY workflow_version_label DESC
+        LIMIT 1
+      `,
+      [item.module_connection_workflow_id]
+    )[0]?.workflow_version_id;
+
+    if (!workflowVersionId) {
+      throw new Error(`Invalid workflowVersionId for workflow ID: ${item.module_temp_workflow_id}`);
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO workflow_schema.module_connection_table
+        (
+          module_connection_order,
+          module_connection_form_id,
+          module_connection_module_version_id,
+          module_connection_workflow_id,
+          module_connection_workflow_version_id
+        )
+        VALUES
+        ($1, $2, $3, $4, $5);
+      `,
+      [
+        item.module_temp_id,
+        item.module_connection_form_id,
+        versionId,
+        item.module_connection_workflow_id,
+        workflowVersionId
+      ]
+    );
+  });
+  returnData = moduleId;
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_module_request_without_duplicatable_section(
+  request_id TEXT,
+  module_version_id TEXT
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+
+    let returnData;
+    plv8.subtransaction(function(){
+    const idConditionResult = plv8.execute(`SELECT public.generate_request_id_condition($1)`, [request_id]);
+    const idCondition = idConditionResult[0].generate_request_id_condition;
+
+    const requestDataResult = plv8.execute(`
+        SELECT
+        request_view.*,
+        team_member_team_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar,
+        user_job_title,
+        form_id,
+        form_name,
+        form_description,
+        form_is_formsly_form,
+        form_type,
+        form_sub_type,
+        team_project_name
+        FROM public.request_view
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
+        LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
+        WHERE ${idCondition} AND request_is_disabled = false
+    `);
+
+    const requestData = requestDataResult[0];
+
+    const currentRequest = plv8.execute(`
+      SELECT request_status, request_module_request_id
+      FROM request_schema.request_table
+      WHERE request_id = $1
+      ORDER BY request_date_created DESC
+      LIMIT 1;
+    `, [request_id])[0];
+
+    const requestSignerData = plv8.execute(`
+        SELECT DISTINCT ON (ns.node_signer_id)
+        mr.module_request_id,
+        n.node_id,
+        n.node_signer_count_to_proceed,
+        mc.module_connection_module_version_id,
+        mc.module_connection_workflow_version_id,
+        nt.node_type_label,
+        nt.node_type_background_color,
+        nt.node_type_font_color,
+        tg.team_group_id,
+        tg.team_group_name
+      FROM module_request_schema.module_request_table mr
+      JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+      JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+      JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+      JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = mc.module_connection_workflow_version_id
+      LEFT JOIN workflow_schema.node_table n ON n.node_workflow_version_id = wv.workflow_version_id
+      LEFT JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
+      LEFT JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+      LEFT JOIN team_schema.team_group_table tg ON tg.team_group_id = ns.node_signer_team_group_id
+      WHERE mc.module_connection_module_version_id = $1
+        AND nt.node_type_label = $2
+        AND r.request_id = $3
+      GROUP BY mr.module_request_id, ns.node_signer_id, ns.node_signer_team_group_id, tg.team_group_id, n.node_id, nt. node_type_label, n.node_signer_count_to_proceed, mc.module_connection_module_version_id, nt.node_type_background_color, nt.node_type_font_color,module_connection_workflow_version_id
+    `, [module_version_id, currentRequest.request_status, request_id]);
+
+    const workflowVersionId = plv8.execute(`
+        SELECT module_connection_workflow_version_id
+        FROM workflow_schema.module_connection_table
+        WHERE module_connection_module_version_id = $1
+    `,[module_version_id])[0].module_connection_workflow_version_id
+
+     const targetNodeData = plv8.execute(
+      `
+        SELECT DISTINCT ON (e.edge_target_node_id)
+            target_nt.node_type_label AS target_node_type_label,
+            e.edge_label AS edge_transition_label,
+            target_nt.node_type_background_color AS target_node_background_color,
+            target_nt.node_type_font_color AS target_node_font_color,
+            n.node_signer_count_to_proceed AS signer_count
+        FROM
+            module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        AND r.request_id = $1
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
+        JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
+        JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        AND nt.node_type_label = $2
+        JOIN workflow_schema.node_table target_node ON target_node.node_id = e.edge_target_node_id
+        JOIN workflow_schema.node_type_table target_nt ON target_node.node_type_node_id = target_nt.node_type_id
+        WHERE mc.module_connection_workflow_version_id = $3
+        ORDER BY e.edge_target_node_id
+      `,
+      [request_id, currentRequest.request_status, workflowVersionId]
+     );
+
+    const workflowData = plv8.execute(
+      `
+        SELECT DISTINCT ON (e.edge_target_node_id)
+            target_nt.node_type_label AS target_node_type_label,
+            e.edge_label AS edge_transition_label,
+            target_nt.node_type_background_color AS target_node_background_color,
+            target_nt.node_type_font_color AS target_node_font_color,
+            n.node_signer_count_to_proceed AS signer_count
+        FROM module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        AND   r.request_id = $1
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
+        JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
+        JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        JOIN workflow_schema.node_table target_node ON target_node.node_id = e.edge_target_node_id
+        JOIN workflow_schema.node_type_table target_nt ON target_node.node_type_node_id = target_nt.node_type_id
+        WHERE
+            mc.module_connection_workflow_version_id = $2
+        ORDER BY
+            e.edge_target_node_id
+      `,
+      [request_id, workflowVersionId]
+      );
+
+    const nextFormData = plv8.execute(`
+        WITH all_forms AS (
+            SELECT
+                mc.module_connection_form_id AS form_id,
+                f.form_name,
+                ROW_NUMBER() OVER (ORDER BY mc.module_connection_order ASC) AS form_order,
+                r.request_id IS NOT NULL AS is_submitted
+            FROM workflow_schema.module_connection_table mc
+            JOIN workflow_schema.module_version_table mv
+                ON mv.module_version_id = mc.module_connection_module_version_id
+            LEFT JOIN form_schema.form_table f
+                ON f.form_id = mc.module_connection_form_id
+            LEFT JOIN request_schema.request_table r
+                ON r.request_form_id = mc.module_connection_form_id
+                AND r.request_module_request_id = $1
+            WHERE mc.module_connection_module_version_id = $2
+        ),
+        current_form AS (
+            SELECT form_order
+            FROM all_forms
+            WHERE form_id =$3
+        ),
+        next_form AS (
+            SELECT
+                af.form_id,
+                af.form_name,
+                af.is_submitted
+            FROM all_forms af
+            CROSS JOIN current_form cf
+            WHERE af.form_order = cf.form_order + 1
+        )
+        SELECT
+        CASE
+            WHEN nf.is_submitted THEN NULL
+            ELSE nf.form_id
+        END AS form_id,
+        CASE
+            WHEN nf.is_submitted THEN NULL
+            ELSE nf.form_name
+        END AS form_name
+    FROM next_form nf;
+    `,[currentRequest.request_module_request_id,module_version_id,requestData.form_id])[0] ?? [];
+
+    const requestCommentData = plv8.execute(`
+        SELECT
+            comment_id,
+            comment_date_created,
+            comment_content,
+            comment_is_edited,
+            comment_last_updated,
+            comment_type,
+            comment_team_member_id,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_username,
+            user_avatar
+        FROM request_schema.comment_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = comment_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE comment_request_id = $1
+        ORDER BY comment_date_created DESC
+        `, [requestData.request_id]);
+
+    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset", "Liquidation Reimbursement"].includes(requestData.form_name);
+
+    const sectionData = plv8.execute(`
+        SELECT *
+        FROM form_schema.section_table
+        WHERE section_form_id = $1
+        ORDER BY section_order ASC
+    `, [requestData.form_id]);
+
+    const formSection = sectionData.map((section, index) => {
+        let fieldWithOptionAndResponse;
+        if (index === 0 || (index === 2 && ["IT Asset", "Liquidation Reimbursement"].includes(requestData.form_name))) {
+        const fieldData = plv8.execute(`
+            SELECT *
+            FROM form_schema.field_table
+            WHERE field_section_id = $1
+            ORDER BY field_order ASC
+        `, [section.section_id]);
+
+        fieldWithOptionAndResponse = fieldData.map(field => {
+            const optionData = plv8.execute(`
+            SELECT *
+            FROM form_schema.option_table
+            WHERE option_field_id = $1
+            ORDER BY option_order ASC
+            `, [field.field_id]);
+
+            const requestResponseData = plv8.execute(`
+            SELECT *
+            FROM request_schema.request_response_table
+            WHERE request_response_request_id = $1 AND request_response_field_id = $2
+            `, [requestData.request_id, field.field_id]);
+
+            return {
+            ...field,
+            field_response: requestResponseData,
+            field_option: optionData
+            };
+        });
+
+        return {
+            ...section,
+            section_field: fieldWithOptionAndResponse,
+        };
+        } else {
+        if (isWithConditionalFields) {
+            return {
+            ...section,
+            section_field: []
+            };
+        } else {
+            const fieldData = plv8.execute(`
+            SELECT *
+            FROM form_schema.field_table
+            WHERE field_section_id = $1
+            ORDER BY field_order ASC
+            `, [section.section_id]);
+            return {
+            ...section,
+            section_field: fieldData
+            };
+        }
+        }
+    });
+
+    const form = {
+        form_id: requestData.form_id,
+        form_name: requestData.form_name,
+        form_description: requestData.form_description,
+        form_is_formsly_form: requestData.form_is_formsly_form,
+        form_section: formSection,
+        form_type: requestData.form_type,
+        form_sub_type: requestData.form_sub_type
+    };
+
+    returnData = {
+        request_id: requestData.request_id,
+        request_formsly_id: requestData.request_formsly_id,
+        request_date_created: requestData.request_date_created,
+        request_status: currentRequest.request_status,
+        request_is_disabled: requestData.request_is_disabled,
+        request_team_member_id: requestData.team_member_team_id,
+        request_form_id: requestData.form_id,
+        request_project_id: requestData.request_project_id,
+        request_jira_id: requestData.request_jira_id,
+        request_jira_link: requestData.request_jira_link,
+        request_otp_id: requestData.request_otp_id,
+        request_comment: requestCommentData.map(comment => ({
+            comment_id: comment.comment_id,
+            comment_date_created: comment.comment_date_created,
+            comment_content: comment.comment_content,
+            comment_is_edited: comment.comment_is_edited,
+            comment_last_updated: comment.comment_last_updated,
+            comment_type: comment.comment_type,
+            comment_team_member_id: comment.comment_team_member_id,
+            comment_team_member: {
+            team_member_user: {
+                user_id: comment.user_id,
+                user_first_name: comment.user_first_name,
+                user_last_name: comment.user_last_name,
+                user_username: comment.user_username,
+                user_avatar: comment.user_avatar
+            }
+            }
+        })),
+        request_form: form,
+        request_workflow_data:{
+            workflowNodeData:workflowData,
+            targetNode:targetNodeData
+        },
+        request_team_member: {
+            team_member_team_id: requestData.team_member_team_id,
+            team_member_user: {
+            user_id: requestData.user_id,
+            user_first_name: requestData.user_first_name,
+            user_last_name: requestData.user_last_name,
+            user_username: requestData.user_username,
+            user_avatar: requestData.user_avatar,
+            user_job_title: requestData.user_job_title
+            }
+        },
+        request_signer: [{
+            request_signer_status: requestSignerData[0]?.node_type_label ?? "",
+            request_module_name:requestSignerData[0]?.module_name ?? "",
+            request_workflow_version:requestSignerData[0]?.workflow_version_id ?? "",
+            request_module_version_id:requestSignerData[0]?.module_connection_module_version_id ?? "",
+            request_status_color:requestSignerData[0]?.node_type_background_color ?? "",
+            request_status_font_color:requestSignerData[0]?.node_type_font_color ?? "",
+            request_signer_signer: {
+            signer_id: "",
+            signer_action: targetNodeData.map((node) => node.target_node_type_label).join(" / "),
+            signer_order: requestSignerData[0].node_signer_count_to_proceed,
+            signer_team_group: requestSignerData.map(group => ({
+                team_group_id: group.team_group_id,
+                team_group_name: group.team_group_name
+            }))
+            }
+        }],
+        request_project: {
+            team_project_name: requestData.team_project_name
+        },
+        request_next_form: {
+            request_next_form_name:nextFormData.form_name ?? "",
+            request_next_form_id:nextFormData.form_id ?? ""
+        }
+        };
+    });
+    return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_module_request(
+  request_id TEXT,
+  module_version_id TEXT
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const idConditionResult = plv8.execute(`SELECT public.generate_request_id_condition($1)`, [request_id]);
+    const idCondition = idConditionResult[0].generate_request_id_condition;
+    const requestDataResult = plv8.execute(`
+        SELECT
+        request_view.*,
+        team_member_team_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar,
+        user_job_title,
+        form_id,
+        form_name,
+        form_description,
+        form_is_formsly_form,
+        form_type,
+        form_sub_type,
+        team_project_name
+        FROM public.request_view
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
+        LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
+        WHERE ${idCondition} AND request_is_disabled = false
+    `);
+
+    const requestData = requestDataResult[0];
+
+    const currentRequest = plv8.execute(`
+      SELECT request_status, request_module_request_id
+      FROM request_schema.request_table
+      WHERE request_id = $1
+      ORDER BY request_date_created DESC
+      LIMIT 1;
+    `, [request_id])[0];
+
+    const requestSignerData = plv8.execute(`
+        SELECT DISTINCT ON (ns.node_signer_id)
+        mr.module_request_id,
+        n.node_id,
+        n.node_signer_count_to_proceed,
+        mc.module_connection_module_version_id,
+        mc.module_connection_workflow_version_id,
+        nt.node_type_label,
+        nt.node_type_background_color,
+        nt.node_type_font_color,
+        tg.team_group_id,
+        tg.team_group_name
+      FROM module_request_schema.module_request_table mr
+      JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+      JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+      JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+      JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = mc.module_connection_workflow_version_id
+      LEFT JOIN workflow_schema.node_table n ON n.node_workflow_version_id = wv.workflow_version_id
+      LEFT JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
+      LEFT JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+      LEFT JOIN team_schema.team_group_table tg ON tg.team_group_id = ns.node_signer_team_group_id
+      WHERE mc.module_connection_module_version_id = $1
+        AND nt.node_type_label = $2
+        AND r.request_id = $3
+      GROUP BY mr.module_request_id, ns.node_signer_id, ns.node_signer_team_group_id, tg.team_group_id, n.node_id, nt. node_type_label, n.node_signer_count_to_proceed, mc.module_connection_module_version_id, nt.node_type_background_color, nt.node_type_font_color,module_connection_workflow_version_id
+    `, [module_version_id, currentRequest.request_status, request_id]);
+
+    const workflowVersionId = plv8.execute(`
+        SELECT module_connection_workflow_version_id
+        FROM workflow_schema.module_connection_table
+        WHERE module_connection_module_version_id = $1
+    `,[module_version_id])[0].module_connection_workflow_version_id
+
+     const targetNodeData = plv8.execute(
+      `
+        SELECT DISTINCT ON (e.edge_target_node_id)
+            target_nt.node_type_label AS target_node_type_label,
+            e.edge_label AS edge_transition_label,
+            target_nt.node_type_background_color AS target_node_background_color,
+            target_nt.node_type_font_color AS target_node_font_color,
+            n.node_signer_count_to_proceed AS signer_count
+        FROM
+            module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        AND r.request_id = $1
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
+        JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
+        JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        AND nt.node_type_label = $2
+        JOIN workflow_schema.node_table target_node ON target_node.node_id = e.edge_target_node_id
+        JOIN workflow_schema.node_type_table target_nt ON target_node.node_type_node_id = target_nt.node_type_id
+        WHERE mc.module_connection_workflow_version_id = $3
+        ORDER BY e.edge_target_node_id
+      `,
+      [request_id, currentRequest.request_status, workflowVersionId]
+     );
+
+    const workflowData = plv8.execute(
+      `
+        SELECT DISTINCT ON (e.edge_target_node_id)
+            target_nt.node_type_label AS target_node_type_label,
+            e.edge_label AS edge_transition_label,
+            target_nt.node_type_background_color AS target_node_background_color,
+            target_nt.node_type_font_color AS target_node_font_color,
+            n.node_signer_count_to_proceed AS signer_count
+        FROM module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        AND   r.request_id = $1
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
+        JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
+        JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        JOIN workflow_schema.node_table target_node ON target_node.node_id = e.edge_target_node_id
+        JOIN workflow_schema.node_type_table target_nt ON target_node.node_type_node_id = target_nt.node_type_id
+        WHERE
+            mc.module_connection_workflow_version_id = $2
+        ORDER BY
+            e.edge_target_node_id
+      `,
+      [request_id, workflowVersionId]
+      );
+
+    const nextFormData = plv8.execute(`
+        SELECT
+        mc.module_connection_form_id AS form_id,
+        f.form_name
+        FROM workflow_schema.module_connection_table mc
+        JOIN workflow_schema.module_version_table mv
+        ON mv.module_version_id = mc.module_connection_module_version_id
+        LEFT JOIN form_schema.form_table f
+        ON f.form_id = mc.module_connection_form_id
+        LEFT JOIN (
+        SELECT
+            r.request_form_id
+        FROM request_schema.request_table r
+        WHERE r.request_module_request_id = $1
+        ) submitted_forms
+        ON submitted_forms.request_form_id = mc.module_connection_form_id
+        WHERE mc.module_connection_module_version_id = $2
+        AND submitted_forms.request_form_id IS NULL
+        ORDER BY mc.module_connection_order ASC
+        LIMIT 1;
+    `,[currentRequest.request_module_request_id,module_version_id])[0];
+
+    const requestCommentData = plv8.execute(`
+        SELECT
+            comment_id,
+            comment_date_created,
+            comment_content,
+            comment_is_edited,
+            comment_last_updated,
+            comment_type,
+            comment_team_member_id,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_username,
+            user_avatar
+        FROM request_schema.comment_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = comment_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE comment_request_id = $1
+        ORDER BY comment_date_created DESC
+        `, [requestData.request_id]);
+
+   const sectionData = plv8.execute(`
+      SELECT *
+      FROM form_schema.section_table
+      WHERE section_form_id = $1
+      ORDER BY section_order ASC
+    `, [requestData.form_id]);
+
+    const formSection = sectionData.map(section => {
+      const fieldData = plv8.execute(`
+        SELECT *
+        FROM form_schema.field_table
+        WHERE field_section_id = $1
+        ORDER BY field_order ASC
+      `, [section.section_id]);
+
+      const fieldWithOptionAndResponse = fieldData.map(field => {
+        const optionData = plv8.execute(`
+          SELECT *
+          FROM form_schema.option_table
+          WHERE option_field_id = $1
+          ORDER BY option_order ASC
+        `, [field.field_id]);
+
+        const requestResponseData = plv8.execute(`
+          SELECT *
+          FROM request_schema.request_response_table
+          WHERE request_response_request_id = $1 AND request_response_field_id = $2
+        `, [requestData.request_id, field.field_id]);
+
+        return {
+          ...field,
+          field_response: requestResponseData,
+          field_option: optionData
+        };
+      });
+
+      return {
+        ...section,
+        section_field: fieldWithOptionAndResponse
+      };
+    });
+
+    const form = {
+        form_id: requestData.form_id,
+        form_name: requestData.form_name,
+        form_description: requestData.form_description,
+        form_is_formsly_form: requestData.form_is_formsly_form,
+        form_section: formSection,
+        form_type: requestData.form_type,
+        form_sub_type: requestData.form_sub_type
+    };
+
+    returnData = {
+        request_id: requestData.request_id,
+        request_formsly_id: requestData.request_formsly_id,
+        request_date_created: requestData.request_date_created,
+        request_status: currentRequest.request_status,
+        request_is_disabled: requestData.request_is_disabled,
+        request_team_member_id: requestData.team_member_team_id,
+        request_form_id: requestData.form_id,
+        request_project_id: requestData.request_project_id,
+        request_jira_id: requestData.request_jira_id,
+        request_jira_link: requestData.request_jira_link,
+        request_otp_id: requestData.request_otp_id,
+        request_comment: requestCommentData.map(comment => ({
+            comment_id: comment.comment_id,
+            comment_date_created: comment.comment_date_created,
+            comment_content: comment.comment_content,
+            comment_is_edited: comment.comment_is_edited,
+            comment_last_updated: comment.comment_last_updated,
+            comment_type: comment.comment_type,
+            comment_team_member_id: comment.comment_team_member_id,
+            comment_team_member: {
+            team_member_user: {
+                user_id: comment.user_id,
+                user_first_name: comment.user_first_name,
+                user_last_name: comment.user_last_name,
+                user_username: comment.user_username,
+                user_avatar: comment.user_avatar
+            }
+            }
+        })),
+        request_form: form,
+        request_workflow_data:{
+            workflowNodeData:workflowData,
+            targetNode:targetNodeData
+        },
+        request_team_member: {
+            team_member_team_id: requestData.team_member_team_id,
+            team_member_user: {
+            user_id: requestData.user_id,
+            user_first_name: requestData.user_first_name,
+            user_last_name: requestData.user_last_name,
+            user_username: requestData.user_username,
+            user_avatar: requestData.user_avatar,
+            user_job_title: requestData.user_job_title
+            }
+        },
+        request_signer: [{
+            request_signer_status: requestSignerData[0]?.node_type_label ?? "",
+            request_module_name:requestSignerData[0]?.module_name ?? "",
+            request_workflow_version:requestSignerData[0]?.workflow_version_id ?? "",
+            request_module_version_id:requestSignerData[0]?.module_connection_module_version_id ?? "",
+            request_status_color:requestSignerData[0]?.node_type_background_color ?? "",
+            request_status_font_color:requestSignerData[0]?.node_type_font_color ?? "",
+            request_signer_signer: {
+            signer_id: "",
+            signer_action: currentRequest.request_status,
+            signer_order: requestSignerData[0].node_signer_count_to_proceed,
+            signer_team_group: requestSignerData.map(group => ({
+                team_group_id: group.team_group_id,
+                team_group_name: group.team_group_name
+            }))
+            }
+        }],
+        request_project: {
+            team_project_name: requestData.team_project_name
+        },
+        request_next_form: {
+            request_next_form_name:nextFormData.form_name,
+            request_next_form_id:nextFormData.form_id
+        }
+        };
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_module_request_page_on_load(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      moduleId,
+      moduleRequestId,
+      userId,
+    } = input_data;
+
+    let nextFormId;
+    let moduleVersionId;
+    let workflowVersionId;
+
+    if (moduleRequestId) {
+      const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].generate_module_request_id_condition;
+
+      const getModuleRequestVersion = plv8.execute(`
+        SELECT
+          module_request_table.module_request_id,
+          module_request_table.module_request_module_version_id,
+          module_connection_table.module_connection_workflow_id
+        FROM module_request_schema.module_request_table
+        JOIN workflow_schema.module_connection_table
+          ON module_request_table.module_request_module_version_id = module_connection_table.module_connection_module_version_id
+        WHERE ${idCondition}
+        LIMIT 1
+      `)[0];
+
+      if (!getModuleRequestVersion) throw new Error("Module request version not found");
+
+      moduleVersionId = getModuleRequestVersion.module_request_module_version_id;
+      workflowVersionId = getModuleRequestVersion.module_connection_workflow_id;
+
+      nextFormId = plv8.execute(`
+        SELECT
+          mc.module_connection_form_id AS form_id,
+          f.form_name
+        FROM workflow_schema.module_connection_table mc
+        JOIN workflow_schema.module_version_table mv
+        ON mv.module_version_id = mc.module_connection_module_version_id
+        LEFT JOIN form_schema.form_table f
+          ON f.form_id = mc.module_connection_form_id
+        WHERE mc.module_connection_module_version_id = $1
+        AND NOT EXISTS (
+        SELECT 1
+        FROM request_schema.request_table r
+        WHERE r.request_form_id = mc.module_connection_form_id
+            AND r.request_module_request_id = $2
+        )
+        ORDER BY mc.module_connection_order ASC
+        LIMIT 1
+      `, [moduleVersionId, getModuleRequestVersion.module_request_id])[0]?.form_id;
+    } else {
+        const connectionData = plv8.execute(`
+        SELECT
+            module_connection_table.module_connection_form_id,
+            module_connection_table.module_connection_module_version_id,
+            module_version_table.module_version_id AS workflow_version_id
+        FROM workflow_schema.module_table
+        JOIN LATERAL (
+            SELECT *
+            FROM workflow_schema.module_version_table
+            WHERE module_table.module_id = module_version_table.module_version_module_id
+            ORDER BY module_version_label DESC
+            LIMIT 1
+        ) module_version_table ON TRUE
+        JOIN workflow_schema.module_connection_table
+            ON module_connection_table.module_connection_module_version_id = module_version_table.module_version_id
+        WHERE module_table.module_id = $1
+        ORDER BY module_connection_table.module_connection_order ASC
+        LIMIT 1
+        `, [moduleId])[0];
+
+        if (!connectionData) throw new Error("No module connection data found");
+        moduleVersionId = connectionData.module_connection_module_version_id;
+        nextFormId = connectionData.module_connection_form_id;
+        workflowVersionId = connectionData.workflow_version_id;
+    }
+
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    if (!teamId) throw new Error("No team found");
+
+    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+    if (!teamMember) throw new Error("No team member found");
+
+
+    const formData = plv8.execute(`
+      SELECT
+        form_id,
+        form_name,
+        form_description,
+        form_date_created,
+        form_is_hidden,
+        form_is_formsly_form,
+        form_is_for_every_member,
+        form_type,
+        form_sub_type,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_username
+      FROM form_schema.form_table
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE form_id = $1
+    `,[nextFormId])[0];
+
+    if (!formData) throw new Error("Form data not found");
+
+    const signerData = plv8.execute(`
+            WITH limited_nodes AS (
+                SELECT
+                n.node_id,
+                ns.node_signer_team_group_id,
+                ns.node_signer_id,
+                nt.node_type_label
+            FROM workflow_schema.node_table n
+            JOIN workflow_schema.edge_table e ON e.edge_target_node_id = n.node_id
+            JOIN workflow_schema.node_type_table nt ON nt.node_type_id = n.node_type_node_id
+            JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = n.node_workflow_version_id
+            JOIN workflow_schema.module_connection_table mc
+            ON mc.module_connection_workflow_id = wv.workflow_version_workflow_id
+            AND mc.module_connection_workflow_version_id = wv.workflow_version_id
+            JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
+        WHERE mc.module_connection_form_id = $1
+            AND mc.module_connection_module_version_id = $2
+            AND e.edge_is_start_edge = true
+        )
+        SELECT
+            ln.node_id,
+            ln.node_signer_team_group_id,
+            ln.node_signer_id,
+            ln.node_type_label,
+            ARRAY_AGG(
+                JSON_BUILD_OBJECT(
+                    'team_group_id', tg.team_group_id,
+                    'team_group_name', tg.team_group_name
+                )
+            ) AS group_info
+        FROM limited_nodes ln
+        JOIN workflow_schema.node_signer_table ns
+            ON ns.node_signer_node_id = ln.node_id
+        JOIN team_schema.team_group_table tg
+            ON tg.team_group_id = ns.node_signer_team_group_id
+        GROUP BY ln.node_id, ln.node_signer_team_group_id, ln.node_signer_id, ln.node_type_label
+        LIMIT 1;
+    `,[nextFormId,moduleVersionId]);
+
+    const moduleData = plv8.execute(`
+      SELECT module_table.module_name, module_version_table.module_version_id
+      FROM workflow_schema.module_table
+      JOIN workflow_schema.module_version_table
+      ON module_table.module_id = module_version_table.module_version_module_id
+      WHERE module_version_id = $1
+    `,[moduleVersionId])[0];
+
+    const sectionData = [];
+    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${nextFormId}' ORDER BY section_order ASC`);
+    formSection.forEach(section => {
+      const fieldData = plv8.execute(`
+        SELECT *
+        FROM form_schema.field_table
+        WHERE field_section_id = '${section.section_id}'
+        ORDER BY field_order ASC
+        ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
+        ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
+        ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
+      `);
+
+      const fields = fieldData.map(field => {
+        let optionData = [];
+
+        if (field.field_special_field_template_id) {
+          switch(field.field_special_field_template_id) {
+            case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
+              const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`);
+              optionData = teamMemberList.map((item, index) => ({
+                option_id: item.user_id,
+                option_value: item.user_last_name + ', ' + item.user_first_name,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+
+            case "ff007180-4367-4cf2-b259-7804867615a7":
+              const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`);
+              optionData = csiCodeList.map((item, index) => ({
+                option_id: item.csi_code_id,
+                option_value: item.csi_code_section,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+          }
+        } else {
+          optionData = plv8.execute(`
+            SELECT *
+            FROM form_schema.option_table
+            WHERE option_field_id = '${field.field_id}'
+            ORDER BY option_order ASC
+          `);
+        }
+
+        return {
+          ...field,
+          field_option: optionData
+        };
+      });
+
+      sectionData.push({
+        ...section,
+        section_field: fields,
+      });
+    });
+
+
+    const form = {
+      form_id: formData.form_id,
+      form_name: formData.form_name,
+      form_description: formData.form_description,
+      form_date_created: formData.form_date_created,
+      form_is_hidden: formData.form_is_hidden,
+      form_is_formsly_form: formData.form_is_formsly_form,
+      form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_module_name:moduleData.module_name,
+      form_module_version:moduleData.module_version_id,
+      form_sub_type: formData.form_sub_type,
+      form_team_member: {
+        team_member_id: formData.team_member_id,
+        team_member_user: {
+          user_id: formData.user_id,
+          user_first_name: formData.user_first_name,
+          user_last_name: formData.user_last_name,
+          user_avatar: formData.user_avatar,
+          user_username: formData.user_username
+        }
+      },
+      form_signer: signerData.map(signer => {
+        return {
+          signer_id: signer.node_signer_id,
+          signer_action: signer.node_type_label,
+          signer_order: 1,
+          signer_is_disabled: false,
+          signer_team_group: signer.group_info.map(group => {
+            return {
+              team_group_id: group.team_group_id,
+              team_group_name: group.team_group_name
+            };
+          })
+        };
+      }),
+      form_section: sectionData,
+    };
+
+    if (form.form_is_formsly_form) {
+      if (form.form_name === "Item") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              form.form_section[1]
+            ],
+          },
+          projectOptions
+        }
+        return;
+      } else if (form.form_name === "Services") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                service_category_id,
+                service_category
+            FROM service_schema.service_category_table
+            WHERE
+              service_category_team_id = '${teamMember.team_member_team_id}'
+              AND service_category_is_disabled = false
+              AND service_category_is_available = true
+            ORDER BY service_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.service_category_id,
+            option_order: index,
+            option_value: category.service_category,
+          };
+        });
+
+        const csiDivisions = plv8.execute(
+          `
+            SELECT
+              csi_code_division_id,
+              csi_code_division_description
+            FROM public.distinct_division_view
+          `
+        );
+
+        const csiDivisionOption = csiDivisions.map((division, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: division.csi_code_division_description,
+            option_order: index,
+            option_value: division.csi_code_division_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT
+                general_unit_of_measurement_id,
+                general_unit_of_measurement
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
+            WHERE
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement;
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[3].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 3),
+                   {
+                    ...form.form_section[1].section_field[3],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[4],
+                    field_option: csiDivisionOption
+                  },
+                  ...form.form_section[1].section_field.slice(5, 10),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Other Expenses") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                other_expenses_category_id,
+                other_expenses_category
+            FROM other_expenses_schema.other_expenses_category_table
+            WHERE
+              other_expenses_category_team_id = '${teamMember.team_member_team_id}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+            ORDER BY other_expenses_category
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT
+                csi_code_id,
+                csi_code_level_three_description
+            FROM lookup_schema.csi_code_table
+            WHERE csi_code_division_id = '01'
+            ORDER BY csi_code_level_three_description
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT
+                general_unit_of_measurement_id,
+                general_unit_of_measurement
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
+            WHERE
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 4),
+                   {
+                    ...form.form_section[1].section_field[4],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: csiCodeDescriptionOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6, 10)
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "PED Equipment") {
+        const projects = plv8.execute(
+          `
+            SELECT
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                equipment_category_id,
+                equipment_category
+            FROM equipment_schema.equipment_category_table
+            WHERE
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+            ORDER BY equipment_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        const capacityUoM = plv8.execute(
+          `
+            SELECT
+                capacity_unit_of_measurement_id,
+                capacity_unit_of_measurement
+            FROM unit_of_measurement_schema.capacity_unit_of_measurement_table
+            WHERE
+              capacity_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND capacity_unit_of_measurement_is_disabled = false
+              AND capacity_unit_of_measurement_is_available = true
+            ORDER BY capacity_unit_of_measurement;
+          `
+        );
+
+        const capacityUoMOptions = capacityUoM.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: uom.capacity_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.capacity_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 5),
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: capacityUoMOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
+      } else if (form.form_name === "PED Part") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                equipment_category_id,
+                equipment_category
+            FROM equipment_schema.equipment_category_table
+            WHERE
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+            ORDER BY equipment_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  {
+                    ...form.form_section[0].section_field[1]
+                  },
+                  {
+                    ...form.form_section[0].section_field[2],
+                    field_option: categoryOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(3),
+                ],
+              },
+              {
+                ...form.form_section[1],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
+      } else if (form.form_name === "PED Item") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              form.form_section[1]
+            ],
+          },
+          projectOptions
+        }
+        return;
+      }  else if (form.form_name === "IT Asset") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name
+          }
+        });
+
+        const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
+          if (field.field_name === 'Requesting Project') {
+            return {
+              ...field,
+              field_option: projectOptions
+            }
+          } else if (field.field_name === 'Department') {
+            return {
+              ...field,
+              field_option: departmentOptions,
+            }
+          } else {
+            return field;
+          }
+        })
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: firstSectionFieldList,
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions
+        }
+        return;
+      }
+    } else {
+        returnData = {
+          form
+        }
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_module_form(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function() {
+    const { moduleId } = input_data;
+
+    const formSql = `
+      SELECT
+        mct.module_connection_module_version_id,
+        f.form_id,
+        f.form_name
+      FROM
+        workflow_schema.module_connection_table mct
+      JOIN
+        form_schema.form_table f
+      ON
+        mct.module_connection_form_id = f.form_id
+      WHERE
+        mct.module_connection_module_version_id = ANY($1)
+    `;
+
+    const forms = plv8.execute(formSql, [moduleId]);
+    forms.forEach(form => {
+      if (!returnData[form.module_connection_module_version_id]) {
+        returnData[form.module_connection_module_version_id] = [];
+      }
+
+      returnData[form.module_connection_module_version_id].push({
+        form_id: form.form_id,
+        form_name: form.form_name
+      });
+
+      const requestSql = `
+        SELECT request_id
+        FROM request_schema.request_table
+        WHERE request_form_id = $1
+        LIMIT 1
+      `;
+
+      const requestResult = plv8.execute(requestSql, [form.form_id]);
+      if (requestResult.length > 0) {
+        returnData[form.module_connection_module_version_id][returnData[form.module_connection_module_version_id].length - 1].request_id = requestResult[0].request_id;
+      }
+    });
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION check_member_team_group(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const { memberId, requestId, currentStatus, signerTeamGroups, userGroupData } = input_data;
+
+  const approvalData = plv8.execute(
+    `
+    SELECT tg.team_group_name
+    FROM module_request_schema.module_signer_table ms
+    JOIN team_schema.team_group_member_table tgm
+      ON tgm.team_member_id = ms.module_signer_team_member_id
+    JOIN team_schema.team_group_table tg
+      ON tg.team_group_id = tgm.team_group_id
+    WHERE ms.module_signer_request_id = $1
+      AND ms.module_signer_status = $2
+    `,
+    [requestId, currentStatus]
+  );
+
+  returnData = approvalData.map((group) => group.team_group_name);
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION module_request_signer_count(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+ let signerCount = 0;
+  plv8.subtransaction(function(){
+  const {
+    requestId,
+    requestStatus,
+  } = input_data;
+
+    const signerCountData = plv8.execute(
+      `
+        SELECT COUNT(*) AS signer_count
+        FROM module_request_schema.module_signer_table ms
+        JOIN request_schema.request_table r ON r.request_id = ms.module_signer_request_id
+        WHERE ms.module_signer_request_id = '${requestId}'
+          AND ms.module_signer_status = '${requestStatus}'
+      `
+    )[0];
+
+    signerCount = signerCountData.signer_count;
+  });
+  return signerCount;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION module_request_signer_update(
+    input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+
+  plv8.subtransaction(function(){
+  const {
+    requestId,
+    requestSignerId,
+    requestStatus,
+    groupMember,
+    signerFullName,
+    requestAction,
+    memberId,
+    signerTeamGroups
+  } = input_data;
+
+    const commonGroups = groupMember.filter(group => signerTeamGroups.includes(group));
+     commonGroups.forEach((group) => {
+        plv8.execute(
+        `
+            INSERT INTO module_request_schema.module_signer_table
+            (
+            module_signer_request_id,
+            module_signer_team_member_id,
+            module_signer_status,
+            module_signer_status_date_updated
+            )
+            VALUES
+            (
+            '${requestId}',
+            '${memberId}',
+            '${requestStatus}',
+            NOW()
+            )
+        `
+        );
+    });
+      plv8.execute(
+      `
+        INSERT INTO request_schema.comment_table
+        (
+          comment_request_id,
+          comment_team_member_id,
+          comment_type,
+          comment_content
+        )
+        VALUES
+        (
+          '${requestId}',
+          '${memberId}',
+          'ACTION_${requestStatus}',
+          '${signerFullName} ${requestAction.toLowerCase()} this module request!'
+        )
+      `
+    );
+  });
+
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION view_page_on_load(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+returnData = [];
+plv8.subtransaction(function(){
+  const {
+    moduleRequestId
+  } = input_data;
+
+   const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].  generate_module_request_id_condition;
+
+  const moduleData = plv8.execute(
+    `
+    SELECT *
+    FROM request_schema.request_table r
+    JOIN workflow_schema.node_type_table nt ON nt.node_type_label = r.request_status
+    JOIN module_request_schema.module_request_table mr ON mr.module_request_id = r.request_module_request_id
+    JOIN workflow_schema.module_version_table mv ON mv.module_version_id = mr.module_request_module_version_id
+    JOIN workflow_schema.module_table m ON m.module_id = mv.module_version_module_id
+    JOIN team_schema.team_member_table tm ON tm.team_member_id = r.request_team_member_id
+    JOIN user_schema.user_table u ON u.user_id = tm.team_member_user_id
+    WHERE ${idCondition}
+    ORDER BY r.request_date_created DESC
+    LIMIT 1
+    `
+  )[0];
+
+  returnData = {
+      module_request_id: moduleData.request_id,
+      module_name: moduleData.module_name,
+      module_date_created:moduleData.request_date_created,
+      module_form:moduleData.request_form_id,
+      module_status: moduleData.request_status,
+      module_status_color: moduleData.node_type_background_color,
+      module_status_font_color: moduleData.node_type_font_color,
+      requestor: {
+        user_id: moduleData.user_id,
+        user_first_name: moduleData.user_first_name,
+        user_last_name: moduleData.user_last_name,
+        user_avatar: moduleData.user_avatar
+      }
+  }
+});
+return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION check_approver_group(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let teamMemberData = [];
+plv8.subtransaction(function(){
+    const { requestId, requestStatus } = input_data;
+
+   const teamMember = plv8.execute(
+        `
+        SELECT
+            ms.module_signer_team_member_id AS team_member_id
+        FROM module_request_schema.module_signer_table ms
+        WHERE ms.module_signer_request_id = $1 AND ms.module_signer_status = ANY($2::text[]);
+        `,
+        [requestId, requestStatus]
+    );
+
+   teamMemberData = teamMember.map(member => member.team_member_id);
+});
+return teamMemberData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION check_form_exist(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    moduleRequestId
+  } = input_data;
+
+  const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].generate_module_request_id_condition;
+
+  const requestForm = plv8.execute(`
+    SELECT f.form_name,f.form_id,request_id
+    FROM request_schema.request_table r
+    JOIN form_schema.form_table f ON f.form_id = r.request_form_id
+    JOIN module_request_schema.module_request_table mr ON mr.module_request_id = r.request_module_request_id
+    WHERE ${idCondition}
+  `);
+
+  if (requestForm.length > 0) {
+    returnData = requestForm;
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_module_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let request_data;
+  plv8.subtransaction(function () {
+    const {
+      requestId,
+      formId,
+      moduleId,
+      teamMemberId,
+      responseValues,
+      moduleRequestId,
+      moduleVersion,
+      signerValues,
+      requestSignerNotificationInput,
+      formName,
+      isFormslyForm,
+      projectId,
+      teamId,
+      signers,
+    } = input_data;
+
+    let formslyIdPrefix = '';
+    let endId = '';
+    const moduleIdPrefix = 'MR';
+
+    if (isFormslyForm) {
+      let project;
+      if (projectId) {
+        project = plv8.execute(
+          `
+            SELECT *
+            FROM team_schema.team_project_table
+            WHERE team_project_id = $1
+          `,
+          [projectId]
+        )[0];
+      }
+      if (formName === 'Services') {
+        endId = `S`;
+      } else if (formName === 'Other Expenses') {
+        endId = `OE`;
+      } else if (formName === 'PED Equipment') {
+        endId = `PE`;
+      } else if (formName === 'PED Part') {
+        endId = `PP`;
+      } else if (formName === 'PED Item') {
+        endId = `PC`;
+      } else if (formName === 'IT Asset') {
+        endId = `ITA`;
+      }
+      formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
+    }
+
+    const signerList = signers[0].signer_team_group.map((group) => group.team_group_name).join(',');
+    const nodeStatus = signers[0].signer_action;
+
+    const newModuleRequestId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+
+    if (!projectId && !endId) {
+      if (moduleRequestId && moduleRequestId !== "") {
+        const nextFormData = plv8.execute(
+          `
+            WITH all_forms AS (
+              SELECT
+                mc.module_connection_form_id AS form_id,
+                f.form_name,
+                ROW_NUMBER() OVER (ORDER BY mc.module_connection_order ASC) AS form_order,
+                r.request_id IS NOT NULL AS is_submitted
+              FROM workflow_schema.module_connection_table mc
+              JOIN workflow_schema.module_version_table mv
+                ON mv.module_version_id = mc.module_connection_module_version_id
+              LEFT JOIN form_schema.form_table f
+                ON f.form_id = mc.module_connection_form_id
+              LEFT JOIN request_schema.request_table r
+                ON r.request_form_id = mc.module_connection_form_id
+                AND r.request_module_request_id = $1
+              WHERE mc.module_connection_module_version_id = $2
+            ),
+            current_form AS (
+              SELECT form_order
+              FROM all_forms
+              WHERE form_id = $3
+            ),
+            next_form AS (
+              SELECT
+                af.form_id,
+                af.form_name,
+                af.is_submitted
+              FROM all_forms af
+              CROSS JOIN current_form cf
+              WHERE af.form_order = cf.form_order + 1
+            )
+            SELECT
+              CASE
+                WHEN nf.is_submitted THEN NULL
+                ELSE nf.form_id
+              END AS form_id,
+              CASE
+                WHEN nf.is_submitted THEN NULL
+                ELSE nf.form_name
+              END AS form_name
+            FROM next_form nf;
+          `,
+          [moduleRequestId, moduleVersion, formId]
+        )[0] ?? [];
+
+        if (!nextFormData) {
+          throw new Error("Form Already Submitted");
+        }
+
+        const idCondition = plv8.execute(
+          `SELECT public.generate_module_request_id_condition($1)`,
+          [moduleRequestId]
+        )[0].generate_module_request_id_condition;
+
+        request_data = plv8.execute(
+          `
+            UPDATE module_request_schema.module_request_table
+            SET
+              module_request_latest_status = $1,
+              module_request_latest_form_name = $2,
+              module_request_latest_approver = $3,
+              module_request_requested_by = $4
+            WHERE ${idCondition}
+            RETURNING *
+          `,
+          [nodeStatus, formName, signerList, teamMemberId]
+        )[0];
+
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_table
+            (
+              request_id,
+              request_form_id,
+              request_team_member_id,
+              request_status,
+              request_status_date_updated,
+              request_formsly_id_serial,
+              request_module_request_id
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7
+            )
+            RETURNING *
+          `,
+          [
+            requestId,
+            formId,
+            teamMemberId || null,
+            status || "PENDING",
+            status ? "NOW()" : null,
+            null,
+            request_data.module_request_id,
+          ]
+        )[0];
+      } else {
+        request_data = plv8.execute(
+          `
+            INSERT INTO module_request_schema.module_request_table
+            (module_request_id, module_request_latest_status, module_request_latest_form_name, module_request_latest_approver, module_request_requested_by, module_request_module_version_id, module_request_formsly_id_prefix)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+          `,
+          [newModuleRequestId, nodeStatus, formName, signerList, teamMemberId, moduleVersion, moduleIdPrefix]
+        )[0];
+
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_table
+            (
+              request_id,
+              request_form_id,
+              request_team_member_id,
+              request_status,
+              request_status_date_updated,
+              request_formsly_id_serial,
+              request_module_request_id
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7
+            )
+            RETURNING *
+          `,
+          [
+            requestId,
+            formId,
+            teamMemberId || null,
+            nodeStatus || "PENDING",
+            nodeStatus ? "NOW()" : null,
+            null,
+            newModuleRequestId,
+          ]
+        )[0];
+      }
+    } else {
+      if (moduleRequestId && moduleRequestId !== "") {
+        const nextFormData = plv8.execute(
+          `
+            WITH all_forms AS (
+              SELECT
+                mc.module_connection_form_id AS form_id,
+                f.form_name,
+                ROW_NUMBER() OVER (ORDER BY mc.module_connection_order ASC) AS form_order,
+                r.request_id IS NOT NULL AS is_submitted
+              FROM workflow_schema.module_connection_table mc
+              JOIN workflow_schema.module_version_table mv
+                ON mv.module_version_id = mc.module_connection_module_version_id
+              LEFT JOIN form_schema.form_table f
+                ON f.form_id = mc.module_connection_form_id
+              LEFT JOIN request_schema.request_table r
+                ON r.request_form_id = mc.module_connection_form_id
+                AND r.request_module_request_id = $1
+              WHERE mc.module_connection_module_version_id = $2
+            ),
+            current_form AS (
+              SELECT form_order
+              FROM all_forms
+              WHERE form_id = $3
+            ),
+            next_form AS (
+              SELECT
+                af.form_id,
+                af.form_name,
+                af.is_submitted
+              FROM all_forms af
+              CROSS JOIN current_form cf
+              WHERE af.form_order = cf.form_order + 1
+            )
+            SELECT
+              CASE
+                WHEN nf.is_submitted THEN NULL
+                ELSE nf.form_id
+              END AS form_id,
+              CASE
+                WHEN nf.is_submitted THEN NULL
+                ELSE nf.form_name
+              END AS form_name
+            FROM next_form nf;
+          `,
+          [moduleRequestId, moduleVersion, formId]
+        )[0] ?? [];
+
+        if (!nextFormData) {
+          throw new Error("Form Already Submitted");
+        }
+
+        const idCondition = plv8.execute(
+          `SELECT public.generate_module_request_id_condition($1)`,
+          [moduleRequestId]
+        )[0].generate_module_request_id_condition;
+
+        request_data = plv8.execute(
+          `
+            UPDATE module_request_schema.module_request_table
+            SET
+              module_request_latest_status = $1,
+              module_request_latest_form_name = $2,
+              module_request_latest_approver = $3,
+              module_request_requested_by = $4
+            WHERE ${idCondition}
+            RETURNING *
+          `,
+          [nodeStatus, formName, signerList, teamMemberId]
+        )[0];
+
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_table
+            (
+              request_id,
+              request_form_id,
+              request_team_member_id,
+              request_status,
+              request_status_date_updated,
+              request_formsly_id_serial,
+              request_module_request_id
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7
+            )
+            RETURNING *
+          `,
+          [
+            requestId,
+            formId,
+            teamMemberId || null,
+            status || "PENDING",
+            status ? "NOW()" : null,
+            null,
+            request_data.module_request_id,
+          ]
+        )[0];
+      } else {
+        request_data = plv8.execute(
+          `
+            INSERT INTO module_request_schema.module_request_table
+            (module_request_id, module_request_latest_status, module_request_latest_form_name, module_request_latest_approver, module_request_requested_by, module_request_module_version_id, module_request_formsly_id_prefix)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+          `,
+          [newModuleRequestId, nodeStatus, formName, signerList, teamMemberId, moduleVersion, moduleIdPrefix]
+        )[0];
+
+        plv8.execute(
+          `
+            INSERT INTO request_schema.request_table
+            (
+              request_id,
+              request_form_id,
+              request_team_member_id,
+              request_status,
+              request_status_date_updated,
+              request_formsly_id_serial,
+              request_module_request_id
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7
+            )
+            RETURNING *
+          `,
+          [
+            requestId,
+            formId,
+            teamMemberId || null,
+            nodeStatus || "PENDING",
+            nodeStatus ? "NOW()" : null,
+            null,
+            newModuleRequestId,
+          ]
+        )[0];
+      }
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO request_schema.request_response_table
+        (
+          request_response,
+          request_response_duplicatable_section_id,
+          request_response_field_id,
+          request_response_request_id,
+          request_response_prefix
+        )
+        VALUES ${responseValues}
+      `
+    );
+  });
+  return request_data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_status_module_request(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let request_status;
+  plv8.subtransaction(function(){
+    const {
+      requestId,
+      moduleRequestId,
+      requestStatus,
+      signerFullName,
+      formName,
+      requestAction,
+      requestOwnerId,
+      teamId,
+      jiraId,
+      jiraLink,
+      requestFormslyId
+    } = input_data;
+
+    const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].generate_module_request_id_condition;
+
+    const moduleRequestVersionID = plv8.execute(`
+        SELECT *
+        FROM module_request_schema.module_request_table
+        WHERE ${idCondition}
+    `)[0].module_request_module_version_id;
+
+    const latestNodeData = plv8.execute(
+      `
+         SELECT DISTINCT ON (mr.module_request_id)
+          mr.module_request_id,
+          ns.node_signer_id,
+          n.node_id,
+          nt.node_type_label,
+          f.form_name,
+          json_agg(
+              json_build_object(
+                  'group_id', ns.node_signer_team_group_id,
+                  'group_name', tg.team_group_name
+              )
+          ) AS team_groups
+        FROM module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.workflow_table w ON mc.module_connection_workflow_id = w.workflow_id
+        JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_workflow_id = w.workflow_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = wv.workflow_version_id
+        LEFT JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
+        LEFT JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        LEFT JOIN team_schema.team_group_table tg ON tg.team_group_id = ns.node_signer_team_group_id
+        LEFT JOIN form_schema.form_table f ON f.form_id = mc.module_connection_form_id
+        WHERE
+          r.request_id = $1
+          AND mc.module_connection_module_version_id = $2
+          AND nt.node_type_label = $3
+        GROUP BY
+          mr.module_request_id,
+          ns.node_signer_id,
+          ns.node_signer_team_group_id,
+          f.form_name,
+          mc.module_connection_form_id,
+          tg.team_group_id,
+          n.node_id,
+          nt.node_type_label;
+      `,
+      [requestId,moduleRequestVersionID, requestStatus]
+    );
+
+    if (latestNodeData.length > 0) {
+
+      plv8.execute(
+        `
+          UPDATE module_request_schema.module_request_table
+          SET
+            module_request_latest_status = $1,
+            module_request_latest_approver = $2
+          WHERE ${idCondition}
+        `,
+        [
+          requestStatus,
+          latestNodeData[0].team_groups.map(group => group.group_name).join(','),
+        ]
+      );
+
+      plv8.execute(
+        `
+          UPDATE request_schema.request_table
+          SET
+            request_status = $1
+          WHERE
+            request_id = $2
+        `,
+        [requestStatus, requestId]
+      );
+
+      const activeTeamResult = plv8.execute(
+        `SELECT * FROM team_schema.team_table WHERE team_id = $1;`,
+        [teamId]
+      );
+      const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+
+      if (activeTeam) {
+        const teamNameUrlKeyResult = plv8.execute(
+          `SELECT public.format_team_name_to_url_key($1) AS url_key;`,
+          [activeTeam.team_name]
+        );
+        const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+        if (teamNameUrlKey) {
+          plv8.execute(
+            `
+              INSERT INTO public.notification_table
+              (
+                notification_app,
+                notification_type,
+                notification_content,
+                notification_redirect_url,
+                notification_user_id,
+                notification_team_id
+              )
+              VALUES
+              (
+                'REQUEST',
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+              )
+            `,
+            [
+              requestStatus,
+              `${signerFullName} ${requestAction.toLowerCase()} your ${formName} request`,
+              `/${teamNameUrlKey}/module-request/${moduleRequestId}/view`,
+              requestOwnerId,
+              teamId
+            ]
+          );
+        }
+      }
+
+      request_status = { status: "success", message: "Request status updated successfully." };
+    } else {
+      request_status = { status: "failure", message: "Failed to update request status." };
+    }
+  });
+  return request_status;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION module_request_page_on_load(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      moduleId,
+      moduleRequestId,
+      userId,
+    } = input_data;
+
+    let nextFormId;
+    let moduleVersionId;
+    let workflowVersionId;
+
+    if (moduleRequestId) {
+      const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].generate_module_request_id_condition;
+
+      const getModuleRequestVersion = plv8.execute(`
+        SELECT
+          module_request_table.module_request_id,
+          module_request_table.module_request_module_version_id,
+          module_connection_table.module_connection_workflow_id
+        FROM module_request_schema.module_request_table
+        JOIN workflow_schema.module_connection_table
+          ON module_request_table.module_request_module_version_id = module_connection_table.module_connection_module_version_id
+        WHERE ${idCondition}
+        LIMIT 1
+      `)[0];
+
+      if (!getModuleRequestVersion) throw new Error("Module request version not found");
+
+      moduleVersionId = getModuleRequestVersion.module_request_module_version_id;
+      workflowVersionId = getModuleRequestVersion.module_connection_workflow_id;
+
+      nextFormId = plv8.execute(`
+        SELECT
+          mc.module_connection_form_id AS form_id,
+          f.form_name
+        FROM workflow_schema.module_connection_table mc
+        JOIN workflow_schema.module_version_table mv
+        ON mv.module_version_id = mc.module_connection_module_version_id
+        LEFT JOIN form_schema.form_table f
+          ON f.form_id = mc.module_connection_form_id
+        WHERE mc.module_connection_module_version_id = $1
+        AND NOT EXISTS (
+        SELECT 1
+        FROM request_schema.request_table r
+        WHERE r.request_form_id = mc.module_connection_form_id
+            AND r.request_module_request_id = $2
+        )
+        ORDER BY mc.module_connection_order ASC
+        LIMIT 1
+    `, [moduleVersionId, getModuleRequestVersion.module_request_id])[0]?.form_id;
+
+  } else {
+    const connectionData = plv8.execute(`
+      SELECT
+        module_connection_table.module_connection_form_id,
+        module_connection_table.module_connection_module_version_id,
+        module_version_table.module_version_id AS workflow_version_id
+      FROM workflow_schema.module_table
+      JOIN LATERAL (
+        SELECT *
+        FROM workflow_schema.module_version_table
+        WHERE module_table.module_id = module_version_table.module_version_module_id
+        ORDER BY module_version_label DESC
+        LIMIT 1
+      ) module_version_table ON TRUE
+      JOIN workflow_schema.module_connection_table
+        ON module_connection_table.module_connection_module_version_id = module_version_table.module_version_id
+      WHERE module_table.module_id = $1
+      ORDER BY module_connection_table.module_connection_order ASC
+      LIMIT 1
+    `, [moduleId])[0];
+
+    if (!connectionData) throw new Error("No module connection data found");
+    moduleVersionId = connectionData.module_connection_module_version_id;
+    nextFormId = connectionData.module_connection_form_id;
+    workflowVersionId = connectionData.workflow_version_id;
+  }
+
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    if (!teamId) throw new Error("No team found");
+
+    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+    if (!teamMember) throw new Error("No team member found");
+
+
+    const formData = plv8.execute(`
+      SELECT
+        form_id,
+        form_name,
+        form_description,
+        form_date_created,
+        form_is_hidden,
+        form_is_formsly_form,
+        form_is_for_every_member,
+        form_type,
+        form_sub_type,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_username
+      FROM form_schema.form_table
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE form_id = $1
+    `,[nextFormId])[0];
+
+    if (!formData) throw new Error("Form data not found");
+
+    const signerData = plv8.execute(`
+            WITH limited_nodes AS (
+                SELECT
+                n.node_id,
+                ns.node_signer_team_group_id,
+                ns.node_signer_id,
+                nt.node_type_label
+            FROM workflow_schema.node_table n
+            JOIN workflow_schema.edge_table e ON e.edge_target_node_id = n.node_id
+            JOIN workflow_schema.node_type_table nt ON nt.node_type_id = n.node_type_node_id
+            JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = n.node_workflow_version_id
+            JOIN workflow_schema.module_connection_table mc
+            ON mc.module_connection_workflow_id = wv.workflow_version_workflow_id
+            AND mc.module_connection_workflow_version_id = wv.workflow_version_id
+            JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
+        WHERE mc.module_connection_form_id = $1
+            AND mc.module_connection_module_version_id = $2
+            AND e.edge_is_start_edge = true
+        )
+        SELECT
+            ln.node_id,
+            ln.node_signer_team_group_id,
+            ln.node_signer_id,
+            ln.node_type_label,
+            ARRAY_AGG(
+                JSON_BUILD_OBJECT(
+                    'team_group_id', tg.team_group_id,
+                    'team_group_name', tg.team_group_name
+                )
+            ) AS group_info
+        FROM limited_nodes ln
+        JOIN workflow_schema.node_signer_table ns
+            ON ns.node_signer_node_id = ln.node_id
+        JOIN team_schema.team_group_table tg
+            ON tg.team_group_id = ns.node_signer_team_group_id
+        GROUP BY ln.node_id, ln.node_signer_team_group_id, ln.node_signer_id, ln.node_type_label
+        LIMIT 1;
+    `,[nextFormId,moduleVersionId]);
+
+    const moduleData = plv8.execute(`
+      SELECT module_table.module_name, module_version_table.module_version_id
+      FROM workflow_schema.module_table
+      JOIN workflow_schema.module_version_table
+      ON module_table.module_id = module_version_table.module_version_module_id
+      WHERE module_version_id = $1
+    `,[moduleVersionId])[0];
+
+    const sectionData = [];
+    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${nextFormId}' ORDER BY section_order ASC`);
+    formSection.forEach(section => {
+      const fieldData = plv8.execute(`
+        SELECT *
+        FROM form_schema.field_table
+        WHERE field_section_id = '${section.section_id}'
+        ORDER BY field_order ASC
+        ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
+        ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
+        ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
+      `);
+
+      const fields = fieldData.map(field => {
+        let optionData = [];
+
+        if (field.field_special_field_template_id) {
+          switch(field.field_special_field_template_id) {
+            case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
+              const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`);
+              optionData = teamMemberList.map((item, index) => ({
+                option_id: item.user_id,
+                option_value: item.user_last_name + ', ' + item.user_first_name,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+
+            case "ff007180-4367-4cf2-b259-7804867615a7":
+              const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`);
+              optionData = csiCodeList.map((item, index) => ({
+                option_id: item.csi_code_id,
+                option_value: item.csi_code_section,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+          }
+        } else {
+          optionData = plv8.execute(`
+            SELECT *
+            FROM form_schema.option_table
+            WHERE option_field_id = '${field.field_id}'
+            ORDER BY option_order ASC
+          `);
+        }
+
+        return {
+          ...field,
+          field_option: optionData
+        };
+      });
+
+      sectionData.push({
+        ...section,
+        section_field: fields,
+      });
+    });
+
+    // Construct the form object
+    const form = {
+      form_id: formData.form_id,
+      form_name: formData.form_name,
+      form_description: formData.form_description,
+      form_date_created: formData.form_date_created,
+      form_is_hidden: formData.form_is_hidden,
+      form_is_formsly_form: formData.form_is_formsly_form,
+      form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_module_name:moduleData.module_name,
+      form_module_version:moduleData.module_version_id,
+      form_sub_type: formData.form_sub_type,
+      form_team_member: {
+        team_member_id: formData.team_member_id,
+        team_member_user: {
+          user_id: formData.user_id,
+          user_first_name: formData.user_first_name,
+          user_last_name: formData.user_last_name,
+          user_avatar: formData.user_avatar,
+          user_username: formData.user_username
+        }
+      },
+      form_signer: signerData.map(signer => {
+        return {
+          signer_id: signer.node_signer_id,
+          signer_action: signer.node_type_label,
+          signer_order: 1,
+          signer_is_disabled: false,
+          signer_team_group: signer.group_info.map(group => {
+            return {
+              team_group_id: group.team_group_id,
+              team_group_name: group.team_group_name
+            };
+          })
+        };
+      }),
+      form_section: sectionData,
+    };
+
+    if (form.form_is_formsly_form) {
+      if (form.form_name === "Item") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              form.form_section[1]
+            ],
+          },
+          projectOptions
+        }
+        return;
+      } else if (form.form_name === "Services") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                service_category_id,
+                service_category
+            FROM service_schema.service_category_table
+            WHERE
+              service_category_team_id = '${teamMember.team_member_team_id}'
+              AND service_category_is_disabled = false
+              AND service_category_is_available = true
+            ORDER BY service_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.service_category_id,
+            option_order: index,
+            option_value: category.service_category,
+          };
+        });
+
+        const csiDivisions = plv8.execute(
+          `
+            SELECT
+              csi_code_division_id,
+              csi_code_division_description
+            FROM public.distinct_division_view
+          `
+        );
+
+        const csiDivisionOption = csiDivisions.map((division, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: division.csi_code_division_description,
+            option_order: index,
+            option_value: division.csi_code_division_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT
+                general_unit_of_measurement_id,
+                general_unit_of_measurement
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
+            WHERE
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement;
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[3].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 3),
+                   {
+                    ...form.form_section[1].section_field[3],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[4],
+                    field_option: csiDivisionOption
+                  },
+                  ...form.form_section[1].section_field.slice(5, 10),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Other Expenses") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                other_expenses_category_id,
+                other_expenses_category
+            FROM other_expenses_schema.other_expenses_category_table
+            WHERE
+              other_expenses_category_team_id = '${teamMember.team_member_team_id}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+            ORDER BY other_expenses_category
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT
+                csi_code_id,
+                csi_code_level_three_description
+            FROM lookup_schema.csi_code_table
+            WHERE csi_code_division_id = '01'
+            ORDER BY csi_code_level_three_description
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT
+                general_unit_of_measurement_id,
+                general_unit_of_measurement
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
+            WHERE
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 4),
+                   {
+                    ...form.form_section[1].section_field[4],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: csiCodeDescriptionOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6, 10)
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "PED Equipment") {
+        const projects = plv8.execute(
+          `
+            SELECT
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                equipment_category_id,
+                equipment_category
+            FROM equipment_schema.equipment_category_table
+            WHERE
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+            ORDER BY equipment_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        const capacityUoM = plv8.execute(
+          `
+            SELECT
+                capacity_unit_of_measurement_id,
+                capacity_unit_of_measurement
+            FROM unit_of_measurement_schema.capacity_unit_of_measurement_table
+            WHERE
+              capacity_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND capacity_unit_of_measurement_is_disabled = false
+              AND capacity_unit_of_measurement_is_available = true
+            ORDER BY capacity_unit_of_measurement;
+          `
+        );
+
+        const capacityUoMOptions = capacityUoM.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: uom.capacity_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.capacity_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 5),
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: capacityUoMOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
+      } else if (form.form_name === "PED Part") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT
+                equipment_category_id,
+                equipment_category
+            FROM equipment_schema.equipment_category_table
+            WHERE
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+            ORDER BY equipment_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  {
+                    ...form.form_section[0].section_field[1]
+                  },
+                  {
+                    ...form.form_section[0].section_field[2],
+                    field_option: categoryOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(3),
+                ],
+              },
+              {
+                ...form.form_section[1],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
+      } else if (form.form_name === "PED Item") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              form.form_section[1]
+            ],
+          },
+          projectOptions
+        }
+        return;
+      }  else if (form.form_name === "IT Asset") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name
+          }
+        });
+
+        const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
+          if (field.field_name === 'Requesting Project') {
+            return {
+              ...field,
+              field_option: projectOptions
+            }
+          } else if (field.field_name === 'Department') {
+            return {
+              ...field,
+              field_option: departmentOptions,
+            }
+          } else {
+            return field;
+          }
+        })
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: firstSectionFieldList,
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions
+        }
+        return;
+      }
+    } else {
+        returnData = {
+          form
+        }
+    }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    count: 0,
+    ModuleRequestList: [],
+  };
+  plv8.subtransaction(function() {
+    const {
+      page,
+      limit,
+      search,
+      creator ,
+      approver,
+      teamId,
+      isAscendingSort,
+      columnAccessor,
+      form,
+      teamGroup,
+      isApprover,
+      teamMemberId,
+    } = input_data;
+
+    const sortDirection = isAscendingSort ? 'ASC' : 'DESC';
+    const sortCondition = columnAccessor ? `ORDER BY ${columnAccessor} ${sortDirection}` : "";
+    const offset = (page - 1) * limit;
+
+    const formattedTeamGroup = teamGroup.map((item) => `'${item}'`).join(', ');
+    const approverCondition = isApprover
+      ? `  AND module_request_table.module_request_latest_approver = ANY(ARRAY[${formattedTeamGroup}]::text[])
+           AND request_team_member_id != '${teamMemberId}'
+         AND NOT EXISTS (
+             SELECT 1
+             FROM module_request_schema.module_signer_table
+             WHERE module_signer_table.module_signer_request_id = request_table.request_id
+               AND module_signer_table.module_signer_team_member_id = '${teamMemberId}'
+         )`
+      : "";
+    const query = `
+        SELECT
+            request_table.request_id,
+            module_request_table.module_request_id,
+            module_table.module_name,
+            module_request_table.module_request_formsly_id_prefix,
+            module_request_table.module_request_formsly_id_serial,
+            module_request_table.module_request_date_created,
+            module_request_table.module_request_latest_status,
+            node_type_table.node_type_background_color,
+            node_type_table.node_type_font_color,
+            module_request_table.module_request_latest_form_name,
+            module_request_table.module_request_latest_approver,
+            user_table.user_first_name,
+            user_table.user_last_name,
+            user_table.user_avatar,
+            user_table.user_id
+        FROM module_request_schema.module_request_table
+        JOIN LATERAL (
+            SELECT *
+            FROM request_schema.request_table
+            WHERE request_table.request_module_request_id = module_request_table.module_request_id
+            ORDER BY request_date_created DESC
+        ) request_table ON TRUE
+        JOIN team_schema.team_member_table ON team_schema.team_member_table.team_member_id = module_request_schema.module_request_table.module_request_requested_by
+        JOIN user_schema.user_table ON user_schema.user_table.user_id = team_schema.team_member_table.team_member_user_id
+        JOIN workflow_schema.module_version_table ON module_request_schema.module_request_table.module_request_module_version_id = workflow_schema.module_version_table.module_version_id
+        JOIN workflow_schema.node_type_table ON workflow_schema.node_type_table.node_type_label = module_request_schema.module_request_table.module_request_latest_status
+        JOIN workflow_schema.module_table ON workflow_schema.module_version_table.module_version_module_id = workflow_schema.module_table.module_id
+        WHERE module_table.module_team_id = '${teamId}'
+          ${search}
+          ${creator}
+          ${form}
+          ${approver}
+          ${approverCondition}
+          ${sortCondition}
+      LIMIT ${limit} OFFSET ${offset};
+    `;
+
+    const result = plv8.execute(query);
+
+    returnData.ModuleRequestList = result;
+
+    const queryCount = `
+      SELECT
+        COUNT(*)
+      FROM module_request_schema.module_request_table
+        JOIN LATERAL (
+            SELECT *
+            FROM request_schema.request_table
+            WHERE request_table.request_module_request_id = module_request_table.module_request_id
+            ORDER BY request_date_created DESC
+        ) request_table ON TRUE
+        JOIN team_schema.team_member_table ON team_schema.team_member_table.team_member_id = module_request_schema.module_request_table.module_request_requested_by
+        JOIN user_schema.user_table ON user_schema.user_table.user_id = team_schema.team_member_table.team_member_user_id
+        JOIN workflow_schema.module_version_table ON module_request_schema.module_request_table.module_request_module_version_id = workflow_schema.module_version_table.module_version_id
+        JOIN workflow_schema.node_type_table ON workflow_schema.node_type_table.node_type_label = module_request_schema.module_request_table.module_request_latest_status
+        JOIN workflow_schema.module_table ON workflow_schema.module_version_table.module_version_module_id = workflow_schema.module_table.module_id
+        WHERE module_table.module_team_id = '${teamId}'
+          ${search}
+          ${creator}
+          ${form}
+          ${approver}
+          ${approverCondition}
+    `;
+    const resultCount = plv8.execute(queryCount)[0].count;
+    returnData.count = Number(resultCount);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -25992,6 +30400,701 @@ DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON hr_schema.application_inf
 CREATE POLICY "Allow UPDATE for anon users" ON hr_schema.application_information_additional_details_table
 AS PERMISSIVE FOR UPDATE
 USING (true);
+
+---- workflow schema
+----- workflow_schema
+ALTER TABLE workflow_schema.workflow_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.workflow_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."workflow_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."workflow_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."workflow_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.workflow_version_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.workflow_version_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role"
+ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role"
+ON workflow_schema.workflow_version_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_table AS tt
+    JOIN team_schema.team_member_table AS tm
+    ON tm.team_member_team_id = tt.team_id
+    JOIN workflow_schema.workflow_table AS wt
+    ON wt.workflow_id = workflow_version_workflow_id
+    WHERE wt.workflow_id = workflow_version_table.workflow_version_workflow_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."workflow_version_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE tt.team_id = workflow_version_workflow_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE tt.team_id = workflow_version_workflow_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."workflow_version_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE tt.team_id = workflow_version_workflow_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.node_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = node_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = node_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = node_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = node_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.node_signer_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_signer_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_signer_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_signer_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_signer_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_group_table tg ON tg.team_group_id = node_signer_team_group_id
+    JOIN team_schema.team_table tt ON tt.team_id = tg.team_group_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = tt.team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_signer_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_group_table tg ON tg.team_group_id = node_signer_team_group_id
+    JOIN team_schema.team_table tt ON tt.team_id = tg.team_group_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = tt.team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_group_table tg ON tg.team_group_id = node_signer_team_group_id
+    JOIN team_schema.team_table tt ON tt.team_id = tg.team_group_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = tt.team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_signer_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_signer_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_group_table tg ON tg.team_group_id = node_signer_team_group_id
+    JOIN team_schema.team_table tt ON tt.team_id = tg.team_group_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = tt.team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.node_type_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_type_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_type_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_type_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_type_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+      AND tmt.team_member_team_id = node_type_team_id
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_type_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_type_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+      AND tmt.team_member_team_id = node_type_team_id
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+      AND tmt.team_member_team_id = node_type_team_id
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.node_type_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."node_type_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+      AND tmt.team_member_team_id = node_type_team_id
+  )
+);
+
+ALTER TABLE workflow_schema.edge_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.edge_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.edge_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.edge_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."edge_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = edge_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.edge_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."edge_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = edge_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = edge_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.edge_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "workflow_schema"."edge_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM workflow_schema.workflow_version_table as wvt
+    JOIN workflow_schema.workflow_table as wt ON wt.workflow_id = wvt.workflow_version_workflow_id
+    JOIN team_schema.team_table as tt ON tt.team_id = wt.workflow_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE wvt.workflow_version_id = edge_workflow_version_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.module_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = module_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = module_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = module_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = module_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.module_version_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = module_version_module_id)
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = module_version_module_id)
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = module_version_module_id)
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = module_version_module_id)
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE workflow_schema.module_version_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_connection_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_connection_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = (SELECT module_version_module_id FROM workflow_schema.module_version_table WHERE module_version_id = module_connection_module_version_id))
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = (SELECT module_version_module_id FROM workflow_schema.module_version_table WHERE module_version_id = module_connection_module_version_id))
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = (SELECT module_version_module_id FROM workflow_schema.module_version_table WHERE module_version_id = module_connection_module_version_id))
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON workflow_schema.module_connection_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = (SELECT module_team_id FROM workflow_schema.module_table WHERE module_id = (SELECT module_version_module_id FROM workflow_schema.module_version_table WHERE module_version_id = module_connection_module_version_id))
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE module_request_schema.module_request_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON module_request_schema.module_request_table;
+CREATE POLICY "Allow READ for authenticated users" ON module_request_schema.module_request_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_request_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+ALTER TABLE module_request_schema.module_signer_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON module_request_schema.module_signer_table;
+CREATE POLICY "Allow READ for authenticated users" ON module_request_schema.module_signer_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON module_request_schema.module_signer_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tmt
+    WHERE
+      tmt.team_member_user_id = auth.uid()
+      AND tmt.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 ----- END: POLICIES
 

@@ -278,19 +278,19 @@ export const getRequestList = async (
 
   const requestorCondition = getFilterConditionFromArray({
     values: requestor,
-    column: "request_view.request_team_member_id",
+    column: "request_table.request_team_member_id",
   });
   const statusCondition = getFilterConditionFromArray({
     values: status,
-    column: "request_view.request_status",
+    column: "request_table.request_status",
   });
   const formCondition = getFilterConditionFromArray({
     values: form,
-    column: "request_view.request_form_id",
+    column: "request_table.request_form_id",
   });
   const projectCondition = getFilterConditionFromArray({
     values: project,
-    column: "request_view.request_formsly_id_prefix",
+    column: "request_table.request_formsly_id_prefix",
     operator: "SIMILAR TO",
   });
 
@@ -308,8 +308,8 @@ export const getRequestList = async (
 
   const searchCondition = search
     ? validate(search)
-      ? `request_view.request_id = '${search}'`
-      : `request_view.request_formsly_id ILIKE '%${search}%'`
+      ? `request_table.request_id = '${search}'`
+      : `request_table.request_formsly_id ILIKE '%${search}%'`
     : "";
 
   const inputData = {
@@ -1228,8 +1228,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -4898,7 +4898,7 @@ export const getUserApplicationList = async (
     email,
     search,
     columnAccessor = "request_date_created",
-    teamMemberId
+    teamMemberId,
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -4917,7 +4917,7 @@ export const getUserApplicationList = async (
         email,
         search: search ? `AND (${searchCondition})` : "",
         columnAccessor,
-        teamMemberId
+        teamMemberId,
       },
     });
   if (requestListError) throw requestListError;

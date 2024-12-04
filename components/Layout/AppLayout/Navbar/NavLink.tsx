@@ -243,8 +243,8 @@ const ReviewAppNavLink = () => {
             openedRequestAccordion && openedRequestAccordion.length > 0
               ? openedRequestAccordion
               : preferences.create
-              ? ["create"]
-              : []
+                ? ["create"]
+                : []
           }
           onChange={(value) => {
             setOpenedRequestAccordion(value);
@@ -433,53 +433,57 @@ const ReviewAppNavLink = () => {
                   </Menu.Dropdown>
                 </Portal>
               </Menu>
-              <Menu
-                shadow="1px 1px 3px rgba(0, 0, 0, .25)"
-                withArrow
-                position="right"
-              >
-                {(userTeamMemberData?.team_member_role === "ADMIN" ||
-                  userTeamMemberData?.team_member_role === "OWNER") && (
+
+              {(userTeamMemberData?.team_member_role === "ADMIN" ||
+                userTeamMemberData?.team_member_role === "OWNER") && (
+                <Menu
+                  trigger={isMobile ? "click" : "hover"}
+                  shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                  withArrow
+                  position={isMobile ? "bottom-end" : "right"}
+                >
                   <Stack align="start" {...defaultNavLinkContainerProps}>
                     <Menu.Target>
-                      <NavigationLink
-                        idx={0}
-                        link={{
-                          label: "Create Module Request",
-                          icon: (
-                            <Box ml="sm" {...defaultNavLinkContainerProps}>
-                              <IconFileStack {...defaultIconProps} />
-                            </Box>
-                          ),
-                        }}
-                        onClick={() => {
-                          return null;
-                        }}
-                        active={
-                          pathName.includes("module-forms") &&
-                          pathName.includes("create")
-                        }
-                      />
+                      <Box>
+                        <NavigationLink
+                          idx={0}
+                          link={{
+                            label: "Create Module Request",
+                            icon: (
+                              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                                <IconFileStack {...defaultIconProps} />
+                              </Box>
+                            ),
+                          }}
+                          onClick={() => {
+                            return null;
+                          }}
+                          active={
+                            pathName.includes("module-forms") &&
+                            pathName.includes("create")
+                          }
+                        />
+                      </Box>
                     </Menu.Target>
-                    <Portal>
-                      <Menu.Dropdown>
-                        {moduleForms.map((module) => (
-                          <Menu.Item
-                            key={module.module_id}
-                            onClick={async () =>
-                              await router.push(
-                                `/${activeTeamNameToUrl}/module-forms/${module.module_id}/create`
-                              )
-                            }
-                          >
-                            {module.module_name}
-                          </Menu.Item>
-                        ))}
-                      </Menu.Dropdown>
-                    </Portal>
                   </Stack>
-                )}
-              </Menu>
+                  <Portal>
+                    <Menu.Dropdown>
+                      {moduleForms.map((module) => (
+                        <Menu.Item
+                          key={module.module_id}
+                          onClick={async () =>
+                            await router.push(
+                              `/${activeTeamNameToUrl}/module-forms/${module.module_id}/create`
+                            )
+                          }
+                        >
+                          {module.module_name}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Portal>
+                </Menu>
+              )}
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
@@ -497,8 +501,8 @@ const ReviewAppNavLink = () => {
             openedFormAccordion && openedFormAccordion.length > 0
               ? openedFormAccordion
               : preferences.form
-              ? ["form"]
-              : []
+                ? ["form"]
+                : []
           }
           onChange={(value) => {
             updatePreference("form", value.includes("form"));

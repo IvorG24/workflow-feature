@@ -153,10 +153,13 @@ const RequestListPage = ({ projectList }: Props) => {
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);
+      console.log(data);
 
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Failed to fetch request list.",
         color: "red",
