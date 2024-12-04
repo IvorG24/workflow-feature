@@ -204,7 +204,8 @@ const ReviewAppNavLink = () => {
   const analyticsMenuOptions = ["Human Resources"];
   const isUserHR =
     teamMemberGroups.includes("HUMAN RESOURCES") ||
-    teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
+    teamMemberGroups.includes("HUMAN RESOURCES COORDINATOR");
+  const isUserHRViewer = teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
 
   const handleRedirectToAnalyticsPage = (option: string) => {
     const url = `/${activeTeamNameToUrl}/analytics/${formatTeamNameToUrlKey(
@@ -840,7 +841,7 @@ const ReviewAppNavLink = () => {
   ];
 
   const hrSection = [
-    ...(isUserHR
+    ...(isUserHR || isUserHRViewer
       ? [
           {
             label: `Application Information`,
@@ -919,16 +920,20 @@ const ReviewAppNavLink = () => {
             withIndicator: Boolean(hrIndicatorCount.jobOffer),
             indicatorLabel: `${hrIndicatorCount.jobOffer}`,
           },
-          {
-            label: `Representing Application`,
-            icon: (
-              <Box ml="sm" {...defaultNavLinkContainerProps}>
-                <IconUserCircle {...defaultIconProps} />
-              </Box>
-            ),
-            href: `/${activeTeamNameToUrl}/hr/application-information`,
-            indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
-          },
+          ...(isUserHR
+            ? [
+                {
+                  label: `Representing Application`,
+                  icon: (
+                    <Box ml="sm" {...defaultNavLinkContainerProps}>
+                      <IconUserCircle {...defaultIconProps} />
+                    </Box>
+                  ),
+                  href: `/${activeTeamNameToUrl}/hr/application-information`,
+                  indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
+                },
+              ]
+            : []),
         ]
       : []),
     ...(userTeamMemberData?.team_member_role === "ADMIN" && isUserHR

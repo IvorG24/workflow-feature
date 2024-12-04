@@ -376,7 +376,8 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     requestStatus !== "CANCELED";
   const canOverrideAction =
     requestStatus === "PENDING" &&
-    teamMemberGroupList.includes("HUMAN RESOURCES");
+    (teamMemberGroupList.includes("HUMAN RESOURCES") ||
+      teamMemberGroupList.includes("HUMAN RESOURCES COORDINATOR"));
   const isEditable = false;
   // signerList
   //   .map((signer) => signer.request_signer_status)

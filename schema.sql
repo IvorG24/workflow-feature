@@ -4081,7 +4081,6 @@ AS $$
   return team_project_data;
 $$ LANGUAGE plv8;
 
-
 CREATE OR REPLACE FUNCTION insert_group_member(
   input_data JSON
 )
@@ -4145,7 +4144,7 @@ AS $$
       );
     }
 
-    if (groupId === 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a') {
+    if (['a691a6ca-8209-4b7a-8f48-8a4582bbe75a', '1926c53c-864f-40bf-bbd4-b3184444c410'].includes(groupId)) {
       const signerInput = teamMemberIdList.map(teamMemberId => {
         return `(
           true,
@@ -4941,7 +4940,7 @@ AS $$
         WHERE
           team_group_team_id = $1
           AND team_group_is_disabled = false
-        ORDER BY team_group_date_created DESC
+        ORDER BY team_group_name ASC
         LIMIT 10
       `, [
         teamId
@@ -5039,7 +5038,6 @@ AS $$
   });
   return team_data;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
   input_data JSON
@@ -15008,22 +15006,7 @@ AS $$
       teamId
     } = input_data;
 
-    const teamMemberGroup = plv8.execute(
-      `
-        SELECT COUNT(*)
-        FROM team_schema.team_member_table AS tmt
-        INNER JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-        WHERE
-          tmt.team_member_user_id = '${userId}'
-          AND tmt.team_member_team_id = '${teamId}'
-          AND tmt.team_member_is_disabled = false
-          AND tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      `
-    );
-    if(!teamMemberGroup.length) throw new Error();
-
     const optionList = [];
-
     const signerIdList = plv8.execute(
       `
         SELECT DISTINCT(signer_id)
@@ -18463,6 +18446,7 @@ plv8.subtransaction(function(){
   const hrMemberData = plv8.execute(
     `
       SELECT
+        DISTINCT(user_id),
         user_first_name,
         user_last_name,
         tmt.team_member_id
@@ -18470,7 +18454,7 @@ plv8.subtransaction(function(){
       INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
       WHERE
-        team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+        team_group_id IN ('a691a6ca-8209-4b7a-8f48-8a4582bbe75a', '1926c53c-864f-40bf-bbd4-b3184444c410')
       ORDER BY user_first_name, user_last_name
     `
   );
