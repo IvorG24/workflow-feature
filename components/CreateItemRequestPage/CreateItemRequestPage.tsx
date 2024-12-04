@@ -414,6 +414,9 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
             color: "orange",
             autoClose: false,
           });
+
+          setValue(`sections.${index}.section_field.0.field_response`, "");
+          setValue(`sections.${index}.section_field.9.field_response`, "");
           return;
         }
 
@@ -508,6 +511,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
           ],
         });
       } else {
+        setValue(`sections.${index}.section_field.9.field_response`, "");
         const generalField = [
           newSection.section_field[0],
           ...newSection.section_field.slice(1, 9).map((field) => {
