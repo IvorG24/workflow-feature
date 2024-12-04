@@ -15363,12 +15363,14 @@ AS $$
       `
         SELECT team_member_id
         FROM user_schema.user_table
-        INNER JOIN team_schema.team_member_table
+        LEFT JOIN team_schema.team_member_table
           ON team_member_user_id = user_id
         WHERE
-          user_email = '${userEmail}'
+          user_email = $1
         LIMIT 1
-      `
+      `, [
+        userEmail
+      ]
     )[0].team_member_id;
 
     if (userEmail !== applicantData.application_information_additional_details_email && teamMemberId !== applicantData.application_information_additional_details_team_member_id) throw new Error('403')
