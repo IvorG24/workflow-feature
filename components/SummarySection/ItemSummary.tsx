@@ -43,7 +43,7 @@ const ItemSummary = ({ summaryData }: Props) => {
                   summary.section_field.some((field) =>
                     CSI_HIDDEN_FIELDS.includes(field.field_name)
                   )
-                ) && <th>CSI Data</th>
+                ) && <th>CSI</th>
               }
             </tr>
           </thead>
