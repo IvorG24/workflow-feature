@@ -1,4 +1,4 @@
-import { getWorkflowPageOnLoad } from "@/backend/api/get";
+import { checkIfOwnerOrAdmin, getWorkflowPageOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import WorkflowPage from "@/components/WorkflowPage/WorkflowPage/WorkflowPage";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -6,12 +6,26 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
-  async ({ supabaseClient, context }) => {
+  async ({ supabaseClient, context, user, teamId }) => {
     try {
       const workflowId = context.query.workflowId as string;
       const data = await getWorkflowPageOnLoad(supabaseClient, {
         workflowId,
       });
+
+      const isOwnerOrApprover = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: teamId,
+      });
+
+      if (!isOwnerOrApprover) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
 
       return {
         props: data,

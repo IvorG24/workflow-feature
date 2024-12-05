@@ -55,6 +55,8 @@ DROP SCHEMA IF EXISTS request_schema CASCADE;
 DROP SCHEMA IF EXISTS form_schema CASCADE;
 DROP SCHEMA IF EXISTS team_schema CASCADE;
 DROP SCHEMA IF EXISTS hr_schema CASCADE;
+DROP SCHEMA IF EXISTS workflow_schema CASCADE;
+DROP SCHEMA IF EXISTS module_request_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -72,12 +74,15 @@ CREATE SCHEMA request_schema AUTHORIZATION postgres;
 CREATE SCHEMA form_schema AUTHORIZATION postgres;
 CREATE SCHEMA team_schema AUTHORIZATION postgres;
 CREATE SCHEMA hr_schema AUTHORIZATION postgres;
+CREATE SCHEMA workflow_schema AUTHORIZATION postgres;
+CREATE SCHEMA module_request_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMAS
 
 ----- START: SEQUENCES
 
 CREATE SEQUENCE request_schema.formsly_id_seq;
+CREATE SEQUENCE module_request_schema.module_formsly_id_seq;
 
 ----- END: SEQUENCES
 
@@ -425,7 +430,7 @@ CREATE TABLE workflow_schema.workflow_version_table (
 
 CREATE TABLE workflow_schema.module_version_table (
   module_version_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  module_version_date_created TIMESTAMPTZ NOT NULL,
+  module_version_date_created DEFAULT NOW() TIMESTAMPTZ NOT NULL,
   module_version_date_updated TIMESTAMPTZ,
   module_version_label INT NOT NULL,
 
@@ -437,6 +442,9 @@ CREATE TABLE workflow_schema.module_version_table (
 CREATE TABLE module_request_schema.module_request_table (
   module_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   module_request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  module_request_formsly_id_prefix VARCHAR(4000) NOT NULL,
+  module_request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('module_request_schema.module_formsly_id_seq'))),
+
   module_request_latest_status VARCHAR(4000),
   module_request_latest_form_name VARCHAR(4000),
   module_request_latest_approver VARCHAR(4000),
@@ -459,7 +467,8 @@ CREATE TABLE request_schema.request_table (
 
   request_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
-  request_project_id UUID REFERENCES team_schema.team_project_table(team_project_id)
+  request_project_id UUID REFERENCES team_schema.team_project_table(team_project_id),
+  request_module_request_id UUID REFERENCES module_request_schema.module_request_table(module_request_id)
 );
 
 CREATE TABLE request_schema.request_score_table (
@@ -1345,8 +1354,19 @@ CREATE TABLE workflow_schema.module_connection_table (
   module_connection_order INT NOT NULL,
 
   module_connection_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
-  module_connection_workflow_id UUID REFERENCES workflow_schema.workflow_table(workflow_id) NOT NULL,
+  module_connection_workflow_version_id UUID REFERENCES workflow_schema.workflow_version_id(workflow_version_id) NOT NULL,
   module_connection_module_version_id UUID REFERENCES workflow_schema.module_version_table(module_version_id) NOT NULL
+);
+
+CREATE TABLE workflow_schema.node_type_table (
+  node_type_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  node_type_label VARCHAR(4000) NOT NULL,
+  node_type_variant VARCHAR(4000) NOT NULL,
+  node_type_background_color VARCHAR(4000) NOT NULL,
+  node_type_font_color VARCHAR(4000) NOT NULL,
+  node_type_is_disabled BOOLEAN NOT NULL,
+  node_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  node_type_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE workflow_schema.node_table (
@@ -1369,17 +1389,6 @@ CREATE TABLE module_request_schema.module_signer_table (
 
   module_signer_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   module_signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
-);
-
-CREATE TABLE workflow_schema.node_type_table (
-  node_type_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  node_type_label VARCHAR(4000) NOT NULL,
-  node_type_variant VARCHAR(4000) NOT NULL,
-  node_type_background_color VARCHAR(4000) NOT NULL,
-  node_type_font_color VARCHAR(4000) NOT NULL,
-  node_type_is_disabled BOOLEAN NOT NULL,
-  node_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  node_type_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE workflow_schema.node_signer_table (
@@ -4002,7 +4011,6 @@ AS $$
           ON request_schema.request_table.request_form_id = form_schema.form_table.form_id
           AND form_schema.form_table.form_is_disabled = false
           AND form_schema.form_table.form_is_public_form = false
-          AND form_schema.form_table.form_is_hr_form = false
         INNER JOIN team_schema.team_member_table
           ON team_schema.team_member_table.team_member_id = request_schema.request_table.request_team_member_id
           AND team_schema.team_member_table.team_member_team_id = $1
@@ -4055,7 +4063,6 @@ AS $$
         ON request_schema.request_table.request_form_id = form_schema.form_table.form_id
         AND form_schema.form_table.form_is_disabled = false
         AND form_schema.form_table.form_is_public_form = false
-        AND form_schema.form_table.form_is_hr_form = false
       INNER JOIN team_schema.team_member_table
         ON team_schema.team_member_table.team_member_id = request_schema.request_table.request_team_member_id
         AND team_schema.team_member_table.team_member_team_id = $1
@@ -22666,7 +22673,6 @@ AS $$
             module_connection_order,
             module_connection_form_id,
             module_connection_module_version_id,
-            module_connection_workflow_id,
             module_connection_workflow_version_id
           )
           VALUES
@@ -22674,7 +22680,6 @@ AS $$
             '${item.module_connection_order}',
             '${item.module_connection_form_id}',
             '${versionId}',
-            '${item.module_connection_workflow_id}',
             '${workflowVersionId}'
           );
         `
@@ -22684,6 +22689,7 @@ AS $$
   });
   return returnData;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION fetch_module_page_node(
   input_data JSON
@@ -22713,7 +22719,6 @@ AS $$
     const formatModule = moduleData.map((item) => {
       return {
         module_connection_form_id: item.module_connection_form_id,
-        module_connection_workflow_id: item.module_connection_workflow_id,
         module_temp_id: item.module_connection_order,
         module_temp_form_name: item.form_name,
         module_temp_workflow_name: item.workflow_label
@@ -23548,7 +23553,7 @@ AS $$
       if (!getModuleRequestVersion) throw new Error("Module request version not found");
 
       moduleVersionId = getModuleRequestVersion.module_request_module_version_id;
-      workflowVersionId = getModuleRequestVersion.module_connection_workflow_id;
+      workflowVersionId = getModuleRequestVersion.module_connection_workflow_version_id;
 
       nextFormId = plv8.execute(`
         SELECT
@@ -23568,33 +23573,34 @@ AS $$
         )
         ORDER BY mc.module_connection_order ASC
         LIMIT 1
-      `, [moduleVersionId, getModuleRequestVersion.module_request_id])[0]?.form_id;
-    } else {
-        const connectionData = plv8.execute(`
-        SELECT
-            module_connection_table.module_connection_form_id,
-            module_connection_table.module_connection_module_version_id,
-            module_version_table.module_version_id AS workflow_version_id
-        FROM workflow_schema.module_table
-        JOIN LATERAL (
-            SELECT *
-            FROM workflow_schema.module_version_table
-            WHERE module_table.module_id = module_version_table.module_version_module_id
-            ORDER BY module_version_label DESC
-            LIMIT 1
-        ) module_version_table ON TRUE
-        JOIN workflow_schema.module_connection_table
-            ON module_connection_table.module_connection_module_version_id = module_version_table.module_version_id
-        WHERE module_table.module_id = $1
-        ORDER BY module_connection_table.module_connection_order ASC
-        LIMIT 1
-        `, [moduleId])[0];
+    `, [moduleVersionId, getModuleRequestVersion.module_request_id])[0]?.form_id;
 
-        if (!connectionData) throw new Error("No module connection data found");
-        moduleVersionId = connectionData.module_connection_module_version_id;
-        nextFormId = connectionData.module_connection_form_id;
-        workflowVersionId = connectionData.workflow_version_id;
-    }
+   } else {
+    const connectionData = plv8.execute(`
+      SELECT
+        module_connection_table.module_connection_form_id,
+        module_connection_table.module_connection_module_version_id,
+        module_connection_table.module_connection_workflow_version_id AS workflow_version_id
+      FROM workflow_schema.module_table
+      JOIN LATERAL (
+        SELECT *
+        FROM workflow_schema.module_version_table
+        WHERE module_table.module_id = module_version_table.module_version_module_id
+        ORDER BY module_version_label DESC
+        LIMIT 1
+      ) module_version_table ON TRUE
+      JOIN workflow_schema.module_connection_table
+        ON module_connection_table.module_connection_module_version_id = module_version_table.module_version_id
+      WHERE module_table.module_id = $1
+      ORDER BY module_connection_table.module_connection_order ASC
+      LIMIT 1
+    `, [moduleId])[0];
+
+    if (!connectionData) throw new Error("No module connection data found");
+    moduleVersionId = connectionData.module_connection_module_version_id;
+    nextFormId = connectionData.module_connection_form_id;
+    workflowVersionId = connectionData.workflow_version_id;
+   }
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
     if (!teamId) throw new Error("No team found");
@@ -23639,9 +23645,7 @@ AS $$
             JOIN workflow_schema.edge_table e ON e.edge_target_node_id = n.node_id
             JOIN workflow_schema.node_type_table nt ON nt.node_type_id = n.node_type_node_id
             JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = n.node_workflow_version_id
-            JOIN workflow_schema.module_connection_table mc
-            ON mc.module_connection_workflow_id = wv.workflow_version_workflow_id
-            AND mc.module_connection_workflow_version_id = wv.workflow_version_id
+            JOIN workflow_schema.module_connection_table mc ON mc.module_connection_workflow_version_id = wv.workflow_version_id
             JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
         WHERE mc.module_connection_form_id = $1
             AND mc.module_connection_module_version_id = $2
@@ -23666,6 +23670,33 @@ AS $$
         GROUP BY ln.node_id, ln.node_signer_team_group_id, ln.node_signer_id, ln.node_type_label
         LIMIT 1;
     `,[nextFormId,moduleVersionId]);
+
+    const targetNodeData = plv8.execute(
+      `
+        SELECT DISTINCT ON (e.edge_target_node_id)
+            target_nt.node_type_label AS target_node_type_label,
+            e.edge_label AS edge_transition_label,
+            target_nt.node_type_background_color AS target_node_background_color,
+            target_nt.node_type_font_color AS target_node_font_color,
+            n.node_signer_count_to_proceed AS signer_count
+        FROM module_request_schema.module_request_table mr
+        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
+        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
+        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
+        JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
+        JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
+        AND nt.node_type_label = $1
+        JOIN workflow_schema.node_table target_node ON target_node.node_id = e.edge_target_node_id
+        JOIN workflow_schema.node_type_table target_nt ON target_node.node_type_node_id = target_nt.node_type_id
+        WHERE mc.module_connection_workflow_version_id = $2 AND mc.module_connection_module_version_id = $3
+        ORDER BY e.edge_target_node_id
+      `,
+      [signerData[0].node_type_label, workflowVersionId, moduleVersionId]
+     );
+
+
+	const signerNodeData = targetNodeData.map((node) => node.target_node_type_label).join(" / ");
 
     const moduleData = plv8.execute(`
       SELECT module_table.module_name, module_version_table.module_version_id
@@ -23734,7 +23765,7 @@ AS $$
       });
     });
 
-
+    // Construct the form object
     const form = {
       form_id: formData.form_id,
       form_name: formData.form_name,
@@ -23747,6 +23778,7 @@ AS $$
       form_module_name:moduleData.module_name,
       form_module_version:moduleData.module_version_id,
       form_sub_type: formData.form_sub_type,
+
       form_team_member: {
         team_member_id: formData.team_member_id,
         team_member_user: {
@@ -23760,7 +23792,8 @@ AS $$
       form_signer: signerData.map(signer => {
         return {
           signer_id: signer.node_signer_id,
-          signer_action: signer.node_type_label,
+          signer_action: signerNodeData,
+	      signer_status:signer.node_type_label,
           signer_order: 1,
           signer_is_disabled: false,
           signer_team_group: signer.group_info.map(group => {
@@ -24370,8 +24403,8 @@ AS $$
           form
         }
     }
-  });
-  return returnData;
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_module_form(
@@ -24707,7 +24740,7 @@ AS $$
     }
 
     const signerList = signers[0].signer_team_group.map((group) => group.team_group_name).join(',');
-    const nodeStatus = signers[0].signer_action;
+    const nodeStatus = signers[0].signer_status;
 
     const newModuleRequestId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
@@ -25185,869 +25218,9 @@ AS $$
   return request_status;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION module_request_page_on_load(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      moduleId,
-      moduleRequestId,
-      userId,
-    } = input_data;
-
-    let nextFormId;
-    let moduleVersionId;
-    let workflowVersionId;
-
-    if (moduleRequestId) {
-      const idCondition = plv8.execute(`SELECT public.generate_module_request_id_condition($1)`, [moduleRequestId])[0].generate_module_request_id_condition;
-
-      const getModuleRequestVersion = plv8.execute(`
-        SELECT
-          module_request_table.module_request_id,
-          module_request_table.module_request_module_version_id,
-          module_connection_table.module_connection_workflow_id
-        FROM module_request_schema.module_request_table
-        JOIN workflow_schema.module_connection_table
-          ON module_request_table.module_request_module_version_id = module_connection_table.module_connection_module_version_id
-        WHERE ${idCondition}
-        LIMIT 1
-      `)[0];
-
-      if (!getModuleRequestVersion) throw new Error("Module request version not found");
-
-      moduleVersionId = getModuleRequestVersion.module_request_module_version_id;
-      workflowVersionId = getModuleRequestVersion.module_connection_workflow_id;
-
-      nextFormId = plv8.execute(`
-        SELECT
-          mc.module_connection_form_id AS form_id,
-          f.form_name
-        FROM workflow_schema.module_connection_table mc
-        JOIN workflow_schema.module_version_table mv
-        ON mv.module_version_id = mc.module_connection_module_version_id
-        LEFT JOIN form_schema.form_table f
-          ON f.form_id = mc.module_connection_form_id
-        WHERE mc.module_connection_module_version_id = $1
-        AND NOT EXISTS (
-        SELECT 1
-        FROM request_schema.request_table r
-        WHERE r.request_form_id = mc.module_connection_form_id
-            AND r.request_module_request_id = $2
-        )
-        ORDER BY mc.module_connection_order ASC
-        LIMIT 1
-    `, [moduleVersionId, getModuleRequestVersion.module_request_id])[0]?.form_id;
-
-  } else {
-    const connectionData = plv8.execute(`
-      SELECT
-        module_connection_table.module_connection_form_id,
-        module_connection_table.module_connection_module_version_id,
-        module_version_table.module_version_id AS workflow_version_id
-      FROM workflow_schema.module_table
-      JOIN LATERAL (
-        SELECT *
-        FROM workflow_schema.module_version_table
-        WHERE module_table.module_id = module_version_table.module_version_module_id
-        ORDER BY module_version_label DESC
-        LIMIT 1
-      ) module_version_table ON TRUE
-      JOIN workflow_schema.module_connection_table
-        ON module_connection_table.module_connection_module_version_id = module_version_table.module_version_id
-      WHERE module_table.module_id = $1
-      ORDER BY module_connection_table.module_connection_order ASC
-      LIMIT 1
-    `, [moduleId])[0];
-
-    if (!connectionData) throw new Error("No module connection data found");
-    moduleVersionId = connectionData.module_connection_module_version_id;
-    nextFormId = connectionData.module_connection_form_id;
-    workflowVersionId = connectionData.workflow_version_id;
-  }
-
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-    if (!teamId) throw new Error("No team found");
-
-    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
-    if (!teamMember) throw new Error("No team member found");
 
 
-    const formData = plv8.execute(`
-      SELECT
-        form_id,
-        form_name,
-        form_description,
-        form_date_created,
-        form_is_hidden,
-        form_is_formsly_form,
-        form_is_for_every_member,
-        form_type,
-        form_sub_type,
-        team_member_id,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_avatar,
-        user_username
-      FROM form_schema.form_table
-      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE form_id = $1
-    `,[nextFormId])[0];
-
-    if (!formData) throw new Error("Form data not found");
-
-    const signerData = plv8.execute(`
-            WITH limited_nodes AS (
-                SELECT
-                n.node_id,
-                ns.node_signer_team_group_id,
-                ns.node_signer_id,
-                nt.node_type_label
-            FROM workflow_schema.node_table n
-            JOIN workflow_schema.edge_table e ON e.edge_target_node_id = n.node_id
-            JOIN workflow_schema.node_type_table nt ON nt.node_type_id = n.node_type_node_id
-            JOIN workflow_schema.workflow_version_table wv ON wv.workflow_version_id = n.node_workflow_version_id
-            JOIN workflow_schema.module_connection_table mc
-            ON mc.module_connection_workflow_id = wv.workflow_version_workflow_id
-            AND mc.module_connection_workflow_version_id = wv.workflow_version_id
-            JOIN workflow_schema.node_signer_table ns ON ns.node_signer_node_id = n.node_id
-        WHERE mc.module_connection_form_id = $1
-            AND mc.module_connection_module_version_id = $2
-            AND e.edge_is_start_edge = true
-        )
-        SELECT
-            ln.node_id,
-            ln.node_signer_team_group_id,
-            ln.node_signer_id,
-            ln.node_type_label,
-            ARRAY_AGG(
-                JSON_BUILD_OBJECT(
-                    'team_group_id', tg.team_group_id,
-                    'team_group_name', tg.team_group_name
-                )
-            ) AS group_info
-        FROM limited_nodes ln
-        JOIN workflow_schema.node_signer_table ns
-            ON ns.node_signer_node_id = ln.node_id
-        JOIN team_schema.team_group_table tg
-            ON tg.team_group_id = ns.node_signer_team_group_id
-        GROUP BY ln.node_id, ln.node_signer_team_group_id, ln.node_signer_id, ln.node_type_label
-        LIMIT 1;
-    `,[nextFormId,moduleVersionId]);
-
-    const moduleData = plv8.execute(`
-      SELECT module_table.module_name, module_version_table.module_version_id
-      FROM workflow_schema.module_table
-      JOIN workflow_schema.module_version_table
-      ON module_table.module_id = module_version_table.module_version_module_id
-      WHERE module_version_id = $1
-    `,[moduleVersionId])[0];
-
-    const sectionData = [];
-    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${nextFormId}' ORDER BY section_order ASC`);
-    formSection.forEach(section => {
-      const fieldData = plv8.execute(`
-        SELECT *
-        FROM form_schema.field_table
-        WHERE field_section_id = '${section.section_id}'
-        ORDER BY field_order ASC
-        ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
-        ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
-        ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
-      `);
-
-      const fields = fieldData.map(field => {
-        let optionData = [];
-
-        if (field.field_special_field_template_id) {
-          switch(field.field_special_field_template_id) {
-            case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
-              const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`);
-              optionData = teamMemberList.map((item, index) => ({
-                option_id: item.user_id,
-                option_value: item.user_last_name + ', ' + item.user_first_name,
-                option_order: index,
-                option_field_id: field.field_id
-              }));
-              break;
-
-            case "ff007180-4367-4cf2-b259-7804867615a7":
-              const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`);
-              optionData = csiCodeList.map((item, index) => ({
-                option_id: item.csi_code_id,
-                option_value: item.csi_code_section,
-                option_order: index,
-                option_field_id: field.field_id
-              }));
-              break;
-          }
-        } else {
-          optionData = plv8.execute(`
-            SELECT *
-            FROM form_schema.option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `);
-        }
-
-        return {
-          ...field,
-          field_option: optionData
-        };
-      });
-
-      sectionData.push({
-        ...section,
-        section_field: fields,
-      });
-    });
-
-    // Construct the form object
-    const form = {
-      form_id: formData.form_id,
-      form_name: formData.form_name,
-      form_description: formData.form_description,
-      form_date_created: formData.form_date_created,
-      form_is_hidden: formData.form_is_hidden,
-      form_is_formsly_form: formData.form_is_formsly_form,
-      form_is_for_every_member: formData.form_is_for_every_member,
-      form_type: formData.form_type,
-      form_module_name:moduleData.module_name,
-      form_module_version:moduleData.module_version_id,
-      form_sub_type: formData.form_sub_type,
-      form_team_member: {
-        team_member_id: formData.team_member_id,
-        team_member_user: {
-          user_id: formData.user_id,
-          user_first_name: formData.user_first_name,
-          user_last_name: formData.user_last_name,
-          user_avatar: formData.user_avatar,
-          user_username: formData.user_username
-        }
-      },
-      form_signer: signerData.map(signer => {
-        return {
-          signer_id: signer.node_signer_id,
-          signer_action: signer.node_type_label,
-          signer_order: 1,
-          signer_is_disabled: false,
-          signer_team_group: signer.group_info.map(group => {
-            return {
-              team_group_id: group.team_group_id,
-              team_group_name: group.team_group_name
-            };
-          })
-        };
-      }),
-      form_section: sectionData,
-    };
-
-    if (form.form_is_formsly_form) {
-      if (form.form_name === "Item") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(1),
-                ],
-              },
-              form.form_section[1]
-            ],
-          },
-          projectOptions
-        }
-        return;
-      } else if (form.form_name === "Services") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        const categories = plv8.execute(
-          `
-            SELECT
-                service_category_id,
-                service_category
-            FROM service_schema.service_category_table
-            WHERE
-              service_category_team_id = '${teamMember.team_member_team_id}'
-              AND service_category_is_disabled = false
-              AND service_category_is_available = true
-            ORDER BY service_category;
-          `
-        );
-
-        const categoryOptions = categories.map((category, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: category.service_category_id,
-            option_order: index,
-            option_value: category.service_category,
-          };
-        });
-
-        const csiDivisions = plv8.execute(
-          `
-            SELECT
-              csi_code_division_id,
-              csi_code_division_description
-            FROM public.distinct_division_view
-          `
-        );
-
-        const csiDivisionOption = csiDivisions.map((division, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[4].field_id,
-            option_id: division.csi_code_division_description,
-            option_order: index,
-            option_value: division.csi_code_division_description,
-          };
-        });
-
-        const unitOfMeasurements = plv8.execute(
-          `
-            SELECT
-                general_unit_of_measurement_id,
-                general_unit_of_measurement
-            FROM unit_of_measurement_schema.general_unit_of_measurement_table
-            WHERE
-              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
-              AND general_unit_of_measurement_is_disabled = false
-              AND general_unit_of_measurement_is_available = true
-            ORDER BY general_unit_of_measurement;
-          `
-        );
-
-        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[3].field_id,
-            option_id: uom.general_unit_of_measurement_id,
-            option_order: index,
-            option_value: uom.general_unit_of_measurement,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(1),
-                ],
-              },
-              {
-                ...form.form_section[1],
-                section_field: [
-                  {
-                    ...form.form_section[1].section_field[0],
-                    field_option: categoryOptions
-                  },
-                  ...form.form_section[1].section_field.slice(1, 3),
-                   {
-                    ...form.form_section[1].section_field[3],
-                    field_option: unitOfMeasurementOptions
-                  },
-                  {
-                    ...form.form_section[1].section_field[4],
-                    field_option: csiDivisionOption
-                  },
-                  ...form.form_section[1].section_field.slice(5, 10),
-                ],
-              },
-            ],
-          },
-          projectOptions,
-        }
-        return;
-      } else if (form.form_name === "Other Expenses") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        const categories = plv8.execute(
-          `
-            SELECT
-                other_expenses_category_id,
-                other_expenses_category
-            FROM other_expenses_schema.other_expenses_category_table
-            WHERE
-              other_expenses_category_team_id = '${teamMember.team_member_team_id}'
-              AND other_expenses_category_is_disabled = false
-              AND other_expenses_category_is_available = true
-            ORDER BY other_expenses_category
-          `
-        );
-
-        const categoryOptions = categories.map((category, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: category.other_expenses_category_id,
-            option_order: index,
-            option_value: category.other_expenses_category,
-          };
-        });
-
-        const csiCodeDescription = plv8.execute(
-          `
-            SELECT
-                csi_code_id,
-                csi_code_level_three_description
-            FROM lookup_schema.csi_code_table
-            WHERE csi_code_division_id = '01'
-            ORDER BY csi_code_level_three_description
-          `
-        );
-
-        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[5].field_id,
-            option_id: codDescription.csi_code_id,
-            option_order: index,
-            option_value: codDescription.csi_code_level_three_description,
-          };
-        });
-
-        const unitOfMeasurements = plv8.execute(
-          `
-            SELECT
-                general_unit_of_measurement_id,
-                general_unit_of_measurement
-            FROM unit_of_measurement_schema.general_unit_of_measurement_table
-            WHERE
-              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
-              AND general_unit_of_measurement_is_disabled = false
-              AND general_unit_of_measurement_is_available = true
-            ORDER BY general_unit_of_measurement
-          `
-        );
-
-        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[4].field_id,
-            option_id: uom.general_unit_of_measurement_id,
-            option_order: index,
-            option_value: uom.general_unit_of_measurement,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(1),
-                ],
-              },
-              {
-                ...form.form_section[1],
-                section_field: [
-                  {
-                    ...form.form_section[1].section_field[0],
-                    field_option: categoryOptions
-                  },
-                  ...form.form_section[1].section_field.slice(1, 4),
-                   {
-                    ...form.form_section[1].section_field[4],
-                    field_option: unitOfMeasurementOptions
-                  },
-                  {
-                    ...form.form_section[1].section_field[5],
-                    field_option: csiCodeDescriptionOptions
-                  },
-                  ...form.form_section[1].section_field.slice(6, 10)
-                ],
-              },
-            ],
-          },
-          projectOptions,
-        }
-        return;
-      } else if (form.form_name === "PED Equipment") {
-        const projects = plv8.execute(
-          `
-            SELECT
-                team_project_table.team_project_id,
-                team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        const categories = plv8.execute(
-          `
-            SELECT
-                equipment_category_id,
-                equipment_category
-            FROM equipment_schema.equipment_category_table
-            WHERE
-              equipment_category_team_id = '${teamMember.team_member_team_id}'
-              AND equipment_category_is_disabled = false
-              AND equipment_category_is_available = true
-            ORDER BY equipment_category;
-          `
-        );
-
-        const categoryOptions = categories.map((category, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: category.equipment_category_id,
-            option_order: index,
-            option_value: category.equipment_category,
-          };
-        });
-
-        const capacityUoM = plv8.execute(
-          `
-            SELECT
-                capacity_unit_of_measurement_id,
-                capacity_unit_of_measurement
-            FROM unit_of_measurement_schema.capacity_unit_of_measurement_table
-            WHERE
-              capacity_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
-              AND capacity_unit_of_measurement_is_disabled = false
-              AND capacity_unit_of_measurement_is_available = true
-            ORDER BY capacity_unit_of_measurement;
-          `
-        );
-
-        const capacityUoMOptions = capacityUoM.map((uom, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[5].field_id,
-            option_id: uom.capacity_unit_of_measurement_id,
-            option_order: index,
-            option_value: uom.capacity_unit_of_measurement,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(1),
-                ],
-              },
-              {
-                ...form.form_section[1],
-                section_field: [
-                  {
-                    ...form.form_section[1].section_field[0],
-                    field_option: categoryOptions
-                  },
-                  ...form.form_section[1].section_field.slice(1, 5),
-                  {
-                    ...form.form_section[1].section_field[5],
-                    field_option: capacityUoMOptions
-                  },
-                  ...form.form_section[1].section_field.slice(6),
-                ],
-              },
-            ],
-          },
-          projectOptions,
-          categoryOptions
-        }
-        return;
-      } else if (form.form_name === "PED Part") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        const categories = plv8.execute(
-          `
-            SELECT
-                equipment_category_id,
-                equipment_category
-            FROM equipment_schema.equipment_category_table
-            WHERE
-              equipment_category_team_id = '${teamMember.team_member_team_id}'
-              AND equipment_category_is_disabled = false
-              AND equipment_category_is_available = true
-            ORDER BY equipment_category;
-          `
-        );
-
-        const categoryOptions = categories.map((category, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[2].field_id,
-            option_id: category.equipment_category_id,
-            option_order: index,
-            option_value: category.equipment_category,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  {
-                    ...form.form_section[0].section_field[1]
-                  },
-                  {
-                    ...form.form_section[0].section_field[2],
-                    field_option: categoryOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(3),
-                ],
-              },
-              {
-                ...form.form_section[1],
-              },
-            ],
-          },
-          projectOptions,
-          categoryOptions
-        }
-        return;
-      } else if (form.form_name === "PED Item") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: [
-                  {
-                    ...form.form_section[0].section_field[0],
-                    field_option: projectOptions,
-                  },
-                  ...form.form_section[0].section_field.slice(1),
-                ],
-              },
-              form.form_section[1]
-            ],
-          },
-          projectOptions
-        }
-        return;
-      }  else if (form.form_name === "IT Asset") {
-        const projects = plv8.execute(
-          `
-            SELECT
-              team_project_table.team_project_id,
-              team_project_table.team_project_name
-            FROM team_schema.team_project_member_table
-            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
-            WHERE
-              team_member_id = '${teamMember.team_member_id}'
-              AND team_project_is_disabled = false
-            ORDER BY team_project_name;
-          `
-        );
-
-        const projectOptions = projects.map((project, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: project.team_project_id,
-            option_order: index,
-            option_value: project.team_project_name,
-          };
-        });
-
-        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
-
-        const departmentOptions = departments.map((department, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[2].field_id,
-            option_id: department.team_department_id,
-            option_order: index,
-            option_value: department.team_department_name
-          }
-        });
-
-        const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
-          if (field.field_name === 'Requesting Project') {
-            return {
-              ...field,
-              field_option: projectOptions
-            }
-          } else if (field.field_name === 'Department') {
-            return {
-              ...field,
-              field_option: departmentOptions,
-            }
-          } else {
-            return field;
-          }
-        })
-
-        returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: firstSectionFieldList,
-              },
-              ...form.form_section.slice(1)
-            ],
-          },
-          projectOptions
-        }
-        return;
-      }
-    } else {
-        returnData = {
-          form
-        }
-    }
-});
-return returnData;
-$$ LANGUAGE plv8;
-
+CREATE OR REPLACE FUNCTION module_request_table_on_load(
     input_data JSON
 )
 RETURNS JSON
@@ -26156,6 +25329,42 @@ AS $$
     const resultCount = plv8.execute(queryCount)[0].count;
     returnData.count = Number(resultCount);
   });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_module_request_form(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+  plv8.subtransaction(function() {
+    const {
+      teamId
+    } = input_data;
+
+    const query = `
+    SELECT DISTINCT ON (m.module_id)
+        m.module_name,
+        m.module_id
+    FROM workflow_schema.module_connection_table mc
+    JOIN form_schema.form_table f
+    ON f.form_id = mc.module_connection_form_id
+    JOIN workflow_schema.module_version_table mv
+    ON mv.module_version_id = mc.module_connection_module_version_id
+    JOIN workflow_schema.module_table m
+    ON m.module_id = mv.module_version_module_id
+    WHERE m.module_team_id = $1
+    GROUP BY m.module_name, m.module_id,mv.module_version_date_created,mv.module_version_label
+    ORDER BY m.module_id,mv.module_version_label DESC,mv.module_version_date_created DESC, mv.module_version_label DESC;
+    `;
+
+    const result = plv8.execute(query, [teamId]);
+
+    returnData = result;
+  });
+
   return returnData;
 $$ LANGUAGE plv8;
 
@@ -30989,9 +30198,10 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table tm
-    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    JOIN workflow_schema.module_version_table mt ON mt.module_version_id = module_request_module_version_id
+    JOIN workflow_schema.module_table m ON m.module_id = mt.module_version_module_id
     WHERE tm.team_member_user_id = auth.uid()
-    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_team_id = m.module_team_id
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -31005,9 +30215,10 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table tm
-    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    JOIN workflow_schema.module_version_table mt ON mt.module_version_id = module_request_module_version_id
+    JOIN workflow_schema.module_table m ON m.module_id = mt.module_version_module_id
     WHERE tm.team_member_user_id = auth.uid()
-    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_team_id = m.module_team_id
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 )
@@ -31015,9 +30226,10 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table tm
-    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    JOIN workflow_schema.module_version_table mt ON mt.module_version_id = module_request_module_version_id
+    JOIN workflow_schema.module_table m ON m.module_id = mt.module_version_module_id
     WHERE tm.team_member_user_id = auth.uid()
-    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_team_id = m.module_team_id
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -31030,9 +30242,10 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table tm
-    JOIN workflow_schema.workflow_table wf ON wf.workflow_id = module_request_workflow_id
+    JOIN workflow_schema.module_version_table mt ON mt.module_version_id = module_request_module_version_id
+    JOIN workflow_schema.module_table m ON m.module_id = mt.module_version_module_id
     WHERE tm.team_member_user_id = auth.uid()
-    AND tm.team_member_team_id = wf.workflow_team_id
+    AND tm.team_member_team_id = m.module_team_id
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -31186,6 +30399,9 @@ ON
 
 ----- END: VIEWS
 
+GRANT USAGE, SELECT ON SEQUENCE module_request_schema.module_formsly_id_seq TO PUBLIC, POSTGRES;
+
+
 ----- START: SUBSCRIPTIONS
 
 DROP PUBLICATION if exists supabase_realtime;
@@ -31279,5 +30495,15 @@ GRANT ALL ON ALL TABLES IN SCHEMA hr_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA hr_schema TO POSTGRES;
 GRANT ALL ON SCHEMA hr_schema TO postgres;
 GRANT ALL ON SCHEMA hr_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA workflow_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA workflow_schema TO POSTGRES;
+GRANT ALL ON SCHEMA workflow_schema TO postgres;
+GRANT ALL ON SCHEMA workflow_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA module_request_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA module_request_schema TO POSTGRES;
+GRANT ALL ON SCHEMA module_request_schema TO postgres;
+GRANT ALL ON SCHEMA module_request_schema TO public;
 
 ----- END: PRIVILEGES

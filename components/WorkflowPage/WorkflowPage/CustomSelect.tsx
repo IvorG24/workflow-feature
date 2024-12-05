@@ -7,8 +7,8 @@ type ItemProps = SelectItemProps & {
 };
 const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
   ({ label, icon, ...others }: ItemProps, ref) => (
-    <Flex gap={4} align={"center"} ref={ref} {...others}>
-      {icon && <ActionIcon color="blue">{icon}</ActionIcon>}
+    <Flex color="white" gap={4} align={"center"} ref={ref} {...others}>
+      {icon && <ActionIcon color="white">{icon}</ActionIcon>}
       {icon ? (
         <Text color="blue" weight={500}>
           {label}

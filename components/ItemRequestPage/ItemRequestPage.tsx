@@ -655,7 +655,7 @@ const ItemRequestPage = ({
               leftIcon={<IconPlus size={16} />}
               onClick={handleCreateNextForm}
             >
-              Create {nextForm?.request_next_form_id} Form
+              Create {nextForm?.request_next_form_name} Form
             </Button>
           )}
         </Group>

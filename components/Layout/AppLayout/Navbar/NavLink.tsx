@@ -332,6 +332,52 @@ const ReviewAppNavLink = () => {
                       }
                     />
                   </Box>
+                  <Menu
+                    trigger={isMobile ? "click" : "hover"}
+                    shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                    withArrow
+                    position={isMobile ? "bottom-end" : "right"}
+                  >
+                    <Menu.Target>
+                      <Box w="100%">
+                        <NavigationLink
+                          idx={0}
+                          link={{
+                            label: "Create Module Request",
+                            icon: (
+                              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                                <IconFileStack {...defaultIconProps} />
+                              </Box>
+                            ),
+                          }}
+                          onClick={() => {
+                            return null;
+                          }}
+                          active={
+                            pathName.includes("module-forms") &&
+                            pathName.includes("create")
+                          }
+                        />
+                      </Box>
+                    </Menu.Target>
+
+                    <Portal>
+                      <Menu.Dropdown>
+                        {moduleForms.map((module) => (
+                          <Menu.Item
+                            key={module.module_id}
+                            onClick={async () =>
+                              await router.push(
+                                `/${activeTeamNameToUrl}/module-forms/${module.module_id}/create`
+                              )
+                            }
+                          >
+                            {module.module_name}
+                          </Menu.Item>
+                        ))}
+                      </Menu.Dropdown>
+                    </Portal>
+                  </Menu>
                 </Stack>
 
                 <Portal>
@@ -433,57 +479,6 @@ const ReviewAppNavLink = () => {
                   </Menu.Dropdown>
                 </Portal>
               </Menu>
-
-              {(userTeamMemberData?.team_member_role === "ADMIN" ||
-                userTeamMemberData?.team_member_role === "OWNER") && (
-                <Menu
-                  trigger={isMobile ? "click" : "hover"}
-                  shadow="1px 1px 3px rgba(0, 0, 0, .25)"
-                  withArrow
-                  position={isMobile ? "bottom-end" : "right"}
-                >
-                  <Stack align="start" {...defaultNavLinkContainerProps}>
-                    <Menu.Target>
-                      <Box>
-                        <NavigationLink
-                          idx={0}
-                          link={{
-                            label: "Create Module Request",
-                            icon: (
-                              <Box ml="sm" {...defaultNavLinkContainerProps}>
-                                <IconFileStack {...defaultIconProps} />
-                              </Box>
-                            ),
-                          }}
-                          onClick={() => {
-                            return null;
-                          }}
-                          active={
-                            pathName.includes("module-forms") &&
-                            pathName.includes("create")
-                          }
-                        />
-                      </Box>
-                    </Menu.Target>
-                  </Stack>
-                  <Portal>
-                    <Menu.Dropdown>
-                      {moduleForms.map((module) => (
-                        <Menu.Item
-                          key={module.module_id}
-                          onClick={async () =>
-                            await router.push(
-                              `/${activeTeamNameToUrl}/module-forms/${module.module_id}/create`
-                            )
-                          }
-                        >
-                          {module.module_name}
-                        </Menu.Item>
-                      ))}
-                    </Menu.Dropdown>
-                  </Portal>
-                </Menu>
-              )}
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
@@ -912,20 +907,16 @@ const ReviewAppNavLink = () => {
           },
         ]
       : []),
-    ...(userTeamMemberData?.team_member_role === "ADMIN" ||
-    userTeamMemberData?.team_member_role === "OWNER"
-      ? [
-          {
-            label: `Module Request List`,
-            icon: (
-              <Box ml="sm" {...defaultNavLinkContainerProps}>
-                <IconTableExport {...defaultIconProps} />
-              </Box>
-            ),
-            href: `/${activeTeamNameToUrl}/module-request`,
-          },
-        ]
-      : []),
+
+    {
+      label: `Module Request List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTableExport {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/module-request`,
+    },
   ];
 
   const teamSectionWithManageTeam = [

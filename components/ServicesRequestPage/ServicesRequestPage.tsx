@@ -734,12 +734,14 @@ const ServicesRequestPage = ({
           <RequestSignerSection signerList={signerList} />
         ) : (
           <>
-            <RequestSignerSectionModule
-              signerList={initialRequestSignerList.map((signer) => ({
-                ...signer,
-                request_signer_status_date_updated: null,
-              }))}
-            />
+            {!isEndNode && !noNodes && (
+              <RequestSignerSectionModule
+                signerList={initialRequestSignerList.map((signer) => ({
+                  ...signer,
+                  request_signer_status_date_updated: null,
+                }))}
+              />
+            )}
           </>
         )}
       </Stack>

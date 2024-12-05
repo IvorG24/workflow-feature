@@ -339,6 +339,7 @@ const CreateItemRequestPage = ({
             moduleVersion: form.form_module_version ?? "",
           });
 
+
           notifications.show({
             message: "Module Request created.",
             color: "green",
@@ -426,7 +427,7 @@ const CreateItemRequestPage = ({
     updateSection: (index: number, newSection: Section) => void
   ) => {
     const clearedFields = [
-      ...newSection.section_field.slice(0,10).map((field) => {
+      ...newSection.section_field.slice(0, 10).map((field) => {
         return {
           ...field,
           field_response: "",
