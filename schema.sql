@@ -23045,6 +23045,21 @@ AS $$
     FROM next_form nf;
     `,[currentRequest.request_module_request_id,module_version_id,requestData.form_id])[0] ?? [];
 
+    const moduleSignerDetails = plv8.execute(`
+      SELECT
+      module_signer_id,
+      module_signer_status,
+      module_signer_status_date_updated,
+      team_member_id,
+      user_first_name,
+      user_last_name
+      FROM module_request_schema.module_signer_table
+      JOIN request_schema.request_table ON module_signer_request_id = request_id
+      JOIN team_schema.team_member_table ON team_member_id = module_signer_team_member_id
+      JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE module_signer_request_id = $1
+    `,[request_id]);
+
     const requestCommentData = plv8.execute(`
         SELECT
             comment_id,
@@ -23187,23 +23202,28 @@ AS $$
             user_job_title: requestData.user_job_title
             }
         },
-        request_signer: [{
-            request_signer_status: requestSignerData[0]?.node_type_label ?? "",
-            request_module_name:requestSignerData[0]?.module_name ?? "",
+        module_request_signer: {
             request_workflow_version:requestSignerData[0]?.workflow_version_id ?? "",
             request_module_version_id:requestSignerData[0]?.module_connection_module_version_id ?? "",
-            request_status_color:requestSignerData[0]?.node_type_background_color ?? "",
-            request_status_font_color:requestSignerData[0]?.node_type_font_color ?? "",
-            request_signer_signer: {
-            signer_id: "",
-            signer_action: targetNodeData.map((node) => node.target_node_type_label).join(" / "),
-            signer_order: requestSignerData[0].node_signer_count_to_proceed,
-            signer_team_group: requestSignerData.map(group => ({
+            request_team_group: requestSignerData.map(group => ({
                 team_group_id: group.team_group_id,
                 team_group_name: group.team_group_name
+
+            })),
+            request_action:targetNodeData.map((node) => node.target_node_type_label).join(" / "),
+            request_signer_signer: moduleSignerDetails.map((signer)=>({
+              request_signer_id: signer.module_signer_id,
+              request_signer_status:signer.module_signer_status,
+              request_signer_status_date_updated:signer.module_signer_status_date_updated,
+              signer_team_member: {
+                team_member_id:signer.team_member_id,
+                team_member_user:{
+                  user_first_name:signer.user_first_name,
+                  user_last_name:signer.user_last_name
+                }
+              },
             }))
-            }
-        }],
+        },
         request_project: {
             team_project_name: requestData.team_project_name
         },
@@ -25217,7 +25237,6 @@ AS $$
 $$ LANGUAGE plv8;
 
 
-
 CREATE OR REPLACE FUNCTION module_request_table_on_load(
     input_data JSON
 )
@@ -25282,6 +25301,7 @@ AS $$
             FROM request_schema.request_table
             WHERE request_table.request_module_request_id = module_request_table.module_request_id
             ORDER BY request_date_created DESC
+            LIMIT 1
         ) request_table ON TRUE
         JOIN team_schema.team_member_table ON team_schema.team_member_table.team_member_id = module_request_schema.module_request_table.module_request_requested_by
         JOIN user_schema.user_table ON user_schema.user_table.user_id = team_schema.team_member_table.team_member_user_id
@@ -25311,6 +25331,7 @@ AS $$
             FROM request_schema.request_table
             WHERE request_table.request_module_request_id = module_request_table.module_request_id
             ORDER BY request_date_created DESC
+            LIMIT 1
         ) request_table ON TRUE
         JOIN team_schema.team_member_table ON team_schema.team_member_table.team_member_id = module_request_schema.module_request_table.module_request_requested_by
         JOIN user_schema.user_table ON user_schema.user_table.user_id = team_schema.team_member_table.team_member_user_id

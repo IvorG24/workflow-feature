@@ -63,6 +63,9 @@ const RequestFormSigner = ({ signerList, type }: Props) => {
                         .join(", ") || ""
                     )}
                   </Text>
+                  <Chip size="xs" variant="outline" checked={true}>
+                    Primary
+                  </Chip>
                 </Group>
               )}
             </>

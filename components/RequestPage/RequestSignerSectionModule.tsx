@@ -1,7 +1,10 @@
-import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
+import { formatDate, formatTime } from "@/utils/constant";
+import { RequestWithResponseType } from "@/utils/types";
 import {
   Badge,
+  Chip,
   Flex,
+  Group,
   Paper,
   Stack,
   Text,
@@ -11,41 +14,22 @@ import {
 import { IconCircleDashed } from "@tabler/icons-react";
 
 export type RequestSignerType =
-  RequestWithResponseType["request_signer"][0]["request_signer_signer"] & {
-    request_signer_status: ReceiverStatusType;
-    request_signer_status_date_updated: string | null;
-    request_signer_id: string;
-  };
+  RequestWithResponseType["module_request_signer"];
 
 type Props = {
-  signerList: RequestSignerType[];
+  signerList: RequestSignerType;
+  groupSigners: {
+    team_group_id: string;
+    team_group_name: string;
+  }[];
 };
 
-const RequestSignerSectionModule = ({ signerList }: Props) => {
-  const getSignerStatusIcon = () => {
-    return (
-      <ThemeIcon color="blue" size="xs" radius="xl">
-        <IconCircleDashed />
-      </ThemeIcon>
-    );
-  };
-
-  //   const getSignerStatusMessage = (
-  //     status: string,
-  //     action: string | undefined,
-  //     fullname: string | undefined,
-  //     dateUpdated: string | null
-  //   ) => {
-  //     return `Status: ${status}, Action: ${action ?? "unknown action"} by ${
-  //       fullname ?? "unknown signer"
-  //     }${
-  //       dateUpdated
-  //         ? ` (${formatDate(new Date(dateUpdated))} ${formatTime(
-  //             new Date(dateUpdated)
-  //           )})`
-  //         : ""
-  //     }`;
-  //   };
+const RequestSignerSectionModule = ({ signerList, groupSigners }: Props) => {
+  const getSignerStatusIcon = () => (
+    <ThemeIcon color="blue" size="xs" radius="xl">
+      <IconCircleDashed />
+    </ThemeIcon>
+  );
 
   return (
     <Paper p="xl" shadow="xs">
@@ -53,19 +37,38 @@ const RequestSignerSectionModule = ({ signerList }: Props) => {
         Signers
       </Title>
       <Stack mt="xl" spacing={0}>
-        {signerList.map((signer) => (
-          <Flex gap={8} key={`${signer.signer_id}-group`} align={"center"}>
-            {getSignerStatusIcon()}
-            <Text size="sm">
-              To be {signerList.map((signer) => signer.signer_action)} by the
-              members of Group{" "}
-              {signer?.signer_team_group
-                ?.map((group) => group.team_group_name)
-                .join(", ")}
-            </Text>
-            <Badge>Primary Signers</Badge>
-          </Flex>
-        ))}
+        {groupSigners && groupSigners[0].team_group_id !== null
+          ? groupSigners.map((groupSigner) => (
+              <Flex gap={8} key={groupSigner.team_group_id} align="center">
+                {getSignerStatusIcon()}
+                <Text size="sm">
+                  To be {signerList?.request_action} by the members of Group{" "}
+                  {groupSigner.team_group_name}
+                </Text>
+                <Badge>Primary Signers</Badge>
+              </Flex>
+            ))
+          : signerList &&
+            signerList.request_signer_signer.map((signer) => (
+              <Group key={signer.request_signer_id} noWrap mt="xs">
+                {getSignerStatusIcon()}
+                <Text size="sm">
+                  {`${signer.request_signer_status},
+                by ${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name} ${
+                  signer.request_signer_status_date_updated
+                    ? ` (Updated: ${formatDate(
+                        new Date(signer.request_signer_status_date_updated)
+                      )} ${formatTime(
+                        new Date(signer.request_signer_status_date_updated)
+                      )})`
+                    : ""
+                }`}
+                </Text>
+                <Chip size="xs" variant="outline" checked>
+                  Primary
+                </Chip>
+              </Group>
+            ))}
       </Stack>
     </Paper>
   );

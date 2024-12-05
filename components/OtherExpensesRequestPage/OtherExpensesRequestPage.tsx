@@ -80,7 +80,7 @@ const OtherExpensesRequestPage = ({
   const requestType = type === "Request";
   const moduleRequestId = router.query.moduleRequestId as string;
 
-  const initialRequestSignerList = request.request_signer.map((signer) => {
+  const initialRequestSignerList = request.request_signer?.map((signer) => {
     return {
       ...signer.request_signer_signer,
       request_signer_status: signer.request_signer_status as ReceiverStatusType,
@@ -106,19 +106,18 @@ const OtherExpensesRequestPage = ({
     link: request.request_jira_link,
   });
 
-  const signerTeamGroup = initialRequestSignerList[0].signer_team_group?.map(
-    (group) => group.team_group_name
-  );
+  const signerTeamGroup =
+    request.module_request_signer?.request_team_group?.map(
+      (group) => group.team_group_name
+    );
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
-  const isTeamGroup = initialRequestSignerList.some((signer) =>
-    signer?.signer_team_group?.some((group) =>
-      teamMemberGroupList.includes(group.team_group_name)
-    )
+  const isTeamGroup = request.module_request_signer?.request_team_group?.some(
+    (group) => teamMemberGroupList.includes(group.team_group_name)
   );
 
   const {
@@ -305,7 +304,7 @@ const OtherExpensesRequestPage = ({
           break;
         case "Module Request":
           const signerCountCurrentNode =
-            request.request_signer[0].request_signer_signer.signer_order;
+            request.module_request_signer?.request_module_signer_count;
 
           const teamGroup = await checkMemberTeamGroup(supabaseClient, {
             memberId: teamMember?.team_member_id ?? "",
@@ -349,7 +348,10 @@ const OtherExpensesRequestPage = ({
             memberId: `${teamMember?.team_member_id}`,
           });
           signerCount;
-          if (signerCounting >= signerCountCurrentNode) {
+          if (
+            signerCountCurrentNode !== undefined &&
+            signerCounting >= signerCountCurrentNode
+          ) {
             setIsSectionHidden(true);
             await updateModuleRequest(supabaseClient, {
               requestAction: status,
@@ -605,7 +607,7 @@ const OtherExpensesRequestPage = ({
     : isTeamGroup && !isUserOwner;
 
   const isEditable =
-    initialRequestSignerList.every(
+    initialRequestSignerList?.every(
       (signer) => signer.request_signer_status === "PENDING"
     ) &&
     Boolean(isUserOwner) &&
@@ -757,14 +759,12 @@ const OtherExpensesRequestPage = ({
           <RequestSignerSection signerList={signerList} />
         ) : (
           <>
-            {!isEndNode && !noNodes && (
-              <RequestSignerSectionModule
-                signerList={initialRequestSignerList.map((signer) => ({
-                  ...signer,
-                  request_signer_status_date_updated: null,
-                }))}
-              />
-            )}
+            <RequestSignerSectionModule
+              groupSigners={
+                request.module_request_signer?.request_team_group ?? []
+              }
+              signerList={request.module_request_signer}
+            />
           </>
         )}
       </Stack>

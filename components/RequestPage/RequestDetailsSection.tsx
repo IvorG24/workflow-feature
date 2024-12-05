@@ -85,7 +85,7 @@ const RequestDetailsSection = ({
     }
   };
 
-  const primarySigner = request.request_signer.find(
+  const primarySigner = request.request_signer?.find(
     (signer) => signer.request_signer_signer.signer_is_primary_signer
   );
 

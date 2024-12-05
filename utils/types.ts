@@ -770,16 +770,16 @@ export type RequestWithResponseType = RequestTableRow & {
     request_workflow_id?: string;
     request_workflow_version?: string;
     request_module_version_id?: string;
-
+    request_team_group?: {
+      team_group_name: string;
+      team_group_id: string;
+    }[];
+    request_action?: string;
     request_signer_signer: {
       signer_id: string;
       signer_is_primary_signer: boolean;
       signer_action: string;
       signer_order: number;
-      signer_team_group?: {
-        team_group_name: string;
-        team_group_id: string;
-      }[];
       signer_team_member: {
         team_member_id: string;
         team_member_user: {
@@ -794,6 +794,28 @@ export type RequestWithResponseType = RequestTableRow & {
       signer_team_department_id: string | null;
     };
   })[];
+  module_request_signer?: {
+    request_workflow_version: string;
+    request_module_version_id: string;
+    request_module_signer_count: number;
+    request_team_group: {
+      team_group_id: string;
+      team_group_name: string;
+    }[];
+    request_action: string;
+    request_signer_signer: {
+      request_signer_id: string;
+      request_signer_status: string;
+      request_signer_status_date_updated: string;
+      signer_team_member: {
+        team_member_id: string;
+        team_member_user: {
+          user_first_name: string;
+          user_last_name: string;
+        };
+      };
+    }[];
+  };
   request_comment: {
     comment_id: string;
     comment_date_created: string;

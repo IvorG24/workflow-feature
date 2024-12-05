@@ -81,7 +81,7 @@ const PEDItemRequestPage = ({
   const requestType = type === "Request";
   const moduleRequestId = router.query.moduleRequestId as string;
 
-  const initialRequestSignerList = request.request_signer.map((signer) => {
+  const initialRequestSignerList = request.request_signer?.map((signer) => {
     return {
       ...signer.request_signer_signer,
       request_signer_status: signer.request_signer_status as ReceiverStatusType,
@@ -106,18 +106,17 @@ const PEDItemRequestPage = ({
     generateSectionWithDuplicateList(request.request_form.form_section)
   );
 
-  const signerTeamGroup = initialRequestSignerList[0].signer_team_group?.map(
-    (group) => group.team_group_name
-  );
+  const signerTeamGroup =
+    request.module_request_signer?.request_team_group?.map(
+      (group) => group.team_group_name
+    );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
-  const isTeamGroup = initialRequestSignerList.some((signer) =>
-    signer?.signer_team_group?.some((group) =>
-      teamMemberGroupList.includes(group.team_group_name)
-    )
+  const isTeamGroup = request.module_request_signer?.request_team_group?.some(
+    (group) => teamMemberGroupList.includes(group.team_group_name)
   );
 
   const {
@@ -294,7 +293,7 @@ const PEDItemRequestPage = ({
 
         case "Module Request":
           const signerCountCurrentNode =
-            request.request_signer[0].request_signer_signer.signer_order;
+            request.module_request_signer?.request_module_signer_count;
 
           const teamGroup = await checkMemberTeamGroup(supabaseClient, {
             memberId: teamMember?.team_member_id ?? "",
@@ -338,7 +337,10 @@ const PEDItemRequestPage = ({
             memberId: `${teamMember?.team_member_id}`,
           });
 
-          if (signerCounting >= signerCountCurrentNode) {
+          if (
+            signerCountCurrentNode !== undefined &&
+            signerCounting >= signerCountCurrentNode
+          ) {
             setIsSectionHidden(true);
             await updateModuleRequest(supabaseClient, {
               requestAction: status,
@@ -594,7 +596,7 @@ const PEDItemRequestPage = ({
     : isTeamGroup && !isUserOwner;
 
   const isEditable =
-    initialRequestSignerList.every(
+    initialRequestSignerList?.every(
       (signer) => signer.request_signer_status === "PENDING"
     ) &&
     Boolean(isUserOwner) &&
@@ -754,14 +756,12 @@ const PEDItemRequestPage = ({
           <RequestSignerSection signerList={signerList} />
         ) : (
           <>
-            {!isEndNode && !noNodes && (
-              <RequestSignerSectionModule
-                signerList={initialRequestSignerList.map((signer) => ({
-                  ...signer,
-                  request_signer_status_date_updated: null,
-                }))}
-              />
-            )}
+            <RequestSignerSectionModule
+              groupSigners={
+                request.module_request_signer?.request_team_group ?? []
+              }
+              signerList={request.module_request_signer}
+            />
           </>
         )}
       </Stack>

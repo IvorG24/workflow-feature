@@ -1,14 +1,14 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-    checkMemberTeamGroup,
-    getRequestComment,
-    getSectionInRequestPage,
+  checkMemberTeamGroup,
+  getRequestComment,
+  getSectionInRequestPage,
 } from "@/backend/api/get";
 import { moduleSignerValidation, moduleUpdateSigner } from "@/backend/api/post";
 import {
-    approveOrRejectRequest,
-    cancelRequest,
-    updateModuleRequest,
+  approveOrRejectRequest,
+  cancelRequest,
+  updateModuleRequest,
 } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -19,36 +19,36 @@ import useNodeAndForm from "@/hooks/reactflow/useNodeAndForm";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
-    useUserProfile,
-    useUserTeamMember,
-    useUserTeamMemberGroupList,
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDateTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import {
-    createJiraTicket,
-    formatJiraRequisitionPayload,
-    getJiraTransitionId,
-    getRequisitionAutomationData,
+  createJiraTicket,
+  formatJiraRequisitionPayload,
+  getJiraTransitionId,
+  getRequisitionAutomationData,
 } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-    CommentType,
-    ReceiverStatusType,
-    RequestCommentType,
-    RequestWithResponseType,
+  CommentType,
+  ReceiverStatusType,
+  RequestCommentType,
+  RequestWithResponseType,
 } from "@/utils/types";
 import {
-    Accordion,
-    Button,
-    Container,
-    Flex,
-    Group,
-    Paper,
-    Stack,
-    Text,
-    Title,
+  Accordion,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -81,7 +81,7 @@ const PEDEquipmentRequestPage = ({
   const requestType = type === "Request";
   const moduleRequestId = router.query.moduleRequestId as string;
 
-  const initialRequestSignerList = request.request_signer.map((signer) => {
+  const initialRequestSignerList = request.request_signer?.map((signer) => {
     return {
       ...signer.request_signer_signer,
       request_signer_status: signer.request_signer_status as ReceiverStatusType,
@@ -106,17 +106,17 @@ const PEDEquipmentRequestPage = ({
     generateSectionWithDuplicateList([request.request_form.form_section[0]])
   );
 
-  const signerTeamGroup = initialRequestSignerList[0].signer_team_group?.map(
-    (group) => group.team_group_name
-  );
+  const signerTeamGroup =
+    request.module_request_signer?.request_team_group?.map(
+      (group) => group.team_group_name
+    );
+
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
-  const isTeamGroup = initialRequestSignerList.some((signer) =>
-    signer?.signer_team_group?.some((group) =>
-      teamMemberGroupList.includes(group.team_group_name)
-    )
+  const isTeamGroup = request.module_request_signer?.request_team_group?.some(
+    (group) => teamMemberGroupList.includes(group.team_group_name)
   );
 
   const {
@@ -294,7 +294,7 @@ const PEDEquipmentRequestPage = ({
 
         case "Module Request":
           const signerCountCurrentNode =
-            request.request_signer[0].request_signer_signer.signer_order;
+            request.module_request_signer?.request_module_signer_count;
 
           const teamGroup = await checkMemberTeamGroup(supabaseClient, {
             memberId: teamMember?.team_member_id ?? "",
@@ -337,7 +337,10 @@ const PEDEquipmentRequestPage = ({
             memberId: `${teamMember?.team_member_id}`,
           });
 
-          if (signerCounting >= signerCountCurrentNode) {
+          if (
+            signerCountCurrentNode !== undefined &&
+            signerCounting >= signerCountCurrentNode
+          ) {
             setIsSectionHidden(true);
             await updateModuleRequest(supabaseClient, {
               requestAction: status,
@@ -606,7 +609,7 @@ const PEDEquipmentRequestPage = ({
     : isTeamGroup && !isUserOwner;
 
   const isEditable =
-    initialRequestSignerList.every(
+    initialRequestSignerList?.every(
       (signer) => signer.request_signer_status === "PENDING"
     ) &&
     Boolean(isUserOwner) &&
@@ -761,14 +764,12 @@ const PEDEquipmentRequestPage = ({
           <RequestSignerSection signerList={signerList} />
         ) : (
           <>
-            {!isEndNode && !noNodes && (
-              <RequestSignerSectionModule
-                signerList={initialRequestSignerList.map((signer) => ({
-                  ...signer,
-                  request_signer_status_date_updated: null,
-                }))}
-              />
-            )}
+            <RequestSignerSectionModule
+              groupSigners={
+                request.module_request_signer?.request_team_group ?? []
+              }
+              signerList={request.module_request_signer}
+            />
           </>
         )}
       </Stack>
