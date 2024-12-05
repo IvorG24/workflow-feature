@@ -22310,7 +22310,6 @@ AS $$
                 module_connection_order,
                 module_connection_form_id,
                 module_connection_module_version_id,
-                module_connection_workflow_id,
                 module_connection_workflow_version_id
             )
             VALUES
@@ -22318,10 +22317,10 @@ AS $$
                 $1,
                 $2,
                 $3,
-                $4,
-                $5
+                $4
+
             );
-            `,[connection.module_connection_order,connection.module_connection_form_id,moduleVersionId,workflowId,workflowVersionId]);
+            `,[connection.module_connection_order,connection.module_connection_form_id,moduleVersionId,workflowVersionId]);
       })
     })
   });
@@ -22708,9 +22707,11 @@ AS $$
         SELECT
           module_connection_table.*,
           wt.workflow_label,
+		  wt.workflow_id,
           ft.form_name
         FROM workflow_schema.module_connection_table
-        JOIN workflow_schema.workflow_table AS wt ON wt.workflow_id = module_connection_table.module_connection_workflow_id
+        JOIN workflow_schema.workflow_version_table AS wv ON wv.workflow_version_id = module_connection_table.module_connection_workflow_version_id
+        JOIN workflow_schema.workflow_table AS wt ON wt.workflow_id = wv.workflow_version_workflow_id
         JOIN form_schema.form_table AS ft ON ft.form_id = module_connection_table.module_connection_form_id
         WHERE module_connection_table.module_connection_module_version_id = '${moduleVersionId}'
       `
@@ -22719,6 +22720,7 @@ AS $$
     const formatModule = moduleData.map((item) => {
       return {
         module_connection_form_id: item.module_connection_form_id,
+        module_connection_workflow_id:item.workflow_id,
         module_temp_id: item.module_connection_order,
         module_temp_form_name: item.form_name,
         module_temp_workflow_name: item.workflow_label
@@ -22849,17 +22851,15 @@ plv8.subtransaction(function() {
           module_connection_order,
           module_connection_form_id,
           module_connection_module_version_id,
-          module_connection_workflow_id,
           module_connection_workflow_version_id
         )
         VALUES
-        ($1, $2, $3, $4, $5);
+        ($1, $2, $3, $4);
       `,
       [
         item.module_temp_id,
         item.module_connection_form_id,
         versionId,
-        item.module_connection_workflow_id,
         workflowVersionId
       ]
     );
@@ -23542,7 +23542,7 @@ AS $$
         SELECT
           module_request_table.module_request_id,
           module_request_table.module_request_module_version_id,
-          module_connection_table.module_connection_workflow_id
+          module_connection_table.module_connection_workflow_version_id
         FROM module_request_schema.module_request_table
         JOIN workflow_schema.module_connection_table
           ON module_request_table.module_request_module_version_id = module_connection_table.module_connection_module_version_id
@@ -23679,10 +23679,8 @@ AS $$
             target_nt.node_type_background_color AS target_node_background_color,
             target_nt.node_type_font_color AS target_node_font_color,
             n.node_signer_count_to_proceed AS signer_count
-        FROM module_request_schema.module_request_table mr
-        JOIN request_schema.request_table r ON r.request_module_request_id = mr.module_request_id
-        JOIN workflow_schema.module_version_table mv ON mr.module_request_module_version_id = mv.module_version_id
-        JOIN workflow_schema.module_connection_table mc ON mc.module_connection_module_version_id = mv.module_version_id
+        FROM workflow_schema.module_connection_table mc
+        JOIN workflow_schema.module_version_table mv ON mc.module_connection_module_version_id = mv.module_version_id
         JOIN workflow_schema.node_table n ON n.node_workflow_version_id = mc.module_connection_workflow_version_id
         JOIN workflow_schema.edge_table e ON e.edge_source_node_id = n.node_id
         JOIN workflow_schema.node_type_table nt ON n.node_type_node_id = nt.node_type_id
@@ -23694,7 +23692,6 @@ AS $$
       `,
       [signerData[0].node_type_label, workflowVersionId, moduleVersionId]
      );
-
 
 	const signerNodeData = targetNodeData.map((node) => node.target_node_type_label).join(" / ");
 
@@ -24403,9 +24400,10 @@ AS $$
           form
         }
     }
-});
-return returnData;
+  });
+  return returnData;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION get_module_form(
   input_data JSON
