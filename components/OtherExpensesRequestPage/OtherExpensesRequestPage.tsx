@@ -1,14 +1,14 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  checkMemberTeamGroup,
-  getRequestComment,
-  getSectionInRequestPage,
+    checkMemberTeamGroup,
+    getRequestComment,
+    getSectionInRequestPage,
 } from "@/backend/api/get";
 import { moduleSignerValidation, moduleUpdateSigner } from "@/backend/api/post";
 import {
-  approveOrRejectRequest,
-  cancelRequest,
-  updateModuleRequest,
+    approveOrRejectRequest,
+    cancelRequest,
+    updateModuleRequest,
 } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -19,35 +19,35 @@ import useNodeAndForm from "@/hooks/reactflow/useNodeAndForm";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
+    useUserProfile,
+    useUserTeamMember,
+    useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, CSI_HIDDEN_FIELDS, formatDateTime } from "@/utils/constant";
 import {
-  createJiraTicket,
-  formatJiraRequisitionPayload,
-  getJiraTransitionId,
-  getRequisitionAutomationData,
+    createJiraTicket,
+    formatJiraRequisitionPayload,
+    getJiraTransitionId,
+    getRequisitionAutomationData,
 } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  CommentType,
-  ReceiverStatusType,
-  RequestCommentType,
-  RequestWithResponseType,
+    CommentType,
+    ReceiverStatusType,
+    RequestCommentType,
+    RequestWithResponseType,
 } from "@/utils/types";
 import {
-  Accordion,
-  Button,
-  Container,
-  Flex,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  Title,
+    Accordion,
+    Button,
+    Container,
+    Flex,
+    Group,
+    Paper,
+    Stack,
+    Text,
+    Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -730,7 +730,7 @@ const OtherExpensesRequestPage = ({
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
-            requestSignerId={isUserSigner?.signer_team_member.team_member_id}
+
             status={request.request_status}
           />
         )}

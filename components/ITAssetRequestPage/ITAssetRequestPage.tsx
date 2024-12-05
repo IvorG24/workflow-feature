@@ -857,7 +857,6 @@ const ITAssetRequestPage = ({
               isDeletable={isDeletable}
               requestId={request.request_id}
               onCreateJiraTicket={onCreateJiraTicket}
-              requestSignerId={request.request_signer[0].request_signer_id}
               targetNodes={targetNodes ?? []}
             />
           )}

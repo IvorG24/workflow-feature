@@ -735,7 +735,6 @@ const PEDEquipmentRequestPage = ({
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
-            requestSignerId={isUserSigner?.signer_team_member.team_member_id}
             status={request.request_status}
           />
         )}
